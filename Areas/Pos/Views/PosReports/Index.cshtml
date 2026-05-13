@@ -44,6 +44,8 @@
         .report-check-filter input { width: auto; }
         .report-print { background: #fff; border: 1px solid #d9e1ee; border-radius: 8px; color: #24364f; cursor: pointer; font-weight: 700; padding: 10px 12px; width: 100%; }
         .report-print:disabled { color: #9aa8bc; cursor: not-allowed; }
+        .report-action.is-loading, .report-export.is-loading, .report-print.is-loading { opacity: .65; pointer-events: none; position: relative; }
+        .report-action:disabled, .report-export:disabled, .report-print:disabled { cursor: not-allowed; opacity: .65; }
         .card-issue-problem td { background: #fff1f2; color: #7f1d1d; font-weight: 700; }
         .card-status-badge { border-radius: 999px; display: inline-block; font-weight: 800; min-width: 72px; padding: 4px 9px; }
         .card-status-normal { background: #dcfce7; color: #166534; }
@@ -61,7 +63,8 @@
     <div class="pos-page pos-reports-page"
          dir="rtl"
          data-run-report-url="@Url.Action("Run", "PosReports", new { area = "Pos" })"
-         data-export-report-url="@Url.Action("Export", "PosReports", new { area = "Pos" })">
+         data-export-report-url="@Url.Action("Export", "PosReports", new { area = "Pos" })"
+         data-lookup-url="@Url.Action("Lookups", "PosReports", new { area = "Pos" })">
         <div class="pos-shell">
             <section class="pos-panel pos-card pos-filter-card">
                 <div class="panel-heading pos-card-heading">
@@ -76,7 +79,7 @@
                             <option value="">كل الفروع المتاحة</option>
                             @foreach (var branch in branches)
                             {
-                                <option value="@branch.BranchId">@branch.BranchName</option>
+                                <option value="@branch.BranchId" @(posContext != null && posContext.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
                             }
                         </select>
                     </label>
@@ -199,6 +202,8 @@
     <script>
         (function () {
             function byId(id) { return document.getElementById(id); }
+            var page = document.querySelector(".pos-reports-page");
+            var busyActions = {};
             function escapeHtml(value) {
                 return String(value === null || value === undefined ? "" : value)
                     .replace(/&/g, "&amp;")
@@ -278,6 +283,88 @@
                 input.addEventListener("focus", render);
                 input.addEventListener("blur", function () { window.setTimeout(close, 150); });
                 sync();
+            }
+            function loadLookup(select, type, extra) {
+                if (!select || select.getAttribute("data-loaded") === "true" || select.getAttribute("data-loading") === "true") { return; }
+                select.setAttribute("data-loading", "true");
+                var url = page.getAttribute("data-lookup-url") + "?type=" + encodeURIComponent(type || "");
+                if (extra && extra.branchId) {
+                    url += "&branchId=" + encodeURIComponent(extra.branchId);
+                }
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", url, true);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) { return; }
+                    select.removeAttribute("data-loading");
+                    if (xhr.status < 200 || xhr.status >= 300) {
+                        byId("reportMessage").innerText = "تعذر تحميل بيانات الفلاتر";
+                        return;
+                    }
+                    var data = null;
+                    try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
+                    if (!data || !data.success || !data.rows) {
+                        byId("reportMessage").innerText = (data && data.message) || "تعذر تحميل بيانات الفلاتر";
+                        return;
+                    }
+                    var current = select.value;
+                    for (var i = 0; i < data.rows.length; i++) {
+                        var row = data.rows[i];
+                        if (select.querySelector('option[value="' + String(row.id).replace(/"/g, '\\"') + '"]')) { continue; }
+                        var option = document.createElement("option");
+                        option.value = row.id;
+                        option.textContent = row.name;
+                        select.appendChild(option);
+                    }
+                    select.value = current;
+                    select.setAttribute("data-loaded", "true");
+                    var lookupInput = select.parentNode ? select.parentNode.querySelector(".lookup-input") : null;
+                    if (lookupInput) { lookupInput.dispatchEvent(new Event("input")); }
+                };
+                xhr.onerror = function () {
+                    select.removeAttribute("data-loading");
+                    byId("reportMessage").innerText = "تعذر الاتصال بالسيرفر أثناء تحميل الفلاتر";
+                };
+                xhr.send();
+            }
+            function lazyLookup(select, type, extraFactory) {
+                if (!select) { return; }
+                function run() {
+                    loadLookup(select, type, typeof extraFactory === "function" ? extraFactory() : null);
+                }
+                select.addEventListener("focus", run);
+                select.addEventListener("mousedown", run);
+                var input = select.parentNode ? select.parentNode.querySelector(".lookup-input") : null;
+                if (input) {
+                    input.addEventListener("focus", run);
+                    input.addEventListener("input", run);
+                }
+            }
+            function setActionBusy(button, busy, text) {
+                if (!button) { return; }
+                if (busy) {
+                    if (!button.getAttribute("data-original-html")) {
+                        button.setAttribute("data-original-html", button.innerHTML);
+                    }
+                    button.disabled = true;
+                    button.classList.add("is-loading");
+                    if (text) { button.innerHTML = escapeHtml(text); }
+                    return;
+                }
+                button.disabled = false;
+                button.classList.remove("is-loading");
+                var original = button.getAttribute("data-original-html");
+                if (original) { button.innerHTML = original; }
+            }
+            function beginAction(action, key, button, text) {
+                var busyKey = action + ":" + key;
+                if (busyActions[busyKey]) { return false; }
+                busyActions[busyKey] = true;
+                setActionBusy(button, true, text);
+                return true;
+            }
+            function endAction(action, key, button) {
+                delete busyActions[action + ":" + key];
+                setActionBusy(button, false);
             }
             function payload(key) {
                 var cardIssueMode = byId("reportCardIssueMode").value || "none";
@@ -640,11 +727,12 @@
                 if (byId("reportShowEmptyBranches").checked) { parts.push("إظهار الفروع الفاضية"); }
                 return parts;
             }
-            function runReport(key, afterRender) {
+            function runReport(key, afterRender, options) {
+                options = options || {};
                 var xhr = new XMLHttpRequest();
-                xhr.open("POST", document.querySelector(".pos-reports-page").getAttribute("data-run-report-url"), true);
+                xhr.open("POST", page.getAttribute("data-run-report-url"), true);
                 xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-                byId("reportMessage").innerText = "جاري تشغيل التقرير...";
+                byId("reportMessage").innerText = options.message || "جاري تجهيز التقرير...";
                 byId("reportResult").innerHTML = "";
                 xhr.onreadystatechange = function () {
                     if (xhr.readyState !== 4) { return; }
@@ -662,10 +750,16 @@
                         if (typeof afterRender === "function") {
                             afterRender(data);
                         }
+                        if (typeof options.complete === "function") { options.complete(true, data); }
                         return;
                     }
 
                     byId("reportMessage").innerText = (data && data.message) || "تعذر تشغيل التقرير";
+                    if (typeof options.complete === "function") { options.complete(false, data); }
+                };
+                xhr.onerror = function () {
+                    byId("reportMessage").innerText = "تعذر الاتصال بالسيرفر أثناء تشغيل التقرير";
+                    if (typeof options.complete === "function") { options.complete(false, null); }
                 };
                 xhr.send(JSON.stringify(payload(key)));
             }
@@ -714,10 +808,11 @@
                     popup.print();
                 }, 250);
             }
-            function printReport(key) {
+            function printReport(key, button) {
                 var popup = window.open("", "_blank");
                 if (!popup) {
                     byId("reportMessage").innerText = "المتصفح منع فتح نافذة الطباعة";
+                    endAction("print", key, button);
                     return;
                 }
                 popup.document.open();
@@ -725,11 +820,17 @@
                 popup.document.close();
                 runReport(key, function (data) {
                     printCurrentReport(key, data, popup);
+                }, {
+                    message: "جاري الطباعة...",
+                    complete: function (success) {
+                        if (!success && popup && !popup.closed) { popup.close(); }
+                        endAction("print", key, button);
+                    }
                 });
             }
-            function exportReport(key) {
+            function exportReport(key, button) {
                 var xhr = new XMLHttpRequest();
-                xhr.open("POST", document.querySelector(".pos-reports-page").getAttribute("data-export-report-url"), true);
+                xhr.open("POST", page.getAttribute("data-export-report-url"), true);
                 xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
                 xhr.responseType = "blob";
                 byId("reportMessage").innerText = "جاري تجهيز ملف Excel...";
@@ -748,6 +849,7 @@
                         document.body.removeChild(link);
                         window.URL.revokeObjectURL(url);
                         byId("reportMessage").innerText = "تم تنزيل ملف Excel";
+                        endAction("export", key, button);
                         return;
                     }
 
@@ -760,14 +862,17 @@
                         } catch (ignore) {
                             byId("reportMessage").innerText = text || "تعذر تصدير Excel";
                         }
+                        endAction("export", key, button);
                     };
                     reader.onerror = function () {
                         byId("reportMessage").innerText = "تعذر تصدير Excel";
+                        endAction("export", key, button);
                     };
                     reader.readAsText(xhr.response || new Blob(), "utf-8");
                 };
                 xhr.onerror = function () {
                     byId("reportMessage").innerText = "تعذر الاتصال بالسيرفر أثناء تصدير Excel";
+                    endAction("export", key, button);
                 };
                 var data = payload(key);
                 var form = [
@@ -804,19 +909,28 @@
 
                 var reportButton = event.target.closest ? event.target.closest(".report-action") : null;
                 if (reportButton && !reportButton.disabled) {
-                    runReport(reportButton.getAttribute("data-report-key"));
+                    var reportKey = reportButton.getAttribute("data-report-key");
+                    if (!beginAction("run", reportKey, reportButton, "جاري تجهيز التقرير...")) { return; }
+                    runReport(reportKey, null, {
+                        message: "جاري تجهيز التقرير...",
+                        complete: function () { endAction("run", reportKey, reportButton); }
+                    });
                     return;
                 }
 
                 var exportButton = event.target.closest ? event.target.closest(".report-export") : null;
                 if (exportButton && !exportButton.disabled) {
-                    exportReport(exportButton.getAttribute("data-report-key"));
+                    var exportKey = exportButton.getAttribute("data-report-key");
+                    if (!beginAction("export", exportKey, exportButton, "جاري تجهيز Excel...")) { return; }
+                    exportReport(exportKey, exportButton);
                     return;
                 }
 
                 var printButton = event.target.closest ? event.target.closest(".report-print") : null;
                 if (printButton && !printButton.disabled) {
-                    printReport(printButton.getAttribute("data-report-key"));
+                    var printKey = printButton.getAttribute("data-report-key");
+                    if (!beginAction("print", printKey, printButton, "جاري الطباعة...")) { return; }
+                    printReport(printKey, printButton);
                 }
             });
 
@@ -825,6 +939,18 @@
             enhanceSelectSearch(byId("reportBranchToId"), "إلى فرع");
             enhanceSelectSearch(byId("reportUserId"), "اكتب اسم المستخدم أو الكود");
             enhanceSelectSearch(byId("reportStoreId"), "اكتب اسم المخزن أو الكود");
+            lazyLookup(byId("reportBranchId"), "branches");
+            lazyLookup(byId("reportBranchFromId"), "branches");
+            lazyLookup(byId("reportBranchToId"), "branches");
+            lazyLookup(byId("reportUserId"), "users");
+            lazyLookup(byId("reportStoreId"), "stores", function () {
+                return { branchId: byId("reportBranchId").value || "" };
+            });
+            byId("reportBranchId").addEventListener("change", function () {
+                var store = byId("reportStoreId");
+                store.setAttribute("data-loaded", "false");
+                while (store.options.length > 1) { store.remove(1); }
+            });
             updateGroups("sales");
         })();
     </script>

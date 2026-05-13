@@ -271,9 +271,19 @@ namespace MyERP.Controllers.PropertyManagement
                 property.IsDeleted = false;
                 property.IsActive = true;
                 property.UserId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
+                property.PropertyDetails = property.PropertyDetails ?? new List<PropertyDetail>();
+                property.PropertyBatches = property.PropertyBatches ?? new List<PropertyBatch>();
 
                 if (property.Id > 0)
                 {
+                    var existingProperty = db.Properties.Find(property.Id);
+                    if (existingProperty == null)
+                    {
+                        return Json(new { success = false, message = "العقار غير موجود." });
+                    }
+
+                    db.Entry(existingProperty).CurrentValues.SetValues(property);
+
                     //----------------PropertyDetails---------------------------
                     // Get existing PropertyDetails from DB
                     var existingDetails = db.PropertyDetails.Where(x => x.MainDocId == property.Id).ToList();
@@ -291,11 +301,11 @@ namespace MyERP.Controllers.PropertyManagement
                             existingDetail.PropertyUnitNo = propDetail.PropertyUnitNo;
                             existingDetail.PropertyUnitTypeId = propDetail.PropertyUnitTypeId;
                             existingDetail.Floor = propDetail.Floor;
-                          existingDetail.RoomsNo = propDetail.RoomsNo;
+                            existingDetail.RoomsNo = propDetail.RoomsNo;
                             existingDetail.HallsNo = propDetail.HallsNo;
                             existingDetail.IsFurnishing = propDetail.IsFurnishing;
                             existingDetail.IsApplyTax = propDetail.IsApplyTax;
-                            //    existingDetail.StatusId = propDetail.StatusId;
+                            existingDetail.StatusId = propDetail.StatusId;
                             existingDetail.KitchenCount= propDetail.KitchenCount;
                             existingDetail.SplitACCount = propDetail.SplitACCount;
                             existingDetail.WindowACCount= propDetail.WindowACCount;
@@ -323,7 +333,21 @@ namespace MyERP.Controllers.PropertyManagement
                     var detailsToRemove = existingDetails
                         .Where(x => !property.PropertyDetails.Any(y => y.Id == x.Id))
                         .ToList();
-                    db.PropertyDetails.RemoveRange(detailsToRemove);
+                    foreach (var detail in detailsToRemove)
+                    {
+                        if (HasPropertyUnitTransactions(detail.Id))
+                        {
+                            return Json(new
+                            {
+                                success = false,
+                                message = "لا يمكن حذف الوحدة رقم " + detail.PropertyUnitNo + " لأنها مرتبطة بحركات أو عقود أو مدفوعات."
+                            });
+                        }
+
+                        detail.IsDeleted = true;
+                        detail.UserId = property.UserId;
+                        db.Entry(detail).State = EntityState.Modified;
+                    }
 
                     //
                     //----------------PropertyBatches---------------------------
@@ -398,6 +422,14 @@ namespace MyERP.Controllers.PropertyManagement
                     .Select(x => new { x.Key, x.Value.Errors })
                     .ToArray();
             return Json(new { success = false });
+        }
+
+        private bool HasPropertyUnitTransactions(int propertyDetailId)
+        {
+            return db.PropertyContracts.Any(x => x.IsDeleted == false && x.PropertyUnitId == propertyDetailId)
+                || db.PropertyContractMergedUnit.Any(x => x.PropertyUnitId == propertyDetailId)
+                || db.PropertyBillRegisterations.Any(x => x.PropertyDetailId == propertyDetailId)
+                || db.IssueAnalysisDetails.Any(x => x.PropertyDetailId == propertyDetailId);
         }
 
         [HttpPost, ActionName("Delete")]

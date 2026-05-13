@@ -415,6 +415,7 @@
     <Compile Include="Areas\MainErp\Controllers\AccountChartsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\DashboardController.cs" />
     <Compile Include="Areas\MainErp\Controllers\DatabaseMigrationController.cs" />
+    <Compile Include="Areas\MainErp\Controllers\MasterDataImportController.cs" />
     <Compile Include="Areas\MainErp\Controllers\DiscountNotificationsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\DynamicReportsAdminController.cs" />
     <Compile Include="Areas\MainErp\Controllers\DynamicReportsController.cs" />
@@ -493,6 +494,9 @@
     <Compile Include="Areas\MainErp\Services\Accounting\PostingPreviewService.cs" />
     <Compile Include="Areas\MainErp\Services\Accounting\VoucherPostingService.cs" />
     <Compile Include="Areas\MainErp\Services\AccountCharts\AccountChartsService.cs" />
+    <Compile Include="Areas\MainErp\Services\MasterDataImport\AccountLinkedMasterImportService.cs" />
+    <Compile Include="Areas\MainErp\Services\MasterDataImport\ChartOfAccountsImportService.cs" />
+    <Compile Include="Areas\MainErp\Services\MasterDataImport\ExcelImportReader.cs" />
     <Compile Include="Areas\MainErp\Services\LegacyOperations\LegacyOperationsService.cs" />
     <Compile Include="Areas\MainErp\Security\DatabaseMigrationPermissions.cs" />
     <Compile Include="Areas\MainErp\Security\MainErpSessionKeys.cs" />
@@ -520,6 +524,7 @@
     <Compile Include="Areas\Reports\Services\ReportValidationService.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Accounting\PostingPreviewViewModel.cs" />
     <Compile Include="Areas\MainErp\ViewModels\AccountCharts\AccountChartsViewModels.cs" />
+    <Compile Include="Areas\MainErp\ViewModels\MasterDataImport\MasterDataImportViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Customers\CustomersViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\DefinCompItem\DefinCompItemViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\FinancialExpenses\FinancialExpensesViewModels.cs" />
@@ -4160,6 +4165,7 @@
     <Content Include="Areas\MainErp\Content\financial-expenses.css" />
     <Content Include="Areas\MainErp\Content\items.css" />
     <Content Include="Areas\MainErp\Content\legacy-operations.css" />
+    <Content Include="Areas\MainErp\Content\master-data-import.css" />
     <Content Include="Areas\MainErp\Content\stocktaking.css" />
     <Content Include="Areas\MainErp\Content\mainerp\mainerp.css" />
     <Content Include="Areas\MainErp\Content\defin-comp-item.css" />
@@ -4194,6 +4200,7 @@
     <Content Include="Areas\MainErp\Views\AccountCharts\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\DatabaseMigration\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\DatabaseMigration\PreviewScript.cshtml" />
+    <Content Include="Areas\MainErp\Views\MasterDataImport\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\Dashboard\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\DefinCompItem\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\FinancialExpenses\Index.cshtml" />
@@ -4383,6 +4390,9 @@
     <Content Include="Areas\Pos\Sql\54_POS_DoubleEntryVoucherSequence_Fix.sql" />
     <Content Include="Areas\Pos\Sql\55_POS_SaveTransaction_Allocator_Hardening.sql" />
     <Content Include="Areas\Pos\Sql\56_POS_RechargeValue_Validation.sql" />
+    <Content Include="Areas\Pos\Sql\75_POS_ClosingReports_Performance.sql" />
+    <Content Include="Areas\Pos\Sql\76_POS_OperationalSalesReports_Performance.sql" />
+    <Content Include="Areas\Pos\Sql\77_POS_SalesAndKycSearch_Performance.sql" />
     <Content Include="Areas\Pos\Sql\README_POS_Dashboard_DailySnapshots.md" />
     <Content Include="Areas\Pos\Sql\README_POS_FinancialIntelligenceReports.md" />
     <Content Include="Areas\Pos\Sql\POS_SQL_AutoUpdate_Manifest.json" />

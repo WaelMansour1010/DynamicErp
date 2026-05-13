@@ -50,6 +50,10 @@
          data-search-url="@Url.Action("Search", "Payments", new { area = "Pos" })"
          data-get-url="@Url.Action("Get", "Payments", new { area = "Pos" })"
          data-lookup-url="@Url.Action("Lookup", "Payments", new { area = "Pos" })"
+         data-lookups-url="@Url.Action("Lookups", "Payments", new { area = "Pos" })"
+         data-balance-url="@Url.Action("AccountBalance", "Payments", new { area = "Pos" })"
+         data-employee-custody-url="@Url.Action("EmployeeCustody", "Payments", new { area = "Pos" })"
+         data-can-execute="@(canExecute ? "true" : "false")"
          data-can-edit="@(canEdit ? "true" : "false")">
         <div class="pos-shell">
             <section class="pos-panel" id="paymentIndexPanel">
@@ -88,6 +92,7 @@
                                 <button type="button" class="lookup-clear" aria-label="مسح">×</button>
                                 <span class="lookup-results" role="listbox"></span>
                             </span>
+                            <small id="paymentNameBalance" class="field-hint"></small>
                         </label>
                     </div>
                     <div class="payments-index-actions">
@@ -234,6 +239,7 @@
                         <label>
                             حساب العهدة
                             <input type="text" id="paymentEmpAccountCode" readonly />
+                            <small id="paymentEmpWarning" class="field-hint"></small>
                         </label>
                         <label>
                             قيمة العهدة
@@ -274,6 +280,9 @@
         (function () {
             var page = document.querySelector(".pos-payments-page");
             var message = document.getElementById("paymentMessage");
+            var canExecutePayment = page.getAttribute("data-can-execute") === "true";
+            var paymentPreviewTimer = null;
+            var paymentPreviewValid = false;
             function byId(id) { return document.getElementById(id); }
             function setMessage(text, error) { message.innerText = text || ""; message.classList.toggle("error", !!error); }
             function escapeHtml(value) {
@@ -286,7 +295,14 @@
                 if (kind === "name-account") {
                     url += "&cashingType=" + encodeURIComponent(byId("paymentCashingType").value || "5");
                 }
+                url += "&branchId=" + encodeURIComponent(currentLookupBranchId(kind) || "");
                 return url;
+            }
+            function currentLookupBranchId(kind) {
+                if (kind === "employee" && document.activeElement && document.activeElement.id === "paymentSearchEmpText") {
+                    return byId("paymentSearchBranch").value || byId("paymentBranchId").value || "";
+                }
+                return byId("paymentBranchId").value || byId("paymentSearchBranch").value || "";
             }
             function setLookupValue(hiddenId, textId, id, text, extra) {
                 var hidden = byId(hiddenId);
@@ -301,6 +317,7 @@
                 if (extraTarget && byId(extraTarget)) { byId(extraTarget).value = ""; }
                 var results = wrapper.querySelector(".lookup-results");
                 if (results) { results.innerHTML = ""; results.classList.remove("is-open"); }
+                afterLookupChange(wrapper.getAttribute("data-target-id"));
             }
             function selectLookupRow(wrapper, row) {
                 setLookupValue(wrapper.getAttribute("data-target-id"), wrapper.getAttribute("data-text-id"), row.id, row.text, row.extra);
@@ -308,6 +325,7 @@
                 if (extraTarget && byId(extraTarget)) { byId(extraTarget).value = row.extra || ""; }
                 var results = wrapper.querySelector(".lookup-results");
                 if (results) { results.innerHTML = ""; results.classList.remove("is-open"); }
+                afterLookupChange(wrapper.getAttribute("data-target-id"));
             }
             function renderLookupRows(wrapper, rows) {
                 var results = wrapper.querySelector(".lookup-results");
@@ -436,6 +454,149 @@
                 html += "<tr class='journal-total-row'><td colspan='3'>الإجمالي</td><td>" + debit.toFixed(2) + "</td><td>" + credit.toFixed(2) + "</td></tr></tbody></table>";
                 target.innerHTML = html;
             }
+            function updateSaveButton() {
+                var button = byId("savePaymentBtn");
+                if (!button) { return; }
+                button.disabled = !canExecutePayment || !paymentPreviewValid;
+            }
+            function setPreviewValid(value) {
+                paymentPreviewValid = !!value;
+                updateSaveButton();
+            }
+            function getJson(url, done) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", url, true);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) { return; }
+                    var data = null;
+                    try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
+                    done(xhr.status, data);
+                };
+                xhr.send();
+            }
+            function formatMoney(value) {
+                var amount = parseFloat(value || 0);
+                return isNaN(amount) ? "0.00" : amount.toFixed(2);
+            }
+            function clearPaymentLookup(targetId) {
+                clearLookup(document.querySelector('[data-target-id="' + targetId + '"]'));
+            }
+            function afterLookupChange(targetId) {
+                if (targetId === "paymentNameAccount") {
+                    loadAccountBalance();
+                }
+                if (targetId === "paymentEmpId") {
+                    loadEmployeeCustody();
+                }
+                if (targetId !== "paymentSearchEmpId") {
+                    schedulePaymentPreview();
+                }
+            }
+            function loadAccountBalance() {
+                var hint = byId("paymentNameBalance");
+                if (hint) { hint.innerText = ""; hint.classList.remove("error"); }
+                var accountCode = byId("paymentNameAccount").value;
+                if (!accountCode) { return; }
+                var url = page.getAttribute("data-balance-url")
+                    + "?branchId=" + encodeURIComponent(byId("paymentBranchId").value || "")
+                    + "&accountCode=" + encodeURIComponent(accountCode)
+                    + "&asOfDate=" + encodeURIComponent(byId("paymentDate").value || "");
+                getJson(url, function (status, data) {
+                    if (!hint) { return; }
+                    if (data && data.success && data.balance) {
+                        hint.innerText = "الرصيد الحالي: " + formatMoney(data.balance.CurrentBalance);
+                        hint.classList.remove("error");
+                    } else {
+                        hint.innerText = "تعذر تحميل الرصيد";
+                        hint.classList.add("error");
+                    }
+                });
+            }
+            function loadEmployeeCustody() {
+                var warning = byId("paymentEmpWarning");
+                if (warning) { warning.innerText = ""; warning.classList.remove("error"); }
+                var employeeId = parseInt(byId("paymentEmpId").value, 10) || 0;
+                if (!employeeId) {
+                    byId("paymentEmpAccountCode").value = "";
+                    schedulePaymentPreview();
+                    return;
+                }
+                var url = page.getAttribute("data-employee-custody-url")
+                    + "?branchId=" + encodeURIComponent(byId("paymentBranchId").value || "")
+                    + "&employeeId=" + encodeURIComponent(employeeId);
+                getJson(url, function (status, data) {
+                    var account = data && data.success ? data.account : null;
+                    byId("paymentEmpAccountCode").value = account && account.CustodyAccountCode ? account.CustodyAccountCode : "";
+                    if (warning && account && account.HasWarning) {
+                        warning.innerText = account.WarningMessage || "لا يوجد حساب عهدة لهذا الموظف";
+                        warning.classList.add("error");
+                    }
+                    schedulePaymentPreview();
+                });
+            }
+            function validateCurrentRelationships() {
+                var url = page.getAttribute("data-lookups-url")
+                    + "?branchId=" + encodeURIComponent(byId("paymentBranchId").value || "")
+                    + "&cashingType=" + encodeURIComponent(byId("paymentCashingType").value || "5")
+                    + "&selectedMainAccountCode=" + encodeURIComponent(byId("paymentNameAccount").value || "")
+                    + "&selectedBoxId=" + encodeURIComponent(byId("paymentBoxId").value || "")
+                    + "&selectedBankId=" + encodeURIComponent(byId("paymentBankId").value || "")
+                    + "&selectedEmployeeId=" + encodeURIComponent(byId("paymentEmpId").value || "");
+                getJson(url, function (status, data) {
+                    var validity = data && data.success ? data.validity : null;
+                    if (!validity) { return; }
+                    if (!validity.mainAccount) { clearPaymentLookup("paymentNameAccount"); if (byId("paymentNameBalance")) { byId("paymentNameBalance").innerText = ""; } }
+                    if (!validity.box) { clearPaymentLookup("paymentBoxId"); }
+                    if (!validity.bank) { clearPaymentLookup("paymentBankId"); }
+                    if (!validity.employee) { clearPaymentLookup("paymentEmpId"); byId("paymentEmpAccountCode").value = ""; }
+                    schedulePaymentPreview();
+                });
+            }
+            function applyPaymentMethodRules() {
+                var method = parseInt(byId("paymentMethod").value, 10) || 0;
+                var isCash = method === 0;
+                var boxLabel = document.querySelector('[data-target-id="paymentBoxId"]').closest("label");
+                var bankLabel = document.querySelector('[data-target-id="paymentBankId"]').closest("label");
+                var refNoLabel = byId("paymentReferenceNo").closest("label");
+                var refDateLabel = byId("paymentReferenceDate").closest("label");
+                if (boxLabel) { boxLabel.classList.toggle("is-hidden-ui", !isCash); }
+                if (bankLabel) { bankLabel.classList.toggle("is-hidden-ui", isCash); }
+                if (refNoLabel) { refNoLabel.classList.toggle("is-hidden-ui", isCash); }
+                if (refDateLabel) { refDateLabel.classList.toggle("is-hidden-ui", isCash); }
+                byId("paymentReferenceNo").disabled = isCash;
+                byId("paymentReferenceDate").disabled = isCash;
+                if (isCash) {
+                    clearPaymentLookup("paymentBankId");
+                    byId("paymentReferenceNo").value = "";
+                } else {
+                    clearPaymentLookup("paymentBoxId");
+                }
+                schedulePaymentPreview();
+            }
+            function schedulePaymentPreview() {
+                window.clearTimeout(paymentPreviewTimer);
+                setPreviewValid(false);
+                paymentPreviewTimer = window.setTimeout(refreshPaymentPreview, 300);
+            }
+            function refreshPaymentPreview() {
+                var payload = requestPayload();
+                if (!payload.BranchId || !payload.CashingType || !payload.NameAccountCode || !payload.Value) {
+                    renderLines([]);
+                    setPreviewValid(false);
+                    return;
+                }
+                post(page.getAttribute("data-preview-url"), payload, function (status, data) {
+                    if (data && data.success) {
+                        renderLines(data.lines || []);
+                        setPreviewValid(true);
+                        setMessage("");
+                    } else {
+                        renderLines([]);
+                        setPreviewValid(false);
+                        if (data && data.message) { setMessage(data.message, true); }
+                    }
+                });
+            }
             function renderSearch(rows) {
                 var target = byId("paymentSearchResult");
                 if (!target) { return; }
@@ -492,9 +653,11 @@
                 clearLookup(document.querySelector('[data-target-id="paymentEmpId"]'));
                 clearLookup(document.querySelector('[data-target-id="paymentSearchEmpId"]'));
                 renderLines([]);
-                byId("savePaymentBtn").disabled = @(canExecute ? "false" : "true");
+                setPreviewValid(false);
                 byId("savePaymentBtn").innerText = "تنفيذ العملية";
                 setMessage("");
+                applyPaymentMethodRules();
+                validateCurrentRelationships();
                 showEntry();
             }
             function applyMovement(movement, canEdit, editMessage) {
@@ -517,9 +680,14 @@
                 byId("paymentRemarks").value = movement.Remarks || "";
                 byId("paymentGeneralDescription").value = movement.GeneralDescription || "";
                 renderLines(movement.Lines || []);
+                paymentPreviewValid = !!canEdit;
                 byId("savePaymentBtn").disabled = !canEdit;
                 byId("savePaymentBtn").innerText = canEdit ? "حفظ التعديل" : "عرض فقط";
                 setMessage(canEdit ? "تم تحميل الحركة للتعديل" : (editMessage || "ليس لديك صلاحية تعديل هذه الحركة"), !canEdit);
+                applyPaymentMethodRules();
+                loadAccountBalance();
+                loadEmployeeCustody();
+                validateCurrentRelationships();
                 showEntry();
             }
             document.addEventListener("click", function (event) {
@@ -530,14 +698,19 @@
                 }
                 if (event.target.id === "previewPaymentBtn") {
                     post(page.getAttribute("data-preview-url"), requestPayload(), function (status, data) {
-                        if (data && data.success) { renderLines(data.lines || []); setMessage(""); } else { setMessage((data && data.message) || "تعذر استعراض القيد", true); }
+                        if (data && data.success) { renderLines(data.lines || []); setPreviewValid(true); setMessage(""); } else { setPreviewValid(false); setMessage((data && data.message) || "تعذر استعراض القيد", true); }
                     });
                 }
                 if (event.target.id === "savePaymentBtn") {
+                    if (!paymentPreviewValid) {
+                        refreshPaymentPreview();
+                        setMessage("راجع القيد المحاسبي قبل الحفظ", true);
+                        return;
+                    }
                     setMessage("جاري الحفظ...");
                     post(page.getAttribute("data-save-url"), requestPayload(), function (status, data) {
-                        if (data && data.success) { renderLines(data.result && data.result.Lines); setMessage(data.message + " - رقم السند: " + (data.result.NoteSerial1 || data.result.NoteSerial || data.result.NoteId), false); }
-                        else { setMessage((data && data.message) || "تعذر حفظ العملية", true); }
+                        if (data && data.success) { renderLines(data.result && data.result.Lines); setPreviewValid(true); setMessage(data.message + " - رقم السند: " + (data.result.NoteSerial1 || data.result.NoteSerial || data.result.NoteId), false); }
+                        else { setPreviewValid(false); setMessage((data && data.message) || "تعذر حفظ العملية", true); }
                     });
                 }
                 if (event.target.id === "searchPaymentBtn") {
@@ -572,8 +745,27 @@
             });
             byId("paymentCashingType").addEventListener("change", function () {
                 clearLookup(document.querySelector('[data-target-id="paymentNameAccount"]'));
+                validateCurrentRelationships();
+                schedulePaymentPreview();
+            });
+            byId("paymentBranchId").addEventListener("change", function () {
+                validateCurrentRelationships();
+                loadAccountBalance();
+                loadEmployeeCustody();
+            });
+            byId("paymentMethod").addEventListener("change", applyPaymentMethodRules);
+            ["paymentDate", "paymentValue", "paymentReferenceNo", "paymentReferenceDate", "paymentBoxValue", "paymentEmpValue", "paymentRemarks", "paymentGeneralDescription"].forEach(function (id) {
+                var element = byId(id);
+                if (!element) { return; }
+                element.addEventListener("input", function () {
+                    if (id === "paymentDate") { loadAccountBalance(); }
+                    schedulePaymentPreview();
+                });
+                element.addEventListener("change", schedulePaymentPreview);
             });
             document.querySelectorAll(".smart-lookup").forEach(setupLookup);
+            applyPaymentMethodRules();
+            updateSaveButton();
         })();
     </script>
 </body>

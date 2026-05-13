@@ -913,6 +913,47 @@ namespace MyERP.Areas.Pos.Models
         public string Extra { get; set; }
     }
 
+    public class PosPaymentRelationshipLookupsDto
+    {
+        public IList<PosLookupDto> MainAccounts { get; set; }
+        public IList<PosLookupDto> PaymentBoxes { get; set; }
+        public IList<PosLookupDto> Banks { get; set; }
+        public IList<PosLookupDto> Employees { get; set; }
+        public bool IsMainAccountValid { get; set; }
+        public bool IsBoxValid { get; set; }
+        public bool IsBankValid { get; set; }
+        public bool IsEmployeeValid { get; set; }
+
+        public PosPaymentRelationshipLookupsDto()
+        {
+            MainAccounts = new List<PosLookupDto>();
+            PaymentBoxes = new List<PosLookupDto>();
+            Banks = new List<PosLookupDto>();
+            Employees = new List<PosLookupDto>();
+            IsMainAccountValid = true;
+            IsBoxValid = true;
+            IsBankValid = true;
+            IsEmployeeValid = true;
+        }
+    }
+
+    public class PosPaymentAccountBalanceDto
+    {
+        public string AccountCode { get; set; }
+        public string DisplayName { get; set; }
+        public decimal CurrentBalance { get; set; }
+    }
+
+    public class PosPaymentEmployeeCustodyDto
+    {
+        public int EmployeeId { get; set; }
+        public string CustodyAccountCode { get; set; }
+        public string DisplayName { get; set; }
+        public decimal CurrentBalance { get; set; }
+        public bool HasWarning { get; set; }
+        public string WarningMessage { get; set; }
+    }
+
     public class PosPaymentRequestDto
     {
         public int? NoteId { get; set; }

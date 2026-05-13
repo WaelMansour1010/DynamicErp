@@ -12,11 +12,17 @@
     var itemSearchTimer = null;
     var customerLookupTimer = null;
     var kycUnusedLookupTimer = null;
+    var kycSearchXhr = null;
+    var kycSearchSequence = 0;
     var commissionTimer = null;
     var amountCommitTimer = null;
     var todayInvoicesTimer = null;
+    var todayInvoicesXhr = null;
+    var todayInvoicesSequence = 0;
     var todayInvoicesCache = [];
     var salesIndexCache = [];
+    var salesIndexXhr = null;
+    var salesIndexSequence = 0;
     var salesBranchCache = null;
     var salesBranchLoading = false;
     var posEntryInitialized = false;
@@ -2612,10 +2618,16 @@
             return;
         }
 
+        var sequence = ++todayInvoicesSequence;
+        if (todayInvoicesXhr && todayInvoicesXhr.readyState !== 4 && todayInvoicesXhr.abort) {
+            todayInvoicesXhr.abort();
+        }
+
         if (list) { list.innerText = "جاري البحث..."; }
         var excelOnly = byId("todayExcelOnly") && byId("todayExcelOnly").checked;
         var excelWithWarnings = byId("todayExcelWarningsOnly") && byId("todayExcelWarningsOnly").checked;
-        requestJson("GET", url + "?term=" + encodeURIComponent(trimmedTerm) + "&operationType=" + encodeURIComponent(operationType || "") + "&excelOnly=" + encodeURIComponent((excelOnly || excelWithWarnings) ? "true" : "false") + "&excelWithWarnings=" + encodeURIComponent(excelWithWarnings ? "true" : "false") + "&fromDate=" + encodeURIComponent(fromDate) + "&toDate=" + encodeURIComponent(toDate), null, function (status, data) {
+        todayInvoicesXhr = requestJson("GET", url + "?term=" + encodeURIComponent(trimmedTerm) + "&operationType=" + encodeURIComponent(operationType || "") + "&excelOnly=" + encodeURIComponent((excelOnly || excelWithWarnings) ? "true" : "false") + "&excelWithWarnings=" + encodeURIComponent(excelWithWarnings ? "true" : "false") + "&fromDate=" + encodeURIComponent(fromDate) + "&toDate=" + encodeURIComponent(toDate), null, function (status, data) {
+            if (sequence !== todayInvoicesSequence) { return; }
             if (status < 200 || status >= 300 || !data) {
                 byId("todayInvoicesList").innerText = "تعذر تحميل فواتير اليوم";
                 return;
@@ -2835,14 +2847,20 @@
         }
 
         if (message) { message.innerText = ""; }
+        var sequence = ++salesIndexSequence;
+        if (salesIndexXhr && salesIndexXhr.readyState !== 4 && salesIndexXhr.abort) {
+            salesIndexXhr.abort();
+        }
+
         if (byId("salesIndexResults")) { byId("salesIndexResults").innerHTML = '<div class="empty-state">جاري البحث...</div>'; }
-        requestJsonWithLoading("GET", url + "?term=" + encodeURIComponent(term) +
+        salesIndexXhr = requestJson("GET", url + "?term=" + encodeURIComponent(term) +
             "&operationType=" + encodeURIComponent(operationType || "") +
             "&fromDate=" + encodeURIComponent(fromDate || "") +
             "&toDate=" + encodeURIComponent(toDate || "") +
             "&branchId=" + encodeURIComponent(branchId || "") +
             "&excelOnly=" + encodeURIComponent((excelOnly || excelWithWarnings) ? "true" : "false") +
             "&excelWithWarnings=" + encodeURIComponent(excelWithWarnings ? "true" : "false"), null, function (status, data) {
+            if (sequence !== salesIndexSequence) { return; }
             if (status < 200 || status >= 300 || !data) {
                 if (message) { message.innerText = "تعذر تحميل الفواتير."; }
                 renderSalesIndex([], !!term);
@@ -2850,7 +2868,7 @@
             }
             salesIndexCache = data;
             renderSalesIndex(data, !!term);
-        }, "جاري تحميل الفواتير...");
+        });
     }
 
     function deleteInvoice(transactionId) {
@@ -4209,8 +4227,14 @@
             return;
         }
 
+        var sequence = ++kycSearchSequence;
+        if (kycSearchXhr && kycSearchXhr.readyState !== 4 && kycSearchXhr.abort) {
+            kycSearchXhr.abort();
+        }
+
         byId("kycSearchResults").innerHTML = "جاري البحث...";
-        requestJson("GET", getUrl("data-customer-search-url") + "?term=" + encodeURIComponent(term), null, function (status, data) {
+        kycSearchXhr = requestJson("GET", getUrl("data-customer-search-url") + "?term=" + encodeURIComponent(term), null, function (status, data) {
+            if (sequence !== kycSearchSequence) { return; }
             var resultsBox = byId("kycSearchResults");
             if (status < 200 || status >= 300 || !data) {
                 resultsBox.innerHTML = "لا توجد نتائج";
@@ -5275,7 +5299,7 @@
             window.clearTimeout(todayInvoicesTimer);
             todayInvoicesTimer = window.setTimeout(function () {
                 loadTodayInvoices(event.target.value.trim());
-            }, 250);
+            }, 400);
         }
 
         if (event.target.id === "salesSearchText") {
@@ -5284,7 +5308,7 @@
                 if ((event.target.value || "").trim().length >= 2) {
                     loadSalesIndexInvoices();
                 }
-            }, 300);
+            }, 500);
         }
         if (event.target.id === "salesSearchBranchText") {
             if (byId("salesSearchBranchId")) { byId("salesSearchBranchId").value = ""; }

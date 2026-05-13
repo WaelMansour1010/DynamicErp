@@ -252,7 +252,7 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpGet]
-        public JsonResult Lookups()
+        public JsonResult Lookups(int? branchId, int? cashingType, string selectedMainAccountCode, int? selectedBoxId, int? selectedBankId, int? selectedEmployeeId)
         {
             var context = GetPosContext();
             if (context == null)
@@ -267,20 +267,28 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" }, JsonRequestBehavior.AllowGet);
             }
 
-            var branchId = context.IsFullAccess ? (int?)null : context.BranchId;
+            var effectiveBranchId = EffectiveBranchId(context, branchId);
+            var lookups = _repository.GetPosPaymentRelationshipLookups(effectiveBranchId, cashingType.GetValueOrDefault(5), selectedMainAccountCode, selectedBoxId, selectedBankId, selectedEmployeeId);
             return Json(new
             {
                 success = true,
-                custodyAccounts = _repository.GetPosPaymentBoxes(branchId, 1),
-                boxAccounts = _repository.GetPosPaymentBoxes(branchId, 0),
-                paymentBoxes = _repository.GetPosPaymentBoxes(branchId, null),
-                banks = _repository.GetPosPaymentBanks(),
-                employees = _repository.GetPosPaymentEmployees()
+                custodyAccounts = lookups.MainAccounts,
+                boxAccounts = lookups.MainAccounts,
+                paymentBoxes = lookups.PaymentBoxes,
+                banks = lookups.Banks,
+                employees = lookups.Employees,
+                validity = new
+                {
+                    mainAccount = lookups.IsMainAccountValid,
+                    box = lookups.IsBoxValid,
+                    bank = lookups.IsBankValid,
+                    employee = lookups.IsEmployeeValid
+                }
             }, JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
-        public JsonResult Lookup(string kind, string term, int? cashingType)
+        public JsonResult Lookup(string kind, string term, int? cashingType, int? branchId)
         {
             var context = GetPosContext();
             if (context == null)
@@ -301,22 +309,22 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = true, rows = new PosLookupDto[0] }, JsonRequestBehavior.AllowGet);
             }
 
-            var branchId = context.IsFullAccess ? (int?)null : context.BranchId;
+            var effectiveBranchId = EffectiveBranchId(context, branchId);
             var normalizedKind = (kind ?? string.Empty).Trim().ToLowerInvariant();
             var rows = new System.Collections.Generic.List<PosLookupDto>();
             switch (normalizedKind)
             {
                 case "name-account":
-                    rows.AddRange(_repository.SearchPosPaymentNameAccounts(branchId, cashingType.GetValueOrDefault(5) == 6 ? 0 : 1, term));
+                    rows.AddRange(_repository.SearchPosPaymentNameAccounts(effectiveBranchId, cashingType.GetValueOrDefault(5) == 6 ? 0 : 1, term));
                     break;
                 case "box":
-                    rows.AddRange(_repository.SearchPosPaymentBoxes(branchId, null, term));
+                    rows.AddRange(_repository.SearchPosPaymentBoxes(effectiveBranchId, null, term));
                     break;
                 case "bank":
-                    rows.AddRange(_repository.SearchPosPaymentBanks(term));
+                    rows.AddRange(_repository.SearchPosPaymentBanks(effectiveBranchId, term));
                     break;
                 case "employee":
-                    rows.AddRange(_repository.SearchPosPaymentEmployees(term));
+                    rows.AddRange(_repository.SearchPosPaymentEmployees(effectiveBranchId, term));
                     break;
             }
 
@@ -325,6 +333,46 @@ namespace MyERP.Areas.Pos.Controllers
                 success = true,
                 rows = rows.Select(x => new { id = x.Id, text = x.Name, extra = x.Extra })
             }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public JsonResult AccountBalance(int branchId, string accountCode, DateTime? asOfDate)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" }, JsonRequestBehavior.AllowGet);
+            }
+
+            if (!context.IsFullAccess && !context.CanOpenPayments)
+            {
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" }, JsonRequestBehavior.AllowGet);
+            }
+
+            var balance = _repository.GetPosPaymentAccountBalance(EffectiveBranchId(context, branchId), accountCode, asOfDate);
+            return Json(new { success = true, balance = balance }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public JsonResult EmployeeCustody(int branchId, int employeeId)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" }, JsonRequestBehavior.AllowGet);
+            }
+
+            if (!context.IsFullAccess && !context.CanOpenPayments)
+            {
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" }, JsonRequestBehavior.AllowGet);
+            }
+
+            var account = _repository.GetPosPaymentEmployeeCustodyAccount(EffectiveBranchId(context, branchId), employeeId);
+            return Json(new { success = true, account = account }, JsonRequestBehavior.AllowGet);
         }
 
         [HttpPost]
@@ -346,7 +394,7 @@ namespace MyERP.Areas.Pos.Controllers
             ForceContext(request, context);
             try
             {
-                return Json(new { success = true, lines = _repository.PreviewPosPayment(request) });
+                return Json(new { success = true, canSave = true, lines = _repository.PreviewPosPayment(request) });
             }
             catch (Exception ex)
             {
@@ -542,6 +590,21 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 request.PaymentDate = DateTime.Today;
             }
+        }
+
+        private static int EffectiveBranchId(PosUserContext context, int? requestedBranchId)
+        {
+            if (context == null)
+            {
+                return requestedBranchId.GetValueOrDefault();
+            }
+
+            if (!context.IsFullAccess)
+            {
+                return context.BranchId.GetValueOrDefault();
+            }
+
+            return requestedBranchId.GetValueOrDefault(context.BranchId.GetValueOrDefault());
         }
 
         private PosUserContext GetPosContext()

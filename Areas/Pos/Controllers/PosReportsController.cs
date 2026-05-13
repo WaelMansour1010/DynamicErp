@@ -43,10 +43,67 @@ namespace MyERP.Areas.Pos.Controllers
 
             ViewBag.PosContext = context;
             ViewBag.ReportDefinitions = BuildReports(context);
-            ViewBag.Branches = GetAllowedBranches(context);
-            ViewBag.Stores = GetAllowedStores(context);
-            ViewBag.Users = _repository.GetPosReportUsers();
+            ViewBag.Branches = GetInitialBranches(context);
+            ViewBag.Stores = new PosStoreDto[0];
+            ViewBag.Users = new PosPermissionUserDto[0];
             return View();
+        }
+
+        [HttpGet]
+        public JsonResult Lookups(string type, int? branchId)
+        {
+            Response.ContentEncoding = System.Text.Encoding.UTF8;
+            Response.Charset = "utf-8";
+            Response.TrySkipIisCustomErrors = true;
+
+            var stopwatch = Stopwatch.StartNew();
+            try
+            {
+                var context = GetPosContext();
+                if (context == null)
+                {
+                    Response.StatusCode = 401;
+                    return Json(Fail("يجب تسجيل دخول نقطة البيع أولًا", "POS session context is missing."), JsonRequestBehavior.AllowGet);
+                }
+
+                if (!CanOpenReports(context))
+                {
+                    Response.StatusCode = 403;
+                    return Json(Fail("ليست لديك صلاحية عرض التقارير", "Report lookup permission denied."), JsonRequestBehavior.AllowGet);
+                }
+
+                var lookupType = (type ?? string.Empty).Trim().ToLowerInvariant();
+                object rows;
+                if (lookupType == "branches")
+                {
+                    rows = GetAllowedBranches(context).Select(x => new { id = x.BranchId, name = x.BranchName });
+                }
+                else if (lookupType == "stores")
+                {
+                    var resolvedBranchId = IsAdmin(context) ? branchId : context.BranchId;
+                    rows = _repository.GetStoresByBranch(resolvedBranchId).Select(x => new { id = x.StoreID, name = x.StoreName, branchId = x.BranchId });
+                }
+                else if (lookupType == "users")
+                {
+                    rows = _repository.GetPosReportUsers().Select(x => new { id = x.UserId, name = string.IsNullOrWhiteSpace(x.EmpName) ? x.UserName : x.UserName + " - " + x.EmpName });
+                }
+                else
+                {
+                    Response.StatusCode = 400;
+                    return Json(Fail("نوع القائمة غير صحيح", "Invalid lookup type."), JsonRequestBehavior.AllowGet);
+                }
+
+                stopwatch.Stop();
+                PosPerformanceLogger.LogQuery("PosReports.Lookups", lookupType, stopwatch.ElapsedMilliseconds, null, context);
+                return Json(new { success = true, rows = rows }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                Trace.TraceError("PosReports.Lookups failed: " + ex);
+                Response.StatusCode = 500;
+                return Json(Fail("تعذر تحميل بيانات الفلاتر", ex.Message), JsonRequestBehavior.AllowGet);
+            }
         }
 
         [HttpPost]
@@ -76,6 +133,7 @@ namespace MyERP.Areas.Pos.Controllers
                 var table = LoadReportTable(report, request, context, validation.BranchId);
                 stopwatch.Stop();
                 PosPerformanceLogger.LogQuery("PosReports.Run", report.Key, stopwatch.ElapsedMilliseconds, table != null ? table.Rows.Count : 0, context);
+                LogImportantReportIfSlow("Run", report.Key, request, context, validation.BranchId, stopwatch.ElapsedMilliseconds, null);
                 return LargeJson(new
                 {
                     success = true,
@@ -87,8 +145,12 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.TraceError("PosReports.Run failed: " + ex);
-                return LargeJson(Fail("تعذر تشغيل التقرير", ex.Message));
+                var context = GetPosContext();
+                var safeRequest = request ?? new PosReportRunRequest();
+                LogImportantReportIfSlow("Run", safeRequest.ReportKey, safeRequest, context, ResolveBranchIdSafe(context, safeRequest.BranchId), 0, ex);
+                Trace.TraceError("PosReports.Run failed: " + ex);
+                Response.StatusCode = 500;
+                return LargeJson(Fail("تعذر تشغيل التقرير. برجاء المحاولة مرة أخرى أو التواصل مع الدعم", ex.Message));
             }
         }
 
@@ -121,14 +183,18 @@ namespace MyERP.Areas.Pos.Controllers
                 var table = LoadReportTable(report, request, context, validation.BranchId);
                 stopwatch.Stop();
                 PosPerformanceLogger.LogQuery("PosReports.Export", report.Key, stopwatch.ElapsedMilliseconds, table != null ? table.Rows.Count : 0, context);
+                LogImportantReportIfSlow("Export", report.Key, request, context, validation.BranchId, stopwatch.ElapsedMilliseconds, null);
                 var bytes = BuildExcel(report.Title, from, to, validation.BranchId, table);
                 var fileName = string.Format("{0}_{1}_{2}.xlsx", SafeFileName(report.Title), from.ToString("yyyyMMdd"), to.ToString("yyyyMMdd"));
                 return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Trace.TraceError("PosReports.Export failed: " + ex);
-                return Json(Fail("تعذر تصدير Excel", ex.ToString()), JsonRequestBehavior.AllowGet);
+                var context = GetPosContext();
+                LogImportantReportIfSlow("Export", request.ReportKey, request, context, ResolveBranchIdSafe(context, request.BranchId), 0, ex);
+                Trace.TraceError("PosReports.Export failed: " + ex);
+                Response.StatusCode = 500;
+                return Json(Fail("تعذر تصدير Excel. برجاء المحاولة مرة أخرى أو التواصل مع الدعم", ex.Message), JsonRequestBehavior.AllowGet);
             }
         }
 
@@ -201,6 +267,36 @@ namespace MyERP.Areas.Pos.Controllers
                 return _repository.RunPosNonWebLoginUsersReport(from, to, branchId, request.UserId, request.LoginSource, context.UserId, IsAdmin(context) || context.CanViewReports);
             }
 
+            if (IsOperationalSalesReport(report.Key) && !request.IncludeCardIssueCheck)
+            {
+                return _repository.RunPosOperationalSalesReport(
+                    report.Key,
+                    from,
+                    to,
+                    branchId,
+                    context.UserId,
+                    IsAdmin(context) || context.CanViewReports,
+                    request.ServiceType,
+                    request.StoreId,
+                    request.UserId);
+            }
+
+            if (IsClosingReport(report.Key))
+            {
+                return _repository.RunPosClosingReport(
+                    report.Key,
+                    from,
+                    to,
+                    branchId,
+                    context.UserId,
+                    IsAdmin(context) || context.CanViewReports,
+                    request.BranchFromId,
+                    request.BranchToId,
+                    request.ShowEmptyBranches,
+                    request.ServiceSearch,
+                    request.UserId);
+            }
+
             return _repository.RunPosReport(
                 report.Key,
                 from,
@@ -231,6 +327,13 @@ namespace MyERP.Areas.Pos.Controllers
                 : new PosBranchDto[0];
         }
 
+        private IEnumerable<PosBranchDto> GetInitialBranches(PosUserContext context)
+        {
+            return context != null && context.BranchId.HasValue
+                ? new[] { new PosBranchDto { BranchId = context.BranchId.Value, BranchName = context.BranchName } }
+                : new PosBranchDto[0];
+        }
+
         private IEnumerable<PosStoreDto> GetAllowedStores(PosUserContext context)
         {
             return _repository.GetStoresByBranch(IsAdmin(context) ? (int?)null : context.BranchId);
@@ -244,6 +347,76 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return context.BranchId.GetValueOrDefault(0);
+        }
+
+        private int ResolveBranchIdSafe(PosUserContext context, int? requestedBranchId)
+        {
+            return context == null ? requestedBranchId.GetValueOrDefault(0) : ResolveBranchId(context, requestedBranchId);
+        }
+
+        private static bool IsClosingReport(string reportKey)
+        {
+            return string.Equals(reportKey, "finance-closing", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "finance-closing-discounts", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsOperationalSalesReport(string reportKey)
+        {
+            return string.Equals(reportKey, "daily-trans", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "daily-trans-2", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "sales-complete", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "sales-complete-2", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "sales-governorates", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "sales-departments", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "sales-sectors", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "sales-analytical", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "general-sales", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsImportantReport(string reportKey)
+        {
+            return IsClosingReport(reportKey)
+                || IsOperationalSalesReport(reportKey)
+                || string.Equals(reportKey, "web-invoices", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "non-web-login-users", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "store-serials", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void LogImportantReportIfSlow(string action, string reportKey, PosReportRunRequest request, PosUserContext context, int branchId, long elapsedMilliseconds, Exception exception)
+        {
+            if (!IsImportantReport(reportKey) && exception == null)
+            {
+                return;
+            }
+
+            if (exception == null && elapsedMilliseconds < 300)
+            {
+                return;
+            }
+
+            request = request ?? new PosReportRunRequest();
+            var from = (request.FromDate ?? DateTime.Today).Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            var to = (request.ToDate ?? DateTime.Today).Date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            var message = string.Format(
+                CultureInfo.InvariantCulture,
+                "POS report {0}: Report={1}; UserId={2}; BranchId={3}; From={4}; To={5}; DurationMs={6}; Error={7}",
+                action,
+                reportKey,
+                context != null ? context.UserId : 0,
+                branchId,
+                from,
+                to,
+                elapsedMilliseconds,
+                exception != null ? exception.Message : string.Empty);
+
+            if (exception == null)
+            {
+                Trace.TraceWarning(message);
+            }
+            else
+            {
+                Trace.TraceError(message);
+            }
         }
 
         private static bool CanOpenReports(PosUserContext context)

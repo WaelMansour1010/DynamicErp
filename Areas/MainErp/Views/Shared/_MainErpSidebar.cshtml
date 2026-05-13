@@ -11,7 +11,7 @@
     var inventoryOpen = sectionActive(new[] { "stock-transfers", "items", "stocktaking", "defin-comp-item" });
     var projectsOpen = sectionActive(new[] { "projects", "project-extracts" });
     var lcOpen = sectionActive(new[] { "lc" });
-    var adminOpen = sectionActive(new[] { "database-migration" });
+    var adminOpen = sectionActive(new[] { "database-migration", "master-data-import" });
     var canViewCustomers = false;
     if (mainErpContext != null)
     {
@@ -123,6 +123,7 @@
                 <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="إدارة النظام"><span><i class="fas fa-shield-alt"></i><b>إدارة النظام</b></span><i class="fas fa-chevron-down nav-chevron"></i></button>
                 <div class="pos-nav-submenu">
                     <a class="pos-nav-link main-erp-nav-link @(isActive("database-migration") ? "active" : "")" href="@Url.Action("Index", "DatabaseMigration", new { area = "MainErp" })" title="إدارة تحديثات قاعدة البيانات"><i class="fas fa-database"></i><span>تحديثات قاعدة البيانات</span></a>
+                    <a class="pos-nav-link main-erp-nav-link @(isActive("master-data-import") ? "active" : "")" href="@Url.Action("Index", "MasterDataImport", new { area = "MainErp" })" title="استيراد الملفات الأساسية"><i class="fas fa-file-excel"></i><span>استيراد ملفات Excel</span></a>
                 </div>
             </section>
         }

@@ -3436,6 +3436,48 @@ ORDER BY c.Id DESC;";
             return SearchKeshniCardCustomers(term, branchId, canChangeDefaults).FirstOrDefault();
         }
 
+        public IList<PosCustomerLookupDto> SearchKeshniCardCustomersFast(string term, int? branchId, bool canChangeDefaults)
+        {
+            return RunKycCustomerSearch(term, branchId, canChangeDefaults, false, 50);
+        }
+
+        public IList<PosCustomerLookupDto> SearchUnusedKeshniCardCustomersFast(string term, int? branchId, bool canChangeDefaults)
+        {
+            return RunKycCustomerSearch(term, branchId, canChangeDefaults, true, 20);
+        }
+
+        private IList<PosCustomerLookupDto> RunKycCustomerSearch(string term, int? branchId, bool canChangeDefaults, bool unusedOnly, int maxRows)
+        {
+            var customers = new List<PosCustomerLookupDto>();
+            if (string.IsNullOrWhiteSpace(term))
+            {
+                return customers;
+            }
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand("dbo.usp_POS_KycCustomers_Search", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 10;
+                command.Parameters.Add("@term", SqlDbType.NVarChar, 255).Value = term.Trim();
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = (object)branchId ?? DBNull.Value;
+                command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
+                command.Parameters.Add("@unusedOnly", SqlDbType.Bit).Value = unusedOnly;
+                command.Parameters.Add("@maxRows", SqlDbType.Int).Value = maxRows;
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        customers.Add(MapKeshniCardCustomer(reader));
+                    }
+                }
+            }
+
+            return customers;
+        }
+
         public PosKycBranchHintDto FindKeshniCardCustomerOtherBranchHint(string term, int? branchId)
         {
             if (string.IsNullOrWhiteSpace(term) || !branchId.HasValue)
@@ -6069,6 +6111,73 @@ OPTION (RECOMPILE);";
             return invoices;
         }
 
+        public IList<PosTodayInvoiceDto> GetTodayInvoicesFast(int userId, int? branchId, bool canChangeDefaults, bool canEditInvoice, string term, string operationType, DateTime? fromDate, DateTime? toDate, int? filterBranchId, bool excelOnly = false, bool excelWithWarnings = false)
+        {
+            EnsurePosExcelImportAuditTables();
+            var invoices = new List<PosTodayInvoiceDto>();
+            var searchTerm = (term ?? string.Empty).Trim();
+            var operation = NormalizeInvoiceOperationType(operationType);
+            var hasSearchTerm = !string.IsNullOrWhiteSpace(searchTerm);
+            var today = DateTime.Today;
+            var searchFromDate = today.AddDays(-2);
+            var safeFromDate = NormalizeSqlDate(fromDate);
+            var safeToDate = NormalizeSqlDate(toDate);
+            var effectiveFromDate = safeFromDate.HasValue ? safeFromDate.Value.Date : (hasSearchTerm ? searchFromDate : today);
+            var effectiveToDate = safeToDate.HasValue ? safeToDate.Value.Date : today;
+            if (effectiveToDate < effectiveFromDate)
+            {
+                var temp = effectiveFromDate;
+                effectiveFromDate = effectiveToDate;
+                effectiveToDate = temp;
+            }
+
+            var effectiveBranchId = canChangeDefaults ? filterBranchId : branchId;
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand("dbo.usp_POS_SalesInvoices_Search", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 15;
+                command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = (object)branchId ?? DBNull.Value;
+                command.Parameters.Add("@filterBranchId", SqlDbType.Int).Value = (object)effectiveBranchId ?? DBNull.Value;
+                command.Parameters.Add("@canSeeAllBranches", SqlDbType.Bit).Value = canChangeDefaults;
+                command.Parameters.Add("@canSeeAllUsers", SqlDbType.Bit).Value = canChangeDefaults || canEditInvoice;
+                command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = effectiveFromDate;
+                command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = effectiveToDate;
+                command.Parameters.Add("@term", SqlDbType.NVarChar, 100).Value = searchTerm;
+                command.Parameters.Add("@operationType", SqlDbType.NVarChar, 30).Value = operation;
+                command.Parameters.Add("@excelOnly", SqlDbType.Bit).Value = excelOnly;
+                command.Parameters.Add("@excelWithWarnings", SqlDbType.Bit).Value = excelWithWarnings;
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        invoices.Add(new PosTodayInvoiceDto
+                        {
+                            Transaction_ID = ReadInt(reader, "Transaction_ID").GetValueOrDefault(),
+                            NoteSerial1 = ReadString(reader, "NoteSerial1"),
+                            TransactionDate = ReadString(reader, "TransactionDate"),
+                            TransactionTime = ReadString(reader, "TransactionTime"),
+                            CustomerName = ReadString(reader, "CashCustomerName"),
+                            CustomerPhone = ReadString(reader, "CashCustomerPhone"),
+                            PayedValue = ReadDecimal(reader, "PayedValue").GetValueOrDefault(),
+                            NetValue = ReadDecimal(reader, "NetValue").GetValueOrDefault(),
+                            ServiceType = ReadString(reader, "ServiceType"),
+                            IsExcelImported = ReadBoolean(reader, "IsExcelImported"),
+                            ExcelImportBatchId = ReadLong(reader, "ExcelImportBatchId"),
+                            HasExcelImportWarning = ReadBoolean(reader, "HasExcelImportWarning"),
+                            ExcelImportWarningMessage = ReadString(reader, "ExcelImportWarningMessage"),
+                            IsCancelled = ReadBoolean(reader, "IsCancelled")
+                        });
+                    }
+                }
+            }
+
+            return invoices;
+        }
+
         public void InsertPosSystemErrorLog(PosSystemErrorLogWriteRequest log)
         {
             EnsurePosSystemErrorLogTable();
@@ -7229,6 +7338,56 @@ END";
                 command.Parameters.Add("@filterUserId", SqlDbType.Int).Value = filterUserId.HasValue ? (object)filterUserId.Value : DBNull.Value;
                 command.Parameters.Add("@includeCardIssueCheck", SqlDbType.Bit).Value = includeCardIssueCheck;
                 command.Parameters.Add("@cardIssueMode", SqlDbType.NVarChar, 20).Value = string.IsNullOrWhiteSpace(cardIssueMode) ? (object)DBNull.Value : cardIssueMode.Trim().ToLowerInvariant();
+                adapter.Fill(table);
+            }
+
+            return table;
+        }
+
+        public DataTable RunPosClosingReport(string reportKey, DateTime fromDate, DateTime toDate, int branchId, int userId, bool canChangeDefaults, int? branchFromId = null, int? branchToId = null, bool showEmptyBranches = false, string serviceSearch = null, int? filterUserId = null)
+        {
+            var table = new DataTable();
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand("dbo.usp_POS_Report_RunClosing", connection))
+            using (var adapter = new SqlDataAdapter(command))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 60;
+                command.Parameters.Add("@reportKey", SqlDbType.NVarChar, 80).Value = reportKey ?? string.Empty;
+                command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = fromDate.Date;
+                command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = toDate.Date;
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = branchId;
+                command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
+                command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
+                command.Parameters.Add("@branchFromId", SqlDbType.Int).Value = branchFromId.HasValue ? (object)branchFromId.Value : DBNull.Value;
+                command.Parameters.Add("@branchToId", SqlDbType.Int).Value = branchToId.HasValue ? (object)branchToId.Value : DBNull.Value;
+                command.Parameters.Add("@showEmptyBranches", SqlDbType.Bit).Value = showEmptyBranches;
+                command.Parameters.Add("@serviceSearch", SqlDbType.NVarChar, 100).Value = string.IsNullOrWhiteSpace(serviceSearch) ? (object)DBNull.Value : serviceSearch.Trim();
+                command.Parameters.Add("@filterUserId", SqlDbType.Int).Value = filterUserId.HasValue ? (object)filterUserId.Value : DBNull.Value;
+                adapter.Fill(table);
+            }
+
+            return table;
+        }
+
+        public DataTable RunPosOperationalSalesReport(string reportKey, DateTime fromDate, DateTime toDate, int branchId, int userId, bool canChangeDefaults, string serviceType = null, int? storeId = null, int? filterUserId = null)
+        {
+            var table = new DataTable();
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand("dbo.usp_POS_Report_RunOperationalSales", connection))
+            using (var adapter = new SqlDataAdapter(command))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 60;
+                command.Parameters.Add("@reportKey", SqlDbType.NVarChar, 80).Value = reportKey ?? string.Empty;
+                command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = fromDate.Date;
+                command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = toDate.Date;
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = branchId;
+                command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
+                command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
+                command.Parameters.Add("@serviceType", SqlDbType.NVarChar, 30).Value = string.IsNullOrWhiteSpace(serviceType) ? (object)DBNull.Value : NormalizeInvoiceOperationType(serviceType);
+                command.Parameters.Add("@storeId", SqlDbType.Int).Value = storeId.HasValue ? (object)storeId.Value : DBNull.Value;
+                command.Parameters.Add("@filterUserId", SqlDbType.Int).Value = filterUserId.HasValue ? (object)filterUserId.Value : DBNull.Value;
                 adapter.Fill(table);
             }
 
@@ -8520,7 +8679,7 @@ SELECT TOP (300)
     COALESCE(NULLIF(BoxName, N''), NULLIF(BoxNameE, N''), N'خزنة ' + CONVERT(NVARCHAR(20), BoxID)) AS Name,
     Account_Code AS Extra
 FROM dbo.TblBoxesData
-WHERE (@branchId IS NULL OR BranchId = @branchId)
+WHERE (@branchId IS NULL OR ISNULL(BranchId, 0) = 0 OR BranchId = @branchId)
   AND (@boxType IS NULL OR [Type] = @boxType)
 ORDER BY BoxName;";
             using (var connection = new SqlConnection(_connectionString))
@@ -8541,7 +8700,7 @@ ORDER BY BoxName;";
             return list;
         }
 
-        public IList<PosLookupDto> GetPosPaymentBanks()
+        public IList<PosLookupDto> GetPosPaymentBanks(int? branchId = null)
         {
             var list = new List<PosLookupDto>();
             const string sql = @"
@@ -8550,10 +8709,12 @@ SELECT TOP (300)
     COALESCE(NULLIF(BankName, N''), NULLIF(BankNameE, N''), N'بنك ' + CONVERT(NVARCHAR(20), BankID)) AS Name,
     Account_Code AS Extra
 FROM dbo.BanksData
+WHERE (@branchId IS NULL OR ISNULL(BranchId, 0) = 0 OR BranchId = @branchId)
 ORDER BY BankName;";
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
             {
+                Add(command, "@branchId", SqlDbType.Int, branchId);
                 connection.Open();
                 using (var reader = command.ExecuteReader())
                 {
@@ -8567,7 +8728,7 @@ ORDER BY BankName;";
             return list;
         }
 
-        public IList<PosLookupDto> GetPosPaymentEmployees()
+        public IList<PosLookupDto> GetPosPaymentEmployees(int? branchId = null)
         {
             var list = new List<PosLookupDto>();
             const string sql = @"
@@ -8577,10 +8738,12 @@ SELECT TOP (500)
     Account_Code AS Extra
 FROM dbo.TblEmployee
 WHERE Emp_ID IS NOT NULL
+  AND (@branchId IS NULL OR ISNULL(BranchId, 0) = 0 OR BranchId = @branchId)
 ORDER BY Emp_Name;";
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
             {
+                Add(command, "@branchId", SqlDbType.Int, branchId);
                 connection.Open();
                 using (var reader = command.ExecuteReader())
                 {
@@ -8608,7 +8771,7 @@ SELECT TOP (50)
 FROM dbo.TblBoxesData b WITH (NOLOCK)
 LEFT JOIN dbo.ACCOUNTS a WITH (NOLOCK) ON a.Account_Code = b.Account_Code
 WHERE NULLIF(LTRIM(RTRIM(ISNULL(b.Account_Code, N''))), N'') IS NOT NULL
-  AND (@branchId IS NULL OR b.BranchId = @branchId)
+  AND (@branchId IS NULL OR ISNULL(b.BranchId, 0) = 0 OR b.BranchId = @branchId)
   AND (@boxType IS NULL OR b.[Type] = @boxType)
   AND (
       @term = N''
@@ -8649,7 +8812,7 @@ SELECT TOP (50)
     b.Account_Code AS Extra
 FROM dbo.TblBoxesData b WITH (NOLOCK)
 LEFT JOIN dbo.ACCOUNTS a WITH (NOLOCK) ON a.Account_Code = b.Account_Code
-WHERE (@branchId IS NULL OR b.BranchId = @branchId)
+WHERE (@branchId IS NULL OR ISNULL(b.BranchId, 0) = 0 OR b.BranchId = @branchId)
   AND (@boxType IS NULL OR b.[Type] = @boxType)
   AND (
       @term = N''
@@ -8680,7 +8843,7 @@ ORDER BY b.BoxName, b.BoxID;";
             return list;
         }
 
-        public IList<PosLookupDto> SearchPosPaymentBanks(string term)
+        public IList<PosLookupDto> SearchPosPaymentBanks(int? branchId, string term)
         {
             var list = new List<PosLookupDto>();
             const string sql = @"
@@ -8690,17 +8853,21 @@ SELECT TOP (50)
     b.Account_Code AS Extra
 FROM dbo.BanksData b WITH (NOLOCK)
 LEFT JOIN dbo.ACCOUNTS a WITH (NOLOCK) ON a.Account_Code = b.Account_Code
-WHERE @term = N''
-   OR CONVERT(NVARCHAR(50), b.BankID) LIKE N'%' + @term + N'%'
-   OR b.BankName LIKE N'%' + @term + N'%'
-   OR b.BankNameE LIKE N'%' + @term + N'%'
-   OR b.Account_Code LIKE N'%' + @term + N'%'
-   OR a.Account_Serial LIKE N'%' + @term + N'%'
-   OR a.Account_Name LIKE N'%' + @term + N'%'
+WHERE (@branchId IS NULL OR ISNULL(b.BranchId, 0) = 0 OR b.BranchId = @branchId)
+  AND (
+      @term = N''
+      OR CONVERT(NVARCHAR(50), b.BankID) LIKE N'%' + @term + N'%'
+      OR b.BankName LIKE N'%' + @term + N'%'
+      OR b.BankNameE LIKE N'%' + @term + N'%'
+      OR b.Account_Code LIKE N'%' + @term + N'%'
+      OR a.Account_Serial LIKE N'%' + @term + N'%'
+      OR a.Account_Name LIKE N'%' + @term + N'%'
+  )
 ORDER BY b.BankName, b.BankID;";
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
             {
+                Add(command, "@branchId", SqlDbType.Int, branchId);
                 command.Parameters.Add("@term", SqlDbType.NVarChar, 100).Value = (term ?? string.Empty).Trim();
                 connection.Open();
                 using (var reader = command.ExecuteReader())
@@ -8715,7 +8882,7 @@ ORDER BY b.BankName, b.BankID;";
             return list;
         }
 
-        public IList<PosLookupDto> SearchPosPaymentEmployees(string term)
+        public IList<PosLookupDto> SearchPosPaymentEmployees(int? branchId, string term)
         {
             var list = new List<PosLookupDto>();
             const string sql = @"
@@ -8725,6 +8892,7 @@ SELECT TOP (50)
     Account_Code AS Extra
 FROM dbo.TblEmployee WITH (NOLOCK)
 WHERE Emp_ID IS NOT NULL
+  AND (@branchId IS NULL OR ISNULL(BranchId, 0) = 0 OR BranchId = @branchId)
   AND (
       @term = N''
       OR CONVERT(NVARCHAR(50), Emp_ID) LIKE N'%' + @term + N'%'
@@ -8735,6 +8903,7 @@ ORDER BY Emp_Name, Emp_ID;";
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
             {
+                Add(command, "@branchId", SqlDbType.Int, branchId);
                 command.Parameters.Add("@term", SqlDbType.NVarChar, 100).Value = (term ?? string.Empty).Trim();
                 connection.Open();
                 using (var reader = command.ExecuteReader())
@@ -8749,36 +8918,181 @@ ORDER BY Emp_Name, Emp_ID;";
             return list;
         }
 
+        public PosPaymentRelationshipLookupsDto GetPosPaymentRelationshipLookups(int branchId, int cashingType, string selectedMainAccountCode, int? selectedBoxId, int? selectedBankId, int? selectedEmployeeId)
+        {
+            var result = new PosPaymentRelationshipLookupsDto();
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand("dbo.usp_POS_CustodyFundingRefund_GetLookups", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 90;
+                command.Parameters.Add("@BranchId", SqlDbType.Int).Value = branchId;
+                command.Parameters.Add("@OperationType", SqlDbType.Int).Value = cashingType;
+                command.Parameters.Add("@SelectedMainAccountCode", SqlDbType.NVarChar, 255).Value = string.IsNullOrWhiteSpace(selectedMainAccountCode) ? (object)DBNull.Value : selectedMainAccountCode.Trim();
+                Add(command, "@SelectedBoxID", SqlDbType.Int, selectedBoxId);
+                Add(command, "@SelectedBankID", SqlDbType.Int, selectedBankId);
+                Add(command, "@SelectedEmployeeID", SqlDbType.Int, selectedEmployeeId);
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    reader.NextResult();
+                    reader.NextResult();
+                    while (reader.Read())
+                    {
+                        result.MainAccounts.Add(new PosLookupDto
+                        {
+                            Id = ReadString(reader, "AccountCode"),
+                            Name = ReadString(reader, "DisplayName"),
+                            Extra = ReadString(reader, "BoxID")
+                        });
+                    }
+
+                    reader.NextResult();
+                    while (reader.Read())
+                    {
+                        result.PaymentBoxes.Add(new PosLookupDto
+                        {
+                            Id = ReadString(reader, "BoxID"),
+                            Name = ReadString(reader, "DisplayName"),
+                            Extra = ReadString(reader, "AccountCode")
+                        });
+                    }
+
+                    reader.NextResult();
+                    while (reader.Read())
+                    {
+                        result.Banks.Add(new PosLookupDto
+                        {
+                            Id = ReadString(reader, "BankID"),
+                            Name = ReadString(reader, "DisplayName"),
+                            Extra = ReadString(reader, "AccountCode")
+                        });
+                    }
+
+                    reader.NextResult();
+                    while (reader.Read())
+                    {
+                        result.Employees.Add(new PosLookupDto
+                        {
+                            Id = ReadString(reader, "EmployeeID"),
+                            Name = ReadString(reader, "DisplayName"),
+                            Extra = ReadString(reader, "CustodyAccountCode")
+                        });
+                    }
+
+                    reader.NextResult();
+                    if (reader.Read())
+                    {
+                        result.IsMainAccountValid = ReadBoolean(reader, "IsMainAccountValid");
+                        result.IsBoxValid = ReadBoolean(reader, "IsBoxValid");
+                        result.IsBankValid = ReadBoolean(reader, "IsBankValid");
+                        result.IsEmployeeValid = ReadBoolean(reader, "IsEmployeeValid");
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public PosPaymentAccountBalanceDto GetPosPaymentAccountBalance(int branchId, string accountCode, DateTime? asOfDate)
+        {
+            if (string.IsNullOrWhiteSpace(accountCode))
+            {
+                return null;
+            }
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand("dbo.usp_POS_CustodyFundingRefund_GetAccountBalance", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.Add("@BranchId", SqlDbType.Int).Value = branchId;
+                command.Parameters.Add("@AccountCode", SqlDbType.NVarChar, 255).Value = accountCode.Trim();
+                Add(command, "@AsOfDate", SqlDbType.DateTime, asOfDate);
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        return null;
+                    }
+
+                    return new PosPaymentAccountBalanceDto
+                    {
+                        AccountCode = ReadString(reader, "AccountCode"),
+                        DisplayName = ReadString(reader, "DisplayName"),
+                        CurrentBalance = ReadDecimal(reader, "CurrentBalance").GetValueOrDefault()
+                    };
+                }
+            }
+        }
+
+        public PosPaymentEmployeeCustodyDto GetPosPaymentEmployeeCustodyAccount(int branchId, int employeeId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand("dbo.usp_POS_CustodyFundingRefund_GetEmployeeCustodyAccount", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.Add("@BranchId", SqlDbType.Int).Value = branchId;
+                command.Parameters.Add("@EmployeeID", SqlDbType.Int).Value = employeeId;
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        return new PosPaymentEmployeeCustodyDto
+                        {
+                            EmployeeId = employeeId,
+                            HasWarning = true,
+                            WarningMessage = "لم يتم العثور على الموظف أو لا يرتبط بالفرع المحدد."
+                        };
+                    }
+
+                    return new PosPaymentEmployeeCustodyDto
+                    {
+                        EmployeeId = ReadInt(reader, "EmployeeID").GetValueOrDefault(employeeId),
+                        CustodyAccountCode = ReadString(reader, "CustodyAccountCode"),
+                        DisplayName = ReadString(reader, "DisplayName"),
+                        CurrentBalance = ReadDecimal(reader, "CurrentBalance").GetValueOrDefault(),
+                        HasWarning = ReadBoolean(reader, "HasWarning"),
+                        WarningMessage = ReadString(reader, "WarningMessage")
+                    };
+                }
+            }
+        }
+
         public IList<PosPaymentLineDto> PreviewPosPayment(PosPaymentRequestDto request)
         {
             request = request ?? new PosPaymentRequestDto();
             var lines = new List<PosPaymentLineDto>();
-            var description = string.IsNullOrWhiteSpace(request.Remarks) ? "تمويل واستعاضة الخزن والعهد" : request.Remarks.Trim();
-            lines.Add(new PosPaymentLineDto
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = CreatePosPaymentValidationCommand(connection, request, "dbo.usp_POS_CustodyFundingRefund_Preview"))
             {
-                AccountCode = request.NameAccountCode,
-                AccountName = GetAccountName(request.NameAccountCode),
-                Debit = request.Value,
-                Credit = 0,
-                Description = description
-            });
-
-            if (request.BoxValue == 0 && request.EmpValue == 0)
-            {
-                var credit = ResolvePaymentCreditAccount(request);
-                lines.Add(new PosPaymentLineDto { AccountCode = credit, AccountName = GetAccountName(credit), Debit = 0, Credit = request.Value, Description = description });
-            }
-            else
-            {
-                if (request.BoxValue > 0)
+                connection.Open();
+                using (var reader = command.ExecuteReader())
                 {
-                    var credit = ResolvePaymentCreditAccount(request);
-                    lines.Add(new PosPaymentLineDto { AccountCode = credit, AccountName = GetAccountName(credit), Debit = 0, Credit = request.BoxValue, Description = description });
-                }
+                    if (reader.Read())
+                    {
+                        if (!ReadBoolean(reader, "CanSave"))
+                        {
+                            throw new InvalidOperationException(ReadString(reader, "ValidationMessage"));
+                        }
+                    }
 
-                if (request.EmpValue > 0)
-                {
-                    lines.Add(new PosPaymentLineDto { AccountCode = request.EmpAccountCode, AccountName = GetAccountName(request.EmpAccountCode), Debit = 0, Credit = request.EmpValue, Description = description });
+                    if (reader.NextResult())
+                    {
+                        while (reader.Read())
+                        {
+                            lines.Add(new PosPaymentLineDto
+                            {
+                                AccountCode = ReadString(reader, "AccountCode"),
+                                AccountName = ReadString(reader, "DisplayName"),
+                                Debit = ReadDecimal(reader, "Debit").GetValueOrDefault(),
+                                Credit = ReadDecimal(reader, "Credit").GetValueOrDefault(),
+                                Description = ReadString(reader, "Source")
+                            });
+                        }
+                    }
                 }
             }
 
@@ -9105,6 +9419,49 @@ VALUES
             if ((request.PaymentMethod == 1 || request.PaymentMethod == 2 || request.PaymentMethod == 3) && string.IsNullOrWhiteSpace(request.ReferenceNo)) { throw new InvalidOperationException("رقم الشيك/الحوالة مطلوب"); }
             if (request.BoxValue + request.EmpValue > 0 && Math.Abs((request.BoxValue + request.EmpValue) - request.Value) > 0.01m) { throw new InvalidOperationException("مجموع قيمة الخزنة والعهدة يجب أن يساوي قيمة الدفع"); }
             if (request.EmpValue > 0 && string.IsNullOrWhiteSpace(request.EmpAccountCode)) { throw new InvalidOperationException("حساب عهدة الموظف مطلوب"); }
+            ValidatePosPaymentRelationships(request);
+        }
+
+        private void ValidatePosPaymentRelationships(PosPaymentRequestDto request)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = CreatePosPaymentValidationCommand(connection, request, "dbo.usp_POS_CustodyFundingRefund_ValidateSave"))
+            {
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read() && !ReadBoolean(reader, "CanSave"))
+                    {
+                        throw new InvalidOperationException(ReadString(reader, "ValidationMessage"));
+                    }
+                }
+            }
+        }
+
+        private static SqlCommand CreatePosPaymentValidationCommand(SqlConnection connection, PosPaymentRequestDto request, string procedureName)
+        {
+            var command = new SqlCommand(procedureName, connection);
+            command.CommandType = CommandType.StoredProcedure;
+            command.CommandTimeout = 90;
+            command.Parameters.Add("@BranchId", SqlDbType.Int).Value = request.BranchId;
+            command.Parameters.Add("@OperationType", SqlDbType.Int).Value = request.CashingType;
+            command.Parameters.Add("@Amount", SqlDbType.Decimal).Value = request.Value;
+            command.Parameters["@Amount"].Precision = 19;
+            command.Parameters["@Amount"].Scale = 4;
+            command.Parameters.Add("@MainAccountCode", SqlDbType.NVarChar, 255).Value = (object)(request.NameAccountCode ?? string.Empty);
+            command.Parameters.Add("@PaymentMethod", SqlDbType.Int).Value = request.PaymentMethod;
+            Add(command, "@BoxID", SqlDbType.Int, request.BoxId);
+            Add(command, "@BankID", SqlDbType.Int, request.BankId);
+            command.Parameters.Add("@ChequeOrTransferNumber", SqlDbType.NVarChar, 100).Value = string.IsNullOrWhiteSpace(request.ReferenceNo) ? (object)DBNull.Value : request.ReferenceNo.Trim();
+            Add(command, "@ChequeOrTransferDate", SqlDbType.DateTime, request.ReferenceDate);
+            Add(command, "@EmployeeID", SqlDbType.Int, request.EmpId);
+            command.Parameters.Add("@BoxValue", SqlDbType.Decimal).Value = request.BoxValue;
+            command.Parameters["@BoxValue"].Precision = 19;
+            command.Parameters["@BoxValue"].Scale = 4;
+            command.Parameters.Add("@EmployeeValue", SqlDbType.Decimal).Value = request.EmpValue;
+            command.Parameters["@EmployeeValue"].Precision = 19;
+            command.Parameters["@EmployeeValue"].Scale = 4;
+            return command;
         }
 
         private IList<PosPaymentLineDto> GetPosPaymentLines(int noteId)
@@ -9768,6 +10125,11 @@ BEGIN
         CreatedAt DATETIME NOT NULL CONSTRAINT DF_POS_ImportBatch_CreatedAt DEFAULT (GETDATE()),
         CompletedAt DATETIME NULL
     );
+END;
+
+IF COL_LENGTH(N'dbo.POS_ImportBatch', N'BranchId') IS NULL
+BEGIN
+    ALTER TABLE dbo.POS_ImportBatch ADD BranchId INT NULL;
 END;
 
 IF OBJECT_ID(N'dbo.POS_ImportBatchRow', N'U') IS NULL

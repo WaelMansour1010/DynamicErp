@@ -174,7 +174,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(Fail("الفرع غير محدد", "POS branch context is missing."), JsonRequestBehavior.AllowGet);
             }
 
-            var matches = _repository.SearchKeshniCardCustomers(term, context.BranchId, context.CanChangeDefaults);
+            var matches = _repository.SearchKeshniCardCustomersFast(term, context.BranchId, context.CanChangeDefaults);
             if (matches.Count > 0)
             {
                 return Json(matches, JsonRequestBehavior.AllowGet);
@@ -211,7 +211,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(Fail("الفرع غير محدد", "POS branch context is missing."), JsonRequestBehavior.AllowGet);
             }
 
-            var matches = _repository.SearchUnusedKeshniCardCustomers(term, context.BranchId, context.CanChangeDefaults);
+            var matches = _repository.SearchUnusedKeshniCardCustomersFast(term, context.BranchId, context.CanChangeDefaults);
             if (matches.Count == 1)
             {
                 return Json(new
@@ -451,7 +451,7 @@ namespace MyERP.Areas.Pos.Controllers
 
             try
             {
-                return Json(_repository.GetTodayInvoices(context.UserId, context.BranchId, context.CanChangeDefaults, context.CanEditInvoice, term, operationType, fromDate, toDate, branchId, excelOnly, excelWithWarnings), JsonRequestBehavior.AllowGet);
+                return Json(_repository.GetTodayInvoicesFast(context.UserId, context.BranchId, context.CanChangeDefaults, context.CanEditInvoice, term, operationType, fromDate, toDate, branchId, excelOnly, excelWithWarnings), JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {

@@ -36,7 +36,11 @@
     { "order": 65, "file": "65_POS_OperationalTransactions_ServiceType_CardIssues.sql", "autoApply": true, "purpose": "Operational transactions service filter and card issue report enhancements." },
     { "order": 66, "file": "66_POS_SaveTransaction_DeadlockIndexes.sql", "autoApply": true, "purpose": "Reduce POS save deadlock risk in cash-in and card save checks." },
     { "order": 68, "file": "68_POS_Grant_LimitedEdit_ByUserRole.sql", "autoApply": true, "purpose": "Grant today-only limited invoice edit to tellers and limited invoice edit to admins." },
-    { "order": 70, "file": "70_POS_TodayInvoices_ReadIndexes.sql", "autoApply": true, "purpose": "Reduce deadlocks/timeouts when loading POS today invoices side list." }
+    { "order": 70, "file": "70_POS_TodayInvoices_ReadIndexes.sql", "autoApply": true, "purpose": "Reduce deadlocks/timeouts when loading POS today invoices side list." },
+    { "order": 73, "file": "73_POS_CustodyFundingRefund_Relationships.sql", "autoApply": true, "purpose": "Custody funding/refund relational lookups, preview, and validation." },
+    { "order": 75, "file": "75_POS_ClosingReports_Performance.sql", "autoApply": true, "purpose": "Dedicated optimized POS closing report procedure." },
+    { "order": 76, "file": "76_POS_OperationalSalesReports_Performance.sql", "autoApply": true, "purpose": "Dedicated optimized POS daily transaction and sales report procedure." },
+    { "order": 77, "file": "77_POS_SalesAndKycSearch_Performance.sql", "autoApply": true, "purpose": "Dedicated optimized POS sales invoice and KYC search procedures." }
   ],
   "manualScripts": [
     { "file": "35_POS_SystemHealthPermissions.sql", "reason": "Requires sysadmin/master login and replacing the app SQL login placeholder." },

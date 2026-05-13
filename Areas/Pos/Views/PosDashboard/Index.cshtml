@@ -236,6 +236,7 @@
             var sidebarBackdrop = document.getElementById("posSidebarBackdrop");
             var menuSearch = document.getElementById("posMenuSearch");
             var menuSearchClear = document.getElementById("posMenuSearchClear");
+            var menuSearchTimer = null;
             var favoritesList = document.getElementById("posFavoritesList");
             var favoritesEmpty = document.getElementById("posFavoritesEmpty");
             var favoritesCount = document.getElementById("posQuickAccessCount");
@@ -1011,7 +1012,11 @@
                 shell.classList.add("is-sidebar-collapsed");
             }
             if (menuSearch) {
-                menuSearch.addEventListener("input", function () { filterMenu(this.value); });
+                menuSearch.addEventListener("input", function () {
+                    var value = this.value;
+                    window.clearTimeout(menuSearchTimer);
+                    menuSearchTimer = window.setTimeout(function () { filterMenu(value); }, 120);
+                });
             }
             if (menuSearchClear) {
                 menuSearchClear.addEventListener("click", function () {

@@ -120,7 +120,7 @@ namespace MyERP.Areas.Pos.Services
             var arabicName = ReadColumn(sheet, rowIndex, headerMap, "ArabicName");
             var englishName = ReadColumn(sheet, rowIndex, headerMap, "EnglishName");
             var nationalId = DigitsOnly(ReadColumn(sheet, rowIndex, headerMap, "NationalId"));
-            var mobile = DigitsOnly(ReadColumn(sheet, rowIndex, headerMap, "Mobile"));
+            var mobile = NormalizeExcelPhone(ReadColumn(sheet, rowIndex, headerMap, "Mobile"));
             if (string.IsNullOrWhiteSpace(cardNo)
                 && string.IsNullOrWhiteSpace(arabicName)
                 && string.IsNullOrWhiteSpace(englishName)
@@ -293,6 +293,49 @@ namespace MyERP.Areas.Pos.Services
         private static string DigitsOnly(string value)
         {
             return Regex.Replace(value ?? string.Empty, @"\D+", string.Empty);
+        }
+
+        private static string NormalizeExcelPhone(string value)
+        {
+            var text = NormalizeArabicDigits(value);
+            decimal numeric;
+            if ((decimal.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out numeric)
+                    || decimal.TryParse(text, NumberStyles.Any, CultureInfo.CurrentCulture, out numeric))
+                && numeric == decimal.Truncate(numeric))
+            {
+                text = decimal.Truncate(numeric).ToString("0", CultureInfo.InvariantCulture);
+            }
+
+            var digits = DigitsOnly(text);
+            if (digits.Length == 10 && digits[0] == '1')
+            {
+                return "0" + digits;
+            }
+
+            return digits;
+        }
+
+        private static string NormalizeArabicDigits(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            var chars = value.ToCharArray();
+            for (var i = 0; i < chars.Length; i++)
+            {
+                if (chars[i] >= '\u0660' && chars[i] <= '\u0669')
+                {
+                    chars[i] = (char)('0' + (chars[i] - '\u0660'));
+                }
+                else if (chars[i] >= '\u06F0' && chars[i] <= '\u06F9')
+                {
+                    chars[i] = (char)('0' + (chars[i] - '\u06F0'));
+                }
+            }
+
+            return new string(chars);
         }
 
         private static string[] SplitNameParts(string value, int count)

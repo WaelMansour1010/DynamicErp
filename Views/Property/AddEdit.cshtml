@@ -797,6 +797,7 @@
                                                             <td>@MyERP.Properties.Resources.Type</td>
                                                             <td>@MyERP.Properties.Resources.Status</td>
                                                             <td>@MyERP.Properties.Resources.ApplyTax</td>
+                                                            <td></td>
                                                         </tr>
                                                     </thead>
                                                     <tbody id="PropertyDetails">
@@ -806,7 +807,7 @@
                                                             {
                                                                 <tr>
                                                                     <td class="tabledit-edit-mode">
-                                                                        <input type="text" class="PropertyUnitNo form-control tabledit-input form-control-sm" value="@item.PropertyUnitNo" disabled readonly />
+                                                                        <input type="text" class="PropertyUnitNo form-control tabledit-input form-control-sm" value="@item.PropertyUnitNo" />
                                                                     </td>
                                                                     <td class="tabledit-edit-mode">
                                                                         <input type="text" class="PropertyUnitTypeName form-control tabledit-input form-control-sm" value="@item.PropertyUnitType.ArName" disabled readonly />
@@ -872,6 +873,9 @@
                                                                     <td class="tabledit-edit-mode">
                                                                         <input type="checkbox" class="IsApplyTax tabledit-input form-control-sm" @Html.Raw(item.IsApplyTax == true ? "checked" : "") />
                                                                         
+                                                                    </td>
+                                                                    <td>
+                                                                        <button type="button" class="btn btn-danger btn-sm" onclick="removePropertyDetailRow(this)">حذف</button>
                                                                     </td>
                                                                 </tr>
                                                             }
@@ -1589,7 +1593,7 @@ function CalculateBatches() {
 
         for (var unitIndex = 0; unitIndex < unitCodes.length; unitIndex++) {
             let tr = '<tr>' +
-                '<td class="tabledit-edit-mode"><input type="text" class="PropertyUnitNo form-control tabledit-input form-control-sm" value="' + unitCodes[unitIndex] + '" disabled readonly /></td>' +
+                '<td class="tabledit-edit-mode"><input type="text" class="PropertyUnitNo form-control tabledit-input form-control-sm" value="' + unitCodes[unitIndex] + '" /></td>' +
                 '<td class="tabledit-edit-mode"><input type="text" class="PropertyUnitTypeName form-control tabledit-input form-control-sm" value="' + PropertyUnitTypeName + '" disabled readonly />' +
 
                 '<input type="text" hidden class="PropDetailId" value="0" />' +
@@ -1612,10 +1616,29 @@ function CalculateBatches() {
                 '<td class="tabledit-edit-mode"><input type="text" class="TypeName form-control tabledit-input form-control-sm" value="' + TypeName + '" disabled readonly /><input type="text" hidden class="TypeId form-control tabledit-input form-control-sm" value="' + TypeId + '" disabled readonly /></td>' +
                 '<td class="tabledit-edit-mode"><input type="text" class="StatusName form-control tabledit-input form-control-sm" value="' + StatusName + '" disabled readonly /><input type="text" hidden class="StatusId form-control tabledit-input form-control-sm" value="' + StatusId + '" disabled readonly /></td>' +
                 '<td class="tabledit-edit-mode"><input type="checkbox" class="IsApplyTax form-control tabledit-input form-control-sm" ' + IsApplyTax + '  /></td>' +
+                '<td><button type="button" class="btn btn-danger btn-sm" onclick="removePropertyDetailRow(this)">حذف</button></td>' +
                 '</tr>';
 
             $('#PropertyDetails').append(tr);
         }
+    }
+
+    function removePropertyDetailRow(button) {
+        Swal.fire({
+            title: 'هل تريد حذف الوحدة؟',
+            text: 'سيتم منع الحذف عند الحفظ إذا كانت الوحدة مرتبطة بحركات.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '@MyERP.Properties.Resources.Ok',
+            cancelButtonText: '@MyERP.Properties.Resources.Cancel',
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $(button).closest('tr').remove();
+            }
+        });
     }
 //*********************************************************//
 function addEdit(n) {
@@ -1761,6 +1784,7 @@ function addEdit(n) {
         FirstBatchDate: $('#FirstBatchDate').val(),
         PeriodBetweenBatchesNum: $('#PeriodBetweenBatchesNum').val(),
         PeriodBetweenBatchesTypeId: $('#PeriodBetweenBatchesTypeId').val(),
+        IsTaxable: $('#IsTaxable').prop('checked'),
         PropertyUnitNo: $('#PropertyUnitNo').val(),
         PropertyUnitTypeId: $('#PropertyUnitTypeId').val(),
         Floor: $('#Floor').val(),
@@ -1815,7 +1839,7 @@ function addEdit(n) {
                         else {
                             Swal.fire({
                                 title: '@MyERP.Properties.Resources.NotSaved !',
-                                text: " ",
+                                text: r.message || " ",
                                 icon: 'error',
                                 showCancelButton: false,
                                 confirmButtonText: '@MyERP.Properties.Resources.Ok',

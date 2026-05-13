@@ -1,0 +1,114 @@
+@model MyERP.Areas.MainErp.ViewModels.MasterDataImport.MasterDataImportIndexViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "Master Data Import / استيراد الملفات الأساسية";
+}
+
+<link href="@Url.Content("~/Areas/MainErp/Content/master-data-import.css?v=20260513-master-import")" rel="stylesheet" />
+
+<section class="import-panel">
+    @if (TempData["ImportError"] != null)
+    {
+        <div class="alert danger">@TempData["ImportError"]</div>
+    }
+    @if (TempData["ImportMessage"] != null)
+    {
+        <div class="alert success">@TempData["ImportMessage"]</div>
+    }
+
+    @using (Html.BeginForm("Preview", "MasterDataImport", new { area = "MainErp" }, FormMethod.Post, new { enctype = "multipart/form-data", @class = "import-form" }))
+    {
+        @Html.AntiForgeryToken()
+        <label>
+            Entity type
+            <select name="entityType">
+                @foreach (var item in Model.EntityTypes)
+                {
+                    <option value="@item.Value" @(item.Value == Model.EntityType ? "selected" : "")>@item.Text</option>
+                }
+            </select>
+        </label>
+        <label>
+            Excel file
+            <input type="file" name="excelFile" accept=".xls,.xlsx" />
+        </label>
+        <label class="check">
+            <input type="checkbox" name="stopOnAnyError" value="true" @(Model.StopOnAnyError ? "checked" : "") />
+            Stop whole import if any error exists
+        </label>
+        <div class="actions">
+            <button type="submit">Preview / معاينة</button>
+            @Html.ActionLink("Download template / تحميل النموذج", "DownloadTemplate", new { entityType = Model.EntityType }, new { @class = "button secondary" })
+            @if (Model.HasPreview)
+            {
+                @Html.ActionLink("Download error file / ملف الأخطاء", "DownloadErrors", null, new { @class = "button secondary" })
+            }
+        </div>
+    }
+</section>
+
+@if (Model.HasPreview)
+{
+    <section class="summary-strip">
+        <div><strong>@Model.TotalRows</strong><span>Total rows</span></div>
+        <div><strong>@Model.ValidRows</strong><span>Valid</span></div>
+        <div><strong>@Model.ErrorRows</strong><span>Errors</span></div>
+        <div><strong>@Model.FileName</strong><span>File</span></div>
+    </section>
+
+    <section class="grid-wrap">
+        <table class="preview-grid">
+            <thead>
+                <tr>
+                    <th>Row</th>
+                    <th>Status</th>
+                    <th>Errors</th>
+                    <th>Account Serial</th>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Arabic Name</th>
+                    <th>English Name</th>
+                    <th>Parent Serial</th>
+                    <th>Account Code</th>
+                    <th>Parent Code</th>
+                    <th>Final</th>
+                    <th>Level</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr class="@(row.IsValid ? "ok" : "bad")">
+                        <td>@row.RowNumber</td>
+                        <td>@(row.IsValid ? "Valid" : "Error")</td>
+                        <td>@row.ErrorDetails</td>
+                        <td>@row.AccountSerial</td>
+                        <td>@row.EntityCode</td>
+                        <td>@row.EntityName</td>
+                        <td>@row.AccountName</td>
+                        <td>@row.AccountNameEnglish</td>
+                        <td>@row.ParentAccountSerial</td>
+                        <td>@row.AccountCode</td>
+                        <td>@row.ParentAccountCode</td>
+                        <td>@row.IsFinalAccount</td>
+                        <td>@row.Level</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+
+    using (Html.BeginForm("Import", "MasterDataImport", new { area = "MainErp" }, FormMethod.Post, new { @class = "import-submit" }))
+    {
+        @Html.AntiForgeryToken()
+        <label class="check">
+            <input type="checkbox" name="stopOnAnyError" value="true" checked />
+            Stop whole import if any error exists
+        </label>
+        <button type="submit" @(Model.ErrorRows > 0 ? "disabled" : "")>Import valid rows / استيراد</button>
+        if (Model.ErrorRows > 0)
+        {
+            <button type="submit" name="stopOnAnyError" value="false">Import valid rows only / استيراد السليم فقط</button>
+        }
+    }
+}

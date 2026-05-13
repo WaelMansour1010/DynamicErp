@@ -114,7 +114,7 @@ namespace MyERP.Areas.Pos.Services
         {
             var ipn = ReadText(sheet, rowIndex, 2);
             var customer = ReadText(sheet, rowIndex, 3);
-            var phone = ReadText(sheet, rowIndex, 4);
+            var phone = NormalizeExcelPhone(ReadText(sheet, rowIndex, 4));
             var amountText = ReadText(sheet, rowIndex, 5);
             var serviceType = ReadText(sheet, rowIndex, 8);
 
@@ -574,6 +574,59 @@ namespace MyERP.Areas.Pos.Services
 
             var value = table.Rows[rowIndex][columnIndex];
             return value == null || value == DBNull.Value ? string.Empty : Convert.ToString(value, CultureInfo.InvariantCulture).Trim();
+        }
+
+        private static string NormalizeExcelPhone(string value)
+        {
+            value = (value ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            var text = NormalizeArabicDigits(value);
+            decimal numeric;
+            if ((decimal.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out numeric)
+                    || decimal.TryParse(text, NumberStyles.Any, CultureInfo.CurrentCulture, out numeric))
+                && numeric == decimal.Truncate(numeric))
+            {
+                text = decimal.Truncate(numeric).ToString("0", CultureInfo.InvariantCulture);
+            }
+
+            var digits = Regex.Replace(text, @"\D+", string.Empty);
+            if (digits.Length == 10 && digits[0] == '1')
+            {
+                return "0" + digits;
+            }
+
+            return digits.Length > 0 ? digits : value;
+        }
+
+        private static string NormalizeArabicDigits(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return string.Empty;
+            }
+
+            var builder = new StringBuilder(value.Length);
+            foreach (var ch in value)
+            {
+                if (ch >= '\u0660' && ch <= '\u0669')
+                {
+                    builder.Append((char)('0' + (ch - '\u0660')));
+                }
+                else if (ch >= '\u06F0' && ch <= '\u06F9')
+                {
+                    builder.Append((char)('0' + (ch - '\u06F0')));
+                }
+                else
+                {
+                    builder.Append(ch);
+                }
+            }
+
+            return builder.ToString();
         }
 
         private static decimal? ReadDecimal(DataTable table, int rowIndex, int columnIndex)

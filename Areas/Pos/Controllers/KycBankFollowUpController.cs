@@ -95,11 +95,8 @@ namespace MyERP.Areas.Pos.Controllers
                 }
 
                 var table = LoadExportTable(request, context);
-                var cardLength = ResolveCardLength(request);
-                var from = (request != null && request.FromDate.HasValue ? request.FromDate.Value : DateTime.Today).Date;
-                var to = (request != null && request.ToDate.HasValue ? request.ToDate.Value : DateTime.Today).Date;
-                var bytes = BuildExcel(table, "KYC Bank Export " + cardLength.ToString(), from, to);
-                var fileName = string.Format("KYC_Bank_{0}_{1}_{2}.xlsx", cardLength, from.ToString("yyyyMMdd"), to.ToString("yyyyMMdd"));
+                var bytes = BuildExcel(table);
+                var fileName = string.Format("Bulk Maintenance{0}.xlsx", DateTime.Now.ToString("yyyyMMddHHmmss"));
                 return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (Exception ex)
@@ -213,18 +210,20 @@ namespace MyERP.Areas.Pos.Controllers
             var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 { "Token", "Token" },
-                { "EmbossingName", "Embossing Name" },
-                { "ExtensionName", "Extension Name" },
-                { "MagstripeName", "Magstripe Name" },
-                { "NationalId", "National ID" },
-                { "Address1", "Address 1" },
-                { "Address2", "Address 2" },
-                { "Address3", "Address 3" },
-                { "SmsFlag", "SMS Flag" },
-                { "MobileNumber", "Mobile Number" },
-                { "BirthDate", "Birth Date" },
+                { "EmbossingName", "embossing Name(25)" },
+                { "ExtensionName", "extension Name(25)" },
+                { "MagstripeName", "magstripe Name(25)" },
+                { "NationalId", "national id(14)" },
+                { "Address1", "address1 (35)" },
+                { "Address2", "address2 (35)" },
+                { "Address3", "address3 (35)" },
+                { "SmsFlag", "sms Flag(1)" },
+                { "MobileNumber", "Mobile Number(10)" },
+                { "BirthDate", "birth date (10)" },
                 { "FullEnglishName", "Full English Name" },
-                { "FullArabicName", "الاسم العربي" },
+                { "FullArabicName", "Full Arabic Name" },
+                { "OperationBranchCode", "كود فرع العملية" },
+                { "OperationBranchName", "اسم فرع العملية" },
                 { "BranchName", "الفرع" },
                 { "BranchCode", "كود الفرع" },
                 { "UserName", "المستخدم" },
@@ -236,7 +235,7 @@ namespace MyERP.Areas.Pos.Controllers
             return map.ContainsKey(name) ? map[name] : name;
         }
 
-        private static byte[] BuildExcel(DataTable table, string title, DateTime from, DateTime to)
+        private static byte[] BuildExcel(DataTable table)
         {
             using (var stream = new MemoryStream())
             {
@@ -244,19 +243,23 @@ namespace MyERP.Areas.Pos.Controllers
                 {
                     var workbookPart = document.AddWorkbookPart();
                     workbookPart.Workbook = new Workbook();
+                    AddWorkbookStyles(workbookPart);
                     var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
                     var sheetData = new SheetData();
-                    worksheetPart.Worksheet = new Worksheet(sheetData);
+                    worksheetPart.Worksheet = new Worksheet(
+                        new SheetViews(new SheetView { WorkbookViewId = 0U, RightToLeft = true }),
+                        BuildColumns(table.Columns.Count),
+                        sheetData);
 
                     var sheets = workbookPart.Workbook.AppendChild(new Sheets());
                     sheets.Append(new Sheet { Id = workbookPart.GetIdOfPart(worksheetPart), SheetId = 1, Name = "Sheet1" });
 
-                    AppendRow(sheetData, new[] { title });
-                    AppendRow(sheetData, new[] { "من تاريخ", from.ToString("yyyy-MM-dd"), "إلى تاريخ", to.ToString("yyyy-MM-dd") });
-                    AppendRow(sheetData, table.Columns.Cast<DataColumn>().Select(c => MapColumnTitle(c.ColumnName)));
+                    // Matches VB6 FrmCustCash.btnExport: bank template data starts at row 3.
+                    AppendRow(sheetData, table.Columns.Cast<DataColumn>().Select(c => MapColumnTitle(c.ColumnName)), 1U);
+                    AppendRow(sheetData, Enumerable.Repeat(string.Empty, table.Columns.Count), 2U);
                     foreach (DataRow row in table.Rows)
                     {
-                        AppendRow(sheetData, table.Columns.Cast<DataColumn>().Select(c => row[c] == DBNull.Value ? string.Empty : Convert.ToString(row[c])));
+                        AppendRow(sheetData, table.Columns.Cast<DataColumn>().Select(c => row[c] == DBNull.Value ? string.Empty : Convert.ToString(row[c])), 3U);
                     }
 
                     workbookPart.Workbook.Save();
@@ -266,13 +269,42 @@ namespace MyERP.Areas.Pos.Controllers
             }
         }
 
-        private static void AppendRow(SheetData sheetData, IEnumerable<string> values)
+        private static Columns BuildColumns(int count)
+        {
+            var columns = new Columns();
+            for (uint i = 1; i <= count; i++)
+            {
+                columns.Append(new Column { Min = i, Max = i, Width = i == 12 || i == 13 ? 34D : 18D, CustomWidth = true });
+            }
+            return columns;
+        }
+
+        private static void AddWorkbookStyles(WorkbookPart workbookPart)
+        {
+            var stylesPart = workbookPart.AddNewPart<WorkbookStylesPart>();
+            stylesPart.Stylesheet = new Stylesheet(
+                new Fonts(
+                    new Font(),
+                    new Font(new Bold())),
+                new Fills(
+                    new Fill(new PatternFill { PatternType = PatternValues.None }),
+                    new Fill(new PatternFill { PatternType = PatternValues.Gray125 })),
+                new Borders(new Border()),
+                new CellFormats(
+                    new CellFormat(),
+                    new CellFormat { FontId = 1U, ApplyFont = true, Alignment = new Alignment { Horizontal = HorizontalAlignmentValues.Center, ReadingOrder = 2U } },
+                    new CellFormat { ApplyAlignment = true, Alignment = new Alignment { Horizontal = HorizontalAlignmentValues.Left, ReadingOrder = 2U } }));
+            stylesPart.Stylesheet.Save();
+        }
+
+        private static void AppendRow(SheetData sheetData, IEnumerable<string> values, uint styleIndex)
         {
             var row = new Row();
             foreach (var value in values)
             {
                 row.Append(new Cell
                 {
+                    StyleIndex = styleIndex,
                     DataType = CellValues.InlineString,
                     InlineString = new InlineString(new Text(value ?? string.Empty))
                 });
