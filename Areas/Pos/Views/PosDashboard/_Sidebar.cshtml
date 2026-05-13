@@ -31,6 +31,56 @@
     }
 }
 
+@helper PosIcon(string name, string extraClass = "")
+{
+    var body = "";
+    switch ((name ?? "").ToLowerInvariant())
+    {
+        case "menu": body = "<path d=\"M4 6h16\"/><path d=\"M4 12h16\"/><path d=\"M4 18h16\"/>"; break;
+        case "user": body = "<path d=\"M19 21a7 7 0 0 0-14 0\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/>"; break;
+        case "search": body = "<circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/>"; break;
+        case "x": body = "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>"; break;
+        case "pin": body = "<path d=\"M12 17v5\"/><path d=\"M5 17h14\"/><path d=\"m7 7 10 10\"/><path d=\"M9 7V3h6v4l2 2v2H7V9z\"/>"; break;
+        case "chevron-down": body = "<path d=\"m6 9 6 6 6-6\"/>"; break;
+        case "gauge": body = "<path d=\"M12 14l4-4\"/><path d=\"M3.34 19a10 10 0 1 1 17.32 0\"/>"; break;
+        case "store": body = "<path d=\"M3 9h18l-2-5H5L3 9z\"/><path d=\"M5 9v11h14V9\"/><path d=\"M9 20v-6h6v6\"/>"; break;
+        case "terminal": body = "<path d=\"M4 6h16v12H4z\"/><path d=\"M8 10l3 2-3 2\"/><path d=\"M13 14h3\"/>"; break;
+        case "id-card": body = "<rect x=\"3\" y=\"5\" width=\"18\" height=\"14\" rx=\"2\"/><circle cx=\"9\" cy=\"11\" r=\"2\"/><path d=\"M7 15h4\"/><path d=\"M14 10h4\"/><path d=\"M14 14h4\"/>"; break;
+        case "lock-check": body = "<rect x=\"5\" y=\"11\" width=\"14\" height=\"10\" rx=\"2\"/><path d=\"M8 11V7a4 4 0 0 1 8 0v4\"/><path d=\"m9 16 2 2 4-4\"/>"; break;
+        case "wallet": body = "<path d=\"M19 7V6a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6\"/><path d=\"M16 13h.01\"/>"; break;
+        case "arrows-left-right": body = "<path d=\"m7 7-4 4 4 4\"/><path d=\"M3 11h18\"/><path d=\"m17 7 4 4-4 4\"/>"; break;
+        case "receipt": body = "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z\"/><path d=\"M8 7h8\"/><path d=\"M8 11h8\"/><path d=\"M8 15h5\"/>"; break;
+        case "spreadsheet": body = "<path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><path d=\"M14 2v6h6\"/><path d=\"M8 13h8\"/><path d=\"M8 17h8\"/><path d=\"M12 9v10\"/>"; break;
+        case "landmark": body = "<path d=\"M3 21h18\"/><path d=\"M5 21V10\"/><path d=\"M19 21V10\"/><path d=\"M9 21V10\"/><path d=\"M15 21V10\"/><path d=\"M12 3 3 8h18z\"/>"; break;
+        case "receipt-plus": body = "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z\"/><path d=\"M8 8h8\"/><path d=\"M12 12v6\"/><path d=\"M9 15h6\"/>"; break;
+        case "banknote-arrow": body = "<rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M7 12h.01\"/><path d=\"M17 12h.01\"/><path d=\"m15 3 3 3 3-3\"/>"; break;
+        case "book-open": body = "<path d=\"M12 7v14\"/><path d=\"M3 5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v16a3 3 0 0 0-3-3H5a2 2 0 0 1-2-2z\"/><path d=\"M21 5a2 2 0 0 0-2-2h-5a2 2 0 0 0-2 2v16a3 3 0 0 1 3-3h4a2 2 0 0 0 2-2z\"/>"; break;
+        case "file-percent": body = "<path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><path d=\"M14 2v6h6\"/><path d=\"m9 17 6-6\"/><circle cx=\"9\" cy=\"11\" r=\"1\"/><circle cx=\"15\" cy=\"17\" r=\"1\"/>"; break;
+        case "chart-pie": body = "<path d=\"M21 12a9 9 0 1 1-9-9v9z\"/><path d=\"M12 3a9 9 0 0 1 9 9h-9z\"/>"; break;
+        case "chart-bar": body = "<path d=\"M3 3v18h18\"/><path d=\"M7 16v-5\"/><path d=\"M12 16V7\"/><path d=\"M17 16v-8\"/>"; break;
+        case "chart-line": body = "<path d=\"M3 3v18h18\"/><path d=\"m7 15 4-4 3 3 5-7\"/>"; break;
+        case "table": body = "<rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 10h18\"/><path d=\"M9 4v16\"/>"; break;
+        case "sliders": body = "<path d=\"M4 21v-7\"/><path d=\"M4 10V3\"/><path d=\"M12 21v-9\"/><path d=\"M12 8V3\"/><path d=\"M20 21v-5\"/><path d=\"M20 12V3\"/><path d=\"M2 14h4\"/><path d=\"M10 8h4\"/><path d=\"M18 16h4\"/>"; break;
+        case "briefcase-user": body = "<path d=\"M10 6V5a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v1\"/><rect x=\"3\" y=\"6\" width=\"18\" height=\"14\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M8 18a4 4 0 0 1 8 0\"/>"; break;
+        case "users": body = "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>"; break;
+        case "building": body = "<rect x=\"4\" y=\"2\" width=\"16\" height=\"20\" rx=\"2\"/><path d=\"M9 22v-4h6v4\"/><path d=\"M8 6h.01\"/><path d=\"M16 6h.01\"/><path d=\"M8 10h.01\"/><path d=\"M16 10h.01\"/><path d=\"M8 14h.01\"/><path d=\"M16 14h.01\"/>"; break;
+        case "coins": body = "<circle cx=\"8\" cy=\"8\" r=\"5\"/><path d=\"M18.09 10.37A5 5 0 1 1 10.37 18.09\"/><path d=\"M7 6h1v4\"/>"; break;
+        case "boxes": body = "<path d=\"m7.5 4.27 4.5 2.6 4.5-2.6\"/><path d=\"M3 8.5 12 14l9-5.5\"/><path d=\"M12 22V14\"/><path d=\"M3 8.5v7L12 21l9-5.5v-7\"/>"; break;
+        case "user-check": body = "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"m16 11 2 2 4-4\"/>"; break;
+        case "alert-triangle": body = "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>"; break;
+        case "heart-pulse": body = "<path d=\"M19.5 12.6 12 20 4.5 12.6a5 5 0 0 1 7.5-6.5 5 5 0 0 1 7.5 6.5z\"/><path d=\"M3 12h4l2-3 3 6 2-3h7\"/>"; break;
+        case "target": body = "<circle cx=\"12\" cy=\"12\" r=\"10\"/><circle cx=\"12\" cy=\"12\" r=\"6\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/>"; break;
+        case "shield-check": body = "<path d=\"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10\"/><path d=\"m9 12 2 2 4-4\"/>"; break;
+        case "monitor": body = "<rect x=\"3\" y=\"4\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M8 20h8\"/><path d=\"M12 16v4\"/>"; break;
+        case "bug": body = "<path d=\"M8 2l1.5 3h5L16 2\"/><rect x=\"7\" y=\"5\" width=\"10\" height=\"14\" rx=\"5\"/><path d=\"M3 13h4\"/><path d=\"M17 13h4\"/><path d=\"M4 19l3-2\"/><path d=\"M20 19l-3-2\"/><path d=\"M4 7l3 2\"/><path d=\"M20 7l-3 2\"/>"; break;
+        case "database": body = "<ellipse cx=\"12\" cy=\"5\" rx=\"9\" ry=\"3\"/><path d=\"M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5\"/><path d=\"M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3\"/>"; break;
+        case "settings": body = "<path d=\"M12.22 2h-.44a2 2 0 0 0-2 2l-.11.62a2 2 0 0 1-2.31 1.33l-.61-.2a2 2 0 0 0-2.45.9l-.22.38a2 2 0 0 0 .44 2.55l.49.42a2 2 0 0 1 0 3l-.49.42a2 2 0 0 0-.44 2.55l.22.38a2 2 0 0 0 2.45.9l.61-.2a2 2 0 0 1 2.31 1.33l.11.62a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2l.11-.62a2 2 0 0 1 2.31-1.33l.61.2a2 2 0 0 0 2.45-.9l.22-.38a2 2 0 0 0-.44-2.55l-.49-.42a2 2 0 0 1 0-3l.49-.42a2 2 0 0 0 .44-2.55l-.22-.38a2 2 0 0 0-2.45-.9l-.61.2a2 2 0 0 1-2.31-1.33L14.22 4a2 2 0 0 0-2-2\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>"; break;
+        case "printer": body = "<path d=\"M6 9V2h12v7\"/><path d=\"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2\"/><path d=\"M6 14h12v8H6z\"/>"; break;
+        default: body = "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 8v4l3 2\"/>"; break;
+    }
+    <svg class="@("pos-svg-icon " + extraClass)" viewBox="0 0 24 24" aria-hidden="true" focusable="false">@Html.Raw(body)</svg>
+}
+
 <aside class="pos-main-sidebar" id="posMainSidebar" data-pos-user-key="@userStorageKey">
     <div class="pos-sidebar-brand">
         <div class="pos-main-logo">
@@ -44,12 +94,12 @@
             }
         </div>
         <button type="button" class="pos-sidebar-collapse" id="posSidebarCollapseBtn" aria-label="تصغير القائمة" title="تصغير القائمة">
-            <i class="fas fa-bars" aria-hidden="true"></i>
+            @PosIcon("menu")
         </button>
     </div>
 
     <div class="pos-sidebar-user" title="المستخدم الحالي">
-        <span class="user-avatar"><i class="fas fa-user" aria-hidden="true"></i></span>
+        <span class="user-avatar">@PosIcon("user")</span>
         <div>
             <strong>@(posContext != null ? posContext.UserName : "")</strong>
             <small>@(posContext != null ? posContext.BranchName : "")</small>
@@ -57,14 +107,14 @@
     </div>
 
     <div class="pos-sidebar-search" role="search">
-        <i class="fas fa-search" aria-hidden="true"></i>
+        @PosIcon("search")
         <input id="posMenuSearch" type="search" autocomplete="off" placeholder="بحث سريع: قبض، KYC، تقارير..." aria-label="بحث في قائمة POS" />
-        <button type="button" id="posMenuSearchClear" aria-label="مسح البحث" title="مسح البحث"><i class="fas fa-times" aria-hidden="true"></i></button>
+        <button type="button" id="posMenuSearchClear" aria-label="مسح البحث" title="مسح البحث">@PosIcon("x")</button>
     </div>
 
     <section class="pos-nav-quick-access" id="posQuickAccess" aria-label="الوصول السريع">
         <div class="pos-nav-quick-heading">
-            <span><i class="fas fa-thumbtack" aria-hidden="true"></i> الوصول السريع</span>
+            <span>@PosIcon("pin") الوصول السريع</span>
             <small id="posQuickAccessCount">0</small>
         </div>
         <div class="pos-nav-favorites" id="posFavoritesList"></div>
@@ -79,13 +129,13 @@
            data-nav-section="الإدارة والإعدادات"
            data-nav-text="لوحة التحكم dashboard admin management"
            title="لوحة التحكم">
-            <i class="fas fa-tachometer-alt" aria-hidden="true"></i><span>لوحة التحكم</span>
+            @PosIcon("gauge")<span>لوحة التحكم</span>
         </a>
 
         <section class="pos-nav-section teller-sales-section @(dailyOpen ? "is-open" : "")" data-section-id="daily">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="العمليات اليومية" aria-expanded="@(dailyOpen ? "true" : "false")">
-                <span><i class="fas fa-cash-register" aria-hidden="true"></i><b>العمليات اليومية</b><small>بيع، KYC، إغلاق، مخزون</small></span>
-                <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
+                <span>@PosIcon("store")<b>العمليات اليومية</b><small>بيع، KYC، إغلاق، مخزون</small></span>
+                @PosIcon("chevron-down", "nav-chevron")
             </button>
             <div class="pos-nav-submenu">
                 <a class="pos-nav-link teller-sales-link @(isActive("sales") ? "active" : "")"
@@ -95,7 +145,7 @@
                    data-nav-section="العمليات اليومية"
                    data-nav-text="نقطة البيع شاشة البيع pos sales cashier teller فاتورة بيع"
                    title="شاشة البيع">
-                    <i class="fas fa-cash-register" aria-hidden="true"></i><span>نقطة البيع POS</span>
+                    @PosIcon("terminal")<span>نقطة البيع POS</span>
                 </a>
                 <a class="pos-nav-link @(isActive("kyc") ? "active" : "")"
                    href="@Url.Action("Kyc", "PosDashboard", new { area = "Pos" })"
@@ -104,7 +154,7 @@
                    data-nav-section="العمليات اليومية"
                    data-nav-text="KYC اعرف عميلك كارت بطاقة customer card bank"
                    title="KYC">
-                    <i class="fas fa-id-card" aria-hidden="true"></i><span>KYC</span>
+                    @PosIcon("id-card")<span>KYC</span>
                 </a>
                 <a class="pos-nav-link @(isActive("closing") ? "active" : "")"
                    href="@Url.Action("Closing", "PosDashboard", new { area = "Pos" })"
@@ -113,7 +163,7 @@
                    data-nav-section="العمليات اليومية"
                    data-nav-text="الإغلاق إغلاق اليومية closing day close cashier"
                    title="الإغلاق">
-                    <i class="fas fa-lock" aria-hidden="true"></i><span>إغلاق اليومية</span>
+                    @PosIcon("lock-check")<span>إغلاق اليومية</span>
                 </a>
                 @if (isAdmin || (posContext != null && posContext.CanOpenPayments))
                 {
@@ -124,7 +174,7 @@
                        data-nav-section="العمليات اليومية"
                        data-nav-text="تمويل العهدة payments custody cash box funding"
                        title="تمويل العهدة">
-                        <i class="fas fa-money-bill-alt" aria-hidden="true"></i><span>تمويل العهدة</span>
+                        @PosIcon("wallet")<span>تمويل العهدة</span>
                     </a>
                 }
                 @if (isAdmin || (posContext != null && posContext.CanSave))
@@ -136,7 +186,7 @@
                        data-nav-section="العمليات اليومية"
                        data-nav-text="تحويل مخزون stock transfer store inventory"
                        title="تحويل مخزون">
-                        <i class="fas fa-exchange-alt" aria-hidden="true"></i><span>تحويل مخزون</span>
+                        @PosIcon("arrows-left-right")<span>تحويل مخزون</span>
                     </a>
                     <a class="pos-nav-link @(isActive("purchase-invoice") ? "active" : "")"
                        href="@Url.Action("PurchaseInvoice", "PosDashboard", new { area = "Pos" })"
@@ -145,7 +195,7 @@
                        data-nav-section="العمليات اليومية"
                        data-nav-text="فاتورة مشتريات purchases purchase invoice supplier"
                        title="فواتير مشتريات">
-                        <i class="fas fa-file-alt" aria-hidden="true"></i><span>فاتورة مشتريات</span>
+                        @PosIcon("receipt")<span>فاتورة مشتريات</span>
                     </a>
                     if (isAdmin || (posContext != null && posContext.CanImportExcel))
                     {
@@ -156,7 +206,7 @@
                        data-nav-section="العمليات اليومية"
                        data-nav-text="استيراد Excel العمليات import excel upload"
                        title="استيراد العمليات من Excel">
-                        <i class="fas fa-file-import" aria-hidden="true"></i><span>استيراد العمليات من Excel</span>
+                        @PosIcon("spreadsheet")<span>استيراد العمليات من Excel</span>
                     </a>
                     }
                 }
@@ -165,8 +215,8 @@
 
         <section class="pos-nav-section @(financeOpen ? "is-open" : "")" data-section-id="finance">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="المالية" aria-expanded="@(financeOpen ? "true" : "false")">
-                <span><i class="fas fa-university" aria-hidden="true"></i><b>المالية</b><small>سندات، قيود، إشعارات</small></span>
-                <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
+                <span>@PosIcon("landmark")<b>المالية</b><small>سندات، قيود، إشعارات</small></span>
+                @PosIcon("chevron-down", "nav-chevron")
             </button>
             <div class="pos-nav-submenu">
                 @if (isAdmin || (posContext != null && posContext.CanViewAccountingReports))
@@ -178,7 +228,7 @@
                        data-nav-section="المالية"
                        data-nav-text="سند قبض قبض cashing receipt voucher receive"
                        title="سندات القبض">
-                        <i class="fas fa-hand-holding-usd" aria-hidden="true"></i><span>سندات القبض</span>
+                        @PosIcon("receipt-plus")<span>سندات القبض</span>
                     </a>
                     <a class="pos-nav-link @(isActive("payment-vouchers") ? "active" : "")"
                        href="@Url.Content("~/Pos/Payments/Vouchers")"
@@ -187,7 +237,7 @@
                        data-nav-section="المالية"
                        data-nav-text="سند صرف صرف payment voucher payable"
                        title="سندات الصرف">
-                        <i class="fas fa-money-bill-wave" aria-hidden="true"></i><span>سندات الصرف</span>
+                        @PosIcon("banknote-arrow")<span>سندات الصرف</span>
                     </a>
                 }
                 @if (isAdmin || (posContext != null && (posContext.CanViewJournalEntry || posContext.CanCreateJournalEntry || posContext.CanEditJournalEntry || posContext.CanDeleteJournalEntry)))
@@ -199,7 +249,7 @@
                        data-nav-section="المالية"
                        data-nav-text="قيود يومية قيد journal entries accounting"
                        title="إدخال واستعراض القيود">
-                        <i class="fas fa-book" aria-hidden="true"></i><span>القيود اليومية</span>
+                        @PosIcon("book-open")<span>القيود اليومية</span>
                     </a>
                     <a class="pos-nav-link @(isActive("discount-notifications") ? "active" : "")"
                        href="@Url.Content("~/Pos/DiscountNotifications/Index")"
@@ -208,7 +258,7 @@
                        data-nav-section="المالية"
                        data-nav-text="إشعارات خصم discount notifications debit credit"
                        title="الإشعارات">
-                        <i class="fas fa-file-invoice-dollar" aria-hidden="true"></i><span>إشعارات الخصم</span>
+                        @PosIcon("file-percent")<span>إشعارات الخصم</span>
                     </a>
                 }
                 @if (isAdmin || (posContext != null && posContext.CanViewAccountingReports))
@@ -220,7 +270,7 @@
                        data-nav-section="المالية"
                        data-nav-text="تقارير مالية حسابات accounting reports financial"
                        title="تقارير الحسابات">
-                        <i class="fas fa-chart-pie" aria-hidden="true"></i><span>التقارير المالية</span>
+                        @PosIcon("chart-pie")<span>التقارير المالية</span>
                     </a>
                 }
             </div>
@@ -228,8 +278,8 @@
 
         <section class="pos-nav-section @(reportsOpen ? "is-open" : "")" data-section-id="reports">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="التقارير والتحليلات" aria-expanded="@(reportsOpen ? "true" : "false")">
-                <span><i class="fas fa-chart-line" aria-hidden="true"></i><b>التقارير والتحليلات</b><small>تشغيل، فروع، مؤشرات</small></span>
-                <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
+                <span>@PosIcon("chart-line")<b>التقارير والتحليلات</b><small>تشغيل، فروع، مؤشرات</small></span>
+                @PosIcon("chevron-down", "nav-chevron")
             </button>
             <div class="pos-nav-submenu">
                 @if (hasReportMenuAccess)
@@ -241,7 +291,7 @@
                        data-nav-section="التقارير والتحليلات"
                        data-nav-text="تقارير تشغيلية تقرير الحركات اليومية reports operational daily transactions"
                        title="التقارير التشغيلية">
-                        <i class="fas fa-chart-bar" aria-hidden="true"></i><span>التقارير التشغيلية</span>
+                        @PosIcon("chart-bar")<span>التقارير التشغيلية</span>
                     </a>
                     <a class="pos-nav-link"
                        href="@Url.Content("~/Pos/HtmlReports/Index")"
@@ -250,7 +300,7 @@
                        data-nav-section="التقارير والتحليلات"
                        data-nav-text="تقارير ذكية html reports report viewer"
                        title="التقارير الذكية">
-                        <i class="fas fa-table" aria-hidden="true"></i><span>التقارير الذكية</span>
+                        @PosIcon("table")<span>التقارير الذكية</span>
                     </a>
                     <a class="pos-nav-link"
                        href="@Url.Content("~/Pos/DynamicReports/Index")"
@@ -259,7 +309,7 @@
                        data-nav-section="التقارير والتحليلات"
                        data-nav-text="مصمم التقارير الديناميكي dynamic report designer"
                        title="مصمم التقارير الديناميكي">
-                        <i class="fas fa-sliders-h" aria-hidden="true"></i><span>مصمم التقارير الديناميكي</span>
+                        @PosIcon("sliders")<span>مصمم التقارير الديناميكي</span>
                     </a>
                 }
                 @if (isAdmin || (posContext != null && (posContext.CanReportSalesmen || posContext.CanReportSalesComplete || posContext.CanReportAllSales || posContext.CanViewReports)))
@@ -271,7 +321,7 @@
                        data-nav-section="التقارير والتحليلات"
                        data-nav-text="أداء المناديب المبيعات sales representatives performance targets"
                        title="لوحة أداء المناديب والمبيعات">
-                        <i class="fas fa-user-tie" aria-hidden="true"></i><span>أداء المناديب والمبيعات</span>
+                        @PosIcon("briefcase-user")<span>أداء المناديب والمبيعات</span>
                     </a>
                 }
                 @if (isAdmin || (posContext != null && posContext.CanViewAccountingReports))
@@ -283,17 +333,17 @@
                        data-nav-section="التقارير والتحليلات"
                        data-nav-text="لوحة المؤشرات المالية financial intelligence dashboard"
                        title="لوحة المؤشرات المالية">
-                        <i class="fas fa-tachometer-alt" aria-hidden="true"></i><span>لوحة المؤشرات المالية</span>
+                        @PosIcon("gauge")<span>لوحة المؤشرات المالية</span>
                     </a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/BranchPerformance")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/BranchPerformance")" data-nav-id="branch-performance" data-nav-section="التقارير والتحليلات" data-nav-text="أداء الفروع المالي branch performance" title="أداء الفروع المالي"><i class="fas fa-building" aria-hidden="true"></i><span>أداء الفروع المالي</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/CashFlow")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/CashFlow")" data-nav-id="cash-flow" data-nav-section="التقارير والتحليلات" data-nav-text="التدفقات النقدية cash flow" title="تحليل التدفقات النقدية"><i class="fas fa-coins" aria-hidden="true"></i><span>تحليل التدفقات النقدية</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/SalesCollections")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/SalesCollections")" data-nav-id="sales-collections" data-nav-section="التقارير والتحليلات" data-nav-text="المبيعات والتحصيل sales collections" title="تحليل المبيعات والتحصيل"><i class="fas fa-chart-line" aria-hidden="true"></i><span>تحليل المبيعات والتحصيل</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/Expenses")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/Expenses")" data-nav-id="expenses" data-nav-section="التقارير والتحليلات" data-nav-text="المصروفات expenses" title="تحليل المصروفات"><i class="fas fa-chart-pie" aria-hidden="true"></i><span>تحليل المصروفات</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/InventoryProfitability")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/InventoryProfitability")" data-nav-id="inventory-profitability" data-nav-section="التقارير والتحليلات" data-nav-text="المخزون والربحية inventory profitability" title="مؤشرات المخزون والربحية"><i class="fas fa-boxes" aria-hidden="true"></i><span>مؤشرات المخزون والربحية</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/EmployeeReceivables")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/EmployeeReceivables")" data-nav-id="employee-receivables" data-nav-section="التقارير والتحليلات" data-nav-text="ذمم الموظفين employee receivables" title="تشخيص ذمم الموظفين"><i class="fas fa-user-check" aria-hidden="true"></i><span>ذمم الموظفين</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/Custody")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/Custody")" data-nav-id="custody" data-nav-section="التقارير والتحليلات" data-nav-text="العهد والسلف custody advances" title="تشخيص العهد والسلف"><i class="fas fa-wallet" aria-hidden="true"></i><span>العهد والسلف</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/AbnormalJournals")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/AbnormalJournals")" data-nav-id="abnormal-journals" data-nav-section="التقارير والتحليلات" data-nav-text="تنبيهات مراجعة محاسبية قيود غير طبيعية abnormal journals" title="تنبيهات ومراجعة محاسبية"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>تنبيهات محاسبية</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/RootCause")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/RootCause")" data-nav-id="root-cause" data-nav-section="التقارير والتحليلات" data-nav-text="تحليل سبب المشكلة root cause" title="تحليل سبب المشكلة"><i class="fas fa-search" aria-hidden="true"></i><span>تحليل سبب المشكلة</span></a>
+                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/BranchPerformance")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/BranchPerformance")" data-nav-id="branch-performance" data-nav-section="التقارير والتحليلات" data-nav-text="أداء الفروع المالي branch performance" title="أداء الفروع المالي">@PosIcon("building")<span>أداء الفروع المالي</span></a>
+                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/CashFlow")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/CashFlow")" data-nav-id="cash-flow" data-nav-section="التقارير والتحليلات" data-nav-text="التدفقات النقدية cash flow" title="تحليل التدفقات النقدية">@PosIcon("coins")<span>تحليل التدفقات النقدية</span></a>
+                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/SalesCollections")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/SalesCollections")" data-nav-id="sales-collections" data-nav-section="التقارير والتحليلات" data-nav-text="المبيعات والتحصيل sales collections" title="تحليل المبيعات والتحصيل">@PosIcon("chart-line")<span>تحليل المبيعات والتحصيل</span></a>
+                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/Expenses")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/Expenses")" data-nav-id="expenses" data-nav-section="التقارير والتحليلات" data-nav-text="المصروفات expenses" title="تحليل المصروفات">@PosIcon("chart-pie")<span>تحليل المصروفات</span></a>
+                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/InventoryProfitability")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/InventoryProfitability")" data-nav-id="inventory-profitability" data-nav-section="التقارير والتحليلات" data-nav-text="المخزون والربحية inventory profitability" title="مؤشرات المخزون والربحية">@PosIcon("boxes")<span>مؤشرات المخزون والربحية</span></a>
+                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/EmployeeReceivables")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/EmployeeReceivables")" data-nav-id="employee-receivables" data-nav-section="التقارير والتحليلات" data-nav-text="ذمم الموظفين employee receivables" title="تشخيص ذمم الموظفين">@PosIcon("user-check")<span>ذمم الموظفين</span></a>
+                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/Custody")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/Custody")" data-nav-id="custody" data-nav-section="التقارير والتحليلات" data-nav-text="العهد والسلف custody advances" title="تشخيص العهد والسلف">@PosIcon("wallet")<span>العهد والسلف</span></a>
+                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/AbnormalJournals")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/AbnormalJournals")" data-nav-id="abnormal-journals" data-nav-section="التقارير والتحليلات" data-nav-text="تنبيهات مراجعة محاسبية قيود غير طبيعية abnormal journals" title="تنبيهات ومراجعة محاسبية">@PosIcon("alert-triangle")<span>تنبيهات محاسبية</span></a>
+                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/RootCause")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/RootCause")" data-nav-id="root-cause" data-nav-section="التقارير والتحليلات" data-nav-text="تحليل سبب المشكلة root cause" title="تحليل سبب المشكلة">@PosIcon("search")<span>تحليل سبب المشكلة</span></a>
                 }
             </div>
         </section>
@@ -302,8 +352,8 @@
         {
             <section class="pos-nav-section @(peopleOpen ? "is-open" : "")" data-section-id="people">
                 <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="الموظفون والمبيعات" aria-expanded="@(peopleOpen ? "true" : "false")">
-                    <span><i class="fas fa-users" aria-hidden="true"></i><b>الموظفون والمبيعات</b><small>رواتب، تأمين، تارجت</small></span>
-                    <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
+                    <span>@PosIcon("users")<b>الموظفون والمبيعات</b><small>رواتب، تأمين، تارجت</small></span>
+                    @PosIcon("chevron-down", "nav-chevron")
                 </button>
                 <div class="pos-nav-submenu">
                 @if (isAdmin)
@@ -315,7 +365,7 @@
                        data-nav-section="الموظفون والمبيعات"
                        data-nav-text="الموظفون employees payroll hr"
                        title="الموظفون">
-                        <i class="fas fa-users" aria-hidden="true"></i><span>الموظفون</span>
+                        @PosIcon("users")<span>الموظفون</span>
                     </a>
                     <a class="pos-nav-link @(isActive("salary-run") ? "active" : "")"
                        href="@Url.Action("SalaryRun", "PosDashboard", new { area = "Pos" })"
@@ -324,7 +374,7 @@
                        data-nav-section="الموظفون والمبيعات"
                        data-nav-text="مسير الرواتب salary payroll"
                        title="مسير الرواتب">
-                        <i class="fas fa-file-invoice-dollar" aria-hidden="true"></i><span>مسير الرواتب</span>
+                        @PosIcon("receipt")<span>مسير الرواتب</span>
                     </a>
                     <a class="pos-nav-link @(isActive("medical-insurance") ? "active" : "")"
                        href="@Url.Action("MedicalInsurance", "PosDashboard", new { area = "Pos" })"
@@ -333,7 +383,7 @@
                        data-nav-section="الموظفون والمبيعات"
                        data-nav-text="التأمين الطبي medical insurance"
                        title="التأمين الطبي">
-                        <i class="fas fa-briefcase-medical" aria-hidden="true"></i><span>التأمين الطبي</span>
+                        @PosIcon("heart-pulse")<span>التأمين الطبي</span>
                     </a>
                     <a class="pos-nav-link @(isActive("medical-insurance-reports") ? "active" : "")"
                        href="@Url.Action("MedicalInsuranceReports", "PosDashboard", new { area = "Pos" })"
@@ -342,7 +392,7 @@
                        data-nav-section="الموظفون والمبيعات"
                        data-nav-text="تقارير التأمين medical insurance reports"
                        title="تقارير التأمين الطبي">
-                        <i class="fas fa-chart-bar" aria-hidden="true"></i><span>تقارير التأمين</span>
+                        @PosIcon("chart-bar")<span>تقارير التأمين</span>
                     </a>
                     <a class="pos-nav-link @(isActive("sales-targets") ? "active" : "")"
                        href="@Url.Content("~/Pos/SalesTargets/Index")"
@@ -351,7 +401,7 @@
                        data-nav-section="الموظفون والمبيعات"
                        data-nav-text="تارجت المناديب sales targets"
                        title="إدارة تارجت المناديب">
-                        <i class="fas fa-bullseye" aria-hidden="true"></i><span>تارجت المناديب</span>
+                        @PosIcon("target")<span>تارجت المناديب</span>
                     </a>
                 }
             </div>
@@ -362,8 +412,8 @@
         {
             <section class="pos-nav-section @(adminOpen ? "is-open" : "")" data-section-id="admin">
                 <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="الإدارة والإعدادات" aria-expanded="@(adminOpen ? "true" : "false")">
-                    <span><i class="fas fa-shield-alt" aria-hidden="true"></i><b>الإدارة والإعدادات</b><small>صلاحيات، نظام، طباعة</small></span>
-                    <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
+                    <span>@PosIcon("shield-check")<b>الإدارة والإعدادات</b><small>صلاحيات، نظام، طباعة</small></span>
+                    @PosIcon("chevron-down", "nav-chevron")
                 </button>
                 <div class="pos-nav-submenu">
                     @if (isAdmin || (posContext != null && posContext.IsFullAccessCustomerService))
@@ -375,7 +425,7 @@
                        data-nav-section="الإدارة والإعدادات"
                        data-nav-text="متابعة KYC البنك bank follow up customer service"
                        title="متابعة KYC والبنك">
-                        <i class="fas fa-university" aria-hidden="true"></i><span>متابعة KYC والبنك</span>
+                        @PosIcon("landmark")<span>متابعة KYC والبنك</span>
                     </a>
                     }
                     @if (isAdmin)
@@ -387,7 +437,7 @@
                        data-nav-section="الإدارة والإعدادات"
                        data-nav-text="مراقبة النظام system health monitor"
                        title="مراقبة النظام">
-                        <i class="fas fa-desktop" aria-hidden="true"></i><span>مراقبة النظام</span>
+                        @PosIcon("monitor")<span>مراقبة النظام</span>
                     </a>
                     <a class="pos-nav-link @(isActive("system-error-log") ? "active" : "")"
                        href="@Url.Content("~/Pos/PosSystemErrorLog/Index")"
@@ -396,7 +446,7 @@
                        data-nav-section="الإدارة والإعدادات"
                        data-nav-text="سجل أخطاء النظام error log bugs"
                        title="سجل أخطاء النظام">
-                        <i class="fas fa-bug" aria-hidden="true"></i><span>سجل أخطاء النظام</span>
+                        @PosIcon("bug")<span>سجل أخطاء النظام</span>
                     </a>
                     <a class="pos-nav-link @(isActive("permissions") ? "active" : "")"
                        href="@Url.Action("Index", "PosPermissions", new { area = "Pos" })"
@@ -405,7 +455,7 @@
                        data-nav-section="الإدارة والإعدادات"
                        data-nav-text="صلاحيات POS permissions users roles authorization"
                        title="صلاحيات POS">
-                        <i class="fas fa-shield-alt" aria-hidden="true"></i><span>صلاحيات POS</span>
+                        @PosIcon("shield-check")<span>صلاحيات POS</span>
                     </a>
                     <a class="pos-nav-link @(isActive("sql-updates") ? "active" : "")"
                        href="@Url.Action("SqlUpdates", "PosDashboard", new { area = "Pos" })"
@@ -414,7 +464,7 @@
                        data-nav-section="الإدارة والإعدادات"
                        data-nav-text="تحديثات قاعدة البيانات sql updates database"
                        title="إدارة تحديثات قاعدة البيانات">
-                        <i class="fas fa-database" aria-hidden="true"></i><span>تحديثات قاعدة البيانات</span>
+                        @PosIcon("database")<span>تحديثات قاعدة البيانات</span>
                     </a>
                     <a class="pos-nav-link"
                        href="@Url.Content("~/Pos/DynamicReportsAdmin/Index")"
@@ -423,7 +473,7 @@
                        data-nav-section="الإدارة والإعدادات"
                        data-nav-text="إدارة التقارير الديناميكية dynamic reports admin"
                        title="إدارة التقارير الديناميكية">
-                        <i class="fas fa-cogs" aria-hidden="true"></i><span>إدارة التقارير الديناميكية</span>
+                        @PosIcon("settings")<span>إدارة التقارير الديناميكية</span>
                     </a>
                     }
                     @if (isAdmin || (posContext != null && posContext.CanManagePrintTemplates))
@@ -435,7 +485,7 @@
                        data-nav-section="الإدارة والإعدادات"
                        data-nav-text="مصمم نماذج الطباعة print templates designer"
                        title="مصمم نماذج الطباعة">
-                        <i class="fas fa-print" aria-hidden="true"></i><span>نماذج الطباعة</span>
+                        @PosIcon("printer")<span>نماذج الطباعة</span>
                     </a>
                     }
                 </div>

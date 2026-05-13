@@ -26,7 +26,7 @@
 }
 
 <meta charset="utf-8" />
-<link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css?v=20260510-teller-ux")" rel="stylesheet" />
+<link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css?v=20260513-light-default")" rel="stylesheet" />
 
 <div class="pos-page pos-mode-cash-in"
      id="posPage"
@@ -229,7 +229,7 @@
         </section>
 
         <div class="pos-workspace">
-        <form id="posForm" class="pos-form" autocomplete="off">
+        <form id="posForm" class="pos-form" autocomplete="off" novalidate>
             <input type="hidden" id="transactionType" value="cash-in" />
             <input type="hidden" id="isCashOut" value="false" />
             <input type="hidden" id="isPOS" value="false" />
@@ -518,4 +518,4 @@
     </div>
 </div>
 
-<script src="@Url.Content("~/Areas/Pos/Scripts/pos-transaction.js?v=20260510-today-range-print-rtl")"></script>
+<script src="@Url.Content("~/Areas/Pos/Scripts/pos-transaction.js?v=20260513-local-fees")"></script>

@@ -17,14 +17,49 @@
         : (System.IO.File.Exists(Server.MapPath(logoAltPath)) ? logoAltPath : null);
 }
 
+@helper ShellIcon(string name, string extraClass = "")
+{
+    var body = "";
+    switch ((name ?? "").ToLowerInvariant())
+    {
+        case "menu": body = "<path d=\"M4 6h16\"/><path d=\"M4 12h16\"/><path d=\"M4 18h16\"/>"; break;
+        case "user": body = "<path d=\"M19 21a7 7 0 0 0-14 0\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/>"; break;
+        case "branch": body = "<path d=\"M6 3v12\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><circle cx=\"18\" cy=\"6\" r=\"3\"/><path d=\"M6 12a6 6 0 0 0 6-6h3\"/>"; break;
+        case "wallet": body = "<path d=\"M19 7V6a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6\"/><path d=\"M16 13h.01\"/>"; break;
+        case "clock": body = "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 6v6l4 2\"/>"; break;
+        case "bell": body = "<path d=\"M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9\"/><path d=\"M10 21h4\"/>"; break;
+        case "logout": body = "<path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"/><path d=\"M16 17l5-5-5-5\"/><path d=\"M21 12H9\"/>"; break;
+        case "sun": body = "<circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2\"/><path d=\"M12 20v2\"/><path d=\"m4.93 4.93 1.41 1.41\"/><path d=\"m17.66 17.66 1.41 1.41\"/><path d=\"M2 12h2\"/><path d=\"M20 12h2\"/><path d=\"m6.34 17.66-1.41 1.41\"/><path d=\"m19.07 4.93-1.41 1.41\"/>"; break;
+        case "moon": body = "<path d=\"M20.99 12.42A8.5 8.5 0 1 1 11.58 3a6.5 6.5 0 0 0 9.41 9.42z\"/>"; break;
+        default: body = "<circle cx=\"12\" cy=\"12\" r=\"9\"/>"; break;
+    }
+    <svg class="@("pos-svg-icon " + extraClass)" viewBox="0 0 24 24" aria-hidden="true" focusable="false">@Html.Raw(body)</svg>
+}
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewBag.Title</title>
+    <script>
+        (function () {
+            var key = "kishny.pos.theme";
+            var resetKey = "kishny.pos.theme.defaultLight.20260513";
+            var saved = null;
+            try {
+                if (localStorage.getItem(resetKey) !== "true") {
+                    localStorage.setItem(key, "light");
+                    localStorage.setItem(resetKey, "true");
+                }
+                saved = localStorage.getItem(key);
+            } catch (e) { saved = null; }
+            var theme = saved === "dark" || saved === "light" ? saved : "light";
+            document.documentElement.setAttribute("data-pos-theme", theme);
+        })();
+    </script>
     <link href="@Url.Content("~/assets/css/Courses/css/fontawesome-all.min.css")" rel="stylesheet" />
-    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css?v=20260506-analytics")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css?v=20260513-light-default")" rel="stylesheet" />
     <script src="@Url.Content("~/assets/libs/chart-js/Chart.bundle.min.js")"></script>
 </head>
 <body>
@@ -34,7 +69,7 @@
          data-is-admin="@(isAdmin ? "true" : "false")">
         @Html.Partial("_Sidebar")
         <button type="button" class="pos-mobile-nav-toggle" id="posMobileNavToggle" aria-label="فتح القائمة" title="فتح القائمة">
-            <i class="fas fa-bars" aria-hidden="true"></i>
+            @ShellIcon("menu")
         </button>
         <div class="pos-sidebar-backdrop" id="posSidebarBackdrop"></div>
 
@@ -49,18 +84,23 @@
                     <h1 id="posShellTitle">لوحة تشغيل كيشني</h1>
                 </div>
                 <div class="pos-topbar-meta" aria-label="بيانات الجلسة">
-                    <span title="المستخدم الحالي"><i class="fas fa-user" aria-hidden="true"></i>@(posContext != null ? posContext.UserName : "")</span>
-                    <span title="الفرع الحالي"><i class="fas fa-code-branch" aria-hidden="true"></i>@currentBranchName</span>
-                    <span title="الكاش بوكس"><i class="fas fa-wallet" aria-hidden="true"></i>@currentBoxName</span>
-                    <span title="التاريخ والوقت"><i class="fas fa-clock" aria-hidden="true"></i><time id="posTopbarClock">@DateTime.Now.ToString("yyyy/MM/dd HH:mm")</time></span>
+                    <span title="المستخدم الحالي">@ShellIcon("user")@(posContext != null ? posContext.UserName : "")</span>
+                    <span title="الفرع الحالي">@ShellIcon("branch")@currentBranchName</span>
+                    <span title="الكاش بوكس">@ShellIcon("wallet")@currentBoxName</span>
+                    <span title="التاريخ والوقت">@ShellIcon("clock")<time id="posTopbarClock">@DateTime.Now.ToString("yyyy/MM/dd HH:mm")</time></span>
+                    <button type="button" class="pos-theme-toggle" id="posThemeToggle" aria-label="تبديل الوضع" title="تبديل الوضع">
+                        <span class="theme-sun">@ShellIcon("sun")</span>
+                        <span class="theme-moon">@ShellIcon("moon")</span>
+                        <b id="posThemeToggleText">Light</b>
+                    </button>
                     <button type="button" class="pos-notification-button" title="التنبيهات" aria-label="التنبيهات">
-                        <i class="fas fa-bell" aria-hidden="true"></i>
+                        @ShellIcon("bell")
                     </button>
                 </div>
                 @using (Html.BeginForm("Logout", "PosLogin", new { area = "Pos" }, FormMethod.Post, new { @class = "pos-main-logout" }))
                 {
                     @Html.AntiForgeryToken()
-                    <button type="submit"><i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>خروج</span></button>
+                    <button type="submit">@ShellIcon("logout")<span>خروج</span></button>
                 }
             </header>
 
@@ -199,6 +239,8 @@
             var favoritesList = document.getElementById("posFavoritesList");
             var favoritesEmpty = document.getElementById("posFavoritesEmpty");
             var favoritesCount = document.getElementById("posQuickAccessCount");
+            var themeToggle = document.getElementById("posThemeToggle");
+            var themeToggleText = document.getElementById("posThemeToggleText");
             var breadcrumbSection = document.getElementById("posShellBreadcrumbSection");
             var breadcrumbScreen = document.getElementById("posShellBreadcrumbScreen");
             var shellTitle = document.getElementById("posShellTitle");
@@ -207,6 +249,9 @@
             var sectionStorageKey = "kishny.pos.nav.sections." + storageUserKey;
             var collapsedStorageKey = "kishny.pos.nav.collapsed." + storageUserKey;
             var favoritesStorageKey = "kishny.pos.nav.favorites." + storageUserKey;
+            var themeStorageKey = "kishny.pos.theme";
+            var defaultNavIconMarkup = '<svg class="pos-svg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4l3 2"></path></svg>';
+            var pinIconMarkup = '<svg class="pos-svg-icon pos-pin-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 17v5"></path><path d="M5 17h14"></path><path d="m7 7 10 10"></path><path d="M9 7V3h6v4l2 2v2H7V9z"></path></svg>';
 
             function escapeHtml(value) {
                 return String(value === null || value === undefined ? "" : value)
@@ -238,6 +283,69 @@
 
             function displayValue(value) {
                 return displayDate(value);
+            }
+
+            function cssVar(name, fallback) {
+                var source = shell || document.documentElement;
+                var value = window.getComputedStyle(source).getPropertyValue(name);
+                if (!value) { value = window.getComputedStyle(document.documentElement).getPropertyValue(name); }
+                return value ? value.trim() : fallback;
+            }
+
+            function currentTheme() {
+                return document.documentElement.getAttribute("data-pos-theme") === "dark" ? "dark" : "light";
+            }
+
+            function applyThemeToFrame() {
+                if (!frame || !frame.contentDocument || !frame.contentDocument.documentElement) { return; }
+                try {
+                    frame.contentDocument.documentElement.setAttribute("data-pos-theme", currentTheme());
+                } catch (e) { }
+            }
+
+            function applyChartTheme() {
+                if (typeof Chart === "undefined") { return; }
+                var text = cssVar("--kx-text", "#172033");
+                var muted = cssVar("--kx-muted", "#6d7a8c");
+                var grid = cssVar("--kx-chart-grid", "rgba(20,33,61,.10)");
+                var surface = cssVar("--kx-surface", "#ffffff");
+                Chart.defaults.global.defaultFontColor = text;
+                Chart.defaults.global.tooltips.backgroundColor = surface;
+                Chart.defaults.global.tooltips.titleFontColor = text;
+                Chart.defaults.global.tooltips.bodyFontColor = text;
+                Chart.defaults.global.tooltips.borderColor = grid;
+                Chart.defaults.global.tooltips.borderWidth = 1;
+                for (var id in charts) {
+                    if (!charts.hasOwnProperty(id) || !charts[id]) { continue; }
+                    var chart = charts[id];
+                    if (chart.options.legend && chart.options.legend.labels) { chart.options.legend.labels.fontColor = muted; }
+                    if (chart.options.scales) {
+                        ["xAxes", "yAxes"].forEach(function (axisName) {
+                            var axes = chart.options.scales[axisName] || [];
+                            axes.forEach(function (axis) {
+                                axis.ticks = axis.ticks || {};
+                                axis.gridLines = axis.gridLines || {};
+                                axis.ticks.fontColor = muted;
+                                axis.gridLines.color = grid;
+                                axis.gridLines.zeroLineColor = grid;
+                            });
+                        });
+                    }
+                    chart.update();
+                }
+            }
+
+            function applyTheme(theme) {
+                var next = theme === "dark" ? "dark" : "light";
+                document.documentElement.setAttribute("data-pos-theme", next);
+                try { localStorage.setItem(themeStorageKey, next); } catch (e) { }
+                if (themeToggle) {
+                    themeToggle.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
+                    themeToggle.setAttribute("title", next === "dark" ? "الوضع الداكن" : "الوضع الفاتح");
+                }
+                if (themeToggleText) { themeToggleText.textContent = next === "dark" ? "Dark" : "Light"; }
+                applyThemeToFrame();
+                applyChartTheme();
             }
 
             function toDateInput(value) {
@@ -309,6 +417,9 @@
                     return;
                 }
                 if (canvas.parentNode) { canvas.parentNode.removeAttribute("data-empty"); }
+                var palette = [cssVar("--kx-chart-1", "#3867d6"), cssVar("--kx-chart-2", "#e94b6e"), cssVar("--kx-chart-3", "#19a974"), cssVar("--kx-chart-4", "#d99a2b"), cssVar("--kx-chart-5", "#5d6bff"), cssVar("--kx-chart-6", "#22b8cf")];
+                var chartText = cssVar("--kx-muted", "#6d7a8c");
+                var chartGrid = cssVar("--kx-chart-grid", "rgba(20,33,61,.10)");
                 charts[id] = new Chart(canvas.getContext("2d"), {
                     type: type,
                     data: {
@@ -316,15 +427,15 @@
                         datasets: [{
                             label: title || "",
                             data: values,
-                            backgroundColor: ["#2563eb", "#7c3aed", "#f97316", "#14b8a6", "#0ea5e9", "#22c55e"],
-                            borderColor: "#ffffff",
+                            backgroundColor: type === "line" ? palette[0] : palette,
+                            borderColor: type === "line" ? palette[0] : cssVar("--kx-surface", "#ffffff"),
                             borderWidth: type === "line" ? 2 : 1,
                             fill: type === "line" ? false : true
                         }].concat(secondValues ? [{
                             label: secondTitle || "",
                             data: secondValues,
-                            backgroundColor: "#f97316",
-                            borderColor: "#f97316",
+                            backgroundColor: palette[1],
+                            borderColor: palette[1],
                             borderWidth: 2,
                             fill: false
                         }] : [])
@@ -332,10 +443,10 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        legend: { display: type === "doughnut", position: "bottom" },
+                        legend: { display: type === "doughnut", position: "bottom", labels: { fontColor: chartText } },
                         scales: type === "doughnut" ? {} : {
-                            yAxes: [{ ticks: { beginAtZero: true } }],
-                            xAxes: [{ ticks: { autoSkip: false } }]
+                            yAxes: [{ ticks: { beginAtZero: true, fontColor: chartText }, gridLines: { color: chartGrid, zeroLineColor: chartGrid } }],
+                            xAxes: [{ ticks: { autoSkip: false, fontColor: chartText }, gridLines: { color: chartGrid, zeroLineColor: chartGrid } }]
                         }
                     }
                 });
@@ -686,6 +797,7 @@
 
             if (frame) {
                 frame.addEventListener("load", function () {
+                    applyThemeToFrame();
                     hideNavigationLoading();
                 });
                 frame.addEventListener("error", function () {
@@ -705,6 +817,7 @@
 
             function navMeta(link) {
                 if (!link) { return null; }
+                var icon = link.querySelector(".pos-svg-icon");
                 return {
                     id: link.getAttribute("data-nav-id") || link.getAttribute("data-screen-url") || link.href,
                     label: navLabel(link),
@@ -712,7 +825,7 @@
                     text: ((link.getAttribute("data-nav-text") || "") + " " + navLabel(link)).toLowerCase(),
                     url: link.getAttribute("data-screen-url") || "",
                     dashboard: link.hasAttribute("data-dashboard-screen"),
-                    icon: (link.querySelector("i") || {}).className || "fas fa-circle"
+                    iconMarkup: icon ? icon.outerHTML : defaultNavIconMarkup
                 };
             }
 
@@ -773,7 +886,7 @@
                     button.setAttribute("data-favorite-toggle", meta.id);
                     button.setAttribute("aria-label", "تثبيت " + meta.label);
                     button.setAttribute("title", "تثبيت في الوصول السريع");
-                    button.innerHTML = "<i class=\"fas fa-thumbtack\" aria-hidden=\"true\"></i>";
+                    button.innerHTML = pinIconMarkup;
                     link.insertAdjacentElement("afterend", button);
                 }
             }
@@ -809,7 +922,7 @@
                     fav.setAttribute("data-nav-id", match.meta.id);
                     fav.setAttribute("data-nav-section", match.meta.section);
                     fav.setAttribute("title", match.meta.label);
-                    fav.innerHTML = "<i class=\"" + match.meta.icon + "\" aria-hidden=\"true\"></i><span>" + escapeHtml(match.meta.label) + "</span>";
+                    fav.innerHTML = match.meta.iconMarkup + "<span>" + escapeHtml(match.meta.label) + "</span>";
                     favoritesList.appendChild(fav);
                     visible++;
                 }
@@ -907,6 +1020,12 @@
                         filterMenu("");
                         menuSearch.focus();
                     }
+                });
+            }
+            applyTheme(currentTheme());
+            if (themeToggle) {
+                themeToggle.addEventListener("click", function () {
+                    applyTheme(currentTheme() === "dark" ? "light" : "dark");
                 });
             }
             if (topbarClock) {

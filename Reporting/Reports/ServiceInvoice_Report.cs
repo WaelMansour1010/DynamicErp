@@ -2513,7 +2513,7 @@ public class ServiceInvoice_Report : DevExpress.XtraReports.UI.XtraReport
             | DevExpress.XtraPrinting.BorderSide.Right) 
             | DevExpress.XtraPrinting.BorderSide.Bottom)));
             this.xrLabel16.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Total]")});
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Total] + [ItemTaxValue]")});
             this.xrLabel16.Font = new DevExpress.Drawing.DXFont("Arial", 10F);
             this.xrLabel16.LocationFloat = new DevExpress.Utils.PointFloat(693.4684F, 0F);
             this.xrLabel16.Multiline = true;

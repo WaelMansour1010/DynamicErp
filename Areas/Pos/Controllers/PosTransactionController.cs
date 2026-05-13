@@ -116,12 +116,20 @@ namespace MyERP.Areas.Pos.Controllers
             var serviceTypes = new[] { "cash-in", "cash-out", "card", "violations" };
             var stopwatch = Stopwatch.StartNew();
             var primaryServices = serviceTypes.ToDictionary(serviceType => serviceType, serviceType => _repository.GetPrimaryServiceItems(serviceType));
+            var bootstrapItemIds = primaryServices
+                .Where(pair => !string.Equals(pair.Key, "card", StringComparison.OrdinalIgnoreCase))
+                .SelectMany(pair => pair.Value ?? new List<PosServiceOptionDto>())
+                .Select(item => item.Id)
+                .Distinct()
+                .ToList();
+            var commissionRules = _repository.GetCommissionBootstrapData(bootstrapItemIds);
             stopwatch.Stop();
             PosPerformanceLogger.LogQuery("PosTransaction.CommissionBootstrap", "GetPrimaryServiceItems", stopwatch.ElapsedMilliseconds, primaryServices.Sum(x => x.Value != null ? x.Value.Count : 0), context);
             return Json(new
             {
                 success = true,
                 primaryServices = primaryServices,
+                commissionRules = commissionRules,
                 loadedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)
             }, JsonRequestBehavior.AllowGet);
         }
@@ -1056,14 +1064,8 @@ namespace MyERP.Areas.Pos.Controllers
                         request.VisaNumber = string.IsNullOrWhiteSpace(request.VisaNumber) ? cashCustomer.VisaNumber : request.VisaNumber;
                     }
 
-                    var existingCardInvoiceId = _repository.FindKeshniCardInvoiceDuplicateId(request.VisaNumber, request.Transaction_ID);
-                    if (existingCardInvoiceId.HasValue)
-                    {
-                        validationErrors["VisaNumberDuplicate"] = "هذا الكارت تم إصدار فاتورة تفعيل له من قبل. رقم الفاتورة السابقة: " + existingCardInvoiceId.Value.ToString(CultureInfo.InvariantCulture);
-                        LogPosSystemIssue(context, "Save.KycCardInvoiceDuplicate", request, null, "Duplicate Keshni card activation invoice blocked", "Warning", "Validation", BuildSaveDiagnostic("PosTransactionController.Save", request, validationErrors, null));
-                        SetJsonErrorStatus(400);
-                        return Json(Fail("لا يمكن إصدار فاتورة أخرى لنفس كارت كيشني", "Keshni card activation invoice already exists.", validationErrors));
-                    }
+                    // KYC/card uniqueness is validated during KYC activation. Do not block invoice save here;
+                    // production schemas differ and this diagnostic check must not stop card invoices.
                 }
                 else
                 {
@@ -2323,6 +2325,11 @@ namespace MyERP.Areas.Pos.Controllers
         private static string FriendlySqlKycMessage(SqlException ex)
         {
             var message = ex == null ? string.Empty : ex.Message;
+            if (message.IndexOf("Invalid column name", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "يوجد اختلاف في تحديث قاعدة البيانات أثناء حفظ بيانات الكارت: " + SafeSqlMessageForDisplay(message);
+            }
+
             if (message.IndexOf("هذا الكارت/التوكن تم تفعيله من قبل", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return "هذا الكارت/التوكن تم تفعيله من قبل ولا يمكن استخدامه مرة أخرى.";
@@ -2386,7 +2393,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return "تعذر حفظ بيانات الكارت بسبب تكرار بيانات مسجلة من قبل.";
             }
 
-            return "حدث خطأ من قاعدة البيانات أثناء حفظ بيانات الكارت";
+            return "حدث خطأ من قاعدة البيانات أثناء حفظ بيانات الكارت: " + SafeSqlMessageForDisplay(message);
         }
 
         private static bool IsKeshniActivationValidationSqlError(SqlException ex)
@@ -2400,6 +2407,11 @@ namespace MyERP.Areas.Pos.Controllers
         private static string FriendlySqlSaveMessage(SqlException ex)
         {
             var message = ex == null ? string.Empty : ex.Message;
+            if (message.IndexOf("Invalid column name", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "يوجد اختلاف في تحديث قاعدة البيانات أثناء حفظ الفاتورة: " + SafeSqlMessageForDisplay(message);
+            }
+
             if (message.IndexOf("هذا الكارت غير متاح بالمخزون", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return "هذا الكارت غير متاح بالمخزون أو تم صرفه/استخدامه من قبل.";
@@ -2441,7 +2453,26 @@ namespace MyERP.Areas.Pos.Controllers
                 return "فشل تنفيذ الحفظ بسبب صلاحيات غير كافية على قاعدة البيانات.";
             }
 
-            return "حدث خطأ من قاعدة البيانات أثناء الحفظ";
+            return "حدث خطأ من قاعدة البيانات أثناء الحفظ: " + SafeSqlMessageForDisplay(message);
+        }
+
+        private static string SafeSqlMessageForDisplay(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return "تم تسجيل التفاصيل الفنية للدعم.";
+            }
+
+            var cleaned = message.Replace("\r", " ").Replace("\n", " ").Trim();
+            while (cleaned.Contains("  "))
+            {
+                cleaned = cleaned.Replace("  ", " ");
+            }
+
+            const int maxLength = 450;
+            return cleaned.Length <= maxLength
+                ? cleaned
+                : cleaned.Substring(0, maxLength) + "...";
         }
 
         private static bool HasSqlError(SqlException exception, int errorNumber)
@@ -2532,6 +2563,46 @@ namespace MyERP.Areas.Pos.Controllers
         private static bool IsKeshniCardTransaction(string transactionType)
         {
             return string.Equals(transactionType, "card", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string BuildKeshniCardInvoiceDuplicateMessage(PosKeshniCardInvoiceDuplicateDto duplicate)
+        {
+            if (duplicate == null)
+            {
+                return "هذا الكارت تم إصدار فاتورة تفعيل له من قبل.";
+            }
+
+            var invoiceNumber = string.IsNullOrWhiteSpace(duplicate.NoteSerial1)
+                ? duplicate.Transaction_ID.ToString(CultureInfo.InvariantCulture)
+                : duplicate.NoteSerial1;
+            var dateText = duplicate.TransactionDate.HasValue
+                ? duplicate.TransactionDate.Value.ToString("yyyy/MM/dd HH:mm", CultureInfo.InvariantCulture)
+                : "غير محدد";
+            var parts = new List<string>
+            {
+                "هذا الكارت تم إصدار فاتورة تفعيل له من قبل.",
+                "رقم الفاتورة: " + invoiceNumber,
+                "رقم الحركة: " + duplicate.Transaction_ID.ToString(CultureInfo.InvariantCulture),
+                "التاريخ: " + dateText
+            };
+
+            if (!string.IsNullOrWhiteSpace(duplicate.BranchName))
+            {
+                parts.Add("الفرع: " + duplicate.BranchName);
+            }
+
+            if (!string.IsNullOrWhiteSpace(duplicate.UserName))
+            {
+                parts.Add("المستخدم: " + duplicate.UserName);
+            }
+
+            if (!string.IsNullOrWhiteSpace(duplicate.CustomerName))
+            {
+                parts.Add("العميل: " + duplicate.CustomerName);
+            }
+
+            parts.Add("القيمة: " + duplicate.NetValue.ToString("0.##", CultureInfo.InvariantCulture));
+            return string.Join(" - ", parts);
         }
 
         private static bool IsValidEgyptianMobile(string mobile)

@@ -716,7 +716,7 @@ public class ServiceInvoice2_Report : DevExpress.XtraReports.UI.XtraReport
             // 
             this.xrTableCell6.Dpi = 254F;
             this.xrTableCell6.ExpressionBindings.AddRange(new DevExpress.XtraReports.UI.ExpressionBinding[] {
-            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Total]")});
+            new DevExpress.XtraReports.UI.ExpressionBinding("BeforePrint", "Text", "[Total] + [ItemTaxValue]")});
             this.xrTableCell6.Multiline = true;
             this.xrTableCell6.Name = "xrTableCell6";
             this.xrTableCell6.Padding = new DevExpress.XtraPrinting.PaddingInfo(5, 5, 0, 0, 254F);

@@ -1099,27 +1099,6 @@
             && !commissionCalculationPending;
     }
 
-    function uxSaveBlockingReason() {
-        var mode = byId("transactionType").value;
-        if (uxIsBusy()) { return "يوجد طلب جاري، برجاء الانتظار لحظات."; }
-        if (!uxIsServiceReady()) { return "اختر الخدمة أولاً."; }
-        if (!uxIsValueReady()) { return mode === "cash-out" ? "راجع مبلغ الكاش أوت وحساب العمولة." : "راجع مبلغ العملية."; }
-        if (!uxIsPaymentReady()) { return "راجع بيانات الدفع والخزنة."; }
-        if (!uxHasRequiredCustomerData()) {
-            if (!byId("cashCustomerPhone").value.trim()) { return "رقم التليفون مطلوب."; }
-            if (!byId("cashCustomerName").value.trim()) { return "اسم العميل مطلوب."; }
-            if (mode !== "card" && !byId("ipn").value.trim()) { return "ID مطلوب."; }
-            if (isImportantIpnMode(mode) && !byId("manualNo").value.trim()) { return "IPN مطلوب في كاش إن فقط."; }
-            if (mode === "cash-out" && !byId("tetNumPoket").value.trim()) { return "رقم المحفظة مطلوب للكاش أوت."; }
-            if (mode === "violations" && !byId("violationWalletNo").value.trim()) { return "رقم المحفظة مطلوب للمخالفات."; }
-            return "راجع بيانات العميل المطلوبة.";
-        }
-        if (!uxContextAllowsSave()) { return "ليست لديك صلاحية حفظ هذه العملية أو الفاتورة للعرض فقط."; }
-        if (!uxHasCurrentCommissionResult()) { return "جاري حساب العمولة، اضغط حفظ مرة أخرى بعد لحظات."; }
-        if (commissionCalculationPending) { return "جاري حساب القيمة، برجاء الانتظار لحظات."; }
-        return "أكمل البيانات أولاً.";
-    }
-
     function uxResolveStep() {
         if (!uxIsServiceReady()) { return "service"; }
         if (!uxIsValueReady()) { return "value"; }
@@ -2472,8 +2451,8 @@
     function saveTransaction(event) {
         event.preventDefault();
         var isConfirmingSave = pendingSaveConfirmation === true;
-        if (saveRequestInFlight || uxIsBusy()) {
-            uxShowGuide(uxSaveBlockingReason());
+        if (saveRequestInFlight || uxIsBusy() || (!isConfirmingSave && uxDebounced())) {
+            uxShowGuide();
             return;
         }
         calculateTotals();
@@ -2482,7 +2461,7 @@
         if (!ensureCommissionReadyForSave()) { return; }
         uxApplyFlow();
         if (!uxIsSaveReady()) {
-            uxShowGuide(uxSaveBlockingReason());
+            uxShowGuide();
             uxFocusStep(uxCurrentStep);
             return;
         }
@@ -3764,26 +3743,13 @@
 
     function dateForInput(value) {
         if (!value) { return ""; }
-        if (typeof value === "string") {
-            var dateOnly = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
-            if (dateOnly) { return dateOnly[1] + "-" + dateOnly[2] + "-" + dateOnly[3]; }
-
-            var dayFirst = value.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-            if (dayFirst) {
-                var first = parseInt(dayFirst[1], 10);
-                var second = parseInt(dayFirst[2], 10);
-                var monthPart = second > 12 ? first : second;
-                var dayPart = second > 12 ? second : first;
-                return dayFirst[3] + "-" + ("0" + monthPart).slice(-2) + "-" + ("0" + dayPart).slice(-2);
-            }
-        }
         if (typeof value === "string" && value.indexOf("/Date(") === 0) {
             var ticks = parseInt(value.replace(/[^0-9-]/g, ""), 10);
             if (!isNaN(ticks)) { value = ticks; }
         }
         var parsed = new Date(value);
         if (isNaN(parsed.getTime())) { return ""; }
-        return localIsoDate(parsed);
+        return parsed.toISOString().substring(0, 10);
     }
 
     function dateTimeForDisplay(value) {
@@ -3860,12 +3826,10 @@
 
     function addYears(dateText, years) {
         if (!dateText) { return ""; }
-        var match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateText);
-        if (!match) { return ""; }
-        var parsed = new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, parseInt(match[3], 10));
+        var parsed = new Date(dateText + "T00:00:00");
         if (isNaN(parsed.getTime())) { return ""; }
         parsed.setFullYear(parsed.getFullYear() + years);
-        return localIsoDate(parsed);
+        return parsed.toISOString().substring(0, 10);
     }
 
     function kycDateValidationMessage(id, label) {
@@ -4490,7 +4454,7 @@
 
         var optionRange = matchingRange(readRuleList("optionRanges"), amount, null);
         var optionRangePrice = optionRange ? numericField(optionRange, "price") : 0;
-        if (optionRangePrice >= 1) {
+        if (optionRangePrice > 0) {
             return buildLocalCommissionResult(request, optionRangePrice, request.Vatyo || 14, "local tblOptionsCash", 0, 0, 0, true, 0);
         }
 
@@ -4503,21 +4467,6 @@
         var cashInMin = hasSalesCommissionRule(itemRule) ? numericField(itemRule, "minVisa") : numericField(systemOptions, "minVisa");
         var cashInMax = hasSalesCommissionRule(itemRule) ? numericField(itemRule, "maxVisa") : numericField(systemOptions, "maxVisa");
         return buildLocalCommissionResult(request, applyMinMax(amount * cashInPercent / 100, cashInMin, cashInMax), request.Vatyo || 14, "local cash-in commission", cashInPercent, cashInMin, cashInMax, true, 0);
-    }
-
-    function isUsableLocalCommission(request, result) {
-        if (!request || !result) { return false; }
-        var mode = (request.ServiceType || "").toLowerCase();
-        if (mode === "cash-in") {
-            var amount = parseFloat(request.RechargeValue) || 0;
-            var fee = parseFloat(result.CommissionValue) || 0;
-            var total = parseFloat(result.TotalValue) || 0;
-            return amount > 0 && fee > 0 && total > amount;
-        }
-        if (mode === "cash-out") {
-            return (parseFloat(result.TotalValue) || 0) > 0;
-        }
-        return false;
     }
 
     function applyCommissionResult(data) {
@@ -4586,7 +4535,7 @@
         }
 
         var localCommission = calculateLocalCommission(request);
-        if (isUsableLocalCommission(request, localCommission)) {
+        if (localCommission) {
             commissionCache[key] = localCommission;
             posDebugLog("commissionResult.local", localCommission);
             applyCommissionResult(localCommission);

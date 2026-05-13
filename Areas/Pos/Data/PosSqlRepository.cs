@@ -532,6 +532,173 @@ FROM dbo.TblOptions;";
             return options;
         }
 
+        public PosCommissionBootstrapDto GetCommissionBootstrapData(IEnumerable<int> itemIds)
+        {
+            var bootstrap = new PosCommissionBootstrapDto
+            {
+                SystemOptions = GetPosSystemOptions(),
+                OptionRanges = GetOptionCommissionRanges(),
+                ItemRanges = GetItemCommissionRanges(itemIds),
+                ItemCommissions = GetItemCommissionDetails(itemIds)
+            };
+
+            return bootstrap;
+        }
+
+        private IList<PosCommissionRangeDto> GetOptionCommissionRanges()
+        {
+            var ranges = new List<PosCommissionRangeDto>();
+            const string sql = @"
+SELECT
+    CAST(ISNULL(FromPrice, 0) AS DECIMAL(18, 4)) AS FromPrice,
+    CAST(ISNULL(ToPrice, 0) AS DECIMAL(18, 4)) AS ToPrice,
+    CAST(ISNULL(Price, 0) AS DECIMAL(18, 4)) AS Price
+FROM dbo.tblOptionsCash
+ORDER BY FromPrice, ToPrice;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        ranges.Add(new PosCommissionRangeDto
+                        {
+                            FromPrice = ReadDecimal(reader, "FromPrice").GetValueOrDefault(),
+                            ToPrice = ReadDecimal(reader, "ToPrice").GetValueOrDefault(),
+                            Price = ReadDecimal(reader, "Price").GetValueOrDefault()
+                        });
+                    }
+                }
+            }
+
+            return ranges;
+        }
+
+        private IList<PosCommissionRangeDto> GetItemCommissionRanges(IEnumerable<int> itemIds)
+        {
+            var ranges = new List<PosCommissionRangeDto>();
+            var ids = NormalizeIdList(itemIds);
+            if (ids.Count == 0)
+            {
+                return ranges;
+            }
+
+            var sql = @"
+SELECT
+    ItemID,
+    CAST(ISNULL(FromPrice, 0) AS DECIMAL(18, 4)) AS FromPrice,
+    CAST(ISNULL(ToPrice, 0) AS DECIMAL(18, 4)) AS ToPrice,
+    CAST(ISNULL(Price, 0) AS DECIMAL(18, 4)) AS Price,
+    CAST(ISNULL(CashBack, 0) AS DECIMAL(18, 4)) AS CashBack,
+    CAST(ISNULL(Cost, 0) AS DECIMAL(18, 4)) AS Cost
+FROM dbo.tblItemsCash
+WHERE ItemID IN (" + BuildInParameterList(ids.Count, "itemId") + @")
+ORDER BY ItemID, FromPrice, ToPrice;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                AddInParameters(command, ids, "itemId");
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        ranges.Add(new PosCommissionRangeDto
+                        {
+                            ItemID = ReadInt(reader, "ItemID"),
+                            FromPrice = ReadDecimal(reader, "FromPrice").GetValueOrDefault(),
+                            ToPrice = ReadDecimal(reader, "ToPrice").GetValueOrDefault(),
+                            Price = ReadDecimal(reader, "Price").GetValueOrDefault(),
+                            CashBack = ReadDecimal(reader, "CashBack").GetValueOrDefault(),
+                            Cost = ReadDecimal(reader, "Cost").GetValueOrDefault()
+                        });
+                    }
+                }
+            }
+
+            return ranges;
+        }
+
+        private IList<PosItemCommissionDto> GetItemCommissionDetails(IEnumerable<int> itemIds)
+        {
+            var items = new List<PosItemCommissionDto>();
+            var ids = NormalizeIdList(itemIds);
+            if (ids.Count == 0)
+            {
+                return items;
+            }
+
+            var sql = @"
+SELECT
+    ItemID,
+    PercentVisa,
+    MinVisa,
+    MaxVisa,
+    PercentVisaPur,
+    MinVisaPur,
+    MaxVisaPur
+FROM dbo.TblItems
+WHERE ItemID IN (" + BuildInParameterList(ids.Count, "itemId") + @")
+ORDER BY ItemID;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                AddInParameters(command, ids, "itemId");
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        items.Add(new PosItemCommissionDto
+                        {
+                            ItemID = ReadInt(reader, "ItemID").GetValueOrDefault(),
+                            PercentVisa = ReadDecimal(reader, "PercentVisa"),
+                            MinVisa = ReadDecimal(reader, "MinVisa"),
+                            MaxVisa = ReadDecimal(reader, "MaxVisa"),
+                            PercentVisaPur = ReadDecimal(reader, "PercentVisaPur"),
+                            MinVisaPur = ReadDecimal(reader, "MinVisaPur"),
+                            MaxVisaPur = ReadDecimal(reader, "MaxVisaPur")
+                        });
+                    }
+                }
+            }
+
+            return items;
+        }
+
+        private static IList<int> NormalizeIdList(IEnumerable<int> itemIds)
+        {
+            return (itemIds ?? Enumerable.Empty<int>())
+                .Where(id => id > 0)
+                .Distinct()
+                .Take(500)
+                .ToList();
+        }
+
+        private static string BuildInParameterList(int count, string prefix)
+        {
+            var names = new List<string>();
+            for (var i = 0; i < count; i++)
+            {
+                names.Add("@" + prefix + i.ToString(CultureInfo.InvariantCulture));
+            }
+
+            return string.Join(",", names);
+        }
+
+        private static void AddInParameters(SqlCommand command, IList<int> values, string prefix)
+        {
+            for (var i = 0; i < values.Count; i++)
+            {
+                command.Parameters.Add("@" + prefix + i.ToString(CultureInfo.InvariantCulture), SqlDbType.Int).Value = values[i];
+            }
+        }
+
         public PosCommissionResult CalculateCommission(PosCommissionRequest request)
         {
             if (request == null)
@@ -2402,6 +2569,12 @@ ORDER BY t.Transaction_ID DESC;";
 
         public int? FindKeshniCardInvoiceDuplicateId(string cardNo, int? excludeTransactionId = null)
         {
+            var duplicate = FindKeshniCardInvoiceDuplicate(cardNo, excludeTransactionId);
+            return duplicate == null ? (int?)null : duplicate.Transaction_ID;
+        }
+
+        public PosKeshniCardInvoiceDuplicateDto FindKeshniCardInvoiceDuplicate(string cardNo, int? excludeTransactionId = null)
+        {
             if (string.IsNullOrWhiteSpace(cardNo))
             {
                 return null;
@@ -2410,11 +2583,17 @@ ORDER BY t.Transaction_ID DESC;";
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
-                return FindKeshniCardInvoiceDuplicateId(connection, cardNo, excludeTransactionId);
+                return FindKeshniCardInvoiceDuplicate(connection, cardNo, excludeTransactionId);
             }
         }
 
         private static int? FindKeshniCardInvoiceDuplicateId(SqlConnection connection, string cardNo, int? excludeTransactionId = null)
+        {
+            var duplicate = FindKeshniCardInvoiceDuplicate(connection, cardNo, excludeTransactionId);
+            return duplicate == null ? (int?)null : duplicate.Transaction_ID;
+        }
+
+        private static PosKeshniCardInvoiceDuplicateDto FindKeshniCardInvoiceDuplicate(SqlConnection connection, string cardNo, int? excludeTransactionId = null)
         {
             if (connection == null)
             {
@@ -2427,8 +2606,24 @@ ORDER BY t.Transaction_ID DESC;";
             }
 
             const string sql = @"
-SELECT TOP (1) t.Transaction_ID
+SELECT TOP (1)
+    t.Transaction_ID,
+    t.NoteSerial1,
+    t.Transaction_Date,
+    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), CONVERT(NVARCHAR(50), t.BranchId)) AS BranchName,
+    COALESCE(NULLIF(s.StoreName, N''), NULLIF(s.StoreNamee, N''), CONVERT(NVARCHAR(50), t.StoreID)) AS StoreName,
+    COALESCE(NULLIF(box.BoxName, N''), NULLIF(box.BoxNameE, N''), CONVERT(NVARCHAR(50), t.BoxID)) AS BoxName,
+    u.UserName,
+    t.CashCustomerName,
+    t.CashCustomerPhone,
+    t.VisaNumber,
+    CAST(ISNULL(t.NetValue, ISNULL(t.Transaction_NetValue, 0)) AS DECIMAL(18, 4)) AS NetValue,
+    CAST(ISNULL(t.PayedValue, 0) AS DECIMAL(18, 4)) AS PayedValue
 FROM dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
+LEFT JOIN dbo.TblBranchesData b ON b.branch_id = t.BranchId
+LEFT JOIN dbo.TblStore s ON s.StoreID = t.StoreID
+LEFT JOIN dbo.TblBoxesData box ON box.BoxID = t.BoxID
+LEFT JOIN dbo.TblUsers u ON u.UserID = t.UserID
 WHERE t.Transaction_Type = 21
   AND ISNULL(t.IsCancelled, 0) = 0
   AND NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') = @cardNo
@@ -2439,8 +2634,29 @@ ORDER BY t.Transaction_ID DESC;";
             {
                 AddString(command, "@cardNo", SqlDbType.NVarChar, 255, cardNo.Trim());
                 Add(command, "@excludeTransactionId", SqlDbType.Int, excludeTransactionId);
-                var value = command.ExecuteScalar();
-                return value == null || value == DBNull.Value ? (int?)null : Convert.ToInt32(value, CultureInfo.InvariantCulture);
+                using (var reader = command.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        return null;
+                    }
+
+                    return new PosKeshniCardInvoiceDuplicateDto
+                    {
+                        Transaction_ID = ReadInt(reader, "Transaction_ID").GetValueOrDefault(),
+                        NoteSerial1 = ReadString(reader, "NoteSerial1"),
+                        TransactionDate = ReadDateTime(reader, "Transaction_Date"),
+                        BranchName = FixArabicMojibakeForDisplay(ReadString(reader, "BranchName")),
+                        StoreName = FixArabicMojibakeForDisplay(ReadString(reader, "StoreName")),
+                        BoxName = FixArabicMojibakeForDisplay(ReadString(reader, "BoxName")),
+                        UserName = ReadString(reader, "UserName"),
+                        CustomerName = ReadString(reader, "CashCustomerName"),
+                        CustomerPhone = ReadString(reader, "CashCustomerPhone"),
+                        VisaNumber = ReadString(reader, "VisaNumber"),
+                        NetValue = ReadDecimal(reader, "NetValue").GetValueOrDefault(),
+                        PayedValue = ReadDecimal(reader, "PayedValue").GetValueOrDefault()
+                    };
+                }
             }
         }
 
@@ -4688,11 +4904,33 @@ SELECT
                 }
             }
 
-            var duplicateTransactionId = FindKeshniCardInvoiceDuplicateId(connection, cardToken, request.Transaction_ID);
-            if (duplicateTransactionId.HasValue)
+            // Keep the per-card app lock to prevent double-click/race saves. Duplicate diagnostics are
+            // intentionally not blocking here because customer schemas differ; KYC activation guards card reuse.
+        }
+
+        private static string BuildKeshniCardInvoiceDuplicateMessage(PosKeshniCardInvoiceDuplicateDto duplicate)
+        {
+            if (duplicate == null)
             {
-                throw new InvalidOperationException("هذا الكارت تم إصدار فاتورة تفعيل له من قبل. رقم الفاتورة السابقة: " + duplicateTransactionId.Value.ToString(CultureInfo.InvariantCulture));
+                return "هذا الكارت تم إصدار فاتورة تفعيل له من قبل.";
             }
+
+            var invoiceNumber = string.IsNullOrWhiteSpace(duplicate.NoteSerial1)
+                ? duplicate.Transaction_ID.ToString(CultureInfo.InvariantCulture)
+                : duplicate.NoteSerial1;
+            var dateText = duplicate.TransactionDate.HasValue
+                ? duplicate.TransactionDate.Value.ToString("yyyy/MM/dd HH:mm", CultureInfo.InvariantCulture)
+                : "غير محدد";
+            return "هذا الكارت تم إصدار فاتورة تفعيل له من قبل. رقم الفاتورة: "
+                + invoiceNumber
+                + " - رقم الحركة: "
+                + duplicate.Transaction_ID.ToString(CultureInfo.InvariantCulture)
+                + " - التاريخ: "
+                + dateText
+                + (string.IsNullOrWhiteSpace(duplicate.BranchName) ? string.Empty : " - الفرع: " + duplicate.BranchName)
+                + (string.IsNullOrWhiteSpace(duplicate.UserName) ? string.Empty : " - المستخدم: " + duplicate.UserName)
+                + " - القيمة: "
+                + duplicate.NetValue.ToString("0.##", CultureInfo.InvariantCulture);
         }
 
         private static bool IsDeadlock(SqlException exception)

@@ -17,7 +17,22 @@
 <head>
 <meta charset="utf-8" />
 <title>@ViewBag.Title</title>
-<link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+<script>
+    (function () {
+        var key = "kishny.pos.theme";
+        var resetKey = "kishny.pos.theme.defaultLight.20260513";
+        var saved = null;
+        try {
+            if (localStorage.getItem(resetKey) !== "true") {
+                localStorage.setItem(key, "light");
+                localStorage.setItem(resetKey, "true");
+            }
+            saved = localStorage.getItem(key);
+        } catch (e) { saved = null; }
+        document.documentElement.setAttribute("data-pos-theme", saved === "dark" ? "dark" : "light");
+    })();
+</script>
+<link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css?v=20260513-light-default")" rel="stylesheet" />
 </head>
 <body>
 
@@ -38,6 +53,11 @@
                 <h1>كيشني - تسجيل دخول نقطة البيع</h1>
                 <p>أدخل بيانات مستخدم نقطة البيع للمتابعة</p>
             </div>
+            <button type="button" class="pos-theme-toggle login-theme-toggle" id="posLoginThemeToggle" aria-label="تبديل الوضع" title="تبديل الوضع">
+                <span class="theme-sun" aria-hidden="true"></span>
+                <span class="theme-moon" aria-hidden="true"></span>
+                <b id="posLoginThemeText">Light</b>
+            </button>
         </div>
 
         <section class="pos-panel login-panel">
@@ -61,5 +81,29 @@
         </section>
     </div>
 </div>
+<script>
+    (function () {
+        var key = "kishny.pos.theme";
+        var toggle = document.getElementById("posLoginThemeToggle");
+        var label = document.getElementById("posLoginThemeText");
+        function theme() { return document.documentElement.getAttribute("data-pos-theme") === "dark" ? "dark" : "light"; }
+        function apply(next) {
+            next = next === "dark" ? "dark" : "light";
+            document.documentElement.setAttribute("data-pos-theme", next);
+            try { localStorage.setItem(key, next); } catch (e) { }
+            if (toggle) {
+                toggle.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
+                toggle.setAttribute("title", next === "dark" ? "الوضع الداكن" : "الوضع الفاتح");
+            }
+            if (label) { label.textContent = next === "dark" ? "Dark" : "Light"; }
+        }
+        apply(theme());
+        if (toggle) {
+            toggle.addEventListener("click", function () {
+                apply(theme() === "dark" ? "light" : "dark");
+            });
+        }
+    })();
+</script>
 </body>
 </html>

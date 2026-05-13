@@ -284,6 +284,31 @@ namespace MyERP.Areas.Pos.Models
         public decimal? MaxVisaPur { get; set; }
     }
 
+    public class PosCommissionRangeDto
+    {
+        public int? ItemID { get; set; }
+        public decimal FromPrice { get; set; }
+        public decimal ToPrice { get; set; }
+        public decimal Price { get; set; }
+        public decimal CashBack { get; set; }
+        public decimal Cost { get; set; }
+    }
+
+    public class PosCommissionBootstrapDto
+    {
+        public PosSystemOptionsDto SystemOptions { get; set; }
+        public IList<PosCommissionRangeDto> OptionRanges { get; set; }
+        public IList<PosCommissionRangeDto> ItemRanges { get; set; }
+        public IList<PosItemCommissionDto> ItemCommissions { get; set; }
+
+        public PosCommissionBootstrapDto()
+        {
+            OptionRanges = new List<PosCommissionRangeDto>();
+            ItemRanges = new List<PosCommissionRangeDto>();
+            ItemCommissions = new List<PosItemCommissionDto>();
+        }
+    }
+
     public class PosStoreDto
     {
         public int StoreID { get; set; }
@@ -582,6 +607,22 @@ namespace MyERP.Areas.Pos.Models
         public bool HasExcelImportWarning { get; set; }
         public string ExcelImportWarningMessage { get; set; }
         public bool IsCancelled { get; set; }
+    }
+
+    public class PosKeshniCardInvoiceDuplicateDto
+    {
+        public int Transaction_ID { get; set; }
+        public string NoteSerial1 { get; set; }
+        public DateTime? TransactionDate { get; set; }
+        public string BranchName { get; set; }
+        public string StoreName { get; set; }
+        public string BoxName { get; set; }
+        public string UserName { get; set; }
+        public string CustomerName { get; set; }
+        public string CustomerPhone { get; set; }
+        public string VisaNumber { get; set; }
+        public decimal NetValue { get; set; }
+        public decimal PayedValue { get; set; }
     }
 
     public class PosCancelInvoiceRequest
