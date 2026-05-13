@@ -5580,3 +5580,644 @@ button.kyc-only.is-visible { display: inline-flex !important; }
         display: inline-flex;
     }
 }
+
+/* Unified Kishny Banking POS visual system. UI only; overrides legacy color drift. */
+.pos-page,
+.pos-main-shell,
+.voucher-pos-page,
+.pos-login-page {
+    --kx-primary: #14213d;
+    --kx-primary-hover: #1f315d;
+    --kx-primary-soft: #eef3ff;
+    --kx-primary-softer: #f6f8ff;
+    --kx-accent: #e94b6e;
+    --kx-accent-soft: #fff0f4;
+    --kx-success: #2f7d57;
+    --kx-success-soft: #edf7f2;
+    --kx-danger: #b4233a;
+    --kx-danger-soft: #fff1f3;
+    --kx-warning: #b87918;
+    --kx-warning-soft: #fff8e8;
+    --kx-bg: #f5f7fa;
+    --kx-surface: #ffffff;
+    --kx-surface-soft: #f9fbfd;
+    --kx-border: #dde5ef;
+    --kx-border-strong: #c7d2e2;
+    --kx-text: #172033;
+    --kx-muted: #6d7a8c;
+    --kx-shadow: 0 10px 28px rgba(20, 33, 61, .07);
+    --kx-shadow-soft: 0 6px 18px rgba(20, 33, 61, .045);
+    --kx-radius: 10px;
+    --kx-radius-sm: 8px;
+    --kx-control-h: 42px;
+    --primary: var(--kx-primary);
+    --primary-600: var(--kx-primary-hover);
+    --secondary: var(--kx-muted);
+    --success: var(--kx-success);
+    --danger: var(--kx-danger);
+    --surface: var(--kx-surface);
+    --page-bg: var(--kx-bg);
+    --border: var(--kx-border);
+    --text: var(--kx-text);
+    --muted: var(--kx-muted);
+    --brand-green: var(--kx-primary);
+    --brand-purple: var(--kx-primary);
+    --brand-rose: var(--kx-accent);
+    --mode-color: var(--kx-primary);
+    background: var(--kx-bg);
+    color: var(--kx-text);
+    font-family: "Cairo", "Tajawal", "Segoe UI", "Tahoma", "Arial", sans-serif;
+}
+
+.pos-main-shell {
+    --pos-nav-surface: var(--kx-primary);
+    --pos-nav-ink: #eef3ff;
+    --pos-nav-muted: #aab7cf;
+    --pos-nav-line: rgba(255, 255, 255, .10);
+    --pos-nav-accent: var(--kx-accent);
+    --pos-nav-accent-strong: #ffffff;
+    --pos-nav-gold: #e6b65c;
+    background: var(--kx-bg);
+    grid-template-columns: 318px minmax(0, 1fr);
+}
+
+.pos-main-shell.is-sidebar-collapsed {
+    grid-template-columns: 92px minmax(0, 1fr);
+}
+
+.pos-main-sidebar {
+    background: var(--kx-primary);
+    border-left: 0;
+    box-shadow: -14px 0 32px rgba(20, 33, 61, .20);
+    color: #eef3ff;
+    gap: 12px;
+    padding: 14px 13px;
+}
+
+.pos-main-logo {
+    background: rgba(255, 255, 255, .07);
+    border: 1px solid rgba(255, 255, 255, .11);
+    border-radius: var(--kx-radius);
+    box-shadow: none;
+}
+
+.pos-sidebar-collapse,
+.pos-mobile-nav-toggle {
+    background: rgba(255, 255, 255, .09);
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: var(--kx-radius-sm);
+    color: #fff;
+}
+
+.pos-sidebar-collapse:hover,
+.pos-mobile-nav-toggle:hover {
+    background: rgba(255, 255, 255, .15);
+}
+
+.pos-sidebar-user {
+    background: rgba(255, 255, 255, .08);
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: var(--kx-radius);
+    color: #fff;
+}
+
+.pos-sidebar-user .user-avatar,
+.pos-nav-section-toggle i:first-child,
+.pos-main-nav .pos-nav-link i,
+.pos-favorite-link i {
+    align-items: center;
+    background: rgba(255, 255, 255, .09);
+    border: 1px solid rgba(255, 255, 255, .10);
+    border-radius: var(--kx-radius-sm);
+    color: #dbe7ff;
+    display: inline-flex;
+    flex: 0 0 32px;
+    height: 32px;
+    justify-content: center;
+    width: 32px;
+}
+
+.pos-sidebar-user small,
+.pos-nav-section-toggle small,
+.pos-nav-empty,
+.pos-shell-breadcrumb,
+.pos-card-heading span,
+.panel-heading span,
+.report-card small {
+    color: var(--kx-muted);
+}
+
+.pos-main-sidebar .pos-sidebar-user small,
+.pos-main-sidebar .pos-nav-section-toggle small,
+.pos-main-sidebar .pos-nav-empty {
+    color: #aab7cf;
+}
+
+.pos-sidebar-search {
+    background: rgba(255, 255, 255, .08);
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: var(--kx-radius);
+    min-height: var(--kx-control-h);
+}
+
+.pos-sidebar-search input {
+    color: #ffffff;
+}
+
+.pos-sidebar-search input::placeholder {
+    color: #aab7cf;
+}
+
+.pos-sidebar-search i,
+.pos-sidebar-search button {
+    color: #cbd7ee;
+}
+
+.pos-nav-quick-access {
+    background: rgba(255, 255, 255, .055);
+    border: 1px solid rgba(255, 255, 255, .10);
+    border-radius: var(--kx-radius);
+}
+
+.pos-nav-quick-heading {
+    color: #eef3ff;
+}
+
+.pos-nav-quick-heading small {
+    background: rgba(233, 75, 110, .16);
+    color: #ffd4dd;
+}
+
+.pos-nav-empty {
+    border-color: rgba(255, 255, 255, .14);
+}
+
+.pos-nav-section {
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+}
+
+.pos-nav-section-toggle {
+    border-radius: var(--kx-radius);
+    color: #edf3ff;
+    min-height: 48px;
+    padding: 8px 9px;
+}
+
+.pos-nav-section-toggle:hover,
+.pos-nav-section.has-active > .pos-nav-section-toggle {
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+}
+
+.pos-nav-section.has-active > .pos-nav-section-toggle i:first-child {
+    background: rgba(233, 75, 110, .18);
+    border-color: rgba(233, 75, 110, .28);
+    color: #ffd4dd;
+}
+
+.nav-chevron {
+    color: #91a1bf;
+}
+
+.pos-main-nav .pos-nav-link,
+.pos-favorite-link {
+    border: 1px solid transparent;
+    border-radius: var(--kx-radius-sm);
+    border-right: 3px solid transparent;
+    color: #dce6fa;
+    font-size: 13px;
+    font-weight: 800;
+    min-height: 42px;
+    padding: 7px 9px 7px 34px;
+}
+
+.pos-main-nav .pos-nav-link::before {
+    background: rgba(255, 255, 255, .20);
+}
+
+.pos-main-nav .pos-nav-link:hover,
+.pos-favorite-link:hover {
+    background: rgba(255, 255, 255, .075);
+    border-color: rgba(255, 255, 255, .09);
+    color: #ffffff;
+    transform: translateX(-1px);
+}
+
+.pos-main-nav .pos-nav-link.active,
+.pos-favorite-link.active {
+    background: rgba(238, 243, 255, .12);
+    border-color: rgba(255, 255, 255, .12);
+    border-right-color: var(--kx-accent);
+    box-shadow: inset -3px 0 0 var(--kx-accent);
+    color: #ffffff;
+}
+
+.pos-main-nav .pos-nav-link.active i,
+.pos-favorite-link.active i {
+    background: var(--kx-accent);
+    border-color: var(--kx-accent);
+    color: #ffffff;
+}
+
+.pos-pin-button {
+    color: #8fa0bf;
+    margin-top: -35px;
+}
+
+.pos-pin-button:hover,
+.pos-pin-button.is-pinned {
+    background: rgba(233, 75, 110, .15);
+    border-color: rgba(233, 75, 110, .30);
+    color: #ffd4dd;
+}
+
+.pos-main-content {
+    background: var(--kx-bg);
+    gap: 16px;
+    padding: 16px;
+}
+
+.pos-main-topbar {
+    background: var(--kx-surface);
+    border: 1px solid var(--kx-border);
+    border-radius: var(--kx-radius);
+    box-shadow: var(--kx-shadow-soft);
+    color: var(--kx-text);
+    min-height: 76px;
+    padding: 14px 16px;
+}
+
+.pos-main-topbar h1 {
+    color: var(--kx-primary);
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.pos-shell-breadcrumb strong {
+    color: var(--kx-accent);
+}
+
+.pos-topbar-meta span,
+.pos-notification-button {
+    background: var(--kx-surface-soft);
+    border: 1px solid var(--kx-border);
+    border-radius: 999px;
+    color: #334155;
+    min-height: 36px;
+    padding: 7px 12px;
+}
+
+.pos-topbar-meta i {
+    color: var(--kx-primary);
+}
+
+.pos-notification-button {
+    border-radius: var(--kx-radius-sm);
+    padding: 0;
+}
+
+.pos-main-logout button,
+.primary-action,
+.btn.btn-primary,
+.btn.btn-success,
+button.primary-action,
+a.primary-action {
+    align-items: center;
+    background: var(--kx-primary);
+    border: 1px solid var(--kx-primary);
+    border-radius: var(--kx-radius-sm);
+    box-shadow: 0 6px 14px rgba(20, 33, 61, .12);
+    color: #ffffff;
+    display: inline-flex;
+    font-size: 13px;
+    font-weight: 900;
+    gap: 8px;
+    justify-content: center;
+    min-height: var(--kx-control-h);
+    padding: 9px 16px;
+    text-decoration: none;
+}
+
+.pos-main-logout button:hover,
+.primary-action:hover,
+.btn.btn-primary:hover,
+.btn.btn-success:hover {
+    background: var(--kx-primary-hover);
+    border-color: var(--kx-primary-hover);
+    color: #ffffff;
+}
+
+.secondary-action,
+.btn.btn-default,
+.btn.btn-secondary,
+.link-action,
+button.secondary-action,
+a.secondary-action {
+    align-items: center;
+    background: var(--kx-surface);
+    border: 1px solid var(--kx-border-strong);
+    border-radius: var(--kx-radius-sm);
+    color: var(--kx-primary);
+    display: inline-flex;
+    font-size: 13px;
+    font-weight: 900;
+    gap: 8px;
+    justify-content: center;
+    min-height: var(--kx-control-h);
+    padding: 9px 15px;
+    text-decoration: none;
+}
+
+.secondary-action:hover,
+.btn.btn-default:hover,
+.btn.btn-secondary:hover,
+.link-action:hover {
+    background: var(--kx-primary-soft);
+    border-color: #b8c8e8;
+    color: var(--kx-primary-hover);
+}
+
+.icon-action,
+.danger-action,
+.btn.btn-danger {
+    background: var(--kx-danger-soft);
+    border: 1px solid #efb4c0;
+    border-radius: var(--kx-radius-sm);
+    color: var(--kx-danger);
+}
+
+.pos-panel,
+.pos-card,
+.report-card,
+.payment-search-panel,
+.voucher-search-panel,
+.voucher-table-card,
+.voucher-workspace,
+.voucher-pos-panel,
+.kyc-section-card,
+.kyc-search-card,
+.kyc-attachments-panel,
+.kyc-attachment-card,
+.summary-card,
+.today-target-card,
+.seller-rank-card,
+.admin-kpi-grid article,
+.insight-card,
+.recommendation-card,
+.smart-insight-card,
+.pos-main-frame-card,
+.pos-type-selector,
+.login-brand-card,
+.login-panel {
+    background: var(--kx-surface);
+    border: 1px solid var(--kx-border);
+    border-radius: var(--kx-radius);
+    box-shadow: var(--kx-shadow-soft);
+}
+
+.panel-heading,
+.pos-card-heading,
+.voucher-page-header,
+.compact-heading,
+.seller-rank-header {
+    border-bottom-color: var(--kx-border);
+    color: var(--kx-text);
+}
+
+.panel-heading h2,
+.panel-heading h3,
+.pos-card-heading h2,
+.pos-card-heading h3,
+.voucher-page-header h2,
+.voucher-page-header h3,
+.compact-heading h3 {
+    color: var(--kx-primary);
+    font-weight: 900;
+    letter-spacing: 0;
+}
+
+.pos-grid input,
+.pos-grid select,
+.pos-table input,
+.pos-field input,
+.pos-field select,
+.pos-field textarea,
+.payment-lookup-input,
+.voucher-search-panel input,
+.closing-values-grid input,
+.closing-password-panel input,
+.kyc-search-row input,
+.kyc-compact-form input,
+.phone-inline-control input,
+.smart-lookup .lookup-input,
+.smart-select select,
+.stock-transfer-import textarea,
+.stock-transfer-import input[type="file"],
+.today-date-range input,
+.dashboard-filter-grid input,
+.dashboard-filter-grid select,
+.reports-filter-grid input,
+.reports-filter-grid select {
+    background: var(--kx-surface);
+    border: 1px solid var(--kx-border-strong);
+    border-radius: var(--kx-radius-sm);
+    color: var(--kx-text);
+    min-height: var(--kx-control-h);
+    transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.pos-grid input:focus,
+.pos-grid select:focus,
+.pos-table input:focus,
+.pos-field input:focus,
+.pos-field select:focus,
+.pos-field textarea:focus,
+.payment-lookup-input:focus,
+.voucher-search-panel input:focus,
+.closing-values-grid input:focus,
+.closing-password-panel input:focus,
+.kyc-search-row input:focus,
+.kyc-compact-form input:focus,
+.phone-inline-control input:focus,
+.smart-lookup .lookup-input:focus,
+.smart-select select:focus,
+.stock-transfer-import textarea:focus,
+.today-date-range input:focus,
+.dashboard-filter-grid input:focus,
+.dashboard-filter-grid select:focus,
+.reports-filter-grid input:focus,
+.reports-filter-grid select:focus {
+    background: #ffffff;
+    border-color: #8fa2cd;
+    box-shadow: 0 0 0 3px rgba(20, 33, 61, .10);
+    outline: none;
+}
+
+.serial-badge,
+.excel-badge,
+.manual-badge,
+.kyc-status-badge,
+.workflow-step-number,
+.smart-insight-card em,
+.voucher-status-badge,
+.today-target-head strong,
+.seller-rank-badge {
+    background: var(--kx-primary-soft);
+    border-color: #ccd8ef;
+    border-radius: 999px;
+    color: var(--kx-primary);
+}
+
+.excel-badge,
+.kyc-status-badge,
+.voucher-status-badge.is-success,
+.pos-field-valid-wrap .pos-phone-helper {
+    background: var(--kx-success-soft);
+    border-color: #bddcca;
+    color: var(--kx-success);
+}
+
+.manual-badge,
+.excel-warning-badge,
+.stock-transfer-rejections,
+.recommendation-card {
+    background: var(--kx-warning-soft);
+    border-color: #efd49f;
+    color: var(--kx-warning);
+}
+
+.pos-validation,
+.pos-validation.is-error,
+.pos-field-invalid-wrap .pos-phone-helper {
+    color: var(--kx-danger);
+}
+
+.pos-field-invalid,
+.pos-grid input.pos-field-invalid,
+.pos-grid select.pos-field-invalid {
+    background-color: #fffafb !important;
+    border-color: #e6a6b4 !important;
+}
+
+.pos-field-valid,
+.pos-grid input.pos-field-valid,
+.pos-grid select.pos-field-valid {
+    border-color: #9fcbb2 !important;
+    box-shadow: 0 0 0 3px rgba(47, 125, 87, .10) !important;
+}
+
+.pos-table th {
+    background: var(--kx-surface-soft);
+    color: var(--kx-primary);
+    font-weight: 900;
+}
+
+.pos-table th,
+.pos-table td {
+    border-bottom-color: var(--kx-border);
+}
+
+.executive-hero-panel,
+.amount-panel,
+.seller-rank-card,
+.today-target-card,
+.smart-insight-card,
+.stock-transfer-tools {
+    background: var(--kx-surface);
+}
+
+.summary-card,
+.admin-kpi-grid article,
+.smart-insight-card,
+.report-action,
+.voucher-summary-card {
+    border-right-color: var(--kx-primary);
+}
+
+.smart-insight-card.severity-high,
+.today-target-card.target-danger,
+.summary-cash-out {
+    border-right-color: var(--kx-danger);
+}
+
+.smart-insight-card.severity-medium,
+.today-target-card.target-warning,
+.summary-violations {
+    border-right-color: var(--kx-warning);
+}
+
+.today-target-card.target-success,
+.summary-cash-in,
+.seller-rank-card.rank-progress {
+    border-right-color: var(--kx-success);
+}
+
+.dashboard-period-toggle label {
+    background: var(--kx-surface);
+    border: 1px solid var(--kx-border);
+    border-radius: var(--kx-radius-sm);
+    color: var(--kx-muted);
+}
+
+.dashboard-period-toggle label:has(input:checked) {
+    background: var(--kx-primary);
+    border-color: var(--kx-primary);
+    color: #ffffff;
+}
+
+.dashboard-period-toggle input,
+.pos-check-field input[type="checkbox"],
+.check-field input[type="checkbox"],
+.today-excel-filter input[type="checkbox"],
+.today-date-toggle input[type="checkbox"],
+.pos-grid input[type="checkbox"] {
+    accent-color: var(--kx-accent);
+}
+
+.pos-mode-cash-in,
+.pos-mode-card {
+    --mode-color: var(--kx-primary);
+    --mode-soft: var(--kx-primary-soft);
+    --mode-border: #ccd8ef;
+}
+
+.pos-mode-cash-out,
+.pos-mode-violations {
+    --mode-color: var(--kx-accent);
+    --mode-soft: var(--kx-accent-soft);
+    --mode-border: #f2bfd0;
+}
+
+.pos-net-field input {
+    background: var(--kx-primary) !important;
+    border-color: var(--kx-primary) !important;
+    color: #ffffff !important;
+}
+
+.empty-state {
+    background: var(--kx-surface-soft);
+    border-color: var(--kx-border-strong);
+    border-radius: var(--kx-radius);
+    color: var(--kx-muted);
+}
+
+@media (max-width: 1100px) {
+    .pos-main-shell,
+    .pos-main-shell.is-sidebar-collapsed {
+        grid-template-columns: 1fr;
+    }
+
+    .pos-main-sidebar {
+        box-shadow: -18px 0 34px rgba(20, 33, 61, .28);
+    }
+
+    .pos-main-topbar {
+        gap: 10px;
+    }
+
+    .pos-topbar-meta span {
+        border-radius: var(--kx-radius-sm);
+    }
+}
