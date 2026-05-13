@@ -1,5 +1,0 @@
-@model string
-@{
-    var status = string.IsNullOrWhiteSpace(Model) ? "Draft" : Model;
-}
-<span class="dr-status-pill dr-rv-status-@status dr-status-pill-@status">@status</span>

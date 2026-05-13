@@ -397,6 +397,50 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
+# Archives and deployment packages
+*.zip
+*.7z
+*.rar
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+
+# Release, publish, and packaged build outputs
+[Rr]elease*/
+[Rr]eleases*/
+_[Rr]elease*/
+_[Rr]eleases*/
+[Bb]uild[Oo]utput*/
+[Dd]eploy*/
+[Dd]eployment*/
+[Pp]ublish*/
+[Pp]ublished*/
+_PublishedWebsites/
+
+# Local generated output folders used by this repo
+/BuildOutput/
+/Releases/
+/_releases/
+/bin_codex/
+/obj_codex/
+/_obj/
+
+# Local runtime/temp output
+/Uploads/
+*.err.log
+iisexpress*.log
+iis_*.txt
+
+# Backup files generated during local fixes/builds
+*.bak
+*_Backup_*.csproj
+*_Backup_*.config
+*_Backup_*.css
+*_Backup_*.js
+*_Backup_*.sql
+*_Backup_*.cshtml
+
 # JetBrains Rider
 *.sln.iml
 /Scripts
@@ -413,6 +457,7 @@ bin/
 obj/
 *.zip
 *.7z
+*.rar
 .claude/
 .qwen/
 .vs/

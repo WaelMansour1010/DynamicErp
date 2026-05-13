@@ -1,8 +1,0 @@
-@model string
-@{
-    var level = string.IsNullOrWhiteSpace(Model) ? "Internal" : Model;
-    var text = level == "Reviewed" ? "Reviewed" :
-               level == "ProductionReady" ? "Production Ready" :
-               level == "Certified" ? "Certified" : "Internal";
-}
-<span class="dr-status-pill dr-cert-pill-@level">@text</span>
