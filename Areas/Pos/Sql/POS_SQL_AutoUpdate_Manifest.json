@@ -35,7 +35,8 @@
     { "order": 64, "file": "64_POS_MigrateCashOutWalletNumber.sql", "autoApply": true, "purpose": "Move old cash-out wallet numbers from Tet_NumPoket to AccountTypeName1." },
     { "order": 65, "file": "65_POS_OperationalTransactions_ServiceType_CardIssues.sql", "autoApply": true, "purpose": "Operational transactions service filter and card issue report enhancements." },
     { "order": 66, "file": "66_POS_SaveTransaction_DeadlockIndexes.sql", "autoApply": true, "purpose": "Reduce POS save deadlock risk in cash-in and card save checks." },
-    { "order": 68, "file": "68_POS_Grant_LimitedEdit_ByUserRole.sql", "autoApply": true, "purpose": "Grant today-only limited invoice edit to tellers and limited invoice edit to admins." }
+    { "order": 68, "file": "68_POS_Grant_LimitedEdit_ByUserRole.sql", "autoApply": true, "purpose": "Grant today-only limited invoice edit to tellers and limited invoice edit to admins." },
+    { "order": 70, "file": "70_POS_TodayInvoices_ReadIndexes.sql", "autoApply": true, "purpose": "Reduce deadlocks/timeouts when loading POS today invoices side list." }
   ],
   "manualScripts": [
     { "file": "35_POS_SystemHealthPermissions.sql", "reason": "Requires sysadmin/master login and replacing the app SQL login placeholder." },
@@ -43,6 +44,9 @@
     { "file": "39_POS_Deadlock_Diagnostics.sql", "reason": "Read-only diagnostic script, not an updater." },
     { "file": "52_POS_EmployeePayroll_MedicalInsurance.sql", "reason": "Pointer to MainErp canonical script, not executable POS DDL." },
     { "file": "53_POS_DoubleEntryVoucherSequence_Diagnostics.sql", "reason": "Read-only diagnostic script." },
-    { "file": "56_POS_RechargeValue_Validation.sql", "reason": "Read-only diagnostic helper." }
+    { "file": "56_POS_RechargeValue_Validation.sql", "reason": "Read-only diagnostic helper." },
+    { "file": "69_POS_DEVSerial_Diagnostics.sql", "reason": "Read-only DEV_Serial / DOUBLE_ENTREY_VOUCHERS diagnostic script." },
+    { "file": "71_POS_RuntimeInfrastructure_Preflight.sql", "reason": "DDL preflight script; run once with db_owner/DDL-capable login before production app login." },
+    { "file": "72_POS_DoubleEntryVoucherId_SequenceRepair.sql", "reason": "DDL/sequence repair script; run with db_owner when DOUBLE_ENTREY_VOUCHERS sequence drifts behind the table." }
   ]
 }

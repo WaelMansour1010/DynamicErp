@@ -5967,14 +5967,14 @@ SELECT TOP (50)
     CAST(CASE WHEN CHARINDEX(N'[ExcelImportWarning]', ISNULL(excelRow.Message, N'')) > 0 THEN 1 ELSE 0 END AS BIT) AS HasExcelImportWarning,
     REPLACE(ISNULL(excelRow.Message, N''), N'[ExcelImportWarning] ', N'') AS ExcelImportWarningMessage,
     CAST(ISNULL(t.IsCancelled, 0) AS BIT) AS IsCancelled
-FROM dbo.Transactions t
+FROM dbo.Transactions t WITH (NOLOCK)
 OUTER APPLY
 (
     SELECT TOP (1)
         r.RowId,
         r.BatchId,
         r.Message
-    FROM dbo.POS_ImportBatchRow r
+    FROM dbo.POS_ImportBatchRow r WITH (NOLOCK)
     WHERE r.TransactionId = t.Transaction_ID
       AND r.Status = N'Imported'
     ORDER BY r.RowId DESC
@@ -6004,7 +6004,7 @@ WHERE t.Transaction_Type = 21
       OR EXISTS
       (
           SELECT 1
-          FROM dbo.Transaction_Details d
+          FROM dbo.Transaction_Details d WITH (NOLOCK)
           WHERE d.Transaction_ID = t.Transaction_ID
             AND ISNULL(d.ItemSerial, N'') LIKE N'%' + @term + N'%'
       )
@@ -6022,7 +6022,8 @@ WHERE t.Transaction_Type = 21
   )
   AND (@excelOnly = 0 OR excelRow.RowId IS NOT NULL)
   AND (@excelWithWarnings = 0 OR CHARINDEX(N'[ExcelImportWarning]', ISNULL(excelRow.Message, N'')) > 0)
-ORDER BY t.Transaction_ID DESC;";
+ORDER BY t.Transaction_ID DESC
+OPTION (RECOMPILE);";
 
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
@@ -6038,6 +6039,7 @@ ORDER BY t.Transaction_ID DESC;";
                 command.Parameters.Add("@operationType", SqlDbType.NVarChar, 30).Value = operation;
                 command.Parameters.Add("@excelOnly", SqlDbType.Bit).Value = excelOnly;
                 command.Parameters.Add("@excelWithWarnings", SqlDbType.Bit).Value = excelWithWarnings;
+                command.CommandTimeout = 15;
                 connection.Open();
                 using (var reader = command.ExecuteReader())
                 {
@@ -6326,6 +6328,8 @@ ORDER BY l.CreatedAt DESC, l.Id DESC;";
             };
 
             const string sql = @"
+SET DEADLOCK_PRIORITY LOW;
+
 SELECT
     CASE
         WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'violations'
@@ -6340,7 +6344,7 @@ SELECT
         ELSE ISNULL(t.RechargeValue, 0) + ISNULL(t.VAT, 0) + ISNULL(t.NetValue, 0)
     END) AS DECIMAL(18, 2)) AS NetValue,
     CAST(SUM(ISNULL(t.PayedValue, 0)) AS DECIMAL(18, 2)) AS PayedValue
-FROM dbo.Transactions t
+FROM dbo.Transactions t WITH (NOLOCK)
 WHERE t.Transaction_Type = 21
   AND ISNULL(t.IsCancelled, 0) = 0
   AND t.Transaction_Date >= CONVERT(DATE, GETDATE())
@@ -6353,7 +6357,8 @@ GROUP BY
         WHEN NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL THEN N'card'
         WHEN ISNULL(t.IsCashOut, 0) = 1 THEN N'cash-out'
         ELSE N'cash-in'
-    END;";
+    END
+OPTION (RECOMPILE);";
 
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand(sql, connection))
@@ -6361,6 +6366,7 @@ GROUP BY
                 command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
                 command.Parameters.Add("@branchId", SqlDbType.Int).Value = (object)branchId ?? DBNull.Value;
                 command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
+                command.CommandTimeout = 10;
                 connection.Open();
                 using (var reader = command.ExecuteReader())
                 {
