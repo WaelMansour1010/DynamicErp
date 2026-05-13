@@ -8,6 +8,8 @@
     if (string.IsNullOrWhiteSpace(initialScreenUrl)) { initialScreenUrl = "about:blank"; }
     var canViewReports = posContext != null && posContext.CanViewReports;
     var isAdmin = posContext != null && (posContext.UserType.GetValueOrDefault(-1) == 0 || posContext.IsFullAccess);
+    var currentBranchName = posContext != null && !string.IsNullOrWhiteSpace(posContext.BranchName) ? posContext.BranchName : "غير محدد";
+    var currentBoxName = posContext != null && !string.IsNullOrWhiteSpace(posContext.BoxName) ? posContext.BoxName : "غير محدد";
     var logoPath = "~/Areas/Pos/assets/images/company-logo.png";
     var logoAltPath = "~/Areas/Pos/assets/images/company-logo-1.png";
     var companyLogoPath = System.IO.File.Exists(Server.MapPath(logoPath))
@@ -31,17 +33,34 @@
          data-sales-url="@Url.Content("~/Pos/PosTransaction/Index")"
          data-is-admin="@(isAdmin ? "true" : "false")">
         @Html.Partial("_Sidebar")
+        <button type="button" class="pos-mobile-nav-toggle" id="posMobileNavToggle" aria-label="فتح القائمة" title="فتح القائمة">
+            <i class="fas fa-bars" aria-hidden="true"></i>
+        </button>
+        <div class="pos-sidebar-backdrop" id="posSidebarBackdrop"></div>
 
         <main class="pos-main-content">
             <header class="pos-main-topbar">
-                <div>
-                    <h1>لوحة تشغيل كيشني</h1>
-                    <p>المستخدم: @(posContext != null ? posContext.UserName : "") | الفرع: @(posContext != null ? posContext.BranchName : "")</p>
+                <div class="pos-topbar-title">
+                    <nav class="pos-shell-breadcrumb" id="posShellBreadcrumb" aria-label="مسار الشاشة">
+                        <span>الرئيسية</span>
+                        <span id="posShellBreadcrumbSection">العمليات اليومية</span>
+                        <strong id="posShellBreadcrumbScreen">نقطة البيع POS</strong>
+                    </nav>
+                    <h1 id="posShellTitle">لوحة تشغيل كيشني</h1>
+                </div>
+                <div class="pos-topbar-meta" aria-label="بيانات الجلسة">
+                    <span title="المستخدم الحالي"><i class="fas fa-user" aria-hidden="true"></i>@(posContext != null ? posContext.UserName : "")</span>
+                    <span title="الفرع الحالي"><i class="fas fa-code-branch" aria-hidden="true"></i>@currentBranchName</span>
+                    <span title="الكاش بوكس"><i class="fas fa-wallet" aria-hidden="true"></i>@currentBoxName</span>
+                    <span title="التاريخ والوقت"><i class="fas fa-clock" aria-hidden="true"></i><time id="posTopbarClock">@DateTime.Now.ToString("yyyy/MM/dd HH:mm")</time></span>
+                    <button type="button" class="pos-notification-button" title="التنبيهات" aria-label="التنبيهات">
+                        <i class="fas fa-bell" aria-hidden="true"></i>
+                    </button>
                 </div>
                 @using (Html.BeginForm("Logout", "PosLogin", new { area = "Pos" }, FormMethod.Post, new { @class = "pos-main-logout" }))
                 {
                     @Html.AntiForgeryToken()
-                    <button type="submit">خروج</button>
+                    <button type="submit"><i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>خروج</span></button>
                 }
             </header>
 
@@ -173,6 +192,21 @@
             var charts = {};
             var sidebar = document.getElementById("posMainSidebar");
             var sidebarCollapseBtn = document.getElementById("posSidebarCollapseBtn");
+            var mobileNavToggle = document.getElementById("posMobileNavToggle");
+            var sidebarBackdrop = document.getElementById("posSidebarBackdrop");
+            var menuSearch = document.getElementById("posMenuSearch");
+            var menuSearchClear = document.getElementById("posMenuSearchClear");
+            var favoritesList = document.getElementById("posFavoritesList");
+            var favoritesEmpty = document.getElementById("posFavoritesEmpty");
+            var favoritesCount = document.getElementById("posQuickAccessCount");
+            var breadcrumbSection = document.getElementById("posShellBreadcrumbSection");
+            var breadcrumbScreen = document.getElementById("posShellBreadcrumbScreen");
+            var shellTitle = document.getElementById("posShellTitle");
+            var topbarClock = document.getElementById("posTopbarClock");
+            var storageUserKey = sidebar ? (sidebar.getAttribute("data-pos-user-key") || "guest") : "guest";
+            var sectionStorageKey = "kishny.pos.nav.sections." + storageUserKey;
+            var collapsedStorageKey = "kishny.pos.nav.collapsed." + storageUserKey;
+            var favoritesStorageKey = "kishny.pos.nav.favorites." + storageUserKey;
 
             function escapeHtml(value) {
                 return String(value === null || value === undefined ? "" : value)
@@ -311,9 +345,12 @@
                 for (var i = 0; i < links.length; i++) {
                     var linkUrl = links[i].getAttribute("data-screen-url");
                     links[i].classList.toggle("active", !dashboard && linkUrl === url);
+                    if (!dashboard && linkUrl === url) { updateBreadcrumbFromLink(links[i]); }
                 }
                 if (dashboardLink) { dashboardLink.classList.toggle("active", !!dashboard); }
+                if (dashboard && dashboardLink) { updateBreadcrumbFromLink(dashboardLink); }
                 refreshNavSections();
+                renderFavorites();
             }
 
             function refreshNavSections() {
@@ -322,11 +359,10 @@
                     var activeChild = sections[s].querySelector(".pos-nav-link.active, [data-dashboard-screen].active");
                     sections[s].classList.toggle("has-active", !!activeChild);
                     if (activeChild) {
-                        for (var x = 0; x < sections.length; x++) {
-                            sections[x].classList.toggle("is-open", sections[x] === sections[s]);
-                        }
+                        sections[s].classList.add("is-open");
                     }
                 }
+                updateSectionAria();
             }
 
             function setNavLinksDisabled(disabled) {
@@ -358,18 +394,45 @@
                 var toggle = event.target && event.target.closest ? event.target.closest("[data-menu-toggle]") : null;
                 if (toggle) {
                     var section = toggle.closest(".pos-nav-section");
-                    var sections = document.querySelectorAll(".pos-nav-section");
                     var willOpen = section && !section.classList.contains("is-open");
-                    for (var i = 0; i < sections.length; i++) { sections[i].classList.remove("is-open"); }
-                    if (section && willOpen) { section.classList.add("is-open"); }
+                    if (section) { section.classList.toggle("is-open", willOpen); }
+                    updateSectionAria();
+                    saveSectionState();
+                }
+                var favoriteLink = event.target && event.target.closest ? event.target.closest(".pos-favorite-link") : null;
+                if (favoriteLink) {
+                    if (navigationLoading) {
+                        event.preventDefault();
+                        return;
+                    }
+                    var favoriteUrl = favoriteLink.getAttribute("data-screen-url");
+                    if (favoriteUrl && frame) {
+                        event.preventDefault();
+                        showNavigationLoading("جاري تحميل البيانات...");
+                        showFrame(favoriteUrl);
+                        closeMobileNav();
+                    }
                 }
                 if (event.target && event.target.closest && event.target.closest("#posSidebarCollapseBtn")) {
                     if (shell) { shell.classList.toggle("is-sidebar-collapsed"); }
                     if (sidebarCollapseBtn && shell) {
                         var collapsed = shell.classList.contains("is-sidebar-collapsed");
+                        localStorage.setItem(collapsedStorageKey, collapsed ? "true" : "false");
                         sidebarCollapseBtn.setAttribute("title", collapsed ? "توسيع القائمة" : "تصغير القائمة");
                         sidebarCollapseBtn.setAttribute("aria-label", collapsed ? "توسيع القائمة" : "تصغير القائمة");
                     }
+                }
+                var pin = event.target && event.target.closest ? event.target.closest("[data-favorite-toggle]") : null;
+                if (pin) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    toggleFavorite(pin.getAttribute("data-favorite-toggle"));
+                }
+                if (event.target && event.target.closest && event.target.closest("#posMobileNavToggle")) {
+                    if (shell) { shell.classList.add("is-mobile-nav-open"); }
+                }
+                if (event.target && event.target.closest && event.target.closest("#posSidebarBackdrop")) {
+                    closeMobileNav();
                 }
             });
 
@@ -631,6 +694,176 @@
                 });
             }
 
+            function safeParseJson(value, fallback) {
+                try { return value ? JSON.parse(value) : fallback; } catch (e) { return fallback; }
+            }
+
+            function navLabel(link) {
+                var span = link ? link.querySelector("span") : null;
+                return span ? span.textContent.replace(/\s+/g, " ").trim() : "";
+            }
+
+            function navMeta(link) {
+                if (!link) { return null; }
+                return {
+                    id: link.getAttribute("data-nav-id") || link.getAttribute("data-screen-url") || link.href,
+                    label: navLabel(link),
+                    section: link.getAttribute("data-nav-section") || "",
+                    text: ((link.getAttribute("data-nav-text") || "") + " " + navLabel(link)).toLowerCase(),
+                    url: link.getAttribute("data-screen-url") || "",
+                    dashboard: link.hasAttribute("data-dashboard-screen"),
+                    icon: (link.querySelector("i") || {}).className || "fas fa-circle"
+                };
+            }
+
+            function saveSectionState() {
+                if (!sidebar) { return; }
+                var state = {};
+                var sections = sidebar.querySelectorAll(".pos-nav-section");
+                for (var i = 0; i < sections.length; i++) {
+                    var id = sections[i].getAttribute("data-section-id");
+                    if (id) { state[id] = sections[i].classList.contains("is-open"); }
+                }
+                localStorage.setItem(sectionStorageKey, JSON.stringify(state));
+            }
+
+            function restoreSectionState() {
+                if (!sidebar) { return; }
+                var state = safeParseJson(localStorage.getItem(sectionStorageKey), null);
+                if (!state) { return; }
+                var sections = sidebar.querySelectorAll(".pos-nav-section");
+                for (var i = 0; i < sections.length; i++) {
+                    var id = sections[i].getAttribute("data-section-id");
+                    if (id && Object.prototype.hasOwnProperty.call(state, id)) {
+                        sections[i].classList.toggle("is-open", !!state[id]);
+                    }
+                }
+            }
+
+            function updateSectionAria() {
+                var toggles = document.querySelectorAll("[data-menu-toggle]");
+                for (var i = 0; i < toggles.length; i++) {
+                    var section = toggles[i].closest(".pos-nav-section");
+                    toggles[i].setAttribute("aria-expanded", section && section.classList.contains("is-open") ? "true" : "false");
+                }
+            }
+
+            function favorites() {
+                return safeParseJson(localStorage.getItem(favoritesStorageKey), []);
+            }
+
+            function setFavorites(items) {
+                localStorage.setItem(favoritesStorageKey, JSON.stringify(items || []));
+            }
+
+            function isFavorite(id) {
+                var items = favorites();
+                for (var i = 0; i < items.length; i++) { if (items[i] === id) { return true; } }
+                return false;
+            }
+
+            function decorateNavLinks() {
+                for (var i = 0; i < links.length; i++) {
+                    var link = links[i];
+                    var meta = navMeta(link);
+                    if (!meta || !meta.id || meta.dashboard || (link.nextElementSibling && link.nextElementSibling.classList && link.nextElementSibling.classList.contains("pos-pin-button"))) { continue; }
+                    var button = document.createElement("button");
+                    button.type = "button";
+                    button.className = "pos-pin-button";
+                    button.setAttribute("data-favorite-toggle", meta.id);
+                    button.setAttribute("aria-label", "تثبيت " + meta.label);
+                    button.setAttribute("title", "تثبيت في الوصول السريع");
+                    button.innerHTML = "<i class=\"fas fa-thumbtack\" aria-hidden=\"true\"></i>";
+                    link.insertAdjacentElement("afterend", button);
+                }
+            }
+
+            function updateFavoriteButtons() {
+                var buttons = document.querySelectorAll("[data-favorite-toggle]");
+                for (var i = 0; i < buttons.length; i++) {
+                    var active = isFavorite(buttons[i].getAttribute("data-favorite-toggle"));
+                    buttons[i].classList.toggle("is-pinned", active);
+                    buttons[i].setAttribute("aria-pressed", active ? "true" : "false");
+                    buttons[i].setAttribute("title", active ? "إزالة من الوصول السريع" : "تثبيت في الوصول السريع");
+                }
+            }
+
+            function renderFavorites() {
+                if (!favoritesList) { return; }
+                var items = favorites();
+                var byId = {};
+                var navLinks = document.querySelectorAll(".pos-main-nav .pos-nav-link[data-nav-id]");
+                for (var i = 0; i < navLinks.length; i++) {
+                    var meta = navMeta(navLinks[i]);
+                    if (meta) { byId[meta.id] = { meta: meta, link: navLinks[i] }; }
+                }
+                favoritesList.innerHTML = "";
+                var visible = 0;
+                for (var f = 0; f < items.length; f++) {
+                    var match = byId[items[f]];
+                    if (!match) { continue; }
+                    var fav = document.createElement("a");
+                    fav.className = "pos-nav-link pos-favorite-link";
+                    fav.href = match.link.href;
+                    fav.setAttribute("data-screen-url", match.meta.url);
+                    fav.setAttribute("data-nav-id", match.meta.id);
+                    fav.setAttribute("data-nav-section", match.meta.section);
+                    fav.setAttribute("title", match.meta.label);
+                    fav.innerHTML = "<i class=\"" + match.meta.icon + "\" aria-hidden=\"true\"></i><span>" + escapeHtml(match.meta.label) + "</span>";
+                    favoritesList.appendChild(fav);
+                    visible++;
+                }
+                if (favoritesEmpty) { favoritesEmpty.style.display = visible ? "none" : ""; }
+                if (favoritesCount) { favoritesCount.textContent = String(visible); }
+                updateFavoriteButtons();
+            }
+
+            function toggleFavorite(id) {
+                var items = favorites();
+                var next = [];
+                var removed = false;
+                for (var i = 0; i < items.length; i++) {
+                    if (items[i] === id) { removed = true; continue; }
+                    next.push(items[i]);
+                }
+                if (!removed) { next.unshift(id); }
+                setFavorites(next.slice(0, 8));
+                renderFavorites();
+            }
+
+            function updateBreadcrumbFromLink(link) {
+                var meta = navMeta(link);
+                if (!meta) { return; }
+                if (breadcrumbSection) { breadcrumbSection.textContent = meta.section || "الرئيسية"; }
+                if (breadcrumbScreen) { breadcrumbScreen.textContent = meta.label || "لوحة التشغيل"; }
+                if (shellTitle) { shellTitle.textContent = meta.label || "لوحة تشغيل كيشني"; }
+            }
+
+            function closeMobileNav() {
+                if (shell) { shell.classList.remove("is-mobile-nav-open"); }
+            }
+
+            function filterMenu(term) {
+                var value = (term || "").toLowerCase().trim();
+                var sections = document.querySelectorAll(".pos-nav-section");
+                for (var s = 0; s < sections.length; s++) {
+                    var any = false;
+                    var items = sections[s].querySelectorAll(".pos-nav-link");
+                    for (var i = 0; i < items.length; i++) {
+                        var meta = navMeta(items[i]);
+                        var match = !value || (meta && meta.text.indexOf(value) >= 0);
+                        items[i].classList.toggle("is-search-hidden", !match);
+                        var pin = items[i].nextElementSibling;
+                        if (pin && pin.classList && pin.classList.contains("pos-pin-button")) { pin.classList.toggle("is-search-hidden", !match); }
+                        any = any || match;
+                    }
+                    sections[s].classList.toggle("is-search-hidden", !!value && !any);
+                    if (value && any) { sections[s].classList.add("is-open"); }
+                }
+                if (!value) { restoreSectionState(); }
+                updateSectionAria();
+            }
+
             for (var i = 0; i < links.length; i++) {
                 links[i].addEventListener("click", function (event) {
                     if (navigationLoading) {
@@ -642,6 +875,7 @@
                     event.preventDefault();
                     showNavigationLoading("جاري تحميل البيانات...");
                     showFrame(url);
+                    closeMobileNav();
                 });
             }
 
@@ -654,9 +888,35 @@
                      event.preventDefault();
                      showNavigationLoading("جاري تحميل البيانات...");
                      showDashboard();
+                     closeMobileNav();
                      hideNavigationLoading();
                  });
              }
+            decorateNavLinks();
+            restoreSectionState();
+            if (shell && localStorage.getItem(collapsedStorageKey) === "true") {
+                shell.classList.add("is-sidebar-collapsed");
+            }
+            if (menuSearch) {
+                menuSearch.addEventListener("input", function () { filterMenu(this.value); });
+            }
+            if (menuSearchClear) {
+                menuSearchClear.addEventListener("click", function () {
+                    if (menuSearch) {
+                        menuSearch.value = "";
+                        filterMenu("");
+                        menuSearch.focus();
+                    }
+                });
+            }
+            if (topbarClock) {
+                window.setInterval(function () {
+                    var now = new Date();
+                    var pad = function (value) { return value < 10 ? "0" + value : String(value); };
+                    topbarClock.textContent = now.getFullYear() + "/" + pad(now.getMonth() + 1) + "/" + pad(now.getDate()) + " " + pad(now.getHours()) + ":" + pad(now.getMinutes());
+                }, 30000);
+            }
+            renderFavorites();
             refreshNavSections();
 
             document.addEventListener("click", function (event) {

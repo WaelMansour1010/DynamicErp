@@ -1185,6 +1185,7 @@
             searchCustomerBtn: true,
             closeKycModalBtn: true,
             kycSearchBtn: true,
+            saveCashCustomerBtn: true,
             showKycAttachmentsBtn: true,
             printCardBtn: true,
             printAcknowledgmentBtn: true
@@ -1208,8 +1209,30 @@
         if (loadedInvoiceCanEditKyc && mode === "card") {
             editableIds.phone2 = true;
             editableIds.cardNationalId = true;
+            editableIds.visaNumber = true;
+            editableIds.cashCustomerName = true;
+            editableIds.cashCustomerPhone = true;
+            editableIds.kycCardNo = true;
+            editableIds.kycCardDate = true;
+            editableIds.kycCardEndDate = true;
+            editableIds.kycBirthDate = true;
+            editableIds.kycName = true;
+            editableIds.kycNameE = true;
+            editableIds.kycArabicName0 = true;
+            editableIds.kycArabicName1 = true;
+            editableIds.kycArabicName2 = true;
+            editableIds.kycArabicName3 = true;
+            editableIds.kycEnglishName0 = true;
+            editableIds.kycEnglishName1 = true;
+            editableIds.kycEnglishName2 = true;
+            editableIds.kycEnglishName3 = true;
+            editableIds.kycEnglishName5 = true;
+            editableIds.kycAddress = true;
+            editableIds.kycMailAddress = true;
+            editableIds.kycTel = true;
             editableIds.kycPhoneNo2 = true;
             editableIds.kycNationalId = true;
+            editableIds.kycAttachments = true;
         }
 
         var allControls = document.querySelectorAll("#posForm input, #posForm select, #posForm textarea, #posForm button");
@@ -2405,6 +2428,12 @@
         if (!panel) { return; }
         panel.classList.remove("is-open");
         panel.setAttribute("aria-hidden", "true");
+    }
+
+    function submitConfirmedSave() {
+        saveTransaction({
+            preventDefault: function () { }
+        });
     }
 
     function saveTransaction(event) {
@@ -4726,7 +4755,7 @@
             pendingSaveConfirmation = true;
             uxLastActionAt = 0;
             closeSaveConfirmation();
-            byId("posForm").requestSubmit ? byId("posForm").requestSubmit() : byId("saveBtn").click();
+            submitConfirmedSave();
             return;
         }
         if (event.target.id === "cancelSaveConfirmBtn" || event.target.id === "editSaveConfirmBtn" || event.target.id === "saveConfirmBackdrop") {

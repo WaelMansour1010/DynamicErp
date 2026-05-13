@@ -44,6 +44,17 @@
         .report-check-filter input { width: auto; }
         .report-print { background: #fff; border: 1px solid #d9e1ee; border-radius: 8px; color: #24364f; cursor: pointer; font-weight: 700; padding: 10px 12px; width: 100%; }
         .report-print:disabled { color: #9aa8bc; cursor: not-allowed; }
+        .card-issue-problem td { background: #fff1f2; color: #7f1d1d; font-weight: 700; }
+        .card-status-badge { border-radius: 999px; display: inline-block; font-weight: 800; min-width: 72px; padding: 4px 9px; }
+        .card-status-normal { background: #dcfce7; color: #166534; }
+        .card-status-problem { background: #fee2e2; color: #991b1b; }
+        .card-problems-summary { border-top: 1px solid #d9e1ee; margin-top: 16px; padding-top: 14px; }
+        .card-problems-summary h3 { color: #24364f; font-size: 17px; font-weight: 800; margin: 0 0 10px; }
+        .card-summary-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+        .card-summary-card { border: 1px solid #d9e1ee; border-radius: 8px; padding: 12px; }
+        .card-summary-card strong { color: #111827; display: block; font-size: 15px; margin-bottom: 8px; }
+        .card-summary-card span { display: flex; justify-content: space-between; padding: 3px 0; }
+        .card-summary-card .negative { color: #b42318; font-weight: 800; }
     </style>
 </head>
 <body>
@@ -101,7 +112,25 @@
                             }
                         </select>
                     </label>
+                    <label class="pos-field">
+                        Service Type
+                        <select id="reportServiceType">
+                            <option value="">كل أنواع الخدمة</option>
+                            <option value="cash-in">Cash In</option>
+                            <option value="cash-out">Cash Out</option>
+                            <option value="card">Card</option>
+                            <option value="violations">Violations</option>
+                        </select>
+                    </label>
                     <label class="pos-field">فلتر خدمة/نشاط<input type="text" id="reportServiceSearch" placeholder="اسم الخدمة أو كودها" /></label>
+                    <label class="pos-field">
+                        فحص مشاكل الكروت
+                        <select id="reportCardIssueMode">
+                            <option value="none">بدون فحص - أسرع تشغيل</option>
+                            <option value="summary">ملخص مشاكل فقط</option>
+                            <option value="full">فحص تفصيلي</option>
+                        </select>
+                    </label>
                     <label class="report-check-filter pos-check-field"><input type="checkbox" id="reportShowEmptyBranches" /> <span>إظهار الفروع الخاضعة / الفاضية</span></label>
                     <label class="pos-field">مصدر الدخول<input type="text" id="reportLoginSource" placeholder="مثال: فرع / جهاز / قناة تشغيل" /></label>
                     <label class="serial-filter is-hidden-ui pos-field">
@@ -251,6 +280,7 @@
                 sync();
             }
             function payload(key) {
+                var cardIssueMode = byId("reportCardIssueMode").value || "none";
                 return {
                     reportKey: key,
                     fromDate: byId("reportFromDate").value,
@@ -260,6 +290,9 @@
                     branchToId: parseInt(byId("reportBranchToId").value, 10) || null,
                     storeId: parseInt(byId("reportStoreId").value, 10) || null,
                     userId: parseInt(byId("reportUserId").value, 10) || null,
+                    serviceType: byId("reportServiceType").value || "",
+                    includeCardIssueCheck: cardIssueMode !== "none",
+                    cardIssueMode: cardIssueMode,
                     loginSource: byId("reportLoginSource").value || "",
                     serialSearch: byId("reportSerialSearch").value || "",
                     serviceSearch: byId("reportServiceSearch").value || "",
@@ -291,7 +324,9 @@
                 var hasTotals = false;
 
                 for (var r = 0; r < data.rows.length; r++) {
-                    html += "<tr>";
+                    var issueStatus = readAny(data.rows[r], ["CardIssueStatus"]);
+                    var isProblem = isProblemStatus(issueStatus);
+                    html += '<tr' + (isProblem ? ' class="card-issue-problem"' : '') + '>';
                     for (var x = 0; x < data.columns.length; x++) {
                         var key = data.columns[x].Key || data.columns[x].key;
                         var value = data.rows[r][key];
@@ -300,7 +335,7 @@
                             totals[key] = (totals[key] || 0) + numberValue;
                             hasTotals = true;
                         }
-                        html += "<td>" + escapeHtml(value) + "</td>";
+                        html += "<td>" + formatReportCell(key, value) + "</td>";
                     }
                     html += "</tr>";
                 }
@@ -319,7 +354,62 @@
                     html += "</tr></tfoot>";
                 }
                 html += "</table></div>";
+                if (hasCardIssueCheck(data.rows) && ((data.reportKey || data.ReportKey) === "daily-trans" || (data.reportKey || data.ReportKey) === "daily-trans-2")) {
+                    html += buildCardProblemsSummary(data.rows);
+                }
                 byId("reportResult").innerHTML = html;
+            }
+            function hasCardIssueCheck(rows) {
+                if (!rows || !rows.length) { return false; }
+                for (var i = 0; i < rows.length; i++) {
+                    if (readAny(rows[i], ["CardIssueStatus"]) !== null && readAny(rows[i], ["CardIssueStatus"]) !== undefined) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            function formatReportCell(key, value) {
+                if (String(key || "").toLowerCase() === "cardissuestatus") {
+                    var status = String(value || "");
+                    if (!status) { return ""; }
+                    return '<span class="card-status-badge ' + (isProblemStatus(status) ? 'card-status-problem' : 'card-status-normal') + '">' + escapeHtml(status) + '</span>';
+                }
+                return escapeHtml(value);
+            }
+            function isProblemStatus(status) {
+                status = String(status || "").toLowerCase();
+                return status === "negative"
+                    || status === "insufficient balance"
+                    || status === "problematic card";
+            }
+            function buildCardProblemsSummary(rows) {
+                var groups = {};
+                for (var i = 0; i < rows.length; i++) {
+                    var serviceType = String(readAny(rows[i], ["ServiceType"]) || "").toLowerCase();
+                    if (serviceType !== "card") { continue; }
+                    var store = readAny(rows[i], ["Store"]) || readAny(rows[i], ["Branch"]) || "غير محدد";
+                    if (!groups[store]) { groups[store] = { total: 0, negative: 0 }; }
+                    groups[store].total++;
+                    if (isProblemStatus(readAny(rows[i], ["CardIssueStatus"]))) {
+                        groups[store].negative++;
+                    }
+                }
+                var keys = Object.keys(groups).sort();
+                if (!keys.length) { return ""; }
+                var html = '<div class="card-problems-summary"><h3>ملخص مشاكل الكروت حسب المخزن</h3><div class="card-summary-grid">';
+                for (var x = 0; x < keys.length; x++) {
+                    var g = groups[keys[x]];
+                    var normal = g.total - g.negative;
+                    var ratio = g.total ? ((g.negative * 100) / g.total).toFixed(1) + "%" : "0%";
+                    html += '<div class="card-summary-card">'
+                        + '<strong>' + escapeHtml(keys[x]) + '</strong>'
+                        + '<span><b>Total Cards</b><em>' + escapeHtml(g.total) + '</em></span>'
+                        + '<span class="negative"><b>Negative Cards</b><em>' + escapeHtml(g.negative) + '</em></span>'
+                        + '<span><b>Normal Cards</b><em>' + escapeHtml(normal) + '</em></span>'
+                        + '<span><b>Negative Ratio</b><em>' + escapeHtml(ratio) + '</em></span>'
+                        + '</div>';
+                }
+                return html + '</div></div>';
             }
             function shouldTotal(key) {
                 key = String(key || "");
@@ -539,10 +629,14 @@
                 var branchFrom = selectedText("reportBranchFromId", "");
                 var branchTo = selectedText("reportBranchToId", "");
                 var service = byId("reportServiceSearch").value || "";
+                var serviceType = selectedText("reportServiceType", "");
+                var cardIssueMode = selectedText("reportCardIssueMode", "");
                 if (branch) { parts.push("الفرع: " + branch); }
                 if (branchFrom) { parts.push("من فرع: " + branchFrom); }
                 if (branchTo) { parts.push("إلى فرع: " + branchTo); }
+                if (serviceType) { parts.push("Service Type: " + serviceType); }
                 if (service) { parts.push("خدمة/نشاط: " + service); }
+                if ((byId("reportCardIssueMode").value || "none") !== "none") { parts.push("فحص مشاكل الكروت: " + cardIssueMode); }
                 if (byId("reportShowEmptyBranches").checked) { parts.push("إظهار الفروع الفاضية"); }
                 return parts;
             }
@@ -558,7 +652,8 @@
                     try {
                         data = xhr.responseText ? JSON.parse(xhr.responseText) : null;
                     } catch (ignore) {
-                        data = { success: false, message: "تعذر قراءة رد السيرفر" };
+                        var serverText = (xhr.responseText || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+                        data = { success: false, message: serverText ? "تعذر قراءة رد السيرفر: " + serverText.substring(0, 180) : "تعذر قراءة رد السيرفر" };
                     }
 
                     if (xhr.status >= 200 && xhr.status < 300 && data && data.success) {
@@ -684,6 +779,9 @@
                     ["BranchToId", data.branchToId || ""],
                     ["StoreId", data.storeId || ""],
                     ["UserId", data.userId || ""],
+                    ["ServiceType", data.serviceType || ""],
+                    ["IncludeCardIssueCheck", data.includeCardIssueCheck ? "true" : "false"],
+                    ["CardIssueMode", data.cardIssueMode || "none"],
                     ["LoginSource", data.loginSource || ""],
                     ["SerialSearch", data.serialSearch || ""],
                     ["ServiceSearch", data.serviceSearch || ""],

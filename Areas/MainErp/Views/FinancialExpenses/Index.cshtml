@@ -1,0 +1,131 @@
+@model MyERP.Areas.MainErp.ViewModels.FinancialExpenses.FinancialExpensesIndexViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "الفواتير المالية";
+}
+<link href="~/Areas/MainErp/Content/financial-expenses.css" rel="stylesheet" />
+
+<section class="main-erp-panel financial-expenses-page" dir="rtl" id="financialExpensesPage"
+         data-save-url="@Url.Action("Save", "FinancialExpenses", new { area = "MainErp" })"
+         data-details-url="@Url.Action("Details", "FinancialExpenses", new { area = "MainErp" })"
+         data-delete-url="@Url.Action("Delete", "FinancialExpenses", new { area = "MainErp" })">
+    <header class="main-erp-cockpit-header">
+        <div>
+            <span class="main-erp-kicker">FrmExpenses3 / FrmExpenses30</span>
+            <h2>الفاتورة المالية وتصفية العهدة</h2>
+            <p>حفظ وعرض مستندات المصروفات المالية ونصفية العهدة بنفس جداول VB6: notes_all و Notes و DOUBLE_ENTREY_VOUCHERS.</p>
+        </div>
+        <div class="main-erp-header-actions">
+            <button type="button" class="main-erp-inline-action" id="finNewBtn"><i class="fas fa-plus"></i> جديد</button>
+            <button type="button" class="main-erp-inline-action" id="finSaveBtn"><i class="fas fa-save"></i> حفظ</button>
+            <button type="button" class="main-erp-inline-action is-danger" id="finDeleteBtn"><i class="fas fa-trash"></i> حذف</button>
+        </div>
+    </header>
+
+    <div id="finStatus" class="financial-expenses-status" hidden></div>
+
+    <div class="financial-expenses-layout">
+        <aside class="main-erp-premium-search financial-expenses-search">
+            <div class="main-erp-search-head"><span>بحث</span><h3>المستندات</h3></div>
+            <form method="get" action="@Url.Action("Index", "FinancialExpenses", new { area = "MainErp" })" class="main-erp-filter-bar">
+                <input type="hidden" name="mode" value="@Model.Mode" />
+                <label>بحث
+                    <input type="text" name="searchText" value="@Model.SearchText" placeholder="رقم / مسلسل / بيان" />
+                </label>
+                <button type="submit"><i class="fas fa-search"></i> بحث</button>
+            </form>
+            <div class="main-erp-table-wrap">
+                <table class="main-erp-table">
+                    <thead><tr><th>رقم</th><th>إذن</th><th>التاريخ</th><th>القيمة</th><th></th></tr></thead>
+                    <tbody>
+                    @foreach (var row in Model.Documents)
+                    {
+                        <tr>
+                            <td>@row.Id</td>
+                            <td>@row.VoucherSerial</td>
+                            <td>@(row.Date.HasValue ? row.Date.Value.ToString("yyyy-MM-dd") : "")</td>
+                            <td>@String.Format("{0:n2}", row.Value)</td>
+                            <td><button type="button" class="main-erp-link-btn js-load-fin" data-id="@row.Id">تحميل</button></td>
+                        </tr>
+                    }
+                    @if (Model.Documents.Count == 0)
+                    {
+                        <tr><td colspan="5" class="main-erp-empty">لا توجد مستندات.</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </aside>
+
+        <main class="financial-expenses-editor">
+            <nav class="financial-expenses-tabs">
+                <button type="button" class="active" data-mode="FrmExpenses3">الفاتورة المالية</button>
+                <button type="button" data-mode="FrmExpenses30">تصفية العهدة</button>
+            </nav>
+
+            <section class="main-erp-premium-card">
+                <div class="erp-section-title"><h2>بيانات المستند</h2></div>
+                <div class="main-erp-form-grid financial-expenses-form-grid">
+                    <input type="hidden" id="finMode" value="@Model.Mode" />
+                    <input type="hidden" id="finId" />
+                    <input type="hidden" id="finDetailNoteId" />
+                    <label>رقم المستند<input type="text" id="finDocId" readonly /></label>
+                    <label>مسلسل القيد<input type="text" id="finJournalSerial" readonly placeholder="يولد عند الحفظ" /></label>
+                    <label>مسلسل الإذن<input type="text" id="finVoucherSerial" readonly placeholder="يولد عند الحفظ" /></label>
+                    <label>التاريخ<input type="date" id="finDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                    <label>الفرع
+                        <select id="finBranchId"><option value="">اختر</option>@foreach (var item in Model.Branches) { <option value="@item.Id">@item.Text</option> }</select>
+                    </label>
+                    <label>نوع السطور
+                        <select id="finBillType"><option value="0">مصروفات</option><option value="1">حسابات</option></select>
+                    </label>
+                    <label>طريقة الدفع
+                        <select id="finPaymentType"><option value="0">خزنة</option><option value="1">بنك</option><option value="2">مورد/عهدة</option><option value="3">شيك</option></select>
+                    </label>
+                    <label>الخزنة
+                        <select id="finBoxId"><option value="">اختر</option>@foreach (var item in Model.Boxes) { <option value="@item.Id" data-account="@item.AccountCode">@item.Text</option> }</select>
+                    </label>
+                    <label>البنك
+                        <select id="finBankId"><option value="">اختر</option>@foreach (var item in Model.Banks) { <option value="@item.Id" data-account="@item.AccountCode">@item.Text</option> }</select>
+                    </label>
+                    <label>المورد/العهدة
+                        <select id="finVendorId"><option value="">اختر</option>@foreach (var item in Model.Vendors) { <option value="@item.Id" data-account="@item.AccountCode">@item.Text</option> }</select>
+                    </label>
+                    <label>رقم الشيك<input type="text" id="finChequeNumber" /></label>
+                    <label>استحقاق الشيك<input type="date" id="finChequeDueDate" /></label>
+                    <label>نوع المصروف
+                        <select id="finExpensesTypeId"><option value="">اختر</option>@foreach (var item in Model.ExpensesTypes) { <option value="@item.Id" data-account="@item.AccountCode">@item.Text</option> }</select>
+                    </label>
+                    <label>حساب الدائن<input type="text" id="finCreditAccountCode" readonly /></label>
+                    <label class="financial-expenses-wide">البيان العام<textarea id="finGeneralDescription" rows="2"></textarea></label>
+                </div>
+            </section>
+
+            <section class="main-erp-premium-card">
+                <div class="erp-section-title">
+                    <h2>سطور المستند</h2>
+                    <button type="button" class="main-erp-inline-action is-secondary" id="finAddLineBtn"><i class="fas fa-plus"></i> سطر</button>
+                </div>
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table financial-expenses-lines">
+                        <thead><tr><th>الحساب</th><th>القيمة</th><th>VAT</th><th>البيان</th><th></th></tr></thead>
+                        <tbody id="finLinesBody"></tbody>
+                    </table>
+                </div>
+                <div class="financial-expenses-totals">الإجمالي: <b id="finTotal">0.00</b></div>
+            </section>
+        </main>
+    </div>
+</section>
+
+<template id="finLineTemplate">
+    <tr>
+        <td><select class="line-account"><option value="">اختر الحساب</option>@foreach (var item in Model.Accounts) { <option value="@item.Id">@item.Text</option> }</select></td>
+        <td><input type="number" min="0" step="0.01" class="line-value" value="0" /></td>
+        <td><input type="number" min="0" step="0.01" class="line-vat" value="0" /></td>
+        <td><input type="text" class="line-description" /></td>
+        <td><button type="button" class="main-erp-link-btn is-danger js-remove-fin-line">حذف</button></td>
+    </tr>
+</template>
+
+<script src="~/Areas/MainErp/Scripts/financial-expenses.js"></script>

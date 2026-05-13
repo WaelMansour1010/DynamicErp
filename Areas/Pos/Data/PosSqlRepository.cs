@@ -6962,7 +6962,7 @@ END";
             });
         }
 
-        public DataTable RunPosReport(string reportKey, DateTime fromDate, DateTime toDate, int branchId, int userId, bool canChangeDefaults, int? branchFromId = null, int? branchToId = null, bool showEmptyBranches = false, string serviceSearch = null)
+        public DataTable RunPosReport(string reportKey, DateTime fromDate, DateTime toDate, int branchId, int userId, bool canChangeDefaults, int? branchFromId = null, int? branchToId = null, bool showEmptyBranches = false, string serviceSearch = null, string serviceType = null, int? storeId = null, int? filterUserId = null, bool includeCardIssueCheck = false, string cardIssueMode = null)
         {
             var table = new DataTable();
             using (var connection = new SqlConnection(_connectionString))
@@ -6980,6 +6980,11 @@ END";
                 command.Parameters.Add("@branchToId", SqlDbType.Int).Value = branchToId.HasValue ? (object)branchToId.Value : DBNull.Value;
                 command.Parameters.Add("@showEmptyBranches", SqlDbType.Bit).Value = showEmptyBranches;
                 command.Parameters.Add("@serviceSearch", SqlDbType.NVarChar, 100).Value = string.IsNullOrWhiteSpace(serviceSearch) ? (object)DBNull.Value : serviceSearch.Trim();
+                command.Parameters.Add("@serviceType", SqlDbType.NVarChar, 30).Value = string.IsNullOrWhiteSpace(serviceType) ? (object)DBNull.Value : NormalizeInvoiceOperationType(serviceType);
+                command.Parameters.Add("@storeId", SqlDbType.Int).Value = storeId.HasValue ? (object)storeId.Value : DBNull.Value;
+                command.Parameters.Add("@filterUserId", SqlDbType.Int).Value = filterUserId.HasValue ? (object)filterUserId.Value : DBNull.Value;
+                command.Parameters.Add("@includeCardIssueCheck", SqlDbType.Bit).Value = includeCardIssueCheck;
+                command.Parameters.Add("@cardIssueMode", SqlDbType.NVarChar, 20).Value = string.IsNullOrWhiteSpace(cardIssueMode) ? (object)DBNull.Value : cardIssueMode.Trim().ToLowerInvariant();
                 adapter.Fill(table);
             }
 

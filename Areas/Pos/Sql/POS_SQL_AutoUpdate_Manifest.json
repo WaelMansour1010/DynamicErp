@@ -32,7 +32,8 @@
     { "order": 55, "file": "55_POS_SaveTransaction_Allocator_Hardening.sql", "autoApply": true, "purpose": "Latest allocator hardening procedure." },
     { "order": 62, "file": "62_POS_SalesInvoice_LimitedEditPermissions.sql", "autoApply": true, "purpose": "Limited POS sales invoice edit permissions and audit log table." },
     { "order": 63, "file": "63_POS_MigrateViolationWalletNumber.sql", "autoApply": true, "purpose": "Move old violation wallet numbers from Tet_NumPoket to AccountTypeName1." },
-    { "order": 64, "file": "64_POS_MigrateCashOutWalletNumber.sql", "autoApply": true, "purpose": "Move old cash-out wallet numbers from Tet_NumPoket to AccountTypeName1." }
+    { "order": 64, "file": "64_POS_MigrateCashOutWalletNumber.sql", "autoApply": true, "purpose": "Move old cash-out wallet numbers from Tet_NumPoket to AccountTypeName1." },
+    { "order": 65, "file": "65_POS_OperationalTransactions_ServiceType_CardIssues.sql", "autoApply": true, "purpose": "Operational transactions service filter and card issue report enhancements." }
   ],
   "manualScripts": [
     { "file": "35_POS_SystemHealthPermissions.sql", "reason": "Requires sysadmin/master login and replacing the app SQL login placeholder." },

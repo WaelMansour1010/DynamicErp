@@ -1,0 +1,118 @@
+.stocktaking-layout {
+    display: grid;
+    gap: var(--erp-gap);
+    grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
+}
+
+.stocktaking-search {
+    align-self: start;
+    padding: 14px;
+}
+
+.stocktaking-editor {
+    display: grid;
+    gap: var(--erp-gap);
+    min-width: 0;
+}
+
+.stocktaking-tabs {
+    align-items: center;
+    background: var(--erp-surface);
+    border: 1px solid var(--erp-border);
+    border-radius: var(--erp-radius);
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+}
+
+.stocktaking-tabs button {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--erp-radius-sm);
+    color: var(--erp-muted);
+    cursor: pointer;
+    font-weight: 700;
+    padding: 8px 12px;
+}
+
+.stocktaking-tabs button.active {
+    background: var(--erp-primary-soft);
+    border-color: #c8dff1;
+    color: var(--erp-primary);
+}
+
+.stocktaking-form-grid {
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+}
+
+.stocktaking-check {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: flex-start;
+    padding-top: 24px;
+}
+
+.stocktaking-lines input,
+.stocktaking-lines select {
+    min-width: 95px;
+    width: 100%;
+}
+
+.stocktaking-lines .line-item {
+    min-width: 240px;
+}
+
+.stocktaking-page:not(.is-gard1) .js-gard1-only {
+    display: none;
+}
+
+.stocktaking-totals {
+    align-items: center;
+    border-top: 1px solid var(--erp-border);
+    display: flex;
+    gap: 18px;
+    justify-content: flex-end;
+    margin-top: 12px;
+    padding-top: 12px;
+}
+
+.stocktaking-status {
+    border-radius: var(--erp-radius-sm);
+    font-weight: 700;
+    margin-bottom: var(--erp-gap);
+    padding: 10px 12px;
+    white-space: pre-line;
+}
+
+.stocktaking-status.is-success {
+    background: #e8f6ef;
+    color: var(--erp-success);
+}
+
+.stocktaking-status.is-error {
+    background: #fdecec;
+    color: var(--erp-danger);
+}
+
+@media (max-width: 1100px) {
+    .stocktaking-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .stocktaking-form-grid {
+        grid-template-columns: repeat(2, minmax(150px, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .stocktaking-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stocktaking-tabs {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}

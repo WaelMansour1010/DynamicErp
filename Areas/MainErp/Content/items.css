@@ -1,0 +1,124 @@
+.items-layout {
+    display: grid;
+    gap: var(--erp-gap);
+    grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
+}
+
+.items-search-card {
+    align-self: start;
+    padding: 14px;
+}
+
+.items-editor-stage {
+    display: grid;
+    gap: var(--erp-gap);
+    min-width: 0;
+}
+
+.items-tabs {
+    align-items: center;
+    background: var(--erp-surface);
+    border: 1px solid var(--erp-border);
+    border-radius: var(--erp-radius);
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+}
+
+.items-tabs button {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--erp-radius-sm);
+    color: var(--erp-muted);
+    cursor: pointer;
+    font-weight: 700;
+    padding: 8px 12px;
+}
+
+.items-tabs button.active {
+    background: var(--erp-primary-soft);
+    border-color: #c8dff1;
+    color: var(--erp-primary);
+}
+
+.items-form-grid {
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+}
+
+.items-wide {
+    grid-column: 1 / -1;
+}
+
+.items-check {
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: flex-start;
+    padding-top: 24px;
+}
+
+.items-units-table input,
+.items-units-table select {
+    min-width: 95px;
+    width: 100%;
+}
+
+.items-groups-layout {
+    display: grid;
+    gap: var(--erp-gap);
+    grid-template-columns: minmax(300px, .85fr) minmax(420px, 1.15fr);
+}
+
+.items-groups-table td,
+.items-groups-table th {
+    white-space: nowrap;
+}
+
+.items-group-editor {
+    border: 1px solid var(--erp-border);
+    border-radius: var(--erp-radius-sm);
+    padding: 12px;
+}
+
+.items-status {
+    border-radius: var(--erp-radius-sm);
+    font-weight: 700;
+    margin-bottom: var(--erp-gap);
+    padding: 10px 12px;
+}
+
+.items-status.is-success {
+    background: #e8f6ef;
+    color: var(--erp-success);
+}
+
+.items-status.is-error {
+    background: #fdecec;
+    color: var(--erp-danger);
+}
+
+@media (max-width: 1100px) {
+    .items-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .items-form-grid {
+        grid-template-columns: repeat(2, minmax(150px, 1fr));
+    }
+
+    .items-groups-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .items-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .items-tabs {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}

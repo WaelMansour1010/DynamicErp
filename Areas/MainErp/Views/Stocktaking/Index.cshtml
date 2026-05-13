@@ -1,0 +1,227 @@
+@model MyERP.Areas.MainErp.ViewModels.Stocktaking.StocktakingIndexViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "الجرد";
+    var canAdd = Model != null && Model.Permissions != null && Model.Permissions.CanAdd;
+    var canEdit = Model != null && Model.Permissions != null && Model.Permissions.CanEdit;
+    var canDelete = Model != null && Model.Permissions != null && Model.Permissions.CanDelete;
+}
+
+<link href="~/Areas/MainErp/Content/stocktaking.css" rel="stylesheet" />
+
+<section class="main-erp-panel stocktaking-page" dir="rtl" id="stocktakingPage"
+         data-save-url="@Url.Action("Save", "Stocktaking", new { area = "MainErp" })"
+         data-details-url="@Url.Action("Details", "Stocktaking", new { area = "MainErp" })"
+         data-delete-url="@Url.Action("Delete", "Stocktaking", new { area = "MainErp" })">
+    <header class="main-erp-cockpit-header">
+        <div>
+            <span class="main-erp-kicker">FrmNewGard / FrmNewGard1</span>
+            <h2>شاشات الجرد</h2>
+            <p>حفظ وعرض الجرد الفعلي بنفس نوع الحركة 30، مع أعمدة نتائج الجرد والتسويات الخاصة بالشاشة الثانية.</p>
+        </div>
+        <div class="main-erp-header-actions">
+            <button type="button" class="main-erp-inline-action" id="gardNewBtn" @(canAdd ? "" : "disabled")><i class="fas fa-plus"></i> جديد</button>
+            <button type="button" class="main-erp-inline-action" id="gardSaveBtn" @((canAdd || canEdit) ? "" : "disabled")><i class="fas fa-save"></i> حفظ</button>
+            <button type="button" class="main-erp-inline-action is-danger" id="gardDeleteBtn" @(canDelete ? "" : "disabled")><i class="fas fa-trash"></i> حذف</button>
+        </div>
+    </header>
+
+    <div id="gardStatus" class="stocktaking-status" hidden></div>
+
+    <div class="stocktaking-layout">
+        <aside class="main-erp-premium-search stocktaking-search">
+            <div class="main-erp-search-head">
+                <span>البحث</span>
+                <h3>مستندات الجرد</h3>
+            </div>
+            <form method="get" action="@Url.Action("Index", "Stocktaking", new { area = "MainErp" })" class="main-erp-filter-bar">
+                <label>بحث
+                    <input type="text" name="searchText" value="@Model.SearchText" placeholder="رقم / مسلسل" />
+                </label>
+                <label>المخزن
+                    <select name="storeId">
+                        <option value="">الكل</option>
+                        @foreach (var store in Model.Stores)
+                        {
+                            <option value="@store.Id" @(Model.StoreId.HasValue && Model.StoreId.Value.ToString() == store.Id ? "selected" : "")>@store.Text</option>
+                        }
+                    </select>
+                </label>
+                <label>الفرع
+                    <select name="branchId">
+                        <option value="">الكل</option>
+                        @foreach (var branch in Model.Branches)
+                        {
+                            <option value="@branch.Id" @(Model.BranchId.HasValue && Model.BranchId.Value.ToString() == branch.Id ? "selected" : "")>@branch.Text</option>
+                        }
+                    </select>
+                </label>
+                <button type="submit"><i class="fas fa-search"></i> بحث</button>
+            </form>
+            <div class="main-erp-table-wrap stocktaking-results">
+                <table class="main-erp-table">
+                    <thead>
+                        <tr>
+                            <th>رقم</th>
+                            <th>مسلسل</th>
+                            <th>التاريخ</th>
+                            <th>المخزن</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Transactions)
+                        {
+                            <tr>
+                                <td>@row.Id</td>
+                                <td>@row.Serial</td>
+                                <td>@(row.Date.HasValue ? row.Date.Value.ToString("yyyy-MM-dd") : "")</td>
+                                <td>@row.StoreName</td>
+                                <td><button type="button" class="main-erp-link-btn js-load-gard" data-id="@row.Id">تحميل</button></td>
+                            </tr>
+                        }
+                        @if (Model.Transactions.Count == 0)
+                        {
+                            <tr><td colspan="5" class="main-erp-empty">لا توجد مستندات جرد.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </aside>
+
+        <main class="stocktaking-editor">
+            <nav class="stocktaking-tabs">
+                <button type="button" class="active" data-mode="FrmNewGard">FrmNewGard</button>
+                <button type="button" data-mode="FrmNewGard1">FrmNewGard1</button>
+            </nav>
+
+            <section class="main-erp-premium-card">
+                <div class="erp-section-title"><h2>بيانات الجرد</h2></div>
+                <div class="main-erp-form-grid stocktaking-form-grid">
+                    <input type="hidden" id="gardId" />
+                    <input type="hidden" id="gardMode" value="@Model.Mode" />
+                    <label>رقم الحركة
+                        <input type="text" id="gardTransactionId" readonly />
+                    </label>
+                    <label>المسلسل
+                        <input type="text" id="gardSerial" readonly placeholder="يولد عند الحفظ" />
+                    </label>
+                    <label>تاريخ الجرد
+                        <input type="date" id="gardDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </label>
+                    <label>من تاريخ
+                        <input type="date" id="gardFromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </label>
+                    <label>إلى تاريخ
+                        <input type="date" id="gardToDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </label>
+                    <label>المخزن
+                        <select id="gardStoreId">
+                            <option value="">اختر المخزن</option>
+                            @foreach (var store in Model.Stores)
+                            {
+                                <option value="@store.Id">@store.Text</option>
+                            }
+                        </select>
+                    </label>
+                    <label>الفرع
+                        <select id="gardBranchId">
+                            <option value="">اختر الفرع</option>
+                            @foreach (var branch in Model.Branches)
+                            {
+                                <option value="@branch.Id">@branch.Text</option>
+                            }
+                        </select>
+                    </label>
+                    <label>طريقة الإدخال
+                        <select id="gardEntryType">
+                            <option value="0">إدخال يدوي</option>
+                            <option value="1">من الرصيد</option>
+                            <option value="2" selected>مختلط</option>
+                        </select>
+                    </label>
+                    <label class="stocktaking-check"><input type="checkbox" id="gardStartGard" /> بدء الجرد</label>
+                    <label class="stocktaking-check"><input type="checkbox" id="gardStartSettlement" /> بدء التسوية</label>
+                    <label class="stocktaking-check"><input type="checkbox" id="gardAutoDetect" /> كشف تلقائي</label>
+                    <label class="js-gard1-only">حساب العجز
+                        <input type="text" id="gardAccount1" />
+                    </label>
+                    <label class="js-gard1-only">حساب الزيادة
+                        <input type="text" id="gardAccount2" />
+                    </label>
+                    <label class="js-gard1-only">سند عجز
+                        <input type="text" id="gardNotS" readonly />
+                    </label>
+                    <label class="js-gard1-only">سند زيادة
+                        <input type="text" id="gardNotS2" readonly />
+                    </label>
+                </div>
+            </section>
+
+            <section class="main-erp-premium-card">
+                <div class="erp-section-title">
+                    <h2>أصناف الجرد</h2>
+                    <button type="button" class="main-erp-inline-action is-secondary" id="gardAddLineBtn"><i class="fas fa-plus"></i> صنف</button>
+                </div>
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table stocktaking-lines">
+                        <thead>
+                            <tr>
+                                <th>الصنف</th>
+                                <th>الوحدة</th>
+                                <th>الكمية</th>
+                                <th>السعر</th>
+                                <th>السيريال</th>
+                                <th>Lot</th>
+                                <th class="js-gard1-only">رصيد</th>
+                                <th class="js-gard1-only">فرق</th>
+                                <th class="js-gard1-only">عجز</th>
+                                <th class="js-gard1-only">زيادة</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="gardLinesBody"></tbody>
+                    </table>
+                </div>
+                <div class="stocktaking-totals">
+                    <span>إجمالي الكمية: <b id="gardQtyTotal">0.00</b></span>
+                    <span>إجمالي القيمة: <b id="gardValueTotal">0.00</b></span>
+                </div>
+            </section>
+        </main>
+    </div>
+</section>
+
+<template id="gardLineTemplate">
+    <tr>
+        <td>
+            <select class="line-item">
+                <option value="">اختر الصنف</option>
+                @foreach (var item in Model.Items)
+                {
+                    <option value="@item.Id" data-code="@item.Code" data-price="@item.Price" data-unit="@item.DefaultUnitId" data-unit-name="@item.DefaultUnitName">@item.Code - @item.Text</option>
+                }
+            </select>
+        </td>
+        <td>
+            <select class="line-unit">
+                <option value="">الوحدة</option>
+                @foreach (var unit in Model.Units)
+                {
+                    <option value="@unit.Id">@unit.Text</option>
+                }
+            </select>
+        </td>
+        <td><input type="number" step="0.0001" min="0" class="line-count" value="1" /></td>
+        <td><input type="number" step="0.0001" min="0" class="line-price" value="0" /></td>
+        <td><input type="text" class="line-serial" /></td>
+        <td><input type="text" class="line-lot" /></td>
+        <td class="js-gard1-only"><input type="number" step="0.0001" class="line-gard-qty" /></td>
+        <td class="js-gard1-only"><input type="number" step="0.0001" class="line-gard-result" /></td>
+        <td class="js-gard1-only"><input type="number" step="0.0001" class="line-gard-result1" /></td>
+        <td class="js-gard1-only"><input type="number" step="0.0001" class="line-gard-result2" /></td>
+        <td><button type="button" class="main-erp-link-btn is-danger js-remove-line">حذف</button></td>
+    </tr>
+</template>
+
+<script src="~/Areas/MainErp/Scripts/stocktaking.js"></script>

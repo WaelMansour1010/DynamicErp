@@ -1,0 +1,196 @@
+@model MyERP.Areas.MainErp.ViewModels.LegacyOperations.LegacyOperationsIndexViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "شاشات VB6 المالية والصيانة";
+}
+<link href="~/Areas/MainErp/Content/legacy-operations.css" rel="stylesheet" />
+
+<section class="main-erp-panel legacy-ops-page" dir="rtl" id="legacyOpsPage"
+         data-boxes-url="@Url.Action("Boxes", "LegacyOperations", new { area = "MainErp" })"
+         data-box-url="@Url.Action("Box", "LegacyOperations", new { area = "MainErp" })"
+         data-save-box-url="@Url.Action("SaveBox", "LegacyOperations", new { area = "MainErp" })"
+         data-delete-box-url="@Url.Action("DeleteBox", "LegacyOperations", new { area = "MainErp" })"
+         data-cashing-url="@Url.Action("Cashing", "LegacyOperations", new { area = "MainErp" })"
+         data-cashing-details-url="@Url.Action("CashingDetails", "LegacyOperations", new { area = "MainErp" })"
+         data-save-cashing-url="@Url.Action("SaveCashing", "LegacyOperations", new { area = "MainErp" })"
+         data-delete-cashing-url="@Url.Action("DeleteCashing", "LegacyOperations", new { area = "MainErp" })"
+         data-car-url="@Url.Action("CarMaintenance", "LegacyOperations", new { area = "MainErp" })"
+         data-car-details-url="@Url.Action("CarMaintenanceDetails", "LegacyOperations", new { area = "MainErp" })"
+         data-save-car-url="@Url.Action("SaveCarMaintenance", "LegacyOperations", new { area = "MainErp" })"
+         data-delete-car-url="@Url.Action("DeleteCarMaintenance", "LegacyOperations", new { area = "MainErp" })"
+         data-cars-url="@Url.Action("Cars", "LegacyOperations", new { area = "MainErp" })"
+         data-car-data-url="@Url.Action("CarData", "LegacyOperations", new { area = "MainErp" })"
+         data-save-car-data-url="@Url.Action("SaveCarData", "LegacyOperations", new { area = "MainErp" })"
+         data-delete-car-data-url="@Url.Action("DeleteCarData", "LegacyOperations", new { area = "MainErp" })"
+         data-car-auth-url="@Url.Action("CarAuthorizations", "LegacyOperations", new { area = "MainErp" })"
+         data-car-auth-details-url="@Url.Action("CarAuthorizationDetails", "LegacyOperations", new { area = "MainErp" })"
+         data-save-car-auth-url="@Url.Action("SaveCarAuthorization", "LegacyOperations", new { area = "MainErp" })"
+         data-delete-car-auth-url="@Url.Action("DeleteCarAuthorization", "LegacyOperations", new { area = "MainErp" })"
+         data-attachments-url="@Url.Action("Attachments", "LegacyOperations", new { area = "MainErp" })"
+         data-upload-attachment-url="@Url.Action("UploadAttachment", "LegacyOperations", new { area = "MainErp" })"
+         data-delete-attachment-url="@Url.Action("DeleteAttachment", "LegacyOperations", new { area = "MainErp" })"
+         data-primary-attachment-url="@Url.Action("SetPrimaryAttachment", "LegacyOperations", new { area = "MainErp" })">
+    <header class="legacy-ops-header">
+        <div>
+            <h2>الشاشات المحولة من VB6</h2>
+            <p>FrmBoxesData، FrmBankDeposite3، FrmBillCarMaintExtra</p>
+        </div>
+        <input id="legacySearch" type="search" placeholder="بحث بالكود أو الاسم أو المسلسل" />
+    </header>
+
+    <nav class="legacy-tabs">
+        <button class="active" data-tab="boxes">الخزن والعهد</button>
+        <button data-tab="cashing">إيداع الصندوق العام</button>
+        <button data-tab="car">فاتورة صيانة سيارات</button>
+        <button data-tab="cars">بيانات السيارات</button>
+        <button data-tab="carAuth">كارت التفويض</button>
+    </nav>
+
+    <div class="legacy-message" id="legacyMessage"></div>
+
+    <section class="legacy-tab active" data-panel="boxes">
+        <div class="legacy-grid">
+            <aside><table><thead><tr><th>الكود</th><th>الخزنة</th><th>الحساب</th></tr></thead><tbody id="boxesRows"></tbody></table></aside>
+            <form id="boxForm" class="legacy-form">
+                <input type="hidden" name="Id" />
+                <label>اسم الخزنة<input name="Name" required /></label>
+                <label>الاسم الإنجليزي<input name="EnglishName" /></label>
+                <label>الفرع<select name="BranchId"><option value="">اختر</option>@foreach (var x in Model.Branches){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>النوع<select name="Type"><option value="0">خزنة</option><option value="1">عهدة</option></select></label>
+                <label>حساب الأب<select name="ParentAccountCode"><option value="">اختر</option>@foreach (var x in Model.Accounts){<option value="@x.Id">@x.Id - @x.Text</option>}</select></label>
+                <label>حساب الخزنة<input name="AccountCode" readonly /></label>
+                <label>الرصيد الافتتاحي<input name="OpenBalance" type="number" step="0.01" /></label>
+                <label>التاريخ<input name="OpenBalanceDate" type="date" /></label>
+                <label class="wide">ملاحظات<textarea name="Remarks"></textarea></label>
+                <div class="legacy-actions"><button type="button" data-new="box">جديد</button><button type="submit">حفظ</button><button type="button" data-delete="box">حذف</button></div>
+            </form>
+        </div>
+    </section>
+
+    <section class="legacy-tab" data-panel="cashing">
+        <div class="legacy-grid">
+            <aside><table><thead><tr><th>الكود</th><th>المسلسل</th><th>التاريخ</th></tr></thead><tbody id="cashingRows"></tbody></table></aside>
+            <form id="cashingForm" class="legacy-form">
+                <input type="hidden" name="Id" /><input type="hidden" name="NoteId" />
+                <label>التاريخ<input name="RecordDate" type="date" required /></label>
+                <label>من<input name="FromDate" type="date" /></label>
+                <label>إلى<input name="ToDate" type="date" /></label>
+                <label>الفرع<select name="BranchId"><option value="">اختر</option>@foreach (var x in Model.Branches){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>الصندوق العام<select name="GeneralBoxId"><option value="">اختر</option>@foreach (var x in Model.Boxes){<option value="@x.Id" data-account="@x.AccountCode">@x.Text</option>}</select></label>
+                <label>الصندوق الفرعي<select name="SubBoxId"><option value="">اختر</option>@foreach (var x in Model.Boxes){<option value="@x.Id" data-account="@x.AccountCode">@x.Text</option>}</select></label>
+                <label>الكاشير<select name="CashierId"><option value="">اختر</option>@foreach (var x in Model.Cashiers){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label class="wide">ملاحظات<textarea name="Remarks"></textarea></label>
+                <div class="legacy-lines wide">
+                    <table><thead><tr><th>نوع الدفع</th><th>المحصل</th><th>عمولة</th><th>الصافي</th><th>ملاحظات</th><th></th></tr></thead><tbody id="cashingLines"></tbody></table>
+                    <button type="button" data-add-line="cashing">إضافة سطر</button>
+                </div>
+                <div class="legacy-actions"><button type="button" data-new="cashing">جديد</button><button type="submit">حفظ</button><button type="button" data-delete="cashing">حذف</button></div>
+            </form>
+        </div>
+    </section>
+
+    <section class="legacy-tab" data-panel="car">
+        <div class="legacy-grid">
+            <aside><table><thead><tr><th>الكود</th><th>العميل</th><th>الإجمالي</th></tr></thead><tbody id="carRows"></tbody></table></aside>
+            <form id="carForm" class="legacy-form">
+                <input type="hidden" name="Id" /><input type="hidden" name="NoteId" />
+                <label>التاريخ<input name="RecordDate" type="date" required /></label>
+                <label>تاريخ الانتهاء<input name="EndDate" type="date" /></label>
+                <label>الفرع<select name="BranchId"><option value="">اختر</option>@foreach (var x in Model.Branches){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>العميل<select name="CustomerId"><option value="">اختر</option>@foreach (var x in Model.Customers){<option value="@x.Id" data-account="@x.AccountCode">@x.Text</option>}</select></label>
+                <label>اسم العميل<input name="ClientName" /></label>
+                <label>الهاتف<input name="Telephone" /></label>
+                <label>نوع السيارة<select name="CarTypeId"><option value="">اختر</option>@foreach (var x in Model.CarTypes){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>الموديل<select name="CarModelId"><option value="">اختر</option>@foreach (var x in Model.CarModels){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>اللون<select name="ColorId"><option value="">اختر</option>@foreach (var x in Model.Colors){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>رقم اللوحة<input name="PlateNo" /></label>
+                <label>الدفع<select name="PaymentType"><option value="0">نقداً</option><option value="1">آجل</option></select></label>
+                <label>الخزنة<select name="BoxId"><option value="">اختر</option>@foreach (var x in Model.Boxes){<option value="@x.Id" data-account="@x.AccountCode">@x.Text</option>}</select></label>
+                <label>دفعة نقدية<input name="PaymentValue" type="number" step="0.01" /></label>
+                <label>الضريبة<input name="VatValue" type="number" step="0.01" /></label>
+                <label>حساب الضريبة<select name="VatAccountCode"><option value="">اختر</option>@foreach (var x in Model.Accounts){<option value="@x.Id">@x.Id - @x.Text</option>}</select></label>
+                <div class="legacy-lines wide">
+                    <table><thead><tr><th>النوع</th><th>البند</th><th>القيمة</th><th>العدد</th><th>الصافي</th><th>الحساب</th><th></th></tr></thead><tbody id="carLines"></tbody></table>
+                    <button type="button" data-add-line="car">إضافة سطر</button>
+                </div>
+                <div class="legacy-actions"><button type="button" data-new="car">جديد</button><button type="submit">حفظ</button><button type="button" data-delete="car">حذف</button></div>
+            </form>
+        </div>
+    </section>
+
+    <section class="legacy-tab" data-panel="cars">
+        <div class="legacy-grid">
+            <aside><table><thead><tr><th>الكود</th><th>اللوحة</th><th>الاسم</th></tr></thead><tbody id="carsRows"></tbody></table></aside>
+            <form id="carsForm" class="legacy-form">
+                <input type="hidden" name="Id" />
+                <label>الكود<input name="Code" /></label><label>البادئة<input name="Prefix" /></label><label>الكود الكامل<input name="FullCode" /></label>
+                <label>الفرع<select name="BranchId"><option value="">اختر</option>@foreach (var x in Model.Branches){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>نوع السيارة/المعدة<select name="CarTypeId"><option value="">اختر</option>@foreach (var x in Model.CarTypes){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>الموديل<select name="CarModelId"><option value="">اختر</option>@foreach (var x in Model.CarModels){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>اللون<select name="ColorId"><option value="">اختر</option>@foreach (var x in Model.Colors){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>الموظف/السائق<select name="EmployeeId"><option value="">اختر</option>@foreach (var x in Model.Employees){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>اسم السيارة/المعدة<input name="Name" /></label><label>رقم اللوحة<input name="BoardNo" required /></label><label>رقم الرخصة<input name="LicenseNo" /></label>
+                <label>موديل نصي<input name="Model" /></label><label>اسم المعدة<input name="EquipmentName" /></label><label>اسم السائق<input name="LeaderName" /></label>
+                <label>تاريخ الشراء<input name="PurchaseDate" type="date" /></label><label>انتهاء الرخصة<input name="LicenseExpireDate" type="date" /></label><label>انتهاء التأمين<input name="InsuranceExpireDate" type="date" /></label>
+                <label>انتهاء الفحص<input name="TestExpireDate" type="date" /></label><label>آخر عداد<input name="LastKMCounter" type="number" step="0.01" /></label><label>السعة<input name="Capacity" type="number" step="0.01" /></label>
+                <label>المعدل<input name="Rate" type="number" step="0.01" /></label><label>الإجمالي<input name="Total" type="number" step="0.01" /></label><label>رقم الماكينة<input name="EngineNo" /></label>
+                <label>الشاسيه<input name="Chassis" /></label><label>القير<input name="GearNo" /></label>
+                <label><input name="FormOriginal" type="checkbox" /> أصل الاستمارة</label><label><input name="AuthorizeLicense" type="checkbox" /> تفويض الرخصة</label><label><input name="AuthorizeExamination" type="checkbox" /> تفويض الفحص</label>
+                <label><input name="SpareTyre" type="checkbox" /> استبن</label><label><input name="Battery" type="checkbox" /> بطارية</label><label><input name="Guarantee" type="checkbox" /> ضمان</label>
+                <label class="wide">ملاحظات<textarea name="Notes"></textarea></label>
+                <div class="legacy-lines wide">
+                    <table><thead><tr><th>قطعة/ملحق ثابت</th><th></th></tr></thead><tbody id="carParts"></tbody></table>
+                    <button type="button" data-add-line="carPart">إضافة قطعة</button>
+                </div>
+                <div class="legacy-media wide" data-attachment-panel="FrmCars">
+                    <div class="legacy-media-head"><strong>صور ومرفقات السيارة</strong><span>اسحب الصور هنا أو اختر ملف</span></div>
+                    <label class="legacy-dropzone"><input type="file" accept="image/*,.pdf" multiple data-upload-for="FrmCars" /><span>رفع صور / PDF</span></label>
+                    <div class="legacy-gallery" id="carsGallery"></div>
+                </div>
+                <div class="legacy-actions"><button type="button" data-new="cars">جديد</button><button type="submit">حفظ</button><button type="button" data-delete="cars">حذف</button></div>
+            </form>
+        </div>
+    </section>
+
+    <section class="legacy-tab" data-panel="carAuth">
+        <div class="legacy-grid">
+            <aside><table><thead><tr><th>الكود</th><th>العميل</th><th>اللوحة</th></tr></thead><tbody id="carAuthRows"></tbody></table></aside>
+            <form id="carAuthForm" class="legacy-form">
+                <input type="hidden" name="Id" />
+                <label>التاريخ<input name="RecordDate" type="date" required /></label><label>تاريخ الانتهاء<input name="EndDate" type="date" /></label>
+                <label>الفرع<select name="BranchId"><option value="">اختر</option>@foreach (var x in Model.Branches){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>العميل<select name="CustomerId"><option value="">اختر</option>@foreach (var x in Model.Customers){<option value="@x.Id" data-account="@x.AccountCode">@x.Text</option>}</select></label>
+                <label>كود العميل<input name="ClientCode" /></label><label>اسم العميل<input name="ClientName" /></label><label>الهاتف<input name="Telephone" /></label><label>الجوال<input name="Mobile" /></label>
+                <label>السيارة<select name="CarId"><option value="">اختر</option>@foreach (var x in Model.Cars){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>نوع السيارة<select name="CarTypeId"><option value="">اختر</option>@foreach (var x in Model.CarTypes){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>الموديل<select name="CarModelId"><option value="">اختر</option>@foreach (var x in Model.CarModels){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>اللون<select name="ColorId"><option value="">اختر</option>@foreach (var x in Model.Colors){<option value="@x.Id">@x.Text</option>}</select></label>
+                <label>رقم اللوحة<input name="PlateNo" /></label><label>سنة الصنع<input name="YearFact" type="number" /></label>
+                <label>حالة الطلب<select name="OrderStatus"><option value="0">جديد</option><option value="1">تحت العمل</option><option value="2">منتهي</option></select></label>
+                <label>عداد الدخول<input name="CarMeter" type="number" step="0.01" /></label><label>عداد الخروج<input name="CarMeterOut" type="number" step="0.01" /></label><label>رقم الشاسيه<input name="Chassis" /></label>
+                <label>أمر العمل<input name="WorkOrder" type="number" step="1" /></label><label>رقم التفويض<input name="AuthOrder" type="number" step="1" /></label>
+                <label><input name="Cash" type="checkbox" /> نقدي</label><label><input name="Account" type="checkbox" /> حساب</label><label><input name="Credit" type="checkbox" /> آجل</label>
+                <label><input name="Accepted" type="checkbox" /> مقبول</label><label><input name="Finished" type="checkbox" /> منتهي</label><label><input name="Waiting" type="checkbox" /> انتظار</label>
+                <label><input name="SendSms" type="checkbox" /> إرسال SMS</label>
+                <label>خصم قيمة<input name="DiscountValue" type="number" step="0.01" /></label><label>خصم %<input name="DiscountPercent" type="number" step="0.01" /></label><label>الإجمالي بعد الخصم<input name="TotalAfterDiscount" type="number" step="0.01" /></label>
+                <label>ضريبة %<input name="VatPercent" type="number" step="0.01" /></label><label>قيمة الضريبة<input name="VatValue" type="number" step="0.01" /></label>
+                <label>بيانات QR<input name="QrCodeData" /></label><label>مسار QR<input name="QrCodeDataPath" /></label>
+                <label class="wide">شكوى العميل<textarea name="Complaint"></textarea></label><label class="wide">ملاحظات أولية<textarea name="InitialNote"></textarea></label>
+                <div class="legacy-car-map wide">
+                    @for (var i = 1; i <= 14; i++) { <label><input type="checkbox" name="@("SubCar" + i)" /> نقطة فحص @i</label> }
+                </div>
+                <div class="legacy-lines wide"><table><thead><tr><th>النوع</th><th>البند</th><th>القيمة</th><th>العدد</th><th>الفني</th><th>القسم</th><th></th></tr></thead><tbody id="carAuthLines"></tbody></table><button type="button" data-add-line="carAuth">إضافة سطر عمل</button></div>
+                <div class="legacy-lines wide"><table><thead><tr><th>الصنف</th><th>الكمية</th><th>السعر</th><th>الضريبة</th><th>الإجمالي</th><th>ملاحظات</th><th></th></tr></thead><tbody id="carAuthItems"></tbody></table><button type="button" data-add-line="carAuthItem">إضافة صنف</button></div>
+                <div class="legacy-media wide" data-attachment-panel="FrmCarAuthontication">
+                    <div class="legacy-media-head"><strong>صور قبل/بعد ومرفقات التفويض</strong><span>معرض حديث متعدد الصور</span></div>
+                    <label class="legacy-dropzone"><input type="file" accept="image/*,.pdf" multiple data-upload-for="FrmCarAuthontication" /><span>رفع صور / PDF</span></label>
+                    <div class="legacy-gallery" id="carAuthGallery"></div>
+                </div>
+                <div class="legacy-actions"><button type="button" data-new="carAuth">جديد</button><button type="submit">حفظ</button><button type="button" data-delete="carAuth">حذف</button></div>
+            </form>
+        </div>
+    </section>
+
+    <script type="application/json" id="legacyLookups">@Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model))</script>
+</section>
+<script src="~/Areas/MainErp/Scripts/legacy-operations.js"></script>

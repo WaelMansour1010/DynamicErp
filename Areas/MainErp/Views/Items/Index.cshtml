@@ -1,0 +1,344 @@
+@model MyERP.Areas.MainErp.ViewModels.Items.ItemsIndexViewModel
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "الأصناف";
+    var canAdd = Model != null && Model.Permissions != null && Model.Permissions.CanAdd;
+    var canEdit = Model != null && Model.Permissions != null && Model.Permissions.CanEdit;
+    var canDelete = Model != null && Model.Permissions != null && Model.Permissions.CanDelete;
+    var selected = Model.Selected ?? new MyERP.Areas.MainErp.ViewModels.Items.ItemDetailsViewModel();
+}
+
+<link href="~/Areas/MainErp/Content/items.css" rel="stylesheet" />
+
+<section class="main-erp-panel items-page" dir="rtl" id="itemsPage"
+         data-save-url="@Url.Action("Save", "Items", new { area = "MainErp" })"
+         data-details-url="@Url.Action("Details", "Items", new { area = "MainErp" })"
+         data-delete-url="@Url.Action("Delete", "Items", new { area = "MainErp" })"
+         data-group-details-url="@Url.Action("GroupDetails", "Items", new { area = "MainErp" })"
+         data-group-save-url="@Url.Action("SaveGroup", "Items", new { area = "MainErp" })"
+         data-group-delete-url="@Url.Action("DeleteGroup", "Items", new { area = "MainErp" })">
+    <header class="main-erp-cockpit-header">
+        <div>
+            <span class="main-erp-kicker">FrmItems</span>
+            <h2>الأصناف</h2>
+            <p>بيانات الصنف الأساسية والبيانات الأخرى ووحدات الصنف كما في شاشة VB6 المطلوبة.</p>
+        </div>
+        <div class="main-erp-header-actions">
+            <button type="button" class="main-erp-inline-action" id="itemNewBtn" @(canAdd ? "" : "disabled")><i class="fas fa-plus"></i> جديد</button>
+            <button type="button" class="main-erp-inline-action" id="itemSaveBtn" @((canAdd || canEdit) ? "" : "disabled")><i class="fas fa-save"></i> حفظ</button>
+            <button type="button" class="main-erp-inline-action is-danger" id="itemDeleteBtn" @(canDelete ? "" : "disabled")><i class="fas fa-trash"></i> حذف</button>
+        </div>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="main-erp-warning">@Model.Message</div>
+    }
+
+    <div id="itemStatus" class="items-status" role="status" aria-live="polite" hidden></div>
+
+    <div class="items-layout">
+        <aside class="main-erp-premium-search items-search-card">
+            <div class="main-erp-search-head">
+                <span>الوصول السريع</span>
+                <h3>بحث الأصناف</h3>
+            </div>
+            <form method="get" action="@Url.Action("Index", "Items", new { area = "MainErp" })" class="main-erp-filter-bar">
+                <label>بحث
+                    <input type="text" name="searchText" value="@Model.SearchText" placeholder="الكود / الاسم / الباركود" />
+                </label>
+                <label>المجموعة
+                    <select name="groupId">
+                        <option value="">الكل</option>
+                        @foreach (var group in Model.Groups)
+                        {
+                            <option value="@group.Id" @(Model.GroupId.HasValue && Model.GroupId.Value.ToString() == group.Id ? "selected" : "")>@group.Text</option>
+                        }
+                    </select>
+                </label>
+                <button type="submit"><i class="fas fa-search"></i> بحث</button>
+            </form>
+
+            <div class="main-erp-table-wrap items-results">
+                <table class="main-erp-table">
+                    <thead>
+                        <tr>
+                            <th>الكود</th>
+                            <th>اسم الصنف</th>
+                            <th>الوحدة</th>
+                            <th>السعر</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Results)
+                        {
+                            <tr data-id="@row.Id">
+                                <td>@row.Code</td>
+                                <td>@row.Name</td>
+                                <td>@row.DefaultUnitName</td>
+                                <td>@String.Format("{0:n2}", row.SalePrice)</td>
+                                <td><button type="button" class="main-erp-link-btn js-load-item" data-id="@row.Id">تحميل</button></td>
+                            </tr>
+                        }
+                        @if (Model.Results.Count == 0)
+                        {
+                            <tr><td colspan="5" class="main-erp-empty">لا توجد نتائج.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </aside>
+
+        <main class="items-editor-stage">
+            <nav class="items-tabs" aria-label="FrmItems sections">
+                <button type="button" class="active" data-target="#itemMainSection">بيانات الصنف</button>
+                <button type="button" data-target="#itemOtherSection">بيانات أخرى</button>
+                <button type="button" data-target="#itemUnitsSection">الوحدات</button>
+                <button type="button" data-target="#itemGroupsSection">المجموعات</button>
+            </nav>
+
+            <section class="main-erp-premium-card items-section" id="itemMainSection">
+                <div class="erp-section-title"><h2>بيانات الصنف</h2></div>
+                <div class="main-erp-form-grid items-form-grid">
+                    <input type="hidden" id="itemId" value="@selected.Id" />
+                    <label>كود الصنف
+                        <input type="text" id="itemCode" value="@selected.Code" placeholder="يولد تلقائيا عند تركه فارغا" />
+                    </label>
+                    <label>اسم الصنف عربي
+                        <input type="text" id="itemName" value="@selected.Name" required />
+                    </label>
+                    <label>اسم الصنف إنجليزي
+                        <input type="text" id="itemNameEn" value="@selected.NameEn" />
+                    </label>
+                    <label>المجموعة
+                        <select id="itemGroupId" required>
+                            <option value="">اختر المجموعة</option>
+                            @foreach (var group in Model.Groups)
+                            {
+                                <option value="@group.Id" @(selected.GroupId.HasValue && selected.GroupId.Value.ToString() == group.Id ? "selected" : "")>@group.Text</option>
+                            }
+                        </select>
+                    </label>
+                    <label>نوع الصنف
+                        <select id="itemType" required>
+                            <option value="">اختر النوع</option>
+                            <option value="1" @(selected.ItemType == 1 ? "selected" : "")>مخزني</option>
+                            <option value="2" @(selected.ItemType == 2 ? "selected" : "")>مجمع</option>
+                            <option value="3" @(selected.ItemType == 3 ? "selected" : "")>خدمة</option>
+                        </select>
+                    </label>
+                    <label>الباركود
+                        <input type="text" id="itemBarcode" value="@selected.Barcode" />
+                    </label>
+                    <label>سعر الشراء
+                        <input type="number" step="0.0001" min="0" id="purchasePrice" value="@selected.PurchasePrice" />
+                    </label>
+                    <label>سعر البيع
+                        <input type="number" step="0.0001" min="0" id="salePrice" value="@selected.SalePrice" />
+                    </label>
+                    <label>سعر العميل
+                        <input type="number" step="0.0001" min="0" id="customerPrice" value="@selected.CustomerPrice" />
+                    </label>
+                    <label>سعر التاجر
+                        <input type="number" step="0.0001" min="0" id="dealerPrice" value="@selected.DealerPrice" />
+                    </label>
+                </div>
+            </section>
+
+            <section class="main-erp-premium-card items-section" id="itemOtherSection">
+                <div class="erp-section-title"><h2>بيانات أخرى</h2></div>
+                <div class="main-erp-form-grid items-form-grid">
+                    <label>Part No
+                        <input type="text" id="partNo" value="@selected.PartNo" />
+                    </label>
+                    <label>Catalog No
+                        <input type="text" id="catalogNo" value="@selected.CatalogNo" />
+                    </label>
+                    <label>Factory No
+                        <input type="text" id="factoryNo" value="@selected.FactoryNo" />
+                    </label>
+                    <label>التكلفة
+                        <input type="number" step="0.0001" min="0" id="costPrice" value="@selected.CostPrice" />
+                    </label>
+                    <label>حد الطلب
+                        <input type="number" step="1" min="0" id="requestLimit" value="@selected.RequestLimit" />
+                    </label>
+                    <label>أقل كمية
+                        <input type="number" step="0.0001" min="0" id="minQty" value="@selected.MinQty" />
+                    </label>
+                    <label>أكبر كمية
+                        <input type="number" step="0.0001" min="0" id="maxQty" value="@selected.MaxQty" />
+                    </label>
+                    <label>اسم مختصر
+                        <input type="text" id="shortName" value="@selected.ShortName" />
+                    </label>
+                    <label>مكان التخزين
+                        <input type="text" id="binLocation" value="@selected.BinLocation" />
+                    </label>
+                    <label class="items-check"><input type="checkbox" id="haveSerial" @(selected.HaveSerial ? "checked" : "") /> له سيريال</label>
+                    <label class="items-check"><input type="checkbox" id="haveGuarantee" @(selected.HaveGuarantee ? "checked" : "") /> له ضمان</label>
+                    <label>مدة الضمان
+                        <input type="number" step="1" min="0" id="guaranteeValue" value="@selected.GuaranteeValue" />
+                    </label>
+                    <label>نوع الضمان
+                        <select id="guaranteeType">
+                            <option value="">بدون</option>
+                            <option value="1" @(selected.GuaranteeType == 1 ? "selected" : "")>يوم</option>
+                            <option value="2" @(selected.GuaranteeType == 2 ? "selected" : "")>شهر</option>
+                            <option value="3" @(selected.GuaranteeType == 3 ? "selected" : "")>سنة</option>
+                        </select>
+                    </label>
+                    <label class="items-wide">ملاحظات
+                        <textarea id="itemNotes" rows="3">@selected.Notes</textarea>
+                    </label>
+                </div>
+            </section>
+
+            <section class="main-erp-premium-card items-section" id="itemUnitsSection">
+                <div class="erp-section-title">
+                    <h2>الوحدات</h2>
+                    <button type="button" class="main-erp-inline-action is-secondary" id="addUnitBtn"><i class="fas fa-plus"></i> وحدة</button>
+                </div>
+                <div class="main-erp-table-wrap">
+                    <table class="main-erp-table items-units-table">
+                        <thead>
+                            <tr>
+                                <th>افتراضي</th>
+                                <th>الوحدة</th>
+                                <th>المعامل</th>
+                                <th>سعر البيع</th>
+                                <th>سعر الشراء</th>
+                                <th>أقل سعر</th>
+                                <th>باركود</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemUnitsBody">
+                            @foreach (var unit in selected.Units)
+                            {
+                                <tr>
+                                    <td><input type="radio" name="defaultUnit" class="unit-default" @(unit.IsDefault ? "checked" : "") /></td>
+                                    <td>
+                                        <select class="unit-id">
+                                            <option value="">اختر</option>
+                                            @foreach (var lookup in Model.Units)
+                                            {
+                                                <option value="@lookup.Id" @(unit.UnitId.HasValue && unit.UnitId.Value.ToString() == lookup.Id ? "selected" : "")>@lookup.Text</option>
+                                            }
+                                        </select>
+                                    </td>
+                                    <td><input type="number" step="0.0001" min="0.0001" class="unit-factor" value="@unit.UnitFactor" /></td>
+                                    <td><input type="number" step="0.0001" min="0" class="unit-sale" value="@unit.SalePrice" /></td>
+                                    <td><input type="number" step="0.0001" min="0" class="unit-purchase" value="@unit.PurchasePrice" /></td>
+                                    <td><input type="number" step="0.0001" min="0" class="unit-min-sale" value="@unit.MinSellingPrice" /></td>
+                                    <td><input type="text" class="unit-barcode" value="@unit.Barcode" /></td>
+                                    <td><button type="button" class="main-erp-link-btn js-remove-unit">حذف</button></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="main-erp-premium-card items-section" id="itemGroupsSection">
+                <div class="erp-section-title">
+                    <h2>مجموعات الأصناف</h2>
+                    <div>
+                        <button type="button" class="main-erp-inline-action is-secondary" id="groupNewBtn"><i class="fas fa-plus"></i> مجموعة</button>
+                        <button type="button" class="main-erp-inline-action" id="groupSaveBtn"><i class="fas fa-save"></i> حفظ المجموعة</button>
+                        <button type="button" class="main-erp-inline-action is-danger" id="groupDeleteBtn"><i class="fas fa-trash"></i> حذف</button>
+                    </div>
+                </div>
+                <div class="items-groups-layout">
+                    <div class="main-erp-table-wrap">
+                        <table class="main-erp-table items-groups-table">
+                            <thead>
+                                <tr>
+                                    <th>الكود</th>
+                                    <th>المجموعة</th>
+                                    <th>الأب</th>
+                                    <th>أصناف</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var group in Model.GroupTree)
+                                {
+                                    <tr data-id="@group.Id">
+                                        <td>@group.Code</td>
+                                        <td>@group.Name</td>
+                                        <td>@group.ParentName</td>
+                                        <td>@group.ItemsCount</td>
+                                        <td><button type="button" class="main-erp-link-btn js-load-group" data-id="@group.Id">تحميل</button></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="items-group-editor">
+                        <div class="main-erp-form-grid items-form-grid">
+                            <input type="hidden" id="groupId" value="" />
+                            <label>كود المجموعة
+                                <input type="text" id="groupCode" placeholder="يولد من كود الأب عند تركه فارغا" />
+                            </label>
+                            <label>اسم المجموعة عربي
+                                <input type="text" id="groupName" />
+                            </label>
+                            <label>اسم المجموعة إنجليزي
+                                <input type="text" id="groupNameEn" />
+                            </label>
+                            <label>المجموعة الرئيسية
+                                <select id="groupParentId">
+                                    <option value="1">مجموعة الأصناف</option>
+                                    @foreach (var group in Model.GroupTree)
+                                    {
+                                        <option value="@group.Id">@group.Code - @group.Name</option>
+                                    }
+                                </select>
+                            </label>
+                            <label>Fullcode
+                                <input type="text" id="groupFullCode" />
+                            </label>
+                            <label class="items-check"><input type="checkbox" id="groupIsLast" /> مجموعة نهائية</label>
+                            <label class="items-check"><input type="checkbox" id="groupIsMaterial" /> خامات</label>
+                            <label class="items-check"><input type="checkbox" id="groupPos" /> تظهر في POS</label>
+                            <label class="items-check"><input type="checkbox" id="groupProducer" /> منتجة</label>
+                            <label class="items-check"><input type="checkbox" id="groupAdditions" /> إضافات</label>
+                            <label class="items-check"><input type="checkbox" id="groupHoldingMaterials" /> Holding Materials</label>
+                            <label class="items-check"><input type="checkbox" id="groupSeparate" /> منفصلة</label>
+                            <label class="items-check"><input type="checkbox" id="groupTransfer" /> تحويل</label>
+                            <label class="items-check"><input type="checkbox" id="groupShowCover" /> إظهار الغلاف</label>
+                            <label class="items-check"><input type="checkbox" id="groupTaxExempt" /> معفي ضريبيا</label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</section>
+
+<template id="unitRowTemplate">
+    <tr>
+        <td><input type="radio" name="defaultUnit" class="unit-default" /></td>
+        <td>
+            <select class="unit-id">
+                <option value="">اختر</option>
+                @foreach (var lookup in Model.Units)
+                {
+                    <option value="@lookup.Id">@lookup.Text</option>
+                }
+            </select>
+        </td>
+        <td><input type="number" step="0.0001" min="0.0001" class="unit-factor" value="1" /></td>
+        <td><input type="number" step="0.0001" min="0" class="unit-sale" value="0" /></td>
+        <td><input type="number" step="0.0001" min="0" class="unit-purchase" value="0" /></td>
+        <td><input type="number" step="0.0001" min="0" class="unit-min-sale" value="0" /></td>
+        <td><input type="text" class="unit-barcode" /></td>
+        <td><button type="button" class="main-erp-link-btn js-remove-unit">حذف</button></td>
+    </tr>
+</template>
+
+@section scripts {
+    <script src="~/Areas/MainErp/Scripts/items.js"></script>
+}

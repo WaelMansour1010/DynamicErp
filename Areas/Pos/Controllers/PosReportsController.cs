@@ -54,6 +54,7 @@ namespace MyERP.Areas.Pos.Controllers
         {
             Response.ContentEncoding = System.Text.Encoding.UTF8;
             Response.Charset = "utf-8";
+            Response.TrySkipIisCustomErrors = true;
 
             try
             {
@@ -62,20 +63,20 @@ namespace MyERP.Areas.Pos.Controllers
                 if (validation != null && validation.StatusCode != 0)
                 {
                     Response.StatusCode = validation.StatusCode;
-                    return Json(Fail(validation.Message, validation.TechnicalMessage));
+                    return LargeJson(Fail(validation.Message, validation.TechnicalMessage));
                 }
 
                 var report = validation.Report;
                 if (!report.Enabled)
                 {
-                    return Json(new { success = false, message = "لم يتم تحديد مصدر التقرير بعد" });
+                    return LargeJson(new { success = false, message = "لم يتم تحديد مصدر التقرير بعد" });
                 }
 
                 var stopwatch = Stopwatch.StartNew();
                 var table = LoadReportTable(report, request, context, validation.BranchId);
                 stopwatch.Stop();
                 PosPerformanceLogger.LogQuery("PosReports.Run", report.Key, stopwatch.ElapsedMilliseconds, table != null ? table.Rows.Count : 0, context);
-                return Json(new
+                return LargeJson(new
                 {
                     success = true,
                     reportKey = report.Key,
@@ -86,9 +87,8 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (Exception ex)
             {
-                Response.StatusCode = 500;
                 System.Diagnostics.Trace.TraceError("PosReports.Run failed: " + ex);
-                return Json(Fail("تعذر تشغيل التقرير", ex.Message));
+                return LargeJson(Fail("تعذر تشغيل التقرير", ex.Message));
             }
         }
 
@@ -211,7 +211,12 @@ namespace MyERP.Areas.Pos.Controllers
                 request.BranchFromId,
                 request.BranchToId,
                 request.ShowEmptyBranches,
-                request.ServiceSearch);
+                request.ServiceSearch,
+                request.ServiceType,
+                request.StoreId,
+                request.UserId,
+                request.IncludeCardIssueCheck,
+                request.CardIssueMode);
         }
 
         private IEnumerable<PosBranchDto> GetAllowedBranches(PosUserContext context)
@@ -321,14 +326,37 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 { "BranchName", "بيان الفروع" },
                 { "BranchCode", "كود الفرع" },
-                { "Transaction_ID", "رقم الحركة" },
-                { "NoteSerial1", "رقم الفاتورة" },
-                { "Transaction_Date", "التاريخ" },
-                { "ReportType", "نوع العملية" },
-                { "CashCustomerName", "اسم العميل" },
-                { "CashCustomerPhone", "هاتف العميل" },
-                { "TransactionCount", "عدد الحركات" },
-                { "RechargeValue", "قيمة الشحن" },
+                 { "Transaction_ID", "رقم الحركة" },
+                 { "NoteSerial1", "رقم الفاتورة" },
+                 { "InvoiceNumber", "رقم الفاتورة" },
+                 { "Transaction_Date", "التاريخ" },
+                 { "InvoiceDate", "تاريخ الفاتورة" },
+                 { "ReportType", "نوع العملية" },
+                 { "ServiceType", "نوع الخدمة" },
+                 { "CashCustomerName", "اسم العميل" },
+                 { "CustomerName", "اسم العميل" },
+                 { "CashCustomerPhone", "هاتف العميل" },
+                 { "CustomerPhone", "هاتف العميل" },
+                 { "CardNumber", "رقم الكارت / التوكن" },
+                 { "CardIssueStatus", "حالة الكارت" },
+                 { "CardIssueStatusAr", "حالة الكارت" },
+                 { "CardStockBefore", "رصيد الكارت قبل العملية" },
+                 { "CardStockAfter", "رصيد الكارت بعد العملية" },
+                 { "ProblemReason", "سبب المشكلة" },
+                 { "Branch", "الفرع" },
+                 { "Store", "المخزن" },
+                 { "Cashier", "المستخدم / الكاشير" },
+                 { "TotalCards", "إجمالي الكروت" },
+                 { "ProblematicCards", "كروت بها مشكلة" },
+                 { "PotentialNegativeStockCards", "صرف/رصيد سالب محتمل" },
+                 { "MissingIssueVoucherCards", "بدون إذن صرف" },
+                 { "MissingKycCards", "بدون KYC" },
+                 { "DuplicateCardInvoices", "كروت مكررة" },
+                 { "NormalCards", "كروت طبيعية" },
+                 { "ProblemRatio", "نسبة المشاكل" },
+                 { "TransactionCount", "عدد الحركات" },
+                 { "RechargeValue", "قيمة الشحن" },
+                 { "RechargeAmount", "مبلغ الشحن" },
                 { "RechargeTotal", "إجمالي الشحن" },
                 { "NetValue", "الرسوم" },
                 { "NetValueTotal", "إجمالي الرسوم" },
@@ -433,6 +461,8 @@ namespace MyERP.Areas.Pos.Controllers
                         }).ToArray()));
                     }
 
+                    AppendCardProblemsSummary(sheetData, table);
+
                     worksheetPart.Worksheet.Append(new AutoFilter { Reference = "A4:" + GetExcelColumnName(Math.Max(1, table.Columns.Count)) + Math.Max(4, table.Rows.Count + 4) });
 
                     var sheets = workbookPart.Workbook.AppendChild(new Sheets());
@@ -444,6 +474,17 @@ namespace MyERP.Areas.Pos.Controllers
             }
         }
 
+        private JsonResult LargeJson(object data)
+        {
+            return new JsonResult
+            {
+                Data = data,
+                JsonRequestBehavior = JsonRequestBehavior.DenyGet,
+                MaxJsonLength = int.MaxValue,
+                RecursionLimit = 100
+            };
+        }
+
         private static Row RowFromValues(params string[] values)
         {
             var row = new Row();
@@ -453,6 +494,91 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return row;
+        }
+
+        private static void AppendCardProblemsSummary(SheetData sheetData, DataTable table)
+        {
+            if (sheetData == null || table == null || !HasColumn(table, "ServiceType") || !HasColumn(table, "CardIssueStatus"))
+            {
+                return;
+            }
+
+            var groups = new SortedDictionary<string, CardProblemsSummaryRow>(StringComparer.CurrentCultureIgnoreCase);
+            foreach (DataRow row in table.Rows)
+            {
+                if (!string.Equals(ReadCell(row, "ServiceType"), "Card", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var groupName = ReadCell(row, "Store");
+                if (string.IsNullOrWhiteSpace(groupName))
+                {
+                    groupName = ReadCell(row, "Branch");
+                }
+
+                if (string.IsNullOrWhiteSpace(groupName))
+                {
+                    groupName = "غير محدد";
+                }
+
+                CardProblemsSummaryRow summary;
+                if (!groups.TryGetValue(groupName, out summary))
+                {
+                    summary = new CardProblemsSummaryRow();
+                    groups[groupName] = summary;
+                }
+
+                summary.TotalCards++;
+                if (IsProblemCardStatus(ReadCell(row, "CardIssueStatus")))
+                {
+                    summary.NegativeCards++;
+                }
+            }
+
+            if (groups.Count == 0)
+            {
+                return;
+            }
+
+            sheetData.Append(new Row());
+            sheetData.Append(RowFromValues("ملخص مشاكل الكروت حسب المخزن"));
+            sheetData.Append(RowFromValues("المخزن / الفرع", "Total Cards", "Negative Cards", "Normal Cards", "Negative Ratio"));
+
+            foreach (var group in groups)
+            {
+                var summary = group.Value;
+                var normalCards = summary.TotalCards - summary.NegativeCards;
+                var ratio = summary.TotalCards == 0 ? 0m : (summary.NegativeCards * 100m / summary.TotalCards);
+                sheetData.Append(RowFromValues(
+                    group.Key,
+                    summary.TotalCards.ToString(CultureInfo.InvariantCulture),
+                    summary.NegativeCards.ToString(CultureInfo.InvariantCulture),
+                    normalCards.ToString(CultureInfo.InvariantCulture),
+                    ratio.ToString("0.0", CultureInfo.InvariantCulture) + "%"));
+            }
+        }
+
+        private static bool HasColumn(DataTable table, string columnName)
+        {
+            return table != null && table.Columns.Contains(columnName);
+        }
+
+        private static string ReadCell(DataRow row, string columnName)
+        {
+            if (row == null || row.Table == null || !row.Table.Columns.Contains(columnName) || row[columnName] == DBNull.Value)
+            {
+                return string.Empty;
+            }
+
+            return Convert.ToString(row[columnName], CultureInfo.InvariantCulture) ?? string.Empty;
+        }
+
+        private static bool IsProblemCardStatus(string status)
+        {
+            return string.Equals(status, "Negative", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(status, "Insufficient Balance", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(status, "Problematic Card", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string GetExcelColumnName(int columnNumber)
@@ -535,6 +661,8 @@ namespace MyERP.Areas.Pos.Controllers
             var name = column.ColumnName ?? string.Empty;
             if (name.Equals("RowNo", StringComparison.OrdinalIgnoreCase)
                 || name.Equals("BranchID", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("CardStockBefore", StringComparison.OrdinalIgnoreCase)
+                || name.Equals("CardStockAfter", StringComparison.OrdinalIgnoreCase)
                 || name.IndexOf("Id", StringComparison.OrdinalIgnoreCase) >= 0
                 || name.IndexOf("Status", StringComparison.OrdinalIgnoreCase) >= 0)
             {
@@ -549,6 +677,12 @@ namespace MyERP.Areas.Pos.Controllers
                 || type == typeof(float)
                 || type == typeof(double)
                 || type == typeof(decimal);
+        }
+
+        private sealed class CardProblemsSummaryRow
+        {
+            public int TotalCards { get; set; }
+            public int NegativeCards { get; set; }
         }
     }
 
@@ -566,6 +700,9 @@ namespace MyERP.Areas.Pos.Controllers
         public string SerialSearch { get; set; }
         public bool ShowEmptyBranches { get; set; }
         public string ServiceSearch { get; set; }
+        public string ServiceType { get; set; }
+        public bool IncludeCardIssueCheck { get; set; }
+        public string CardIssueMode { get; set; }
     }
 
     internal class ReportValidationResult

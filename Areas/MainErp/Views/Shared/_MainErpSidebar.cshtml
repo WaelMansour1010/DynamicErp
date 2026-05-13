@@ -5,10 +5,10 @@
     Func<string, bool> isActive = key => string.Equals(activeScreen, key, StringComparison.OrdinalIgnoreCase);
     Func<string[], bool> sectionActive = keys => keys.Any(k => string.Equals(activeScreen, k, StringComparison.OrdinalIgnoreCase));
 
-    var accountingOpen = sectionActive(new[] { "journal-entries", "discount-notifications", "accounts", "account-charts", "accounting-reports", "account-movement", "voucher-preview", "payments", "cashing", "dynamic-reports", "employee-payroll", "salary-run", "medical-insurance", "medical-insurance-reports" });
+    var accountingOpen = sectionActive(new[] { "journal-entries", "discount-notifications", "accounts", "account-charts", "accounting-reports", "account-movement", "voucher-preview", "payments", "cashing", "financial-expenses", "legacy-operations", "dynamic-reports", "employee-payroll", "salary-run", "medical-insurance", "medical-insurance-reports" });
     var salesOpen = sectionActive(new[] { "customers", "workshop-sales", "pump-sales", "sales-reports", "sales-summary" });
     var purchasesOpen = sectionActive(new[] { "purchases" });
-    var inventoryOpen = sectionActive(new[] { "stock-transfers", "defin-comp-item" });
+    var inventoryOpen = sectionActive(new[] { "stock-transfers", "items", "stocktaking", "defin-comp-item" });
     var projectsOpen = sectionActive(new[] { "projects", "project-extracts" });
     var lcOpen = sectionActive(new[] { "lc" });
     var adminOpen = sectionActive(new[] { "database-migration" });
@@ -66,6 +66,8 @@
                 <a class="pos-nav-link main-erp-nav-link @(isActive("voucher-preview") ? "active" : "")" href="@Url.Action("PreviewTest", "Accounting", new { area = "MainErp" })" title="@T("PreviewVoucher")"><i class="fas fa-eye"></i><span>@T("PreviewVoucher")</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("payments") ? "active" : "")" href="@Url.Action("Index", "Payments", new { area = "MainErp" })" title="سندات الصرف"><i class="fas fa-money-bill-wave"></i><span>سندات الصرف</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("cashing") ? "active" : "")" href="@Url.Action("Index", "Cashing", new { area = "MainErp" })" title="سندات القبض"><i class="fas fa-hand-holding-usd"></i><span>سندات القبض</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("financial-expenses") ? "active" : "")" href="@Url.Action("Index", "FinancialExpenses", new { area = "MainErp" })" title="الفواتير المالية"><i class="fas fa-file-invoice"></i><span>الفواتير المالية</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("legacy-operations") ? "active" : "")" href="@Url.Action("Index", "LegacyOperations", new { area = "MainErp" })" title="شاشات VB6 المالية"><i class="fas fa-cash-register"></i><span>شاشات VB6 المالية</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("employee-payroll") ? "active" : "")" href="@Url.Action("Employees", "EmployeePayroll", new { area = "MainErp" })" title="الموظفون"><i class="fas fa-users"></i><span>الموظفون</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("salary-run") ? "active" : "")" href="@Url.Action("SalaryRun", "EmployeePayroll", new { area = "MainErp" })" title="مسير الرواتب"><i class="fas fa-file-invoice-dollar"></i><span>مسير الرواتب</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("medical-insurance") ? "active" : "")" href="@Url.Action("MedicalInsurance", "EmployeePayroll", new { area = "MainErp" })" title="التأمين الطبي"><i class="fas fa-briefcase-medical"></i><span>التأمين الطبي</span></a>
@@ -96,6 +98,8 @@
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="@T("Inventory")"><span><i class="fas fa-boxes"></i><b>@T("Inventory")</b></span><i class="fas fa-chevron-down nav-chevron"></i></button>
             <div class="pos-nav-submenu">
                 <a class="pos-nav-link main-erp-nav-link @(isActive("stock-transfers") ? "active" : "")" href="@Url.Action("Index", "StockTransfers", new { area = "MainErp" })"><i class="fas fa-random"></i><span>@T("StockTransfers")</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("items") ? "active" : "")" href="@Url.Action("Index", "Items", new { area = "MainErp" })" title="الأصناف"><i class="fas fa-box"></i><span>الأصناف</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("stocktaking") ? "active" : "")" href="@Url.Action("Index", "Stocktaking", new { area = "MainErp" })" title="الجرد"><i class="fas fa-clipboard-check"></i><span>الجرد</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("defin-comp-item") ? "active" : "")" href="@Url.Action("Index", "DefinCompItem", new { area = "MainErp" })" title="سند التجميع"><i class="fas fa-layer-group"></i><span>سند التجميع</span></a>
             </div>
         </section>

@@ -1,0 +1,89 @@
+.financial-expenses-layout {
+    display: grid;
+    gap: var(--erp-gap);
+    grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
+}
+.financial-expenses-search {
+    align-self: start;
+    padding: 14px;
+}
+.financial-expenses-editor {
+    display: grid;
+    gap: var(--erp-gap);
+    min-width: 0;
+}
+.financial-expenses-tabs {
+    align-items: center;
+    background: var(--erp-surface);
+    border: 1px solid var(--erp-border);
+    border-radius: var(--erp-radius);
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+}
+.financial-expenses-tabs button {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--erp-radius-sm);
+    color: var(--erp-muted);
+    cursor: pointer;
+    font-weight: 700;
+    padding: 8px 12px;
+}
+.financial-expenses-tabs button.active {
+    background: var(--erp-primary-soft);
+    border-color: #c8dff1;
+    color: var(--erp-primary);
+}
+.financial-expenses-form-grid {
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+}
+.financial-expenses-wide {
+    grid-column: 1 / -1;
+}
+.financial-expenses-lines input,
+.financial-expenses-lines select {
+    min-width: 110px;
+    width: 100%;
+}
+.financial-expenses-lines .line-account {
+    min-width: 260px;
+}
+.financial-expenses-totals {
+    border-top: 1px solid var(--erp-border);
+    font-weight: 800;
+    margin-top: 12px;
+    padding-top: 12px;
+    text-align: left;
+}
+.financial-expenses-status {
+    border-radius: var(--erp-radius-sm);
+    font-weight: 700;
+    margin-bottom: var(--erp-gap);
+    padding: 10px 12px;
+    white-space: pre-line;
+}
+.financial-expenses-status.is-success {
+    background: #e8f6ef;
+    color: var(--erp-success);
+}
+.financial-expenses-status.is-error {
+    background: #fdecec;
+    color: var(--erp-danger);
+}
+@media (max-width: 1100px) {
+    .financial-expenses-layout {
+        grid-template-columns: 1fr;
+    }
+    .financial-expenses-form-grid {
+        grid-template-columns: repeat(2, minmax(150px, 1fr));
+    }
+}
+@media (max-width: 640px) {
+    .financial-expenses-form-grid {
+        grid-template-columns: 1fr;
+    }
+    .financial-expenses-tabs {
+        flex-direction: column;
+    }
+}
