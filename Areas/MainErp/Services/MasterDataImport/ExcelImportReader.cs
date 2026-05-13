@@ -68,12 +68,38 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
         {
             var table = ReadFirstWorksheet(filePath);
             var rows = new List<MasterDataImportRowViewModel>();
+            var accountBalanceLayout = LooksLikeLegacyAccountBalanceReport(table);
 
             for (var i = 0; i < table.Rows.Count; i++)
             {
                 var dataRow = table.Rows[i];
                 if (IsEmptyRow(dataRow))
                 {
+                    continue;
+                }
+
+                if (accountBalanceLayout)
+                {
+                    var serialFromReport = GetByIndex(dataRow, 7);
+                    var nameFromReport = GetByIndex(dataRow, 6);
+                    if (IsLikelyHeader(serialFromReport, nameFromReport))
+                    {
+                        continue;
+                    }
+
+                    var signedBalance = ParseSignedBalance(GetByIndex(dataRow, 5));
+                    rows.Add(new MasterDataImportRowViewModel
+                    {
+                        RowNumber = i + 2,
+                        EntityType = entityType,
+                        EntityCode = serialFromReport,
+                        EntityName = nameFromReport,
+                        AccountSerial = serialFromReport,
+                        AccountName = nameFromReport,
+                        OpeningBalance = signedBalance.HasValue ? Math.Abs(signedBalance.Value) : (decimal?)null,
+                        OpeningBalanceType = ParseBalanceTypeFromLabel(GetByIndex(dataRow, 4), GetByIndex(dataRow, 0), signedBalance),
+                        CurrencyCode = "1"
+                    });
                     continue;
                 }
 
@@ -250,6 +276,27 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
             return hits >= 2;
         }
 
+        private static bool LooksLikeLegacyAccountBalanceReport(DataTable table)
+        {
+            if (table.Columns.Count < 8 || table.Rows.Count == 0)
+            {
+                return false;
+            }
+
+            var hits = 0;
+            foreach (DataRow row in table.Rows.Cast<DataRow>().Take(20))
+            {
+                var name = GetByIndex(row, 6);
+                var serial = GetByIndex(row, 7);
+                if (!string.IsNullOrWhiteSpace(name) && LooksLikeNumericCode(serial))
+                {
+                    hits++;
+                }
+            }
+
+            return hits >= 2;
+        }
+
         private static string GetByIndex(DataRow row, int index)
         {
             return row.Table.Columns.Count > index ? Clean(Convert.ToString(row[index])) : string.Empty;
@@ -300,7 +347,12 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
             }
 
             decimal result;
-            return decimal.TryParse(value, out result) ? result : (decimal?)null;
+            return decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out result) ? result : (decimal?)null;
+        }
+
+        private static decimal? ParseSignedBalance(string value)
+        {
+            return ParseDecimal(value);
         }
 
         private static int? ParseBalanceType(string debit, string credit)
@@ -318,6 +370,52 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
             }
 
             return null;
+        }
+
+        private static int? ParseBalanceTypeFromLabel(string primaryLabel, string fallbackLabel, decimal? signedBalance)
+        {
+            var label = Clean(primaryLabel);
+            if (string.IsNullOrWhiteSpace(label))
+            {
+                label = Clean(fallbackLabel);
+            }
+
+            if (IsDebitLabel(label))
+            {
+                return 0;
+            }
+
+            if (IsCreditLabel(label))
+            {
+                return 1;
+            }
+
+            if (signedBalance.HasValue)
+            {
+                return signedBalance.Value < 0 ? 1 : 0;
+            }
+
+            return null;
+        }
+
+        private static bool LooksLikeNumericCode(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            return value.All(c => char.IsDigit(c) || c == '.' || c == '-' || c == '+');
+        }
+
+        private static bool IsDebitLabel(string value)
+        {
+            return value == "مدين" || value == "ظ…ط¯ظٹظ†" || string.Equals(value, "debit", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsCreditLabel(string value)
+        {
+            return value == "دائن" || value == "ط¯ط§ط¦ظ†" || string.Equals(value, "credit", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsLikelyHeader(string serial, string name)

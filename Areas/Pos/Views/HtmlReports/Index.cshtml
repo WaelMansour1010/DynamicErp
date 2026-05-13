@@ -14,7 +14,7 @@
     <link href="@Url.Content("~/Areas/Pos/Content/html-reports.css")" rel="stylesheet" />
 </head>
 <body>
-    <main class="html-report-page">
+    <main class="html-report-page" data-lookup-url="@Url.Action("Lookups", "HtmlReports", new { area = "Pos" })">
         <header class="html-report-header">
             <div>
                 <h1>&#1575;&#1604;&#1578;&#1602;&#1575;&#1585;&#1610;&#1585; &#1575;&#1604;&#1584;&#1603;&#1610;&#1577;</h1>
@@ -172,8 +172,73 @@
                 sync();
             }
 
+            function loadLookup(select, type, extra) {
+                var page = document.querySelector(".html-report-page");
+                if (!page || !select || select.getAttribute("data-loaded") === "true" || select.getAttribute("data-loading") === "true") { return; }
+                select.setAttribute("data-loading", "true");
+                var url = page.getAttribute("data-lookup-url") + "?type=" + encodeURIComponent(type || "");
+                if (extra && extra.branchId) {
+                    url += "&branchId=" + encodeURIComponent(extra.branchId);
+                }
+
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", url, true);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) { return; }
+                    select.removeAttribute("data-loading");
+                    var data = null;
+                    try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
+                    if (xhr.status < 200 || xhr.status >= 300 || !data || !data.success || !data.rows) { return; }
+
+                    var current = select.value;
+                    for (var i = 0; i < data.rows.length; i++) {
+                        var row = data.rows[i];
+                        if (select.querySelector('option[value="' + String(row.id).replace(/"/g, '\\"') + '"]')) { continue; }
+                        var option = document.createElement("option");
+                        option.value = row.id;
+                        option.textContent = row.name;
+                        select.appendChild(option);
+                    }
+                    select.value = current;
+                    select.setAttribute("data-loaded", "true");
+                    var lookupInput = select.parentNode ? select.parentNode.querySelector(".html-smart-select-input") : null;
+                    if (lookupInput) { lookupInput.dispatchEvent(new Event("input")); }
+                };
+                xhr.send();
+            }
+
+            function lazyLookup(select, type, extraFactory) {
+                if (!select) { return; }
+                function run() {
+                    loadLookup(select, type, typeof extraFactory === "function" ? extraFactory() : null);
+                }
+                select.addEventListener("focus", run);
+                select.addEventListener("mousedown", run);
+                var input = select.parentNode ? select.parentNode.querySelector(".html-smart-select-input") : null;
+                if (input) {
+                    input.addEventListener("focus", run);
+                    input.addEventListener("input", run);
+                }
+            }
+
             enhanceSelectSearch(document.querySelector("select[name='BranchId']"), "اكتب اسم الفرع أو الكود");
             enhanceSelectSearch(document.querySelector("select[name='StoreId']"), "اكتب اسم المخزن أو الكود");
+            lazyLookup(document.querySelector("select[name='BranchId']"), "branches");
+            lazyLookup(document.querySelector("select[name='StoreId']"), "stores", function () {
+                var branch = document.querySelector("select[name='BranchId']");
+                return { branchId: branch ? branch.value : "" };
+            });
+            var branchSelect = document.querySelector("select[name='BranchId']");
+            if (branchSelect) {
+                branchSelect.addEventListener("change", function () {
+                    var store = document.querySelector("select[name='StoreId']");
+                    if (!store) { return; }
+                    store.setAttribute("data-loaded", "false");
+                    while (store.options.length > 1) { store.remove(1); }
+                    var input = store.parentNode ? store.parentNode.querySelector(".html-smart-select-input") : null;
+                    if (input) { input.value = ""; }
+                });
+            }
 
             var filterForm = document.getElementById("htmlReportFilterForm");
             if (filterForm) {

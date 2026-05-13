@@ -57,6 +57,18 @@
     </section>
 
     <section class="grid-wrap">
+        <div class="preview-toolbar">
+            <div class="preview-tabs" role="tablist">
+                <button type="button" class="preview-filter is-active" data-filter="all">All <span>@Model.TotalRows</span></button>
+                <button type="button" class="preview-filter" data-filter="bad">Errors <span>@Model.ErrorRows</span></button>
+                <button type="button" class="preview-filter" data-filter="ok">Valid <span>@Model.ValidRows</span></button>
+            </div>
+            <label class="preview-search">
+                <span>Search</span>
+                <input type="search" id="importPreviewSearch" placeholder="Account, name, error..." />
+            </label>
+        </div>
+        <div class="preview-hint">Scroll horizontally to review all columns. Error rows stay highlighted.</div>
         <table class="preview-grid">
             <thead>
                 <tr>
@@ -78,14 +90,14 @@
             <tbody>
                 @foreach (var row in Model.Rows)
                 {
-                    <tr class="@(row.IsValid ? "ok" : "bad")">
-                        <td>@row.RowNumber</td>
-                        <td>@(row.IsValid ? "Valid" : "Error")</td>
-                        <td>@row.ErrorDetails</td>
+                    <tr class="@(row.IsValid ? "ok" : "bad")" data-status="@(row.IsValid ? "ok" : "bad")">
+                        <td class="col-row">@row.RowNumber</td>
+                        <td class="col-status"><span class="status-pill @(row.IsValid ? "status-ok" : "status-bad")">@(row.IsValid ? "Valid" : "Error")</span></td>
+                        <td class="col-errors">@row.ErrorDetails</td>
                         <td>@row.AccountSerial</td>
                         <td>@row.EntityCode</td>
-                        <td>@row.EntityName</td>
-                        <td>@row.AccountName</td>
+                        <td class="arabic-cell">@row.EntityName</td>
+                        <td class="arabic-cell">@row.AccountName</td>
                         <td>@row.AccountNameEnglish</td>
                         <td>@row.ParentAccountSerial</td>
                         <td>@row.AccountCode</td>
@@ -111,4 +123,40 @@
             <button type="submit" name="stopOnAnyError" value="false">Import valid rows only / استيراد السليم فقط</button>
         }
     }
+}
+
+@section scripts {
+    <script>
+        (function () {
+            var table = document.querySelector(".preview-grid");
+            if (!table) { return; }
+
+            var rows = Array.prototype.slice.call(table.querySelectorAll("tbody tr"));
+            var filters = Array.prototype.slice.call(document.querySelectorAll(".preview-filter"));
+            var search = document.getElementById("importPreviewSearch");
+            var activeFilter = "all";
+
+            function applyPreviewFilters() {
+                var term = search ? search.value.trim().toLowerCase() : "";
+                rows.forEach(function (row) {
+                    var statusMatch = activeFilter === "all" || row.getAttribute("data-status") === activeFilter;
+                    var textMatch = !term || row.innerText.toLowerCase().indexOf(term) >= 0;
+                    row.style.display = statusMatch && textMatch ? "" : "none";
+                });
+            }
+
+            filters.forEach(function (button) {
+                button.addEventListener("click", function () {
+                    filters.forEach(function (item) { item.classList.remove("is-active"); });
+                    button.classList.add("is-active");
+                    activeFilter = button.getAttribute("data-filter") || "all";
+                    applyPreviewFilters();
+                });
+            });
+
+            if (search) {
+                search.addEventListener("input", applyPreviewFilters);
+            }
+        })();
+    </script>
 }

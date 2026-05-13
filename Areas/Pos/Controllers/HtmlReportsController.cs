@@ -7,6 +7,7 @@ using MyERP.Models.Reports;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Web.Mvc;
@@ -82,6 +83,50 @@ namespace MyERP.Areas.Pos.Controllers
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", SafeFileName(model.ActiveReport.Title) + "_" + from + "_" + to + ".xlsx");
         }
 
+        [HttpGet]
+        public JsonResult Lookups(string type, int? branchId)
+        {
+            Response.ContentEncoding = System.Text.Encoding.UTF8;
+            Response.Charset = "utf-8";
+            Response.TrySkipIisCustomErrors = true;
+
+            try
+            {
+                var context = GetPosContext();
+                if (context == null)
+                {
+                    Response.StatusCode = 401;
+                    return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولًا" }, JsonRequestBehavior.AllowGet);
+                }
+
+                if (!CanOpenReports(context))
+                {
+                    Response.StatusCode = 403;
+                    return Json(new { success = false, message = "ليست لديك صلاحية عرض التقارير" }, JsonRequestBehavior.AllowGet);
+                }
+
+                var lookupType = (type ?? string.Empty).Trim().ToLowerInvariant();
+                if (lookupType == "branches")
+                {
+                    return Json(new { success = true, rows = GetAllowedBranches(context).Select(x => new { id = x.Id, name = x.Name }) }, JsonRequestBehavior.AllowGet);
+                }
+
+                if (lookupType == "stores")
+                {
+                    return Json(new { success = true, rows = GetAllowedStores(context, branchId).Select(x => new { id = x.Id, name = x.Name }) }, JsonRequestBehavior.AllowGet);
+                }
+
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = "نوع القائمة غير صحيح" }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("HtmlReports.Lookups failed: " + ex);
+                Response.StatusCode = 500;
+                return Json(new { success = false, message = "تعذر تحميل بيانات الفلاتر" }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
         private HtmlReportPageViewModel BuildPageModel(PosUserContext context, HtmlReportFilterModel filter)
         {
             filter = filter ?? new HtmlReportFilterModel();
@@ -105,8 +150,8 @@ namespace MyERP.Areas.Pos.Controllers
                 Filter = filter,
                 Reports = reports,
                 ActiveReport = activeReport,
-                Branches = GetAllowedBranches(context).ToList(),
-                Stores = GetAllowedStores(context).ToList()
+                Branches = GetInitialBranches(context).ToList(),
+                Stores = new List<HtmlReportLookupItem>()
             };
         }
 
@@ -229,9 +274,17 @@ namespace MyERP.Areas.Pos.Controllers
                 : new HtmlReportLookupItem[0];
         }
 
-        private IEnumerable<HtmlReportLookupItem> GetAllowedStores(PosUserContext context)
+        private IEnumerable<HtmlReportLookupItem> GetInitialBranches(PosUserContext context)
         {
-            return _repository.GetStoresByBranch(IsAdmin(context) ? (int?)null : context.BranchId).Select(x => new HtmlReportLookupItem { Id = x.StoreID, Name = x.StoreName });
+            return context != null && context.BranchId.HasValue
+                ? new[] { new HtmlReportLookupItem { Id = context.BranchId.Value, Name = context.BranchName } }
+                : new HtmlReportLookupItem[0];
+        }
+
+        private IEnumerable<HtmlReportLookupItem> GetAllowedStores(PosUserContext context, int? branchId = null)
+        {
+            var resolvedBranchId = IsAdmin(context) ? branchId : context.BranchId;
+            return _repository.GetStoresByBranch(resolvedBranchId).Select(x => new HtmlReportLookupItem { Id = x.StoreID, Name = x.StoreName });
         }
 
         private static bool CanOpenReports(PosUserContext context)

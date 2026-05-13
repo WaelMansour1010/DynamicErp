@@ -229,6 +229,7 @@
             var navLoadingText = document.getElementById("posMainLoadingText");
             var navigationLoading = false;
             var navigationTimer = null;
+            var frameReadyTimer = null;
             var charts = {};
             var sidebar = document.getElementById("posMainSidebar");
             var sidebarCollapseBtn = document.getElementById("posSidebarCollapseBtn");
@@ -491,6 +492,7 @@
             function showNavigationLoading(message) {
                 navigationLoading = true;
                 window.clearTimeout(navigationTimer);
+                window.clearTimeout(frameReadyTimer);
                 if (navLoadingText) { navLoadingText.innerText = message || "جاري تحميل البيانات..."; }
                 if (navLoadingOverlay) { navLoadingOverlay.setAttribute("aria-hidden", "false"); }
                 if (shell) { shell.classList.add("is-nav-loading"); }
@@ -551,10 +553,40 @@
             function hideNavigationLoading() {
                 navigationLoading = false;
                 window.clearTimeout(navigationTimer);
+                window.clearTimeout(frameReadyTimer);
                 if (shell) { shell.classList.remove("is-nav-loading"); }
                 if (navLoadingOverlay) { navLoadingOverlay.setAttribute("aria-hidden", "true"); }
                 if (navLoadingText) { navLoadingText.innerText = "جاري تحميل البيانات..."; }
                 setNavLinksDisabled(false);
+            }
+
+            function isReportScreen(url) {
+                var value = String(url || "").toLowerCase();
+                return value.indexOf("/pos/posreports/") >= 0 || value.indexOf("/pos/htmlreports/") >= 0;
+            }
+
+            function hideWhenFrameDomReady(url) {
+                if (!isReportScreen(url) || !frame) { return; }
+                var attempts = 0;
+                function check() {
+                    attempts++;
+                    try {
+                        var doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+                        if (doc && (doc.readyState === "interactive" || doc.readyState === "complete") && doc.body) {
+                            hideNavigationLoading();
+                            return;
+                        }
+                    } catch (ignore) { }
+
+                    if (attempts >= 25) {
+                        hideNavigationLoading();
+                        return;
+                    }
+
+                    frameReadyTimer = window.setTimeout(check, 120);
+                }
+
+                frameReadyTimer = window.setTimeout(check, 120);
             }
 
             function showFrame(url) {
@@ -563,6 +595,7 @@
                 if (homePanel) { homePanel.classList.add("is-hidden-ui"); }
                 if (frameSection) { frameSection.classList.remove("is-hidden-ui"); }
                 frame.src = url;
+                hideWhenFrameDomReady(url);
                 setActive(url, false);
             }
 
