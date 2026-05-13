@@ -116,10 +116,27 @@ namespace MyERP.Areas.Pos.Controllers
             var to = filter.ToDate.GetValueOrDefault(DateTime.Today).Date;
             var branchId = IsAdmin(context) ? filter.BranchId.GetValueOrDefault(0) : context.BranchId.GetValueOrDefault(0);
             var canSeeBranchReports = IsAdmin(context) || context.CanViewReports;
-            var table = report.SupportsStoreFilter
-                ? _repository.RunPosStoreSerialsReport(filter.StoreId, filter.SerialSearch, branchId, context.UserId, canSeeBranchReports)
-                : _repository.RunPosReport(report.Key, from, to, branchId, context.UserId, canSeeBranchReports);
+            DataTable table;
+            if (report.SupportsStoreFilter)
+            {
+                table = _repository.RunPosStoreSerialsReport(filter.StoreId, filter.SerialSearch, branchId, context.UserId, canSeeBranchReports);
+            }
+            else if (IsClosingReport(report.Key))
+            {
+                table = _repository.RunPosClosingReport(report.Key, from, to, branchId, context.UserId, canSeeBranchReports);
+            }
+            else
+            {
+                table = _repository.RunPosReport(report.Key, from, to, branchId, context.UserId, canSeeBranchReports);
+            }
+
             return ToResult(report.Title, table);
+        }
+
+        private static bool IsClosingReport(string reportKey)
+        {
+            return string.Equals(reportKey, "finance-closing", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "finance-closing-discounts", StringComparison.OrdinalIgnoreCase);
         }
 
         private static IList<HtmlReportDefinition> BuildReportDefinitions()

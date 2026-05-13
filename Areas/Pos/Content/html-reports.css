@@ -699,6 +699,20 @@ body {
     transform: translateY(-1px);
 }
 
+.html-report-buttons button:disabled,
+.html-report-actions button:disabled {
+    cursor: wait;
+    opacity: .65;
+    transform: none;
+}
+
+.html-report-progress {
+    color: #475569;
+    font-size: 13px;
+    font-weight: 800;
+    min-height: 18px;
+}
+
 .html-report-title {
     align-items: center;
     border-bottom: 1px solid var(--html-report-border);

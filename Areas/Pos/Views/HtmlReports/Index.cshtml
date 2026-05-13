@@ -175,6 +175,37 @@
             enhanceSelectSearch(document.querySelector("select[name='BranchId']"), "اكتب اسم الفرع أو الكود");
             enhanceSelectSearch(document.querySelector("select[name='StoreId']"), "اكتب اسم المخزن أو الكود");
 
+            var filterForm = document.getElementById("htmlReportFilterForm");
+            if (filterForm) {
+                filterForm.addEventListener("submit", function (event) {
+                    var reportKey = document.getElementById("ReportKey");
+                    var searchButton = document.getElementById("htmlReportSearchBtn");
+                    var progress = document.getElementById("htmlReportProgress");
+
+                    if (!reportKey || !reportKey.value) {
+                        event.preventDefault();
+                        if (progress) {
+                            progress.textContent = "اختر التقرير أولا";
+                        }
+                        return;
+                    }
+
+                    if (searchButton && searchButton.disabled) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    if (searchButton) {
+                        searchButton.disabled = true;
+                        searchButton.textContent = "جاري التجهيز...";
+                    }
+
+                    if (progress) {
+                        progress.textContent = "جاري تجهيز التقرير...";
+                    }
+                });
+            }
+
             document.addEventListener("click", function (event) {
                 if (event.target && event.target.id === "htmlReportPrintBtn") {
                     window.print();

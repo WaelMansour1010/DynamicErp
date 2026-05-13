@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -117,21 +118,70 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
             using (var stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (var reader = ExcelReaderFactory.CreateReader(stream))
             {
-                var dataSet = reader.AsDataSet(new ExcelDataSetConfiguration
-                {
-                    ConfigureDataTable = _ => new ExcelDataTableConfiguration
-                    {
-                        UseHeaderRow = true
-                    }
-                });
+                var table = new DataTable();
+                var headersReady = false;
+                var columnCount = reader.FieldCount;
 
-                if (dataSet == null || dataSet.Tables.Count == 0)
+                while (reader.Read())
+                {
+                    if (!headersReady)
+                    {
+                        for (var i = 0; i < columnCount; i++)
+                        {
+                            var header = SafeCellText(reader.GetValue(i));
+                            if (string.IsNullOrWhiteSpace(header))
+                            {
+                                header = "Column" + (i + 1).ToString(CultureInfo.InvariantCulture);
+                            }
+
+                            if (table.Columns.Contains(header))
+                            {
+                                header = header + "_" + (i + 1).ToString(CultureInfo.InvariantCulture);
+                            }
+
+                            table.Columns.Add(header, typeof(string));
+                        }
+
+                        headersReady = true;
+                        continue;
+                    }
+
+                    var row = table.NewRow();
+                    for (var i = 0; i < columnCount; i++)
+                    {
+                        row[i] = SafeCellText(reader.GetValue(i));
+                    }
+
+                    table.Rows.Add(row);
+                }
+
+                if (!headersReady)
                 {
                     throw new InvalidOperationException("No worksheet was found in the uploaded Excel file.");
                 }
 
-                return dataSet.Tables[0];
+                return table;
             }
+        }
+
+        private static string SafeCellText(object value)
+        {
+            if (value == null || value == DBNull.Value)
+            {
+                return string.Empty;
+            }
+
+            if (value is DateTime)
+            {
+                return ((DateTime)value).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            }
+
+            if (value is IFormattable)
+            {
+                return ((IFormattable)value).ToString(null, CultureInfo.InvariantCulture);
+            }
+
+            return Convert.ToString(value, CultureInfo.InvariantCulture);
         }
 
         private static string Get(DataRow row, params string[] names)
