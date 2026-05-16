@@ -31,6 +31,8 @@
         .filter-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
         .lookup-message { color: #b42318; font-weight: 800; min-height: 22px; }
         .lookup-note { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; color: #9a3412; font-weight: 800; padding: 10px 12px; }
+        .lookup-progress { background: #e2e8f0; border-radius: 999px; height: 10px; margin-top: 8px; overflow: hidden; width: 100%; }
+        .lookup-progress-bar { background: linear-gradient(90deg, #2457d6, #16a34a); height: 100%; transition: width .25s ease; width: 0; }
         .lookup-table-wrap { max-height: 62vh; overflow: auto; }
         .lookup-table { border-collapse: collapse; min-width: 1680px; width: 100%; }
         .lookup-table th, .lookup-table td { border: 1px solid #d9e1ee; padding: 8px; text-align: center; vertical-align: middle; white-space: nowrap; }
@@ -128,6 +130,9 @@
                             <div>
                                 <strong id="pageInfo">صفحة 1</strong>
                                 <div id="loadStatus" style="color:#64748b;font-weight:800;margin-top:4px;">لم يتم تحميل ملف بعد.</div>
+                                <div class="lookup-progress" aria-label="نسبة تحميل نتائج التوكنات">
+                                    <div id="loadProgressBar" class="lookup-progress-bar"></div>
+                                </div>
                             </div>
                             <button id="nextPageBtn" type="button" class="erp-btn erp-btn-secondary" disabled>التالي</button>
                         </div>
@@ -267,12 +272,14 @@
             function updatePager(filteredCount) {
                 var totalPages = Math.max(1, Math.ceil(filteredCount / pageSize));
                 if (currentPage >= totalPages) currentPage = totalPages - 1;
+                var percent = paging.totalTokens ? Math.round((paging.loadedTokens / paging.totalTokens) * 100) : 0;
                 byId("pageInfo").textContent = "صفحة " + (currentPage + 1) + " من " + totalPages + " - المعروض " + Math.min(pageSize, Math.max(0, filteredCount - currentPage * pageSize)) + " صف";
                 byId("prevPageBtn").disabled = currentPage <= 0;
                 byId("nextPageBtn").disabled = currentPage >= totalPages - 1 && !paging.hasMore;
                 byId("loadStatus").textContent = paging.totalTokens
-                    ? "تم تحميل " + paging.loadedTokens + " من " + paging.totalTokens + " توكن. " + (paging.hasMore ? "يتم تحميل باقي النتائج تدريجيا." : "اكتمل تحميل الدفعات.")
+                    ? "تم تحميل " + paging.loadedTokens + " من " + paging.totalTokens + " توكن (" + percent + "%). " + (paging.hasMore ? "يتم تحميل باقي النتائج تدريجيا." : "اكتمل تحميل الدفعات.")
                     : "لم يتم تحميل ملف بعد.";
+                byId("loadProgressBar").style.width = percent + "%";
             }
             function arStatus(status) {
                 if (status === "Found") return "موجود";
@@ -307,7 +314,9 @@
                 var body = byId("resultBody");
                 var filtered = applyFilters();
                 if (!filtered.length) {
-                    body.innerHTML = '<tr><td colspan="18">لا توجد نتائج مطابقة للفلاتر</td></tr>';
+                    body.innerHTML = paging.totalTokens && paging.loadedTokens === 0
+                        ? '<tr><td colspan="18">جاري تحميل أول دفعة من النتائج...</td></tr>'
+                        : '<tr><td colspan="18">لا توجد نتائج مطابقة للفلاتر</td></tr>';
                     updatePager(0);
                     return;
                 }
@@ -337,7 +346,27 @@
                 updatePager(filtered.length);
             }
             function mergeRows(newRows) {
-                Array.prototype.push.apply(rows, newRows || []);
+                function rowKey(row) {
+                    return [
+                        String(row.token || "").toUpperCase(),
+                        String(row.transactionId || ""),
+                        String(row.invoiceNumber || ""),
+                        String(row.searchStatus || "")
+                    ].join("|");
+                }
+                var byToken = {};
+                rows.forEach(function (row, index) {
+                    byToken[rowKey(row)] = index;
+                });
+                (newRows || []).forEach(function (row) {
+                    var key = rowKey(row);
+                    if (byToken.hasOwnProperty(key)) {
+                        rows[byToken[key]] = row;
+                    } else {
+                        byToken[key] = rows.length;
+                        rows.push(row);
+                    }
+                });
             }
             function applyPaging(newPaging) {
                 if (!newPaging) return;
@@ -360,6 +389,7 @@
                         applyPaging(data.paging);
                         renderSummary(data.summary);
                         renderRows();
+                        byId("exportBtn").disabled = rows.length === 0;
                         if (!background) message("lookupMessage", "تم تحميل الدفعة التالية.");
                         if (paging.hasMore) {
                             window.setTimeout(function () { loadNextBatch(true); }, 250);
@@ -374,8 +404,14 @@
                 if (!file) { message("lookupMessage", "اختر ملف Excel أو CSV أولا"); return; }
                 var form = new FormData();
                 form.append("file", file);
-                setBusy("analyzeBtn", "جاري البحث...", true);
-                message("lookupMessage", "جاري قراءة الملف والبحث في قاعدة البيانات...");
+                rows = [];
+                paging = { totalTokens: 0, loadedTokens: 0, batchSize: 50, nextSkip: 0, hasMore: false };
+                currentPage = 0;
+                renderSummary({});
+                renderRows();
+                byId("exportBtn").disabled = true;
+                setBusy("analyzeBtn", "جاري قراءة الملف...", true);
+                message("lookupMessage", "جاري قراءة الملف فقط. بعد القراءة ستظهر النتائج على دفعات بدون انتظار الملف كله.");
                 postForm(page.getAttribute("data-analyze-url"), form, function (status, data) {
                     setBusy("analyzeBtn", "", false);
                     if (status >= 200 && status < 300 && data && data.success) {
@@ -385,9 +421,9 @@
                         renderSummary(data.summary);
                         renderRows();
                         byId("exportBtn").disabled = rows.length === 0;
-                        message("lookupMessage", "تم عرض أول دفعة. يمكنك التنقل بين الصفحات وسيستمر تحميل باقي النتائج تدريجيا.");
+                        message("lookupMessage", "تمت قراءة الملف. جاري تحميل النتائج من قاعدة البيانات على دفعات، ولن يتم مسح النتائج التي ظهرت إذا حدث انقطاع.");
                         if (paging.hasMore) {
-                            window.setTimeout(function () { loadNextBatch(true); }, 250);
+                            window.setTimeout(function () { loadNextBatch(false); }, 150);
                         }
                         return;
                     }

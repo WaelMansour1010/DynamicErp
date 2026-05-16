@@ -19,6 +19,7 @@ namespace MyERP.Areas.Pos.Controllers
     {
         private const string SessionKey = "PosTokenInvoiceLookup.LastResult";
         private const string UploadSessionKey = "PosTokenInvoiceLookup.Upload";
+        private const string LoadedCountSessionKey = "PosTokenInvoiceLookup.LoadedCount";
         private const int DefaultBatchSize = 50;
         private readonly PosSqlRepository _repository;
         private readonly PosTokenInvoiceLookupExcelParser _parser;
@@ -106,32 +107,21 @@ namespace MyERP.Areas.Pos.Controllers
                     return Json(Fail("لم يتم العثور على توكنات داخل الملف. يجب أن يحتوي الملف على عمود توكنات واحد على الأقل."));
                 }
 
-                Session[UploadSessionKey] = upload;
-
-                IList<PosTokenInvoiceLookupRow> rows;
-                try
-                {
-                    rows = LookupTokenBatch(upload, 0, DefaultBatchSize);
-                }
-                catch (Exception ex)
-                {
-                    Response.StatusCode = 500;
-                    return Json(Fail("تمت قراءة الملف بنجاح وعدد التوكنات " + upload.Tokens.Count.ToString(CultureInfo.InvariantCulture) + "، لكن تعذر تحميل أول دفعة من قاعدة البيانات.", ex.Message));
-                }
-
                 var result = new PosTokenInvoiceLookupResult
                 {
-                    Rows = rows,
-                    Summary = BuildSummary(upload, rows)
+                    Summary = BuildSummary(upload, new List<PosTokenInvoiceLookupRow>())
                 };
+
+                Session[UploadSessionKey] = upload;
                 Session[SessionKey] = result;
+                Session[LoadedCountSessionKey] = 0;
 
                 return LargeJson(new
                 {
                     success = true,
                     summary = result.Summary,
-                    rows = result.Rows.Select(ToClientRow).ToList(),
-                    paging = BuildPaging(upload, Math.Min(upload.Tokens.Count, DefaultBatchSize), DefaultBatchSize)
+                    rows = new List<object>(),
+                    paging = BuildPaging(upload, 0, DefaultBatchSize)
                 });
             }
             catch (Exception ex)
@@ -173,26 +163,36 @@ namespace MyERP.Areas.Pos.Controllers
                 var start = Math.Max(0, skip.GetValueOrDefault());
                 var pageSize = Math.Max(1, Math.Min(200, take.GetValueOrDefault(DefaultBatchSize)));
                 var rows = LookupTokenBatch(upload, start, pageSize);
+                var batchTokens = new HashSet<string>(
+                    upload.Tokens.Skip(start).Take(pageSize).Select(x => x.Token ?? string.Empty),
+                    StringComparer.OrdinalIgnoreCase);
                 var result = Session[SessionKey] as PosTokenInvoiceLookupResult;
                 if (result == null)
                 {
                     result = new PosTokenInvoiceLookupResult();
                 }
 
+                result.Rows = result.Rows
+                    .Where(x => !batchTokens.Contains(x.Token ?? string.Empty))
+                    .ToList();
+
                 foreach (var row in rows)
                 {
                     result.Rows.Add(row);
                 }
 
+                var previouslyLoaded = Session[LoadedCountSessionKey] is int ? (int)Session[LoadedCountSessionKey] : 0;
+                var loadedTokens = Math.Max(previouslyLoaded, Math.Min(upload.Tokens.Count, start + batchTokens.Count));
                 result.Summary = BuildSummary(upload, result.Rows);
                 Session[SessionKey] = result;
+                Session[LoadedCountSessionKey] = loadedTokens;
 
                 return LargeJson(new
                 {
                     success = true,
                     summary = result.Summary,
                     rows = rows.Select(ToClientRow).ToList(),
-                    paging = BuildPaging(upload, Math.Min(upload.Tokens.Count, start + pageSize), pageSize)
+                    paging = BuildPaging(upload, loadedTokens, pageSize)
                 });
             }
             catch (Exception ex)
