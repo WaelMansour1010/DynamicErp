@@ -29,7 +29,6 @@
     { "order": 50, "file": "50_POS_ExcelImportCommitAudit.sql", "autoApply": true, "purpose": "Excel import commit audit constraints/indexes." },
     { "order": 51, "file": "51_POS_PaymentCashing_ReadProcedures.sql", "autoApply": true, "purpose": "Payment/cashing read procedures." },
     { "order": 54, "file": "54_POS_DoubleEntryVoucherSequence_Fix.sql", "autoApply": true, "purpose": "Safe double-entry voucher sequence repair." },
-    { "order": 55, "file": "55_POS_SaveTransaction_Allocator_Hardening.sql", "autoApply": true, "purpose": "Latest allocator hardening procedure." },
     { "order": 62, "file": "62_POS_SalesInvoice_LimitedEditPermissions.sql", "autoApply": true, "purpose": "Limited POS sales invoice edit permissions and audit log table." },
     { "order": 63, "file": "63_POS_MigrateViolationWalletNumber.sql", "autoApply": true, "purpose": "Move old violation wallet numbers from Tet_NumPoket to AccountTypeName1." },
     { "order": 64, "file": "64_POS_MigrateCashOutWalletNumber.sql", "autoApply": true, "purpose": "Move old cash-out wallet numbers from Tet_NumPoket to AccountTypeName1." },
@@ -48,7 +47,9 @@
     { "order": 83, "file": "83_POS_SaveAttempt_DeadlockDiagnostics.sql", "autoApply": true, "purpose": "Detailed POS save attempt deadlock diagnostics columns, index, and report procedure." },
     { "order": 84, "file": "84_POS_SaveAttemptDiagnostics_ScreenDetails.sql", "autoApply": true, "purpose": "Repair/backfill POS save-attempt diagnostics columns used by the on-screen deadlock analysis." },
     { "order": 85, "file": "85_POS_Save_Idempotency.sql", "autoApply": true, "purpose": "POS invoice save idempotency table to prevent duplicate invoices from repeated client submissions." },
-    { "order": 99, "file": "99_POS_VoucherSerialScope.sql", "autoApply": true, "purpose": "Configurable POS voucher serial scope for Company, Branch, or BranchStore numbering." }
+    { "order": 99, "file": "99_POS_VoucherSerialScope.sql", "autoApply": true, "purpose": "Configurable POS voucher serial scope for Company, Branch, or BranchStore numbering." },
+    { "order": 101, "file": "101_POS_TransactionIdAllocator_Hotfix.sql", "autoApply": true, "purpose": "SQL Server compatible POS Transaction_ID allocator hotfix for save deadlocks." },
+    { "order": 102, "file": "102_POS_TransactionIdAllocator_DuplicateGuard.sql", "autoApply": true, "purpose": "Guard Transaction_ID allocator against stale seeds and duplicate PK candidates." }
   ],
   "manualScripts": [
     { "file": "35_POS_SystemHealthPermissions.sql", "reason": "Requires sysadmin/master login and replacing the app SQL login placeholder." },
@@ -56,6 +57,7 @@
     { "file": "39_POS_Deadlock_Diagnostics.sql", "reason": "Read-only diagnostic script, not an updater." },
     { "file": "52_POS_EmployeePayroll_MedicalInsurance.sql", "reason": "Pointer to MainErp canonical script, not executable POS DDL." },
     { "file": "53_POS_DoubleEntryVoucherSequence_Diagnostics.sql", "reason": "Read-only diagnostic script." },
+    { "file": "55_POS_SaveTransaction_Allocator_Hardening.sql", "reason": "Legacy sequence-based allocator script. Do not auto-apply on older customer SQL Server versions that do not support CREATE SEQUENCE." },
     { "file": "56_POS_RechargeValue_Validation.sql", "reason": "Read-only diagnostic helper." },
     { "file": "69_POS_DEVSerial_Diagnostics.sql", "reason": "Read-only DEV_Serial / DOUBLE_ENTREY_VOUCHERS diagnostic script." },
     { "file": "71_POS_RuntimeInfrastructure_Preflight.sql", "reason": "DDL preflight script; run once with db_owner/DDL-capable login before production app login." },
@@ -69,6 +71,7 @@
     { "file": "MANUAL_96_POS_DEVSerial_UsageAudit.sql", "reason": "Read-only DEV_Serial legacy/business requirement audit; no production DDL." },
     { "file": "97_POS_DEVSerial_RemoveFromHotPath.sql", "reason": "Manual production rollout script to recreate usp_POS_SaveTransaction without DEV_Serial allocator locking; review before deployment." },
     { "file": "MANUAL_98_POS_VoucherCoding_Diagnostics.sql", "reason": "Read-only voucher coding diagnostics for SerialCounters_V2 contention, wait evidence, duplicate serials, and stage p95/p99." },
+    { "file": "MANUAL_101_POS_TransactionIdAllocator_ConcurrencyTest.sql", "reason": "Manual test-database concurrency probe for the Transaction_ID allocator; consumes Transaction_ID values." },
     { "file": "100_POS_SaveTransaction_Phase1_LockWindow.sql", "reason": "Manual Phase 1 production rollout: Branch POS voucher scope plus reviewed usp_POS_SaveTransaction lock-window mitigation with rollback capture." }
   ]
 }

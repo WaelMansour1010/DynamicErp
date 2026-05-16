@@ -389,6 +389,21 @@ namespace MyERP.Areas.Pos.Models
         public int TokenLength { get; set; }
     }
 
+    public class PosKeshniCardTokenUsageDto
+    {
+        public string Token { get; set; }
+        public int? TransactionId { get; set; }
+        public string NoteSerial1 { get; set; }
+        public DateTime? TransactionDate { get; set; }
+        public int? BranchId { get; set; }
+        public string BranchName { get; set; }
+        public string CustomerName { get; set; }
+        public string CustomerPhone { get; set; }
+        public int? UserId { get; set; }
+        public string UserName { get; set; }
+        public string UsageType { get; set; }
+    }
+
     public class PosTransactionItemDto
     {
         public int? Item_ID { get; set; }

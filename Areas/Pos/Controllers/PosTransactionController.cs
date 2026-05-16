@@ -1996,6 +1996,8 @@ namespace MyERP.Areas.Pos.Controllers
                 "Transaction_ID=" + (request.Transaction_ID.HasValue ? request.Transaction_ID.Value.ToString(CultureInfo.InvariantCulture) : ""),
                 "ClientRequestId=" + (request.ClientRequestId ?? ""),
                 "TransactionType=" + (request.TransactionType ?? ""),
+                "VisaNumber=" + (request.VisaNumber ?? ""),
+                "CardSerial=" + (request.CardSerial ?? ""),
                 "BranchId=" + (request.BranchId.HasValue ? request.BranchId.Value.ToString(CultureInfo.InvariantCulture) : ""),
                 "StoreID=" + (request.StoreID.HasValue ? request.StoreID.Value.ToString(CultureInfo.InvariantCulture) : ""),
                 "BoxID=" + (request.BoxID.HasValue ? request.BoxID.Value.ToString(CultureInfo.InvariantCulture) : ""),
@@ -2180,7 +2182,17 @@ namespace MyERP.Areas.Pos.Controllers
             var positiveRows = stockRows.Where(r => r != null && r.ItemId.HasValue && r.AvailableQty > 0).ToList();
             if (positiveRows.Count == 0)
             {
-                errors["VisaNumber"] = "الكارت غير متاح كرصيد موجب في المخزن الحالي";
+                PosKeshniCardTokenUsageDto usage = null;
+                try
+                {
+                    usage = _repository.GetKeshniCardTokenLastUsage(token);
+                }
+                catch
+                {
+                    usage = null;
+                }
+
+                errors["VisaNumber"] = BuildKeshniCardUnavailableMessage(token, usage);
                 return errors;
             }
 
@@ -2201,6 +2213,43 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return errors;
+        }
+
+        private static string BuildKeshniCardUnavailableMessage(string token, PosKeshniCardTokenUsageDto usage)
+        {
+            var safeToken = string.IsNullOrWhiteSpace(token) ? "غير محدد" : token.Trim();
+            if (usage != null && usage.TransactionId.HasValue)
+            {
+                var parts = new List<string>
+                {
+                    "التوكن " + safeToken + " غير متاح لأنه تم استخدامه من قبل",
+                    "فاتورة: " + (!string.IsNullOrWhiteSpace(usage.NoteSerial1) ? usage.NoteSerial1 : usage.TransactionId.Value.ToString(CultureInfo.InvariantCulture))
+                };
+
+                if (usage.TransactionDate.HasValue)
+                {
+                    parts.Add("التاريخ: " + usage.TransactionDate.Value.ToString("yyyy/MM/dd HH:mm", CultureInfo.InvariantCulture));
+                }
+
+                if (!string.IsNullOrWhiteSpace(usage.BranchName))
+                {
+                    parts.Add("الفرع: " + usage.BranchName);
+                }
+
+                if (!string.IsNullOrWhiteSpace(usage.CustomerName))
+                {
+                    parts.Add("العميل: " + usage.CustomerName);
+                }
+
+                if (!string.IsNullOrWhiteSpace(usage.CustomerPhone))
+                {
+                    parts.Add("هاتف: " + usage.CustomerPhone);
+                }
+
+                return string.Join(" | ", parts);
+            }
+
+            return "التوكن " + safeToken + " غير متاح كرصيد موجب في المخزن الحالي";
         }
 
         private static bool IsKeshniCardStockItem(int itemId)

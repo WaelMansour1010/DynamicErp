@@ -3919,6 +3919,120 @@ ORDER BY s.AvailableQty DESC, s.LastTransactionId DESC, s.ItemId;";
             return rows;
         }
 
+        public PosKeshniCardTokenUsageDto GetKeshniCardTokenLastUsage(string token)
+        {
+            token = (token ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return null;
+            }
+
+            const string sql = @"
+DECLARE @Token NVARCHAR(255) = LTRIM(RTRIM(@TokenParam));
+
+;WITH TokenUsage AS
+(
+    SELECT *
+    FROM
+    (
+        SELECT TOP (1)
+            UsageRank = 1,
+            UsageType = N'Sale',
+            t.Transaction_ID,
+            t.NoteSerial1,
+            t.Transaction_Date,
+            t.BranchId,
+            COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), t.BranchId)) AS BranchName,
+            ISNULL(t.CashCustomerName, N'') AS CustomerName,
+            ISNULL(t.CashCustomerPhone, N'') AS CustomerPhone,
+            t.UserID,
+            COALESCE(NULLIF(u.UserName, N''), CONVERT(NVARCHAR(20), t.UserID)) AS UserName
+        FROM dbo.Transactions t WITH (NOLOCK)
+        LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK)
+            ON b.branch_id = t.BranchId
+        LEFT JOIN dbo.TblUsers u WITH (NOLOCK)
+            ON u.UserID = t.UserID
+        WHERE t.Transaction_Type = 21
+          AND ISNULL(t.IsCancelled, 0) = 0
+          AND LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))) = @Token
+        ORDER BY t.Transaction_ID DESC
+    ) SaleUsage
+
+    UNION ALL
+
+    SELECT *
+    FROM
+    (
+        SELECT TOP (1)
+            UsageRank = 2,
+            UsageType = N'Movement',
+            t.Transaction_ID,
+            t.NoteSerial1,
+            t.Transaction_Date,
+            t.BranchId,
+            COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), t.BranchId)) AS BranchName,
+            ISNULL(t.CashCustomerName, N'') AS CustomerName,
+            ISNULL(t.CashCustomerPhone, N'') AS CustomerPhone,
+            t.UserID,
+            COALESCE(NULLIF(u.UserName, N''), CONVERT(NVARCHAR(20), t.UserID)) AS UserName
+        FROM dbo.Transaction_Details d WITH (NOLOCK)
+        INNER JOIN dbo.Transactions t WITH (NOLOCK)
+            ON t.Transaction_ID = d.Transaction_ID
+        LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK)
+            ON b.branch_id = t.BranchId
+        LEFT JOIN dbo.TblUsers u WITH (NOLOCK)
+            ON u.UserID = t.UserID
+        WHERE ISNULL(t.IsCancelled, 0) = 0
+          AND LTRIM(RTRIM(ISNULL(d.ItemSerial, N''))) = @Token
+        ORDER BY t.Transaction_ID DESC
+    ) MovementUsage
+)
+SELECT TOP (1)
+    @Token AS Token,
+    Transaction_ID,
+    NoteSerial1,
+    Transaction_Date,
+    BranchId,
+    BranchName,
+    CustomerName,
+    CustomerPhone,
+    UserID,
+    UserName,
+    UsageType
+FROM TokenUsage
+ORDER BY UsageRank, Transaction_ID DESC;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.CommandTimeout = 10;
+                AddString(command, "@TokenParam", SqlDbType.NVarChar, 255, token);
+                connection.Open();
+                using (var reader = command.ExecuteReader(CommandBehavior.SingleRow))
+                {
+                    if (!reader.Read())
+                    {
+                        return null;
+                    }
+
+                    return new PosKeshniCardTokenUsageDto
+                    {
+                        Token = ReadString(reader, "Token"),
+                        TransactionId = ReadInt(reader, "Transaction_ID"),
+                        NoteSerial1 = ReadString(reader, "NoteSerial1"),
+                        TransactionDate = ReadDateTime(reader, "Transaction_Date"),
+                        BranchId = ReadInt(reader, "BranchId"),
+                        BranchName = ReadString(reader, "BranchName"),
+                        CustomerName = ReadString(reader, "CustomerName"),
+                        CustomerPhone = ReadString(reader, "CustomerPhone"),
+                        UserId = ReadInt(reader, "UserID"),
+                        UserName = ReadString(reader, "UserName"),
+                        UsageType = ReadString(reader, "UsageType")
+                    };
+                }
+            }
+        }
+
         public PosKycCardAvailabilityDto ValidateKeshniCardAvailability(string cardNo, string nationalId, string mobile, int? excludeCustomerId, int? storeId)
         {
             var result = new PosKycCardAvailabilityDto

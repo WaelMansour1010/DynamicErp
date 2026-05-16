@@ -50,7 +50,7 @@ namespace MyERP.Areas.Pos.Controllers
                 }
 
                 var result = _repository.SearchPosSystemErrorLogs(request);
-                return Json(new { success = true, data = result.Items, count = result.Count }, JsonRequestBehavior.AllowGet);
+                return LargeJson(new { success = true, data = result.Items, count = result.Count });
             }
             catch (Exception ex)
             {
@@ -77,7 +77,7 @@ namespace MyERP.Areas.Pos.Controllers
                 }
 
                 var result = _repository.SearchPosSaveAttempts(request);
-                return Json(new { success = true, data = result.Items, summary = result.Summary, count = result.Count }, JsonRequestBehavior.AllowGet);
+                return LargeJson(new { success = true, data = result.Items, summary = result.Summary, count = result.Count });
             }
             catch (Exception ex)
             {
@@ -93,11 +93,23 @@ namespace MyERP.Areas.Pos.Controllers
             Response.TrySkipIisCustomErrors = true;
         }
 
+        private JsonResult LargeJson(object data)
+        {
+            PrepareJsonResponse();
+            return new JsonResult
+            {
+                Data = data,
+                JsonRequestBehavior = JsonRequestBehavior.AllowGet,
+                MaxJsonLength = int.MaxValue,
+                RecursionLimit = 100
+            };
+        }
+
         private JsonResult JsonFailure(int statusCode, string message, string details = null)
         {
             PrepareJsonResponse();
             Response.StatusCode = statusCode;
-            return Json(new { success = false, message = message, details = details }, JsonRequestBehavior.AllowGet);
+            return LargeJson(new { success = false, message = message, details = details });
         }
 
         private static bool IsAdmin(PosUserContext context)
