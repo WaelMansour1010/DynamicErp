@@ -159,7 +159,7 @@ BEGIN
     IF @reportKey = N'finance-closing'
     BEGIN
         SELECT TOP (1000)
-            COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), c.BranchID)) AS BranchName,
+            LTRIM(RTRIM(COALESCE(NULLIF(b.branch_Code, N'') + N' ', N'') + COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), c.BranchID)))) AS BranchName,
             c.OrderDate AS ClosingDate,
             c.NoteID,
             CONVERT(NVARCHAR(50), CAST(c.NoteSerial AS DECIMAL(38,0))) AS NoteSerial,
@@ -202,7 +202,7 @@ BEGIN
             (
                 SELECT
                     b.branch_id AS BranchID,
-                    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), b.branch_id)) AS BranchName
+                    LTRIM(RTRIM(COALESCE(NULLIF(b.branch_Code, N'') + N' ', N'') + COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), b.branch_id)))) AS BranchName
                 FROM dbo.TblBranchesData b
                 WHERE b.branch_id = @branchId
             ),
@@ -218,6 +218,7 @@ BEGIN
                     ISNULL(c.CountCards, 0) AS CountCards,
                     ISNULL(c.TotalSaleDay2, 0) AS CardValue,
                     ISNULL(c.CountTransaction, 0) AS CountTransaction,
+                    ISNULL(c.CountTransactionPOS, 0) AS CountTransactionPOS,
                     ISNULL(c.CashOutTotal, 0) AS CashOutTotal,
                     ISNULL(c.CashOut, 0) AS CashOut,
                     ISNULL(c.CashOutDisc, 0) AS CashOutDisc,
@@ -241,10 +242,12 @@ BEGIN
                     COUNT(1) AS ReturnsCount,
                     SUM(ISNULL(t.Transaction_NetValue, 0) + ISNULL(t.RechargeValue, 0)) AS TotalReturns
                 FROM dbo.Transactions t
+                INNER JOIN dbo.Notes n ON n.NoteID = ISNULL(t.NoteID3, 0)
                 WHERE t.Transaction_Type = 9
                   AND t.BranchId = @branchId
-                  AND t.Transaction_Date >= @from
-                  AND t.Transaction_Date < @toExclusive
+                  AND n.NoteDate >= @from
+                  AND n.NoteDate < @toExclusive
+                  AND n.branch_no = t.BranchId
                   AND (@canChangeDefaults = 1 OR t.UserID = @userId)
                   AND (@filterUserId IS NULL OR t.UserID = @filterUserId)
                 GROUP BY t.BranchId
@@ -262,6 +265,7 @@ BEGIN
                     SUM(c.CountCards) AS CountCards,
                     SUM(c.CardValue) AS CardValue,
                     SUM(c.CountTransaction) AS CountTransaction,
+                    SUM(c.CountTransactionPOS) AS CountTransactionPOS,
                     SUM(c.CashOutTotal) AS CashOutTotal,
                     SUM(c.CashOut) AS CashOut,
                     SUM(c.CashOutDisc) AS CashOutDisc,
@@ -279,11 +283,13 @@ BEGIN
             )
             SELECT
                 ROW_NUMBER() OVER (ORDER BY r.BranchName, r.BranchID) AS RowNo,
+                r.BranchID,
                 r.BranchName,
                 CAST((ISNULL(r.Net, 0) + ISNULL(r.TotalSaleDay2Vat, 0) + ISNULL(r.TotalRevPOS, 0) + ISNULL(r.NetPOS, 0) - ISNULL(r.TotalReturns, 0)) AS DECIMAL(18, 3)) AS TotalSupply,
                 CAST(ISNULL(r.CountCards, 0) AS DECIMAL(18, 0)) AS CountCards,
-                CAST(ISNULL(r.CardValue, 0) AS DECIMAL(18, 3)) AS CardValue,
-                CAST(ISNULL(r.CountTransaction, 0) AS DECIMAL(18, 0)) AS CountTransaction,
+                CAST(ISNULL(r.TotalSaleDay2Vat, 0) AS DECIMAL(18, 3)) AS TotalSaleDay2Vat,
+                CAST((ISNULL(r.CardValue, 0) + ISNULL(r.TotalSaleDay2Vat, 0)) AS DECIMAL(18, 3)) AS CardValue,
+                CAST((ISNULL(r.CountTransaction, 0) + ISNULL(r.CountTransactionPOS, 0)) AS DECIMAL(18, 0)) AS CountTransaction,
                 CAST((ISNULL(r.CashOutTotal, 0) + ISNULL(r.CashOut, 0)) AS DECIMAL(18, 3)) AS WalletBalance,
                 CAST((ISNULL(r.CashOutTotal, 0) + (ISNULL(r.CashOut, 0) - ISNULL(r.CashOutDisc, 0))) AS DECIMAL(18, 3)) AS WalletSupply,
                 CAST(ISNULL(r.BankBalanceCharge, 0) AS DECIMAL(18, 3)) AS BankBalanceCharge,
@@ -292,7 +298,7 @@ BEGIN
                 CAST((ISNULL(r.TotalRev2, 0) + ISNULL(r.TotalRevvat, 0)) AS DECIMAL(18, 3)) AS TotalRevWithVat,
                 ISNULL(r.ReturnsCount, 0) AS ReturnsCount,
                 CAST(ISNULL(r.TotalReturns, 0) AS DECIMAL(18, 3)) AS TotalReturns,
-                CAST((ISNULL(r.CashOut, 0) + ISNULL(r.CashOutTotal, 0) - ISNULL(r.CashOutDisc, 0)) AS DECIMAL(18, 3)) AS NetCashOut,
+                CAST(ISNULL(r.CashOutTotal, 0) AS DECIMAL(18, 3)) AS NetCashOut,
                 CAST(ISNULL(r.BoxValue, 0) AS DECIMAL(18, 3)) AS BoxValue,
                 CASE
                     WHEN r.MinClosed = 1 AND r.MaxClosed = 1 THEN N'مغلق'
@@ -309,6 +315,7 @@ BEGIN
                 OR ISNULL(r.CountCards, 0) <> 0
                 OR ISNULL(r.CardValue, 0) <> 0
                 OR ISNULL(r.CountTransaction, 0) <> 0
+                OR ISNULL(r.CountTransactionPOS, 0) <> 0
                 OR ISNULL(r.CashOutTotal, 0) <> 0
                 OR ISNULL(r.CashOut, 0) <> 0
                 OR ISNULL(r.CashOutDisc, 0) <> 0
@@ -327,7 +334,7 @@ BEGIN
         (
             SELECT
                 b.branch_id AS BranchID,
-                COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), b.branch_id)) AS BranchName
+                LTRIM(RTRIM(COALESCE(NULLIF(b.branch_Code, N'') + N' ', N'') + COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), b.branch_id)))) AS BranchName
             FROM dbo.TblBranchesData b
             WHERE b.branch_id IS NOT NULL
               AND (@branchId <= 0 OR b.branch_id = @branchId)
@@ -370,6 +377,7 @@ BEGIN
                 ISNULL(c.CountCards, 0) AS CountCards,
                 ISNULL(c.TotalSaleDay2, 0) AS CardValue,
                 ISNULL(c.CountTransaction, 0) AS CountTransaction,
+                ISNULL(c.CountTransactionPOS, 0) AS CountTransactionPOS,
                 ISNULL(c.CashOutTotal, 0) AS CashOutTotal,
                 ISNULL(c.CashOut, 0) AS CashOut,
                 ISNULL(c.CashOutDisc, 0) AS CashOutDisc,
@@ -393,10 +401,12 @@ BEGIN
                 COUNT(1) AS ReturnsCount,
                 SUM(ISNULL(t.Transaction_NetValue, 0) + ISNULL(t.RechargeValue, 0)) AS TotalReturns
             FROM dbo.Transactions t
+            INNER JOIN dbo.Notes n ON n.NoteID = ISNULL(t.NoteID3, 0)
             INNER JOIN BranchScope b ON b.BranchID = t.BranchId
             WHERE t.Transaction_Type = 9
-              AND t.Transaction_Date >= @from
-              AND t.Transaction_Date < @toExclusive
+              AND n.NoteDate >= @from
+              AND n.NoteDate < @toExclusive
+              AND n.branch_no = t.BranchId
               AND (@canChangeDefaults = 1 OR t.UserID = @userId)
               AND (@filterUserId IS NULL OR t.UserID = @filterUserId)
             GROUP BY t.BranchId
@@ -414,6 +424,7 @@ BEGIN
                 SUM(c.CountCards) AS CountCards,
                 SUM(c.CardValue) AS CardValue,
                 SUM(c.CountTransaction) AS CountTransaction,
+                SUM(c.CountTransactionPOS) AS CountTransactionPOS,
                 SUM(c.CashOutTotal) AS CashOutTotal,
                 SUM(c.CashOut) AS CashOut,
                 SUM(c.CashOutDisc) AS CashOutDisc,
@@ -431,11 +442,13 @@ BEGIN
         )
         SELECT
             ROW_NUMBER() OVER (ORDER BY s.BranchName, s.BranchID) AS RowNo,
+            s.BranchID,
             s.BranchName,
             CAST((ISNULL(r.Net, 0) + ISNULL(r.TotalSaleDay2Vat, 0) + ISNULL(r.TotalRevPOS, 0) + ISNULL(r.NetPOS, 0) - ISNULL(r.TotalReturns, 0)) AS DECIMAL(18, 3)) AS TotalSupply,
             CAST(ISNULL(r.CountCards, 0) AS DECIMAL(18, 0)) AS CountCards,
-            CAST(ISNULL(r.CardValue, 0) AS DECIMAL(18, 3)) AS CardValue,
-            CAST(ISNULL(r.CountTransaction, 0) AS DECIMAL(18, 0)) AS CountTransaction,
+            CAST(ISNULL(r.TotalSaleDay2Vat, 0) AS DECIMAL(18, 3)) AS TotalSaleDay2Vat,
+            CAST((ISNULL(r.CardValue, 0) + ISNULL(r.TotalSaleDay2Vat, 0)) AS DECIMAL(18, 3)) AS CardValue,
+            CAST((ISNULL(r.CountTransaction, 0) + ISNULL(r.CountTransactionPOS, 0)) AS DECIMAL(18, 0)) AS CountTransaction,
             CAST((ISNULL(r.CashOutTotal, 0) + ISNULL(r.CashOut, 0)) AS DECIMAL(18, 3)) AS WalletBalance,
             CAST((ISNULL(r.CashOutTotal, 0) + (ISNULL(r.CashOut, 0) - ISNULL(r.CashOutDisc, 0))) AS DECIMAL(18, 3)) AS WalletSupply,
             CAST(ISNULL(r.BankBalanceCharge, 0) AS DECIMAL(18, 3)) AS BankBalanceCharge,
@@ -444,7 +457,7 @@ BEGIN
             CAST((ISNULL(r.TotalRev2, 0) + ISNULL(r.TotalRevvat, 0)) AS DECIMAL(18, 3)) AS TotalRevWithVat,
             ISNULL(r.ReturnsCount, 0) AS ReturnsCount,
             CAST(ISNULL(r.TotalReturns, 0) AS DECIMAL(18, 3)) AS TotalReturns,
-            CAST((ISNULL(r.CashOut, 0) + ISNULL(r.CashOutTotal, 0) - ISNULL(r.CashOutDisc, 0)) AS DECIMAL(18, 3)) AS NetCashOut,
+            CAST(ISNULL(r.CashOutTotal, 0) AS DECIMAL(18, 3)) AS NetCashOut,
             CAST(ISNULL(r.BoxValue, 0) AS DECIMAL(18, 3)) AS BoxValue,
             CASE
                 WHEN r.BranchID IS NULL THEN N''
@@ -469,6 +482,7 @@ BEGIN
                     OR ISNULL(r.CountCards, 0) <> 0
                     OR ISNULL(r.CardValue, 0) <> 0
                     OR ISNULL(r.CountTransaction, 0) <> 0
+                    OR ISNULL(r.CountTransactionPOS, 0) <> 0
                     OR ISNULL(r.CashOutTotal, 0) <> 0
                     OR ISNULL(r.CashOut, 0) <> 0
                     OR ISNULL(r.CashOutDisc, 0) <> 0

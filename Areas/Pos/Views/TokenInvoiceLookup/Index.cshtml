@@ -219,7 +219,7 @@
     <script>
         (function () {
             var rows = [];
-            var paging = { totalTokens: 0, loadedTokens: 0, batchSize: 50, nextSkip: 0, hasMore: false };
+            var paging = { totalTokens: 0, loadedTokens: 0, batchSize: 200, nextSkip: 0, hasMore: false };
             var currentPage = 0;
             var pageSize = 50;
             var backgroundLoading = false;
@@ -373,7 +373,7 @@
                 paging = {
                     totalTokens: newPaging.totalTokens || newPaging.TotalTokens || 0,
                     loadedTokens: newPaging.loadedTokens || newPaging.LoadedTokens || 0,
-                    batchSize: newPaging.batchSize || newPaging.BatchSize || 50,
+                    batchSize: newPaging.batchSize || newPaging.BatchSize || 200,
                     nextSkip: newPaging.nextSkip || newPaging.NextSkip || 0,
                     hasMore: !!(newPaging.hasMore || newPaging.HasMore)
                 };
@@ -405,7 +405,7 @@
                 var form = new FormData();
                 form.append("file", file);
                 rows = [];
-                paging = { totalTokens: 0, loadedTokens: 0, batchSize: 50, nextSkip: 0, hasMore: false };
+                paging = { totalTokens: 0, loadedTokens: 0, batchSize: 200, nextSkip: 0, hasMore: false };
                 currentPage = 0;
                 renderSummary({});
                 renderRows();
@@ -468,7 +468,12 @@
                 Array.prototype.forEach.call(document.querySelectorAll(".lookup-tab-panel"), function (p) { p.classList.toggle("active", p.id === "tab-story"); });
             }
             function loadStory(tokenValue) {
-                var token = tokenValue || byId("singleTokenInput").value;
+                if (tokenValue && typeof tokenValue.preventDefault === "function") {
+                    tokenValue.preventDefault();
+                    tokenValue = null;
+                }
+                var token = typeof tokenValue === "string" ? tokenValue : byId("singleTokenInput").value;
+                token = String(token || "").trim();
                 if (!token || !token.trim()) { message("storyMessage", "اكتب رقم التوكن أولا"); return; }
                 byId("singleTokenInput").value = token;
                 activateStoryTab();

@@ -32,7 +32,7 @@ namespace MyERP.Areas.Pos.Data
                 {
                     ClosingDate = closingDate.Date,
                     BranchId = branchId,
-                    BranchName = ExecuteScalarString(connection, null, "SELECT TOP (1) COALESCE(NULLIF(branch_name, N''), NULLIF(branch_namee, N''), CONVERT(NVARCHAR(20), branch_id)) FROM dbo.TblBranchesData WHERE branch_id=@branchId", new SqlParameter("@branchId", branchId)),
+                    BranchName = ExecuteScalarString(connection, null, "SELECT TOP (1) LTRIM(RTRIM(COALESCE(NULLIF(branch_Code, N'') + N' ', N'') + COALESCE(NULLIF(branch_name, N''), NULLIF(branch_namee, N''), CONVERT(NVARCHAR(20), branch_id)))) FROM dbo.TblBranchesData WHERE branch_id=@branchId", new SqlParameter("@branchId", branchId)),
                     // POS web closing is locked to the logged-in POS user context.
                     // VB6 uses branch/date for transaction totals, while the user controls box/account lookups.
                     UserId = fallbackUserId
@@ -53,7 +53,8 @@ FROM dbo.Transaction_Details td
 INNER JOIN dbo.Transactions t ON td.Transaction_ID = t.Transaction_ID
 INNER JOIN dbo.TblItems i ON td.Item_ID = i.ItemID
 WHERE i.ItemType = 0
-  AND t.Transaction_Date = @date
+  AND t.Transaction_Date >= @date
+  AND t.Transaction_Date < DATEADD(DAY, 1, @date)
   AND t.Transaction_Type IN (21,9)
   AND t.BranchId = @branchId
   AND ISNULL(t.IsWallet,0) = 0
@@ -67,7 +68,8 @@ INNER JOIN dbo.Transactions t ON td.Transaction_ID = t.Transaction_ID
 INNER JOIN dbo.TblItems i ON td.Item_ID = i.ItemID
 WHERE ISNULL(td.Price,0) <> 0
   AND i.ItemType = 1
-  AND t.Transaction_Date = @date
+  AND t.Transaction_Date >= @date
+  AND t.Transaction_Date < DATEADD(DAY, 1, @date)
   AND t.Transaction_Type IN (21,9)
   AND t.BranchId = @branchId
   AND ISNULL(t.IsWallet,0) = 0
@@ -77,7 +79,8 @@ WHERE ISNULL(td.Price,0) <> 0
                 values.CountCards = ExecuteScalarDecimal(connection, null, @"
 SELECT COUNT(*)
 FROM dbo.Transactions
-WHERE Transaction_Date = @date
+WHERE Transaction_Date >= @date
+  AND Transaction_Date < DATEADD(DAY, 1, @date)
   AND Transaction_Type IN (21,9)
   AND BranchId = @branchId
   AND ISNULL(VisaNumber,N'') <> N''
@@ -87,7 +90,8 @@ WHERE Transaction_Date = @date
                 values.TotalRechargeValue = ExecuteScalarDecimal(connection, null, @"
 SELECT SUM(RechargeValue)
 FROM dbo.Transactions
-WHERE Transaction_Date = @date
+WHERE Transaction_Date >= @date
+  AND Transaction_Date < DATEADD(DAY, 1, @date)
   AND ISNULL(InstallmentService,0) = 0
   AND Transaction_Type IN (21,9)
   AND BranchId = @branchId
@@ -98,7 +102,8 @@ WHERE Transaction_Date = @date
                 values.TotalVat = ExecuteScalarDecimal(connection, null, @"
 SELECT SUM(Vat)
 FROM dbo.Transactions
-WHERE Transaction_Date = @date
+WHERE Transaction_Date >= @date
+  AND Transaction_Date < DATEADD(DAY, 1, @date)
   AND Transaction_Type IN (21,9)
   AND BranchId = @branchId
   AND ISNULL(IsWallet,0) = 0
@@ -110,7 +115,8 @@ FROM dbo.Transaction_Details td
 INNER JOIN dbo.Transactions t ON td.Transaction_ID = t.Transaction_ID
 INNER JOIN dbo.TblItems i ON td.Item_ID = i.ItemID
 WHERE i.ItemType = 0
-  AND t.Transaction_Date = @date
+  AND t.Transaction_Date >= @date
+  AND t.Transaction_Date < DATEADD(DAY, 1, @date)
   AND t.Transaction_Type IN (21,9)
   AND t.BranchId = @branchId
   AND ISNULL(t.IsWallet,0) = 0
@@ -125,7 +131,8 @@ SELECT SUM(td.Price) AS PriceTotal, SUM(td.Vat) AS VatTotal
 FROM dbo.Transaction_Details td
 INNER JOIN dbo.Transactions t ON td.Transaction_ID = t.Transaction_ID
 INNER JOIN dbo.TblItems i ON td.Item_ID = i.ItemID
-WHERE t.Transaction_Date = @date
+WHERE t.Transaction_Date >= @date
+  AND t.Transaction_Date < DATEADD(DAY, 1, @date)
   AND t.Transaction_Type IN (21,9)
   AND t.BranchId = @branchId
   AND ISNULL(t.IsWallet,0) = 0
@@ -139,12 +146,13 @@ SELECT SUM(Transaction_NetValue) + SUM(RechargeValue)
 FROM dbo.Transactions
 WHERE Transaction_Type IN (9)
   AND ISNULL(NoteID3,0) IN
-      (SELECT NoteID FROM dbo.Notes WHERE NoteDate = @date AND branch_no = @branchId)", DateParams(closingDate, branchId));
+      (SELECT NoteID FROM dbo.Notes WHERE NoteDate >= @date AND NoteDate < DATEADD(DAY, 1, @date) AND branch_no = @branchId)", DateParams(closingDate, branchId));
 
                 values.CashOut = ExecuteScalarDecimal(connection, null, @"
 SELECT SUM(Transaction_NetValue)
 FROM dbo.Transactions
-WHERE Transaction_Date = @date
+WHERE Transaction_Date >= @date
+  AND Transaction_Date < DATEADD(DAY, 1, @date)
   AND Transaction_Type IN (21,9)
   AND BranchId = @branchId
   AND ISNULL(IsWallet,0) = 1", DateParams(closingDate, branchId));
@@ -156,7 +164,8 @@ WHERE Transaction_Date = @date
                 values.CountTransactionPOS = ExecuteScalarDecimal(connection, null, @"
 SELECT COUNT(*)
 FROM dbo.Transactions
-WHERE Transaction_Date = @date
+WHERE Transaction_Date >= @date
+  AND Transaction_Date < DATEADD(DAY, 1, @date)
   AND Transaction_Type IN (21,9)
   AND BranchId = @branchId
   AND ISNULL(HaveGuarantee,0) = 1", DateParams(closingDate, branchId));
@@ -164,7 +173,8 @@ WHERE Transaction_Date = @date
                 values.NetPOS = ExecuteScalarDecimal(connection, null, @"
 SELECT SUM(RechargeValue)
 FROM dbo.Transactions
-WHERE Transaction_Date = @date
+WHERE Transaction_Date >= @date
+  AND Transaction_Date < DATEADD(DAY, 1, @date)
   AND Transaction_Type IN (21,9)
   AND BranchId = @branchId
   AND ISNULL(HaveGuarantee,0) = 1", DateParams(closingDate, branchId));
@@ -172,7 +182,8 @@ WHERE Transaction_Date = @date
                 values.TotalRevPOS = ExecuteScalarDecimal(connection, null, @"
 SELECT SUM(Transaction_NetValue)
 FROM dbo.Transactions
-WHERE Transaction_Date = @date
+WHERE Transaction_Date >= @date
+  AND Transaction_Date < DATEADD(DAY, 1, @date)
   AND Transaction_Type IN (21,9)
   AND BranchId = @branchId
   AND ISNULL(HaveGuarantee,0) = 1", DateParams(closingDate, branchId));
@@ -180,7 +191,8 @@ WHERE Transaction_Date = @date
                 values.TotalRev = ExecuteScalarDecimal(connection, null, @"
 SELECT SUM(Transaction_NetValue)
 FROM dbo.Transactions
-WHERE Transaction_Date = @date
+WHERE Transaction_Date >= @date
+  AND Transaction_Date < DATEADD(DAY, 1, @date)
   AND Transaction_Type IN (21,9)
   AND BranchId = @branchId
   AND ISNULL(IsWallet,0) = 0
@@ -266,12 +278,12 @@ WHERE Transaction_Date = @date
                             NoteValue = noteValue
                         });
 
-                        ExecuteNonQuery(connection, transaction, "DELETE FROM dbo.Notes WHERE NoteType = 29806 AND NoteDate = @date AND branch_no = @branchId AND NoteID <> @noteId",
+                        ExecuteNonQuery(connection, transaction, "DELETE FROM dbo.Notes WHERE NoteType = 29806 AND NoteDate >= @date AND NoteDate < DATEADD(DAY, 1, @date) AND branch_no = @branchId AND NoteID <> @noteId",
                             new SqlParameter("@date", closingDate.Date),
                             new SqlParameter("@branchId", branchId),
                             new SqlParameter("@noteId", noteId));
 
-                        ExecuteNonQuery(connection, transaction, "UPDATE dbo.Transactions SET NoteIDClose = NULL WHERE Transaction_Date = @date AND BranchId = @branchId",
+                        ExecuteNonQuery(connection, transaction, "UPDATE dbo.Transactions SET NoteIDClose = NULL WHERE Transaction_Date >= @date AND Transaction_Date < DATEADD(DAY, 1, @date) AND BranchId = @branchId",
                             new SqlParameter("@date", closingDate.Date),
                             new SqlParameter("@branchId", branchId));
 
@@ -284,7 +296,8 @@ WHERE Transaction_Date = @date
                         ExecuteNonQuery(connection, transaction, @"
 UPDATE dbo.Transactions
 SET NoteIDClose = @noteId
-WHERE Transaction_Date = @date
+WHERE Transaction_Date >= @date
+  AND Transaction_Date < DATEADD(DAY, 1, @date)
   AND Transaction_Type IN (21,9)
   AND BranchId = @branchId",
                             new SqlParameter("@noteId", noteId),
@@ -583,7 +596,8 @@ INNER JOIN dbo.TblItemShows shows ON shows.ID = t.ItemDit
 INNER JOIN dbo.Transaction_Details td ON td.Transaction_ID = t.Transaction_ID
 LEFT JOIN dbo.TblItemShowDitails showDetails ON showDetails.id2 = shows.id
 LEFT JOIN dbo.BanksData bank ON shows.BankID = bank.BankID
-WHERE t.Transaction_Date = @date
+WHERE t.Transaction_Date >= @date
+  AND t.Transaction_Date < DATEADD(DAY, 1, @date)
   AND t.Transaction_Type IN (21)
   AND t.BranchId = @branchId
   AND ISNULL(t.NoID,N'') <> N''
@@ -643,7 +657,8 @@ GROUP BY t.ItemDit, shows.NameShow, shows.Account_code, shows.Account_code2,
             const string sql = @"
 SELECT SUM(RechargeValue) AS RechargeValue, SUM(Cost) AS Cost, SUM(CashBack) AS CashBack
 FROM dbo.Transactions
-WHERE Transaction_Date = @date
+WHERE Transaction_Date >= @date
+  AND Transaction_Date < DATEADD(DAY, 1, @date)
   AND Transaction_Type IN (21,9)
   AND BranchId = @branchId
   AND ISNULL(IsWallet,0) = 1";
@@ -696,7 +711,8 @@ SELECT DISTINCT
 FROM dbo.TBLClosePos c
 INNER JOIN dbo.Notes n ON n.NoteID = c.NoteID
 WHERE c.BranchID = @branchId
-  AND c.OrderDate = @date
+  AND c.OrderDate >= @date
+  AND c.OrderDate < DATEADD(DAY, 1, @date)
   AND c.UserID = @userId
   AND ISNULL(c.IsClosed, 0) = 1
   AND n.NoteType = 29806
@@ -713,7 +729,8 @@ SELECT
     END AS VoucherType
 FROM dbo.Notes n
 WHERE n.NoteType = 29807
-  AND n.NoteDate = @date
+  AND n.NoteDate >= @date
+  AND n.NoteDate < DATEADD(DAY, 1, @date)
   AND n.branch_no = @branchId
   AND n.UserID = @userId
   AND EXISTS
@@ -721,7 +738,8 @@ WHERE n.NoteType = 29807
       SELECT 1
       FROM dbo.TBLClosePos c
       WHERE c.BranchID = @branchId
-        AND c.OrderDate = @date
+        AND c.OrderDate >= @date
+        AND c.OrderDate < DATEADD(DAY, 1, @date)
         AND c.UserID = @userId
         AND ISNULL(c.IsClosed, 0) = 1
   )

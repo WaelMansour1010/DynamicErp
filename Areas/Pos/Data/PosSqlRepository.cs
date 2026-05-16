@@ -7827,6 +7827,11 @@ END";
 
         public DataTable RunPosClosingReport(string reportKey, DateTime fromDate, DateTime toDate, int branchId, int userId, bool canChangeDefaults, int? branchFromId = null, int? branchToId = null, bool showEmptyBranches = false, string serviceSearch = null, int? filterUserId = null)
         {
+            if (string.Equals(reportKey, "finance-closing-discounts", StringComparison.OrdinalIgnoreCase))
+            {
+                return RunBranchDailyRollupParityReport(fromDate, toDate, branchId, userId, canChangeDefaults, branchFromId, branchToId);
+            }
+
             var table = new DataTable();
             using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand("dbo.usp_POS_Report_RunClosing", connection))
@@ -7850,6 +7855,264 @@ END";
 
             AppendLiveOpenClosingRows(table, reportKey, fromDate.Date, toDate.Date, branchId, userId, canChangeDefaults, branchFromId, branchToId, filterUserId);
             return table;
+        }
+
+        private DataTable RunBranchDailyRollupParityReport(DateTime fromDate, DateTime toDate, int branchId, int userId, bool canChangeDefaults, int? branchFromId, int? branchToId)
+        {
+            var source = new DataTable();
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                var branchList = BuildBranchDailyRollupBranchCsv(connection, fromDate.Date, branchId, userId, canChangeDefaults, branchFromId, branchToId);
+                var posAccountCode = ResolveBranchDailyRollupPosAccountCode(connection);
+
+                using (var command = new SqlCommand("dbo.BranchDailyRollup_Parity", connection))
+                using (var adapter = new SqlDataAdapter(command))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.CommandTimeout = 120;
+                    command.Parameters.Add("@FromDate", SqlDbType.DateTime).Value = fromDate.Date;
+                    command.Parameters.Add("@ToDate", SqlDbType.DateTime).Value = toDate.Date;
+                    command.Parameters.Add("@PosAccountCode", SqlDbType.NVarChar, 100).Value = string.IsNullOrWhiteSpace(posAccountCode) ? (object)DBNull.Value : posAccountCode;
+                    command.Parameters.Add("@BankChargeAccountCode", SqlDbType.NVarChar, 100).Value = "a3a1a1a1a6";
+                    command.Parameters.Add("@P_BranchList", SqlDbType.NVarChar, -1).Value = string.IsNullOrWhiteSpace(branchList) ? (object)DBNull.Value : branchList;
+                    adapter.Fill(source);
+                }
+            }
+
+            return BuildFinanceClosingDiscountsParityTable(source);
+        }
+
+        private static string BuildBranchDailyRollupBranchCsv(SqlConnection connection, DateTime fromDate, int branchId, int userId, bool canChangeDefaults, int? branchFromId, int? branchToId)
+        {
+            const string sql = @"
+SELECT DISTINCT b.branch_id
+FROM dbo.TblBranchesData b
+WHERE b.branch_id IS NOT NULL
+  AND (@branchId <= 0 OR b.branch_id = @branchId)
+  AND (@branchFromId IS NULL OR b.branch_id >= @branchFromId)
+  AND (@branchToId IS NULL OR b.branch_id <= @branchToId)
+  AND (ISNULL(b.isStoped, 0) = 0 OR ISNULL(b.IsStopedDate, '99991231') > @fromDate)
+  AND (
+        @branchId > 0
+        OR EXISTS (
+            SELECT 1
+            FROM dbo.TblUsersBranches ub
+            WHERE ub.UserID = @userId
+              AND ub.BranchID = b.branch_id
+        )
+      )
+ORDER BY b.branch_id;";
+
+            var branches = new List<string>();
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = fromDate.Date;
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = branchId;
+                command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
+                command.Parameters.Add("@branchFromId", SqlDbType.Int).Value = branchFromId.HasValue ? (object)branchFromId.Value : DBNull.Value;
+                command.Parameters.Add("@branchToId", SqlDbType.Int).Value = branchToId.HasValue ? (object)branchToId.Value : DBNull.Value;
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        branches.Add(Convert.ToInt32(reader.GetValue(0), CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture));
+                    }
+                }
+            }
+
+            return string.Join(",", branches);
+        }
+
+        private static string ResolveBranchDailyRollupPosAccountCode(SqlConnection connection)
+        {
+            return ExecuteScalarString(connection, null, "SELECT TOP (1) a217 FROM dbo.branches");
+        }
+
+        private static DataTable BuildFinanceClosingDiscountsParityTable(DataTable source)
+        {
+            var table = new DataTable();
+            table.Columns.Add("RowNo", typeof(int));
+            table.Columns.Add("BranchID", typeof(int));
+            table.Columns.Add("BranchName", typeof(string));
+            table.Columns.Add("TotalSupply", typeof(decimal));
+            table.Columns.Add("CountCards", typeof(decimal));
+            table.Columns.Add("TotalSaleDay2Vat", typeof(decimal));
+            table.Columns.Add("CardValue", typeof(decimal));
+            table.Columns.Add("CountTransaction", typeof(decimal));
+            table.Columns.Add("WalletBalance", typeof(decimal));
+            table.Columns.Add("WalletSupply", typeof(decimal));
+            table.Columns.Add("BankBalanceCharge", typeof(decimal));
+            table.Columns.Add("TotalRechargeValue", typeof(decimal));
+            table.Columns.Add("TotalRev2", typeof(decimal));
+            table.Columns.Add("TotalRevWithVat", typeof(decimal));
+            table.Columns.Add("ReturnsCount", typeof(decimal));
+            table.Columns.Add("TotalReturns", typeof(decimal));
+            table.Columns.Add("NetCashOut", typeof(decimal));
+            table.Columns.Add("BoxValue", typeof(decimal));
+            table.Columns.Add("ClosingStatus", typeof(string));
+
+            if (source == null)
+            {
+                return table;
+            }
+
+            var rowNo = 1;
+            foreach (DataRow sourceRow in source.Rows)
+            {
+                var totalReturns = ReadReportDecimal(sourceRow, "TOTALTRETURN", "TotalReturns", "TotalReturn");
+                var totalSaleDay2Vat = ReadReportDecimal(sourceRow, "TotalSaleDay2Vat");
+                var totalSupply = ReadReportDecimal(sourceRow, "Net")
+                    + totalSaleDay2Vat
+                    + ReadReportDecimal(sourceRow, "TotalRevPOS")
+                    + ReadReportDecimal(sourceRow, "NetPOS")
+                    - totalReturns;
+
+                var row = table.NewRow();
+                row["RowNo"] = rowNo++;
+                row["BranchID"] = ReadReportInt(sourceRow, "BranchID", "branch_id", "BranchId", "Branch_ID");
+                row["BranchName"] = BuildParityBranchName(sourceRow);
+                row["TotalSupply"] = totalSupply;
+                row["CountCards"] = ReadReportDecimal(sourceRow, "CountCards", "CardCount");
+                row["TotalSaleDay2Vat"] = totalSaleDay2Vat;
+                row["CardValue"] = ReadReportDecimal(sourceRow, "TotalSaleDay2", "mTotalSalCard", "CardValue") + totalSaleDay2Vat;
+                row["CountTransaction"] = ReadReportDecimal(sourceRow, "CountTransactionCash") + ReadReportDecimal(sourceRow, "CountTransaction");
+                row["WalletBalance"] = ReadReportDecimal(sourceRow, "CashOutTotal") + ReadReportDecimal(sourceRow, "CashOut");
+                row["WalletSupply"] = ReadReportDecimal(sourceRow, "CashOutTotal") + ReadReportDecimal(sourceRow, "CashOut") - ReadReportDecimal(sourceRow, "CashOutDisc");
+                row["BankBalanceCharge"] = ReadReportDecimal(sourceRow, "bankbalancecharge", "BankBalanceCharge");
+                row["TotalRechargeValue"] = ReadReportDecimal(sourceRow, "TotalRechargeValue");
+                row["TotalRev2"] = ReadReportDecimal(sourceRow, "TotalRev2");
+                row["TotalRevWithVat"] = ReadReportDecimal(sourceRow, "TotalRev2") + ReadReportDecimal(sourceRow, "TotalRevVat", "TotalRevvat");
+                row["ReturnsCount"] = ReadReportDecimal(sourceRow, "COUNTRETURN", "CountReturns", "ReturnsCount");
+                row["TotalReturns"] = totalReturns;
+                row["NetCashOut"] = ReadReportDecimal(sourceRow, "CashOutTotal");
+                row["BoxValue"] = ReadReportDecimal(sourceRow, "BoxValue", "BoxBalance", "TotalBoxValue");
+                row["ClosingStatus"] = ResolveParityClosingStatus(sourceRow);
+                table.Rows.Add(row);
+            }
+
+            return table;
+        }
+
+        private static string BuildParityBranchName(DataRow row)
+        {
+            var branchCode = ReadReportString(row, "branch_Code", "BranchCode", "Code");
+            var branchName = ReadReportString(row, "branch_name", "branch_namee", "BranchName");
+            if (!string.IsNullOrWhiteSpace(branchCode) && !string.IsNullOrWhiteSpace(branchName))
+            {
+                return branchCode.Trim() + " - " + branchName.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(branchName))
+            {
+                return branchName.Trim();
+            }
+
+            return branchCode == null ? string.Empty : branchCode.Trim();
+        }
+
+        private static string ResolveParityClosingStatus(DataRow row)
+        {
+            var status = ReadReportString(row, "ClosingStatus", "CloseStatus", "Status");
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                return status;
+            }
+
+            var isClosed = ReadReportInt(row, "IsClosed", "ISClosed", "Closed");
+            return isClosed == 1 ? "تم الإغلاق" : "غير مغلق";
+        }
+
+        private static int ReadReportInt(DataRow row, params string[] names)
+        {
+            var value = ReadReportValue(row, names);
+            if (value == null || value == DBNull.Value)
+            {
+                return 0;
+            }
+
+            int parsed;
+            return int.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out parsed)
+                ? parsed
+                : Convert.ToInt32(ReadReportDecimalValue(value));
+        }
+
+        private static decimal ReadReportDecimal(DataRow row, params string[] names)
+        {
+            return ReadReportDecimalValue(ReadReportValue(row, names));
+        }
+
+        private static decimal ReadReportDecimalValue(object value)
+        {
+            if (value == null || value == DBNull.Value)
+            {
+                return 0m;
+            }
+
+            if (value is decimal)
+            {
+                return (decimal)value;
+            }
+
+            if (value is int || value is long || value is short || value is byte)
+            {
+                return Convert.ToDecimal(value, CultureInfo.InvariantCulture);
+            }
+
+            if (value is double || value is float)
+            {
+                return Convert.ToDecimal(value, CultureInfo.InvariantCulture);
+            }
+
+            decimal parsed;
+            return decimal.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out parsed)
+                ? parsed
+                : 0m;
+        }
+
+        private static string ReadReportString(DataRow row, params string[] names)
+        {
+            var value = ReadReportValue(row, names);
+            return value == null || value == DBNull.Value ? null : Convert.ToString(value, CultureInfo.InvariantCulture);
+        }
+
+        private static object ReadReportValue(DataRow row, params string[] names)
+        {
+            if (row == null || row.Table == null || names == null)
+            {
+                return null;
+            }
+
+            foreach (var name in names)
+            {
+                var column = FindReportColumn(row.Table, name);
+                if (column != null)
+                {
+                    return row[column];
+                }
+            }
+
+            return null;
+        }
+
+        private static DataColumn FindReportColumn(DataTable table, string name)
+        {
+            if (table == null || string.IsNullOrWhiteSpace(name))
+            {
+                return null;
+            }
+
+            foreach (DataColumn column in table.Columns)
+            {
+                if (string.Equals(column.ColumnName, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return column;
+                }
+            }
+
+            return null;
         }
 
         private void AppendLiveOpenClosingRows(DataTable table, string reportKey, DateTime fromDate, DateTime toDate, int branchId, int userId, bool canChangeDefaults, int? branchFromId, int? branchToId, int? filterUserId)
@@ -7917,10 +8180,12 @@ END";
 
                         if (key == "finance-closing")
                         {
+                            RemoveEmptyClosingRow(table, values.BranchId);
                             AppendLiveFinanceClosingRow(table, values);
                         }
                         else
                         {
+                            RemoveEmptyClosingRow(table, values.BranchId);
                             AppendLiveFinanceClosingDiscountRow(table, values);
                         }
                     }
@@ -7967,6 +8232,7 @@ END";
         private static void AppendLiveFinanceClosingRow(DataTable table, PosClosingValuesDto values)
         {
             var row = table.NewRow();
+            SetReportValue(row, "BranchID", values.BranchId);
             SetReportValue(row, "BranchName", values.BranchName);
             SetReportValue(row, "ClosingDate", values.ClosingDate);
             SetReportValue(row, "NoteID", DBNull.Value);
@@ -7987,15 +8253,62 @@ END";
             table.Rows.Add(row);
         }
 
+        private static void RemoveEmptyClosingRow(DataTable table, int branchId)
+        {
+            if (table == null || branchId <= 0 || !table.Columns.Contains("BranchID"))
+            {
+                return;
+            }
+
+            for (var i = table.Rows.Count - 1; i >= 0; i--)
+            {
+                var row = table.Rows[i];
+                var rowBranchId = row["BranchID"] == DBNull.Value ? 0 : Convert.ToInt32(row["BranchID"]);
+                if (rowBranchId == branchId && IsEmptyClosingReportRow(row))
+                {
+                    table.Rows.RemoveAt(i);
+                }
+            }
+        }
+
+        private static bool IsEmptyClosingReportRow(DataRow row)
+        {
+            var numericColumns = new[]
+            {
+                "TotalSupply", "CountCards", "TotalSaleDay2Vat", "CardValue", "CountTransaction",
+                "WalletBalance", "WalletSupply", "BankBalanceCharge", "TotalRechargeValue",
+                "TotalRev2", "TotalRevWithVat", "ReturnsCount", "TotalReturns", "NetCashOut",
+                "BoxValue", "OpenBalance", "LastBalance", "TotalRev", "TotalVat", "CashOutTotal",
+                "BoxBalance", "NoteValue"
+            };
+
+            foreach (var column in numericColumns)
+            {
+                if (!row.Table.Columns.Contains(column) || row[column] == DBNull.Value)
+                {
+                    continue;
+                }
+
+                if (Convert.ToDecimal(row[column]) != 0)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         private static void AppendLiveFinanceClosingDiscountRow(DataTable table, PosClosingValuesDto values)
         {
             var row = table.NewRow();
             SetReportValue(row, "RowNo", table.Rows.Count + 1);
+            SetReportValue(row, "BranchID", values.BranchId);
             SetReportValue(row, "BranchName", values.BranchName);
             SetReportValue(row, "TotalSupply", values.TotalSupply);
             SetReportValue(row, "CountCards", values.CountCards);
-            SetReportValue(row, "CardValue", values.TotalSaleDay2);
-            SetReportValue(row, "CountTransaction", values.CountTransaction);
+            SetReportValue(row, "TotalSaleDay2Vat", values.TotalSaleDay2Vat);
+            SetReportValue(row, "CardValue", values.TotalSaleDay2 + values.TotalSaleDay2Vat);
+            SetReportValue(row, "CountTransaction", values.CountTransaction + values.CountTransactionPOS);
             SetReportValue(row, "WalletBalance", values.TotalWallet);
             SetReportValue(row, "WalletSupply", values.TotalSupplyWallet);
             SetReportValue(row, "BankBalanceCharge", values.BankBalanceCharge);
@@ -8004,7 +8317,7 @@ END";
             SetReportValue(row, "TotalRevWithVat", values.TotalRev2 + values.TotalRevVat);
             SetReportValue(row, "ReturnsCount", values.TotalReturn == 0 ? 0 : 1);
             SetReportValue(row, "TotalReturns", values.TotalReturn);
-            SetReportValue(row, "NetCashOut", values.TotalSupplyWallet);
+            SetReportValue(row, "NetCashOut", values.CashOutTotal);
             SetReportValue(row, "BoxValue", values.BoxBalance);
             SetReportValue(row, "ClosingStatus", "غير مغلق - Live");
             table.Rows.Add(row);
@@ -8026,7 +8339,8 @@ END";
 SELECT TOP (1) 1
 FROM dbo.TBLClosePos
 WHERE BranchID = @branchId
-  AND OrderDate = @date
+  AND OrderDate >= @date
+  AND OrderDate < DATEADD(DAY, 1, @date)
   AND ISNULL(IsClosed, 0) = 1
   AND (@canChangeDefaults = 1 OR UserID = @userId)
   AND (@filterUserId IS NULL OR UserID = @filterUserId);";
@@ -8046,7 +8360,8 @@ WHERE BranchID = @branchId
             const string sql = @"
 SELECT TOP (1) 1
 FROM dbo.Transactions
-WHERE Transaction_Date = @date
+WHERE Transaction_Date >= @date
+  AND Transaction_Date < DATEADD(DAY, 1, @date)
   AND Transaction_Type IN (21,9)
   AND BranchId = @branchId
   AND (@canChangeDefaults = 1 OR UserID = @userId)
@@ -8165,7 +8480,7 @@ CREATE TABLE #UploadedTokens
         Notes = CAST(N'' AS NVARCHAR(500))
     FROM #UploadedTokens ut
     INNER JOIN dbo.Transaction_Details d WITH (NOLOCK)
-        ON UPPER(LTRIM(RTRIM(ISNULL(d.ItemSerial, N'')))) = ut.TokenKey
+        ON d.ItemSerial = ut.TokenKey
     INNER JOIN dbo.Transactions t WITH (NOLOCK)
         ON t.Transaction_ID = d.Transaction_ID
        AND t.Transaction_Type = 21
@@ -8180,9 +8495,9 @@ CREATE TABLE #UploadedTokens
     (
         SELECT TOP (1) c0.Tet_NumPoket
         FROM dbo.TblCusCsh c0 WITH (NOLOCK)
-        WHERE UPPER(LTRIM(RTRIM(ISNULL(c0.CardNo, N'')))) = ut.TokenKey
-           OR UPPER(LTRIM(RTRIM(ISNULL(c0.CardId, N'')))) = ut.TokenKey
-           OR UPPER(LTRIM(RTRIM(ISNULL(c0.card, N'')))) = ut.TokenKey
+        WHERE c0.CardNo = ut.TokenKey
+           OR c0.CardId = ut.TokenKey
+           OR c0.card = ut.TokenKey
         ORDER BY c0.Id DESC
     ) c
 ),
@@ -8218,7 +8533,7 @@ SaleMatchesByVisa AS
     INNER JOIN dbo.Transactions t WITH (NOLOCK)
         ON t.Transaction_Type = 21
        AND ISNULL(t.IsCancelled, 0) = 0
-       AND UPPER(LTRIM(RTRIM(ISNULL(t.VisaNumber, N'')))) = ut.TokenKey
+       AND t.VisaNumber = ut.TokenKey
     LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK)
         ON b.branch_id = t.BranchId
     LEFT JOIN dbo.TblStore s WITH (NOLOCK)
@@ -8229,9 +8544,9 @@ SaleMatchesByVisa AS
     (
         SELECT TOP (1) c0.Tet_NumPoket
         FROM dbo.TblCusCsh c0 WITH (NOLOCK)
-        WHERE UPPER(LTRIM(RTRIM(ISNULL(c0.CardNo, N'')))) = ut.TokenKey
-           OR UPPER(LTRIM(RTRIM(ISNULL(c0.CardId, N'')))) = ut.TokenKey
-           OR UPPER(LTRIM(RTRIM(ISNULL(c0.card, N'')))) = ut.TokenKey
+        WHERE c0.CardNo = ut.TokenKey
+           OR c0.CardId = ut.TokenKey
+           OR c0.card = ut.TokenKey
         ORDER BY c0.Id DESC
     ) c
     WHERE NOT EXISTS
@@ -8239,7 +8554,7 @@ SaleMatchesByVisa AS
         SELECT 1
         FROM dbo.Transaction_Details existingDetail WITH (NOLOCK)
         WHERE existingDetail.Transaction_ID = t.Transaction_ID
-          AND UPPER(LTRIM(RTRIM(ISNULL(existingDetail.ItemSerial, N'')))) = ut.TokenKey
+          AND existingDetail.ItemSerial = ut.TokenKey
     )
 ),
 SaleMatches AS
@@ -8273,7 +8588,7 @@ IssueMatches AS
         Notes = CAST(N'Found only in issue voucher Transaction_Type = 19; sale invoice linkage needs review.' AS NVARCHAR(500))
     FROM #UploadedTokens ut
     INNER JOIN dbo.Transaction_Details d WITH (NOLOCK)
-        ON UPPER(LTRIM(RTRIM(ISNULL(d.ItemSerial, N'')))) = ut.TokenKey
+        ON d.ItemSerial = ut.TokenKey
     INNER JOIN dbo.Transactions t WITH (NOLOCK)
         ON t.Transaction_ID = d.Transaction_ID
        AND t.Transaction_Type = 19
@@ -8288,9 +8603,9 @@ IssueMatches AS
     (
         SELECT TOP (1) c0.Tet_NumPoket
         FROM dbo.TblCusCsh c0 WITH (NOLOCK)
-        WHERE UPPER(LTRIM(RTRIM(ISNULL(c0.CardNo, N'')))) = ut.TokenKey
-           OR UPPER(LTRIM(RTRIM(ISNULL(c0.CardId, N'')))) = ut.TokenKey
-           OR UPPER(LTRIM(RTRIM(ISNULL(c0.card, N'')))) = ut.TokenKey
+        WHERE c0.CardNo = ut.TokenKey
+           OR c0.CardId = ut.TokenKey
+           OR c0.card = ut.TokenKey
         ORDER BY c0.Id DESC
     ) c
     WHERE NOT EXISTS (SELECT 1 FROM SaleMatches sm WHERE sm.Token = ut.Token)
@@ -8362,7 +8677,7 @@ ORDER BY ut.FirstRowNumber, am.Transaction_Date, am.Transaction_ID;";
                     bulk.WriteToServer(tokenTable);
                 }
 
-                using (var indexCommand = new SqlCommand("CREATE CLUSTERED INDEX IX_UploadedTokens_Token ON #UploadedTokens(Token);", connection))
+                using (var indexCommand = new SqlCommand("CREATE CLUSTERED INDEX IX_UploadedTokens_TokenKey ON #UploadedTokens(TokenKey);", connection))
                 {
                     indexCommand.ExecuteNonQuery();
                 }

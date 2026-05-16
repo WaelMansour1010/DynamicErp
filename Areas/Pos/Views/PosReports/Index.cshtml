@@ -136,6 +136,18 @@
                         </select>
                     </label>
                     <label class="report-check-filter pos-check-field"><input type="checkbox" id="reportShowEmptyBranches" /> <span>إظهار الفروع الخاضعة / الفاضية</span></label>
+                    <label class="pos-field">
+                        ترتيب التقرير
+                        <select id="reportSortBy">
+                            <option value="">الترتيب الافتراضي</option>
+                            <option value="branch-code">كود الفرع تصاعدي</option>
+                            <option value="branch-code-desc">كود الفرع تنازلي</option>
+                            <option value="sales-high">الأعلى مبيعًا</option>
+                            <option value="sales-low">الأقل مبيعًا</option>
+                            <option value="card-high">كارت كيشني الأعلى</option>
+                            <option value="card-low">كارت كيشني الأقل</option>
+                        </select>
+                    </label>
                     <label class="pos-field">مصدر الدخول<input type="text" id="reportLoginSource" placeholder="مثال: فرع / جهاز / قناة تشغيل" /></label>
                     <label class="serial-filter is-hidden-ui pos-field">
                         المخزن
@@ -424,6 +436,7 @@
                     includeCardIssueCheck: cardIssueMode !== "none",
                     cardIssueMode: cardIssueMode,
                     loginSource: byId("reportLoginSource").value || "",
+                    sortBy: byId("reportSortBy").value || "",
                     serialSearch: byId("reportSerialSearch").value || "",
                     serviceSearch: byId("reportServiceSearch").value || "",
                     showEmptyBranches: byId("reportShowEmptyBranches").checked
@@ -598,6 +611,7 @@
                         }
                         html += '<td>' + escapeHtml(formatCell(value)) + '</td>';
                     }
+                    addHiddenCrystalTotals(totals, data.rows[r], ["TotalSaleDay2Vat", "TotalRevvat", "TotalRevVat", "CashOutTotal"]);
                     html += '</tr>';
                 }
 
@@ -622,12 +636,23 @@
             function totalValue(totals, key) {
                 return totals && isFinite(totals[key]) ? totals[key] : 0;
             }
+            function addHiddenCrystalTotals(totals, row, keys) {
+                for (var i = 0; i < keys.length; i++) {
+                    var value = readAny(row, [keys[i]]);
+                    var numberValue = readNumber(value);
+                    if (isFinite(numberValue)) {
+                        totals[keys[i]] = (totals[keys[i]] || 0) + numberValue;
+                    }
+                }
+            }
             function moneyCell(value) {
                 return escapeHtml(formatCell(value || 0));
             }
             function buildCrystalSummary(totals) {
                 var countCards = totalValue(totals, "CountCards");
                 var cardValue = totalValue(totals, "CardValue");
+                var cardVat = totalValue(totals, "TotalSaleDay2Vat");
+                var cardBaseValue = cardValue - cardVat;
                 var rechargeCount = totalValue(totals, "CountTransaction");
                 var rechargeValue = totalValue(totals, "TotalRechargeValue");
                 var rechargeDiscount = totalValue(totals, "TotalRev2");
@@ -653,7 +678,7 @@
                     + '<table><thead><tr>'
                     + '<th>الإجمالي</th><th>ق م 14%</th><th>مبلغ الإيراد</th><th>العدد</th><th>البيان</th>'
                     + '</tr></thead><tbody>'
-                    + '<tr><td>' + moneyCell(cardValue) + '</td><td>' + moneyCell(totalValue(totals, "TotalSaleDay2Vat")) + '</td><td>' + moneyCell(cardValue) + '</td><td>' + moneyCell(countCards) + '</td><td class="summary-label">مبيعات كارت كيشني</td></tr>'
+                    + '<tr><td>' + moneyCell(cardValue) + '</td><td>' + moneyCell(cardVat) + '</td><td>' + moneyCell(cardBaseValue) + '</td><td>' + moneyCell(countCards) + '</td><td class="summary-label">مبيعات كارت كيشني</td></tr>'
                     + '<tr><td>' + moneyCell(rechargeFeesVat) + '</td><td>' + moneyCell(rechargeFeesVat - rechargeDiscount) + '</td><td>' + moneyCell(rechargeDiscount) + '</td><td>' + moneyCell(rechargeCount) + '</td><td class="summary-label">عمليات شحن كاش <span class="summary-red">In</span></td></tr>'
                     + '<tr><td>' + moneyCell(walletOut) + '</td><td></td><td>' + moneyCell(walletOut) + '</td><td></td><td class="summary-label">عمليات شحن كاش <span class="summary-red">OUT</span></td></tr>'
                     + '<tr><td></td><td></td><td>0</td><td></td><td class="summary-label">مبيعات فواتير <span class="summary-red">POS</span></td></tr>'
@@ -693,11 +718,15 @@
                 }
 
                 if (col.key === "NetCashOut") {
-                    return sumValues(row, [["CashOut"], ["CashOutTotal"], ["CashOutDisc"]], 2);
+                    return readAny(row, ["CashOutTotal"]);
                 }
 
                 if (col.key === "BoxValue") {
                     return readAny(row, ["BoxBalance"]);
+                }
+
+                if (col.key === "CardValue") {
+                    return sumValues(row, [["TotalSaleDay2", "CardValue"], ["TotalSaleDay2Vat"]]);
                 }
 
                 return "";
@@ -774,12 +803,14 @@
                 var service = byId("reportServiceSearch").value || "";
                 var serviceType = selectedText("reportServiceType", "");
                 var cardIssueMode = selectedText("reportCardIssueMode", "");
+                var sortBy = selectedText("reportSortBy", "");
                 if (branch) { parts.push("الفرع: " + branch); }
                 if (branchFrom) { parts.push("من فرع: " + branchFrom); }
                 if (branchTo) { parts.push("إلى فرع: " + branchTo); }
                 if (serviceType) { parts.push("Service Type: " + serviceType); }
                 if (service) { parts.push("خدمة/نشاط: " + service); }
                 if ((byId("reportCardIssueMode").value || "none") !== "none") { parts.push("فحص مشاكل الكروت: " + cardIssueMode); }
+                if (byId("reportSortBy").value) { parts.push("الترتيب: " + sortBy); }
                 if (byId("reportShowEmptyBranches").checked) { parts.push("إظهار الفروع الفاضية"); }
                 return parts;
             }
@@ -954,6 +985,7 @@
                     ["IncludeCardIssueCheck", data.includeCardIssueCheck ? "true" : "false"],
                     ["CardIssueMode", data.cardIssueMode || "none"],
                     ["LoginSource", data.loginSource || ""],
+                    ["SortBy", data.sortBy || ""],
                     ["SerialSearch", data.serialSearch || ""],
                     ["ServiceSearch", data.serviceSearch || ""],
                     ["ShowEmptyBranches", data.showEmptyBranches ? "true" : "false"]

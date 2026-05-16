@@ -20,7 +20,7 @@ namespace MyERP.Areas.Pos.Controllers
         private const string SessionKey = "PosTokenInvoiceLookup.LastResult";
         private const string UploadSessionKey = "PosTokenInvoiceLookup.Upload";
         private const string LoadedCountSessionKey = "PosTokenInvoiceLookup.LoadedCount";
-        private const int DefaultBatchSize = 50;
+        private const int DefaultBatchSize = 200;
         private readonly PosSqlRepository _repository;
         private readonly PosTokenInvoiceLookupExcelParser _parser;
 

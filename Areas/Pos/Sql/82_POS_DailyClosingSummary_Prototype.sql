@@ -259,9 +259,11 @@ BEGIN
     CREATE TABLE #FinanceClosingDiscounts
     (
         RowNo INT NULL,
+        BranchID INT NULL,
         BranchName NVARCHAR(255) NULL,
         TotalSupply DECIMAL(38, 6) NULL,
         CountCards DECIMAL(38, 6) NULL,
+        TotalSaleDay2Vat DECIMAL(38, 6) NULL,
         CardValue DECIMAL(38, 6) NULL,
         CountTransaction DECIMAL(38, 6) NULL,
         WalletBalance DECIMAL(38, 6) NULL,

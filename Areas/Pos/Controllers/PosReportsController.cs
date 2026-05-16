@@ -270,24 +270,28 @@ namespace MyERP.Areas.Pos.Controllers
         {
             var from = (request.FromDate ?? DateTime.Today).Date;
             var to = (request.ToDate ?? DateTime.Today).Date;
+            DataTable table;
             if (report.Key == "store-serials")
             {
-                return _repository.RunPosStoreSerialsReport(request.StoreId, request.SerialSearch, branchId, context.UserId, IsAdmin(context) || context.CanViewReports);
+                table = _repository.RunPosStoreSerialsReport(request.StoreId, request.SerialSearch, branchId, context.UserId, IsAdmin(context) || context.CanViewReports);
+                return SortReportTable(table, request.SortBy);
             }
 
             if (report.Key == "web-invoices")
             {
-                return _repository.RunPosWebInvoiceAuditReport(from, to, branchId, context.UserId, IsAdmin(context) || context.CanViewReports);
+                table = _repository.RunPosWebInvoiceAuditReport(from, to, branchId, context.UserId, IsAdmin(context) || context.CanViewReports);
+                return SortReportTable(table, request.SortBy);
             }
 
             if (report.Key == "non-web-login-users")
             {
-                return _repository.RunPosNonWebLoginUsersReport(from, to, branchId, request.UserId, request.LoginSource, context.UserId, IsAdmin(context) || context.CanViewReports);
+                table = _repository.RunPosNonWebLoginUsersReport(from, to, branchId, request.UserId, request.LoginSource, context.UserId, IsAdmin(context) || context.CanViewReports);
+                return SortReportTable(table, request.SortBy);
             }
 
             if (IsOperationalSalesReport(report.Key) && !request.IncludeCardIssueCheck)
             {
-                return _repository.RunPosOperationalSalesReport(
+                table = _repository.RunPosOperationalSalesReport(
                     report.Key,
                     from,
                     to,
@@ -297,11 +301,12 @@ namespace MyERP.Areas.Pos.Controllers
                     request.ServiceType,
                     request.StoreId,
                     request.UserId);
+                return SortReportTable(table, request.SortBy);
             }
 
             if (IsClosingReport(report.Key))
             {
-                return _repository.RunPosClosingReport(
+                table = _repository.RunPosClosingReport(
                     report.Key,
                     from,
                     to,
@@ -313,9 +318,11 @@ namespace MyERP.Areas.Pos.Controllers
                     request.ShowEmptyBranches,
                     request.ServiceSearch,
                     request.UserId);
+                RemoveEmptyDuplicateClosingRows(table);
+                return SortReportTable(table, request.SortBy);
             }
 
-            return _repository.RunPosReport(
+            table = _repository.RunPosReport(
                 report.Key,
                 from,
                 to,
@@ -331,6 +338,147 @@ namespace MyERP.Areas.Pos.Controllers
                 request.UserId,
                 request.IncludeCardIssueCheck,
                 request.CardIssueMode);
+            return SortReportTable(table, request.SortBy);
+        }
+
+        private static DataTable SortReportTable(DataTable table, string sortBy)
+        {
+            if (table == null || table.Rows.Count == 0)
+            {
+                return table;
+            }
+
+            var sort = (sortBy ?? string.Empty).Trim().ToLowerInvariant();
+            string expression = null;
+            switch (sort)
+            {
+                case "branch-code":
+                    expression = table.Columns.Contains("BranchID") ? "BranchID ASC" : null;
+                    break;
+                case "branch-code-desc":
+                    expression = table.Columns.Contains("BranchID") ? "BranchID DESC" : null;
+                    break;
+                case "sales-high":
+                    expression = table.Columns.Contains("TotalSupply") ? "TotalSupply DESC" : null;
+                    break;
+                case "sales-low":
+                    expression = table.Columns.Contains("TotalSupply") ? "TotalSupply ASC" : null;
+                    break;
+                case "card-high":
+                    expression = table.Columns.Contains("CardValue") ? "CardValue DESC" : null;
+                    break;
+                case "card-low":
+                    expression = table.Columns.Contains("CardValue") ? "CardValue ASC" : null;
+                    break;
+            }
+
+            if (string.IsNullOrWhiteSpace(expression))
+            {
+                return table;
+            }
+
+            table.DefaultView.Sort = expression;
+            var sorted = table.DefaultView.ToTable();
+            ResetRowNumbers(sorted);
+            return sorted;
+        }
+
+        private static void RemoveEmptyDuplicateClosingRows(DataTable table)
+        {
+            if (table == null || table.Rows.Count == 0 || !table.Columns.Contains("BranchName"))
+            {
+                return;
+            }
+
+            var keysWithValues = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (DataRow row in table.Rows)
+            {
+                var key = GetClosingBranchKey(row);
+                if (!string.IsNullOrWhiteSpace(key) && !IsEmptyClosingRow(row))
+                {
+                    keysWithValues.Add(key);
+                }
+            }
+
+            if (keysWithValues.Count == 0)
+            {
+                return;
+            }
+
+            for (var i = table.Rows.Count - 1; i >= 0; i--)
+            {
+                var row = table.Rows[i];
+                var key = GetClosingBranchKey(row);
+                if (!string.IsNullOrWhiteSpace(key) && keysWithValues.Contains(key) && IsEmptyClosingRow(row))
+                {
+                    table.Rows.RemoveAt(i);
+                }
+            }
+
+            ResetRowNumbers(table);
+        }
+
+        private static string GetClosingBranchKey(DataRow row)
+        {
+            var branchName = row["BranchName"] == DBNull.Value ? string.Empty : Convert.ToString(row["BranchName"], CultureInfo.InvariantCulture);
+            var match = Regex.Match(branchName ?? string.Empty, @"\bEC\d+\b", RegexOptions.IgnoreCase);
+            if (match.Success)
+            {
+                return "code:" + match.Value.ToUpperInvariant();
+            }
+
+            if (row.Table.Columns.Contains("BranchID") && row["BranchID"] != DBNull.Value)
+            {
+                var branchId = Convert.ToInt32(row["BranchID"], CultureInfo.InvariantCulture);
+                if (branchId > 0)
+                {
+                    return "id:" + branchId.ToString(CultureInfo.InvariantCulture);
+                }
+            }
+
+            return "name:" + (branchName ?? string.Empty).Trim();
+        }
+
+        private static bool IsEmptyClosingRow(DataRow row)
+        {
+            var columns = new[]
+            {
+                "TotalSupply", "CountCards", "TotalSaleDay2Vat", "CardValue", "CountTransaction",
+                "WalletBalance", "WalletSupply", "BankBalanceCharge", "TotalRechargeValue",
+                "TotalRev2", "TotalRevWithVat", "ReturnsCount", "TotalReturns", "NetCashOut",
+                "BoxValue", "OpenBalance", "LastBalance", "TotalRev", "TotalVat", "CashOutTotal",
+                "BoxBalance", "NoteValue"
+            };
+
+            foreach (var column in columns)
+            {
+                if (!row.Table.Columns.Contains(column) || row[column] == DBNull.Value)
+                {
+                    continue;
+                }
+
+                decimal value;
+                if (decimal.TryParse(Convert.ToString(row[column], CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out value)
+                    && value != 0)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static void ResetRowNumbers(DataTable table)
+        {
+            if (table == null || !table.Columns.Contains("RowNo"))
+            {
+                return;
+            }
+
+            for (var i = 0; i < table.Rows.Count; i++)
+            {
+                table.Rows[i]["RowNo"] = i + 1;
+            }
         }
 
         private IEnumerable<PosBranchDto> GetAllowedBranches(PosUserContext context)
@@ -572,6 +720,7 @@ namespace MyERP.Areas.Pos.Controllers
                  { "WalletSupply", "توريد Wallet" },
                  { "BankBalanceCharge", "تكلفة رسوم" },
                  { "TotalRev2", "الخصم" },
+                 { "TotalSaleDay2Vat", "ضريبة كارت كيشني" },
                  { "TotalRevvat", "ضريبة رسوم الشحن" },
                  { "TotalRevWithVat", "رسوم الشحن شامل الضريبة" },
                  { "ReturnsCount", "المرتجعات - عدد" },
@@ -895,6 +1044,7 @@ namespace MyERP.Areas.Pos.Controllers
         public string ServiceType { get; set; }
         public bool IncludeCardIssueCheck { get; set; }
         public string CardIssueMode { get; set; }
+        public string SortBy { get; set; }
     }
 
     internal class ReportValidationResult
