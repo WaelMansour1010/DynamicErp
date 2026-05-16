@@ -5263,9 +5263,24 @@
         });
     }
 
+    function promoteSalesModuleInSidebar() {
+        var salesModule = $('#side-menu > li').filter(function () {
+            return $(this).children('input').first().val() == '3165';
+        }).first();
+
+        var homeItem = $('#side-menu > li').filter(function () {
+            return $(this).children('input').first().val() == '0';
+        }).first();
+
+        if (salesModule.length && homeItem.length) {
+            salesModule.detach().insertAfter(homeItem);
+        }
+    }
+
     //---------- to get active modules and shown them in sidemenue
     $.get('/Helper/GetNotActiveModules').done(function (r) {
         Modules = r;
+        promoteSalesModuleInSidebar();
         $('#side-menu li').each(function () {
             if ($(this).find('input').val() > 0) {//skip dashboard
                 var InputValue = $(this).find('input').val();

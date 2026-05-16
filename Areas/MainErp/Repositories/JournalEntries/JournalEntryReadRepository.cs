@@ -115,6 +115,14 @@ ORDER BY RowNo;", connection))
             return result;
         }
 
+        public PagedReadResult<JournalEntryListItemViewModel> SearchOpeningBalance(string searchText, int? branchId, DateTime? fromDate, DateTime? toDate, int page, int pageSize)
+        {
+            return new PagedReadResult<JournalEntryListItemViewModel>
+            {
+                Warning = "قيد افتتاحي: تم فتح السياق الآمن فقط. مرجع VB6 هو FrmAccEditJournal1، ولن يتم تفعيل حفظ قيود Notes1 قبل اكتمال مقارنة قواعده مع قيود POS/Notes."
+            };
+        }
+
         public JournalEntryDetailsViewModel GetDetailsByNote(int noteId)
         {
             var model = new JournalEntryDetailsViewModel { NoteId = noteId };

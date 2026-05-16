@@ -28,16 +28,17 @@
         .crystal-table td:nth-child(2), .crystal-table td:nth-child(17) { direction: rtl; unicode-bidi: plaintext; }
         .crystal-table tfoot th { background: #f6f7fb; color: #24364f; font-weight: 800; }
         .crystal-summary { display: grid; gap: 14px; grid-template-columns: minmax(280px, 0.9fr) minmax(420px, 1.2fr); margin-top: 22px; }
-        .crystal-summary table { border-collapse: collapse; width: 100%; }
+        .crystal-summary table { border-collapse: collapse; direction: ltr; width: 100%; }
         .crystal-summary th, .crystal-summary td { border: 1px solid #ffffff; padding: 8px 10px; text-align: center; vertical-align: middle; }
         .crystal-summary th { background: #d7b6ed; color: #111827; font-weight: 800; }
         .crystal-summary td { background: #ead8f5; }
         .crystal-summary tr:nth-child(even) td { background: #ffffff; }
-        .crystal-summary .summary-label { color: #111827; font-weight: 800; text-align: right; }
+        .crystal-summary .summary-label { color: #111827; direction: rtl; font-weight: 800; text-align: right; unicode-bidi: plaintext; }
         .crystal-summary .summary-red { color: #dc2626; font-weight: 800; }
         .crystal-summary .summary-total { background: #d7b6ed !important; font-size: 18px; font-weight: 800; }
         .crystal-sales-total { align-items: stretch; display: grid; grid-template-columns: 135px 1fr; }
-        .crystal-sales-total .total-caption { align-items: center; background: #ffffff; border: 1px solid #ffffff; color: #111827; display: flex; flex-direction: column; font-weight: 800; justify-content: center; min-height: 150px; }
+        .crystal-sales-total .total-caption { align-items: center; background: #ffffff; border: 1px solid #ffffff; color: #111827; direction: rtl; display: flex; flex-direction: column; font-weight: 800; justify-content: center; min-height: 150px; }
+        .crystal-sales-total .total-caption span { display: block; }
         .crystal-sales-total .total-caption span:last-child { color: #dc2626; }
         @@media (max-width: 900px) { .crystal-summary { grid-template-columns: 1fr; } }
         .report-check-filter { align-items: center; display: flex; flex-direction: row; gap: 8px; justify-content: flex-end; padding-top: 0; }
@@ -79,7 +80,7 @@
                             <option value="">كل الفروع المتاحة</option>
                             @foreach (var branch in branches)
                             {
-                                <option value="@branch.BranchId" @(posContext != null && posContext.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                                <option value="@branch.BranchId" @(posContext != null && posContext.UserType.GetValueOrDefault(-1) != 0 && posContext.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
                             }
                         </select>
                     </label>
@@ -152,7 +153,7 @@
 
             <section class="pos-panel pos-card">
                 <div class="report-tabs" id="reportTabs">
-                    <button type="button" class="active" data-report-group="sales">تقارير المبيعات</button>
+                    <button type="button" class="active" data-report-group="sales">التقارير التشغيلية</button>
                     <button type="button" data-report-group="closings">تقارير الإغلاقات</button>
                     <button type="button" data-report-group="serials">المخزون والسيريالات</button>
                     <button type="button" data-report-group="excel">تصدير/استيراد Excel</button>
@@ -355,15 +356,57 @@
                 var original = button.getAttribute("data-original-html");
                 if (original) { button.innerHTML = original; }
             }
+            function setAllReportButtonsDisabled(disabled) {
+                var buttons = document.querySelectorAll(".report-action, .report-export, .report-print");
+                for (var i = 0; i < buttons.length; i++) {
+                    if (disabled) {
+                        if (buttons[i].disabled) { continue; }
+                        buttons[i].setAttribute("data-temp-disabled", "true");
+                        buttons[i].disabled = true;
+                    } else if (buttons[i].getAttribute("data-temp-disabled") === "true") {
+                        buttons[i].disabled = false;
+                        buttons[i].removeAttribute("data-temp-disabled");
+                    }
+                }
+            }
+            function validateReportFilters(key) {
+                var fromDate = byId("reportFromDate").value;
+                var toDate = byId("reportToDate").value;
+                if (!fromDate || !toDate) {
+                    return "من تاريخ وإلى تاريخ مطلوبان قبل تشغيل التقرير";
+                }
+
+                if (toDate < fromDate) {
+                    return "إلى تاريخ يجب أن يكون أكبر من أو يساوي من تاريخ";
+                }
+
+                if (key === "store-serials") {
+                    var storeId = byId("reportStoreId").value;
+                    var serialSearch = (byId("reportSerialSearch").value || "").trim();
+                    if (!storeId && serialSearch.length < 3) {
+                        return "اختر المخزن أو اكتب 3 أحرف على الأقل قبل تشغيل تقرير السيريالات";
+                    }
+                }
+
+                return "";
+            }
             function beginAction(action, key, button, text) {
                 var busyKey = action + ":" + key;
+                var validation = validateReportFilters(key);
+                if (validation) {
+                    byId("reportMessage").innerText = validation;
+                    return false;
+                }
+
                 if (busyActions[busyKey]) { return false; }
                 busyActions[busyKey] = true;
                 setActionBusy(button, true, text);
+                setAllReportButtonsDisabled(true);
                 return true;
             }
             function endAction(action, key, button) {
                 delete busyActions[action + ":" + key];
+                setAllReportButtonsDisabled(false);
                 setActionBusy(button, false);
             }
             function payload(key) {
@@ -627,6 +670,9 @@
             function getCrystalValue(row, col, rowIndex) {
                 var direct = readAny(row, [col.key].concat(col.aliases || []));
                 if (direct !== null && direct !== undefined && direct !== "") {
+                    if (col.key === "ClosingStatus") {
+                        return normalizeClosingStatus(direct);
+                    }
                     return direct;
                 }
 
@@ -655,6 +701,16 @@
                 }
 
                 return "";
+            }
+            function normalizeClosingStatus(value) {
+                var text = String(value || "").trim();
+                if (!text) { return ""; }
+                if (text.indexOf("ظ") >= 0 || text.indexOf("ط") >= 0) {
+                    if (text.indexOf("¬ط²") >= 0 || text.indexOf("جز") >= 0) { return "إغلاق جزئي"; }
+                    if (text.indexOf("؛ظٹط±") >= 0 || text.indexOf("غير") >= 0) { return "غير مغلق"; }
+                    return "مغلق";
+                }
+                return text;
             }
             function readAny(row, keys) {
                 if (!row || !keys) { return null; }
@@ -791,6 +847,16 @@
                     + '.crystal-table th small{color:#ef4444;display:block;font-size:9px;}'
                     + '.crystal-table td,.crystal-table tfoot th{direction:ltr;unicode-bidi:isolate;}'
                     + '.crystal-table td:nth-child(2),.crystal-table td:nth-child(17),.crystal-table tfoot th:nth-child(2){direction:rtl;text-align:right;unicode-bidi:plaintext;}'
+                    + '.crystal-summary{display:grid;gap:10px;grid-template-columns:minmax(260px,.9fr) minmax(420px,1.2fr);margin-top:12px;page-break-inside:avoid;}'
+                    + '.crystal-summary table{border-collapse:collapse;direction:ltr;width:100%;font-size:10px;}'
+                    + '.crystal-summary th,.crystal-summary td{border:1px solid #d9d9d9;padding:4px 6px;text-align:center;vertical-align:middle;}'
+                    + '.crystal-summary th{background:#f6f7fb;color:#111827;font-weight:800;}'
+                    + '.crystal-summary .summary-label{direction:rtl;font-weight:800;text-align:right;unicode-bidi:plaintext;}'
+                    + '.crystal-summary .summary-red{color:#dc2626;font-weight:800;}'
+                    + '.crystal-summary .summary-total{background:#f6f7fb!important;font-size:13px;font-weight:800;}'
+                    + '.crystal-sales-total{align-items:stretch;display:grid;grid-template-columns:120px 1fr;}'
+                    + '.crystal-sales-total .total-caption{align-items:center;border:1px solid #d9d9d9;direction:rtl;display:flex;flex-direction:column;font-weight:800;justify-content:center;min-height:110px;text-align:center;}'
+                    + '.crystal-sales-total .total-caption span{display:block;}'
                     + '</style>';
                 popup = popup || window.open("", "_blank");
                 if (!popup) {

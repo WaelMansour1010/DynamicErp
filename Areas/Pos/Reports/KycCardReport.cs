@@ -51,7 +51,7 @@ namespace MyERP.Areas.Pos.Reports
             _customer = customer;
             _issuedAt = issuedAt;
             _template = template ?? LoadStoredTemplate("KycCard") ?? BuildDefaultTemplate();
-            _values = BuildValues(customer, issuedAt);
+            _values = BuildValues(customer, issuedAt, _template.ShowBranchData);
 
             // Page coordinates are LTR: BoundsF.X is the distance from the
             // page's LEFT edge, matching what the visual designer shows.
@@ -349,7 +349,7 @@ namespace MyERP.Areas.Pos.Reports
         }
 
         private static Dictionary<string, string> BuildValues(
-            PosCustomerLookupDto customer, DateTime issuedAt)
+            PosCustomerLookupDto customer, DateTime issuedAt, bool showBranchData)
         {
             string token = AlphaNumeric(FirstNonEmpty(
                 customer.CardNo, customer.CardId, customer.VisaNumber));
@@ -367,7 +367,7 @@ namespace MyERP.Areas.Pos.Reports
                 { "BirthDate", FormatDate(customer.BirthDate) },
                 { "NationalId", nationalId },
                 { "IssueDate", FormatDate(customer.CardDate) },
-                { "Source", FirstNonEmpty(customer.CardSource, customer.BranchName) },
+                { "Source", NullToEmpty(customer.CardSource) },
                 { "ExpiryDate", FormatDate(customer.CardEndDate) },
                 { "Phone", phone },
                 { "SignatureName", FirstNonEmpty(JoinArabic(customer), customer.CustomerName, customer.Name) },
@@ -382,7 +382,9 @@ namespace MyERP.Areas.Pos.Reports
                 { "EnglishName6", NullToEmpty(customer.EnglishName6) },
                 { "EnglishName7", NullToEmpty(customer.EnglishName7) },
                 { "CardDate", FormatDate(customer.CardDate) },
-                { "CardSource", FirstNonEmpty(customer.CardSource, customer.BranchName) },
+                { "CardSource", NullToEmpty(customer.CardSource) },
+                { "BranchName", showBranchData ? NullToEmpty(customer.BranchName) : string.Empty },
+                { "BranchCode", string.Empty },
                 { "CardEndDate", FormatDate(customer.CardEndDate) },
                 { "phoneNo", phone },
                 // jobName / WorkAddress / Email are not on the customer

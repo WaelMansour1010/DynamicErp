@@ -140,7 +140,7 @@ BEGIN
     IF @reportKey = N'income-statement'
     BEGIN
         SELECT
-            CASE WHEN a.AccountTab = 2 THEN N'ط§ظ„ط¥ظٹط±ط§ط¯ط§طھ' WHEN a.AccountTab = 3 THEN N'ط§ظ„ظ…طµط±ظˆظپط§طھ' ELSE N'ط£ط®ط±ظ‰' END AS SectionName,
+            CASE WHEN a.AccountTab = 2 THEN N'الإيرادات' WHEN a.AccountTab = 3 THEN N'المصروفات' ELSE N'أخرى' END AS SectionName,
             a.Account_Serial AS AccountSerial,
             a.Account_Code AS AccountCode,
             a.Account_Name AS AccountName,
@@ -233,7 +233,7 @@ BEGIN
         CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) AS NoteSerial1,
         n.NoteDate,
         n.branch_no AS BranchId,
-        COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'ظپط±ط¹ ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
+        COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
         ISNULL(n.Remark, N'') AS Description,
         CASE WHEN ISNULL(n.NoteType, 0) = 57 THEN 1 ELSE 0 END AS IsManual,
         SUM(CASE WHEN d.Credit_Or_Debit = 0 THEN d.Value ELSE 0 END) AS DebitTotal,
@@ -384,9 +384,9 @@ BEGIN
         CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) AS NoteSerial1,
         n.NoteDate,
         ISNULL(n.branch_no, 0) AS BranchId,
-        COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'ظپط±ط¹ ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
+        COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
         ISNULL(n.CashingType, 0) AS CashingType,
-        CASE WHEN ISNULL(n.CashingType, 0) = 5 THEN N'ط§ط³طھط¹ط§ط¶ط© ط¹ظ‡ط¯ط©' WHEN ISNULL(n.CashingType, 0) = 6 THEN N'طھظ…ظˆظٹظ„ ط®ط²ظٹظ†ط©' ELSE CONVERT(NVARCHAR(20), n.CashingType) END AS CashingTypeName,
+        CASE WHEN ISNULL(n.CashingType, 0) = 5 THEN N'استعاضة عهدة' WHEN ISNULL(n.CashingType, 0) = 6 THEN N'تمويل خزينة' ELSE CONVERT(NVARCHAR(20), n.CashingType) END AS CashingTypeName,
         ISNULL(n.BTCashAccountcode, N'') AS NameAccountCode,
         ISNULL(n.person, N'') AS NameText,
         ISNULL(n.NoteCashingType, 0) AS PaymentMethod,
@@ -466,7 +466,7 @@ BEGIN
     END
     ELSE
     BEGIN
-        SET @statusMessage = N'ظ„ط§ طھظˆط¬ط¯ طµظ„ط§ط­ظٹط© ظƒط§ظپظٹط© ظ„ظ‚ط±ط§ط،ط© ظ…ط¤ط´ط±ط§طھ ط§ظ„ط®ط§ط¯ظ…. ظٹطھط·ظ„ط¨ ظ‡ط°ط§ ط§ظ„ط¬ط²ط، طµظ„ط§ط­ظٹط© VIEW SERVER STATE.';
+        SET @statusMessage = N'لا توجد صلاحية كافية لقراءة مؤشرات الخادم. يتطلب هذا الجزء صلاحية VIEW SERVER STATE.';
 
         SELECT TOP (0)
             CAST(0 AS INT) AS session_id,

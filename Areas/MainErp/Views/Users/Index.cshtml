@@ -1,0 +1,102 @@
+@model IList<MyERP.Common.Users.SharedUserListRow>
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "المستخدمين";
+    var searchText = Convert.ToString(ViewBag.SearchText);
+    var page = (int)ViewBag.Page;
+    var pageSize = (int)ViewBag.PageSize;
+    var totalRows = (int)ViewBag.TotalRows;
+    var hasPrevious = page > 1;
+    var hasNext = page * pageSize < totalRows;
+    var databaseName = Convert.ToString(ViewBag.DatabaseName);
+    var canEditUsers = ViewBag.CanEditUsers is bool && (bool)ViewBag.CanEditUsers;
+}
+
+<section class="erp-ui-page users-page" dir="rtl">
+    <header class="erp-page-header">
+        <div>
+            <span class="main-erp-kicker">System Users</span>
+            <h2>المستخدمين</h2>
+            <p>عرض تشغيلي سريع للمستخدمين داخل MainErp من سياق قاعدة MainErp الحالي، مع حالة الحساب وربط الموظف والفرع والمخزن والخزنة.</p>
+        </div>
+        <div class="erp-actions">
+            <span class="erp-status is-active">MainErp / @databaseName</span>
+            <span class="erp-status @(canEditUsers ? "is-active" : "is-closed")">@(canEditUsers ? "إدارة كاملة" : "قراءة فقط")</span>
+            <a class="erp-btn" href="@Url.Action("Index", "Dashboard", new { area = "MainErp" })"><i class="fas fa-arrow-right"></i><span>رجوع</span></a>
+        </div>
+    </header>
+
+    <section class="erp-filter-card">
+        <form method="get" action="@Url.Action("Index", "Users", new { area = "MainErp" })" class="erp-filter-grid">
+            <label class="erp-field">
+                <span>بحث</span>
+                <input type="search" name="searchText" value="@searchText" placeholder="الاسم / اسم الدخول / البريد" />
+            </label>
+            <label class="erp-field">
+                <span>عدد الصفوف</span>
+                <select name="pageSize">
+                    <option value="30" @(pageSize == 30 ? "selected" : "")>30</option>
+                    <option value="50" @(pageSize == 50 ? "selected" : "")>50</option>
+                    <option value="100" @(pageSize == 100 ? "selected" : "")>100</option>
+                </select>
+            </label>
+            <div class="erp-actions">
+                <button class="erp-btn erp-btn-primary" type="submit"><i class="fas fa-search"></i><span>بحث</span></button>
+            </div>
+        </form>
+    </section>
+
+    <section class="erp-kpi-grid">
+        <article><span>إجمالي النتائج</span><strong>@totalRows</strong></article>
+        <article><span>الصفحة الحالية</span><strong>@page</strong></article>
+        <article><span>المعروض</span><strong>@Model.Count</strong></article>
+    </section>
+
+    <section class="erp-table-card">
+        <div class="erp-table-wrap">
+            <table class="erp-table">
+                <thead>
+                    <tr>
+                        <th>الكود</th>
+                        <th>اسم الدخول</th>
+                        <th>الموظف</th>
+                        <th>الفرع</th>
+                        <th>المخزن</th>
+                        <th>الخزنة</th>
+                        <th>الحالة</th>
+                        <th>خصائص</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        <tr>
+                            <td>@user.UserId</td>
+                            <td class="main-erp-ltr">@user.UserName</td>
+                            <td>@user.EmployeeName</td>
+                            <td>@user.BranchName</td>
+                            <td>@user.StoreName</td>
+                            <td>@user.BoxName</td>
+                            <td><span class="erp-status @(user.IsDeactivated ? "is-closed" : "is-active")">@(user.IsDeactivated ? "موقوف" : "نشط")</span></td>
+                            <td>
+                                @if (user.IsAdmin) { <span class="erp-status is-active">مدير نظام</span> }
+                                <span class="erp-status">نوع @user.UserType</span>
+                            </td>
+                        </tr>
+                    }
+                    @if (Model.Count == 0)
+                    {
+                        <tr><td colspan="8" class="erp-empty">لا توجد بيانات مستخدمين مطابقة.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <footer class="main-erp-grid-toolbar">
+            <span>يعرض @Model.Count من @totalRows</span>
+            <div class="erp-actions">
+                <a class="erp-btn @(hasPrevious ? "" : "is-disabled-action")" href="@(hasPrevious ? Url.Action("Index", new { area = "MainErp", searchText, page = page - 1, pageSize }) : "#")">السابق</a>
+                <a class="erp-btn @(hasNext ? "" : "is-disabled-action")" href="@(hasNext ? Url.Action("Index", new { area = "MainErp", searchText, page = page + 1, pageSize }) : "#")">التالي</a>
+            </div>
+        </footer>
+    </section>
+</section>

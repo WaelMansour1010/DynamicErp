@@ -1,0 +1,991 @@
+@model MyERP.Areas.Pos.Models.PosInvoiceReconciliationIndexViewModel
+@{
+    Layout = null;
+    ViewBag.Title = "مراجعة وتسوية فواتير Excel";
+    var result = Model != null ? Model.Result : null;
+    var saved = Model != null ? Model.SavedResult : null;
+    Func<string, string> statusClass = status =>
+    {
+        status = status ?? "";
+        if (status == "Exact Match") return "ok";
+        if (status == "Not Found") return "missing";
+        if (status.IndexOf("Mismatch", StringComparison.OrdinalIgnoreCase) >= 0) return "warn";
+        if (status.IndexOf("Duplicate", StringComparison.OrdinalIgnoreCase) >= 0) return "danger";
+        return "info";
+    };
+    Func<string, string> arStatus = status =>
+    {
+        if (status == "Exact Match") return "مطابق وموجود من قبل";
+        if (status == "Probable Duplicate") return "غالبا مكرر ويحتاج مراجعة";
+        if (status == "Possible Match") return "تشابه محتمل";
+        if (status == "Amount Mismatch") return "اختلاف في المبلغ";
+        if (status == "Customer Mismatch") return "اختلاف في بيانات العميل";
+        if (status == "Date Mismatch") return "اختلاف في التاريخ";
+        if (status == "Not Found") return "غير موجود في النظام";
+        if (status == "Database Duplicate") return "مكرر داخل قاعدة البيانات";
+        if (status == "Excel Duplicate") return "مكرر داخل ملف Excel";
+        if (status == "Confirmed Duplicate") return "تكرار مؤكد";
+        if (status == "Possible Duplicate") return "تكرار محتمل";
+        if (status == "Token Conflict") return "تعارض في التوكن";
+        if (status == "Phone Conflict") return "تعارض في رقم الهاتف";
+        if (status == "Needs Review") return "يحتاج مراجعة";
+        if (status == "No Issue") return "لا توجد مشكلة واضحة";
+        return string.IsNullOrWhiteSpace(status) ? "" : status;
+    };
+    Func<string, string> arRisk = risk =>
+    {
+        if (risk == "Critical") return "حرج جدا";
+        if (risk == "High") return "مرتفع";
+        if (risk == "Medium") return "متوسط";
+        if (risk == "Low") return "منخفض";
+        return string.IsNullOrWhiteSpace(risk) ? "" : risk;
+    };
+    Func<string, string> arService = service =>
+    {
+        if (service == "Cash In") return "إيداع / شحن";
+        if (service == "Cash Out") return "سحب";
+        if (service == "Card") return "كارت / توكن";
+        if (service == "Violations") return "مخالفات";
+        return string.IsNullOrWhiteSpace(service) ? "" : service;
+    };
+    Func<string, string> arSource = source =>
+    {
+        if (source == "Excel Imported" || source == "Estimated Excel") return "مستورد من Excel";
+        if (source == "POS Manual/System" || source == "Estimated Manual") return "مدخل من النظام";
+        if (source == "Normal POS") return "مدخل من النظام";
+        if (source == "Unknown") return "مصدر غير مؤكد";
+        return string.IsNullOrWhiteSpace(source) ? "" : source;
+    };
+    Func<string, string> arReason = reason =>
+    {
+        if (string.IsNullOrWhiteSpace(reason)) return "";
+        return reason
+            .Replace("Same token exists in Excel-imported and normal invoice", "نفس التوكن موجود في فاتورة مستوردة من Excel وفاتورة مدخلة من النظام")
+            .Replace("Same phone + same amount + same date exists in both sources", "نفس الهاتف ونفس المبلغ ونفس التاريخ موجودين في المصدرين")
+            .Replace("Same national ID + same amount/date exists in both sources", "نفس الرقم القومي مع نفس المبلغ والتاريخ موجود في المصدرين")
+            .Replace("Large amount difference or many similar matches", "يوجد فرق كبير في الإجمالي أو عدد كبير من التشابهات")
+            .Replace("Potential duplicate matches found", "تم العثور على فواتير متشابهة تحتاج مراجعة")
+            .Replace("Same day has both Excel and normal entries", "نفس اليوم يحتوي فواتير مستوردة وفواتير مدخلة من النظام")
+            .Replace("Single source only in selected filters", "النتائج من مصدر واحد فقط حسب الفلاتر المختارة")
+            .Replace("Same token", "نفس التوكن")
+            .Replace("Same card serial", "نفس رقم الكارت")
+            .Replace("Same national ID + phone", "نفس الرقم القومي ورقم الهاتف")
+            .Replace("Same manual/IPN + date + branch", "نفس الرقم اليدوي أو IPN مع نفس التاريخ والفرع")
+            .Replace("Same phone + amount + date", "نفس الهاتف والمبلغ والتاريخ")
+            .Replace("Same national ID + amount + date", "نفس الرقم القومي والمبلغ والتاريخ")
+            .Replace("Same token but amount differs", "نفس التوكن لكن المبلغ مختلف")
+            .Replace("Same normalized customer name + phone", "نفس اسم العميل بعد التنسيق ونفس الهاتف")
+            .Replace("Same amount + service + branch + close time", "نفس المبلغ والخدمة والفرع في وقت قريب")
+            .Replace("Same phone + close amount", "نفس الهاتف مع مبلغ قريب")
+            .Replace("Same amount only in same branch/day", "نفس المبلغ فقط في نفس الفرع واليوم")
+            .Replace("Similar customer name only", "تشابه في اسم العميل فقط")
+            .Replace("Same teller + amount + service + date", "نفس المستخدم والمبلغ والخدمة والتاريخ")
+            .Replace("Amount differs for a matching token/phone", "المبلغ مختلف مع تطابق التوكن أو الهاتف")
+            .Replace("Customer name differs for a matching token/phone", "اسم العميل مختلف مع تطابق التوكن أو الهاتف")
+            .Replace("Card sale invoice exists but issue voucher is missing", "فاتورة بيع الكارت موجودة لكن سند الصرف غير موجود")
+            .Replace("Issue voucher exists but sale invoice is missing", "سند الصرف موجود لكن فاتورة البيع غير موجودة")
+            .Replace("Invalid or missing invoice date", "تاريخ الفاتورة غير موجود أو غير صحيح")
+            .Replace("Invalid or missing amount", "المبلغ غير موجود أو غير صحيح")
+            .Replace("No matching key found: token, phone, invoice number, or national ID is required", "لا يوجد مفتاح واضح للمطابقة: يجب وجود توكن أو هاتف أو رقم فاتورة أو رقم قومي")
+            .Replace("Service type is missing", "نوع الخدمة غير موجود")
+            .Replace("Token matched", "التوكن مطابق")
+            .Replace("Phone matched", "رقم الهاتف مطابق")
+            .Replace("Invoice/IPN matched", "رقم الفاتورة أو IPN مطابق")
+            .Replace("National ID matched", "الرقم القومي مطابق")
+            .Replace("Amount matched", "المبلغ مطابق")
+            .Replace("Date matched", "التاريخ مطابق")
+            .Replace("Date is close, possible time/day shift", "التاريخ قريب وقد يكون هناك فرق وقت أو يوم")
+            .Replace("Amount may be net/base vs commission-inclusive", "قد يكون الفرق بسبب العمولة: مبلغ صافى مقابل مبلغ شامل العمولة")
+            .Replace("Card invoice exists but related issue voucher was not detected", "فاتورة الكارت موجودة لكن لم يتم العثور على سند الصرف المرتبط بها")
+            .Replace("Matched an issue voucher; sale invoice may be missing or outside selected range", "تمت المطابقة مع سند صرف، وقد تكون فاتورة البيع غير موجودة أو خارج الفترة المختارة")
+            .Replace("Excel row may be entered under a different branch", "قد تكون فاتورة Excel مدخلة على فرع مختلف")
+            .Replace("Excel row may be entered under a different user", "قد تكون فاتورة Excel مدخلة باسم مستخدم مختلف")
+            .Replace("Token matched header but was not found in Transaction_Details.ItemSerial", "التوكن موجود في رأس الفاتورة لكنه غير موجود في تفاصيل الأصناف")
+            .Replace("Excel duplicate: repeated token/phone+amount+day/national ID+token/invoice number", "صف مكرر داخل Excel: نفس التوكن أو نفس الهاتف مع المبلغ واليوم أو نفس الرقم القومي مع التوكن أو نفس رقم الفاتورة")
+            .Replace("Amount differs for a likely same transaction", "المبلغ مختلف رغم أن الفاتورة تبدو لنفس العملية")
+            .Replace(" | ", " - ");
+    };
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/Pos/Content/html-reports.css")" rel="stylesheet" />
+    <style>
+        .recon-page { min-height: 100vh; padding: 18px; background: #f4f7fb; color: #172033; }
+        .recon-title { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 14px; }
+        .recon-title h1 { margin: 0; font-size: 26px; font-weight: 800; }
+        .recon-title p { margin: 5px 0 0; color: #64748b; }
+        .recon-badge { background: #e8f5e9; color: #17633a; border: 1px solid #b8e2c0; border-radius: 999px; padding: 7px 12px; font-weight: 800; white-space: nowrap; }
+        .recon-panel { background: #fff; border: 1px solid #dbe3ef; border-radius: 8px; padding: 14px; margin-bottom: 14px; box-shadow: 0 8px 20px rgba(15, 23, 42, .05); }
+        .sticky-filter { position: sticky; top: 0; z-index: 20; box-shadow: 0 12px 28px rgba(15, 23, 42, .12); }
+        .investigation-shell { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 14px; align-items: start; }
+        .detail-drawer { position: sticky; top: 92px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; padding: 12px; min-height: 320px; }
+        .detail-drawer h3 { margin-top: 0; }
+        .mini-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+        .mini-cell { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; }
+        .mini-cell small { display:block; color:#64748b; font-weight:800; }
+        .clickable-row { cursor: pointer; }
+        .clickable-row:hover { background: #f8fafc; }
+        .split-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .compare-card { border: 1px solid #dbe3ef; border-radius: 8px; padding: 10px; background: #fff; }
+        .compare-card h4 { margin: 0 0 8px; }
+        .toolbar-line { display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-bottom:10px; }
+        .danger-action { background:#991b1b !important; color:#fff !important; }
+        .recon-grid { display: grid; grid-template-columns: 2fr repeat(4, minmax(140px, 1fr)); gap: 10px; align-items: end; }
+        .recon-field { display: grid; gap: 6px; }
+        .recon-field span { font-size: 13px; font-weight: 800; color: #475569; }
+        .recon-field input, .recon-field select { min-height: 38px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 10px; background: #fff; }
+        .recon-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+        .recon-btn { border: 0; border-radius: 6px; padding: 10px 14px; font-weight: 800; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 7px; }
+        .recon-btn.primary { background: #2457d6; color: #fff; }
+        .recon-btn.secondary { background: #e2e8f0; color: #172033; }
+        .recon-note { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; border-radius: 8px; padding: 10px 12px; margin-top: 12px; }
+        .recon-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .recon-tab-btn { border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #334155; padding: 9px 12px; font-weight: 800; cursor: pointer; }
+        .recon-tab-btn.active { background: #2457d6; color: #fff; border-color: #2457d6; }
+        .recon-tab-panel { display: none; }
+        .recon-tab-panel.active { display: block; }
+        .recon-error { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(6, minmax(120px, 1fr)); gap: 10px; }
+        .summary-tile { border: 1px solid #dbe3ef; border-radius: 8px; padding: 10px; background: #f8fafc; }
+        .summary-tile small { display: block; color: #64748b; font-weight: 800; min-height: 34px; }
+        .summary-tile strong { display: block; font-size: 24px; margin-top: 4px; color: #0f172a; }
+        .mapping-grid { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 8px; }
+        .mapping-item { border: 1px solid #dbe3ef; border-radius: 8px; padding: 9px; background: #f8fafc; }
+        .mapping-item small { display: block; color: #64748b; }
+        .mapping-item strong { display: block; margin-top: 4px; overflow-wrap: anywhere; }
+        .table-tools { display: grid; grid-template-columns: repeat(5, minmax(140px, 1fr)); gap: 8px; margin-bottom: 10px; }
+        .table-tools input, .table-tools select { border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 10px; min-height: 36px; }
+        .recon-table-wrap { overflow: auto; border: 1px solid #dbe3ef; border-radius: 8px; background: #fff; max-height: 62vh; }
+        .recon-table { width: 100%; min-width: 1900px; border-collapse: collapse; font-size: 13px; }
+        .recon-table th { position: sticky; top: 0; background: #eef2f7; z-index: 2; color: #334155; text-align: right; }
+        .recon-table th, .recon-table td { padding: 8px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+        .status-chip { display: inline-block; border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 800; white-space: nowrap; }
+        .status-chip.ok { background: #dcfce7; color: #166534; }
+        .status-chip.warn { background: #fef3c7; color: #92400e; }
+        .status-chip.danger { background: #fee2e2; color: #991b1b; }
+        .status-chip.missing { background: #e0f2fe; color: #075985; }
+        .status-chip.info { background: #ede9fe; color: #5b21b6; }
+        .warnings { margin: 0; padding-right: 16px; color: #92400e; }
+        .invalid-list { margin: 0; padding-right: 18px; color: #991b1b; }
+        @@media (max-width: 1100px) {
+            .recon-grid, .summary-grid, .mapping-grid, .table-tools, .investigation-shell, .split-compare { grid-template-columns: 1fr 1fr; }
+        }
+        @@media (max-width: 700px) {
+            .recon-title { display: block; }
+            .recon-grid, .summary-grid, .mapping-grid, .table-tools, .investigation-shell, .split-compare { grid-template-columns: 1fr; }
+            .detail-drawer, .sticky-filter { position: static; }
+        }
+    </style>
+</head>
+<body>
+<main class="recon-page">
+    <div class="recon-title">
+        <div>
+            <h1>مراجعة وتسوية فواتير Excel</h1>
+            <p>تحليل وقراءة فقط لمقارنة شيتات الإدارة مع فواتير POS قبل أي قرار ترحيل أو تعديل.</p>
+        </div>
+        <span class="recon-badge">مراجعة فقط بدون تعديل</span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+    {
+        <div class="recon-error">@Model.ErrorMessage</div>
+    }
+
+    <div class="recon-tabs">
+        <button type="button" class="recon-tab-btn active" data-tab-target="tab-upload">رفع ومطابقة Excel</button>
+        <button type="button" class="recon-tab-btn" data-tab-target="tab-saved">تحليل Excel المحفوظ في النظام</button>
+        @if (saved != null)
+        {
+            <button type="button" class="recon-tab-btn" data-tab-target="tab-period">ملخص الفترة</button>
+            <button type="button" class="recon-tab-btn" data-tab-target="tab-days">الأيام والفروع</button>
+            <button type="button" class="recon-tab-btn" data-tab-target="tab-excel-invoices">فواتير Excel</button>
+            <button type="button" class="recon-tab-btn" data-tab-target="tab-system-invoices">فواتير النظام</button>
+            <button type="button" class="recon-tab-btn" data-tab-target="tab-pairs">المشتبهات الذكية (@saved.DuplicatePairs.Count)</button>
+            <button type="button" class="recon-tab-btn" data-tab-target="tab-tokens">مشاكل الكروت والتوكينات</button>
+            <button type="button" class="recon-tab-btn" data-tab-target="tab-actions">سجل الإجراءات</button>
+        }
+    </div>
+
+    <section class="recon-panel recon-tab-panel active" id="tab-upload">
+        <form method="post" action="@Url.Action("Analyze", "PosInvoiceReconciliation", new { area = "Pos" })" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div class="recon-grid">
+                <label class="recon-field">
+                    <span>ملفات Excel</span>
+                    <input type="file" name="excelFiles" accept=".xlsx,.xls" multiple required />
+                </label>
+                <label class="recon-field">
+                    <span>من تاريخ</span>
+                    <input type="date" name="fromDate" value="@Model.FromDate.ToString("yyyy-MM-dd")" required />
+                </label>
+                <label class="recon-field">
+                    <span>إلى تاريخ</span>
+                    <input type="date" name="toDate" value="@Model.ToDate.ToString("yyyy-MM-dd")" required />
+                </label>
+                <label class="recon-field">
+                    <span>الفرع</span>
+                    <select name="branchId">
+                        <option value="">كل الفروع</option>
+                        @foreach (var branch in Model.Branches)
+                        {
+                            <option value="@branch.BranchId" @(Model.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                        }
+                    </select>
+                </label>
+                <label class="recon-field">
+                    <span>نوع الخدمة</span>
+                    <select name="serviceType">
+                        <option value="" @(string.IsNullOrWhiteSpace(Model.ServiceType) ? "selected" : "")>الكل</option>
+                        <option value="Cash In" @(Model.ServiceType == "Cash In" ? "selected" : "")>إيداع / شحن</option>
+                        <option value="Cash Out" @(Model.ServiceType == "Cash Out" ? "selected" : "")>سحب</option>
+                        <option value="Card" @(Model.ServiceType == "Card" ? "selected" : "")>كارت / توكن</option>
+                        <option value="Violations" @(Model.ServiceType == "Violations" ? "selected" : "")>مخالفات</option>
+                    </select>
+                </label>
+            </div>
+            <div class="recon-actions">
+                <button type="submit" class="recon-btn primary">تحليل ومراجعة</button>
+                @if (result != null)
+                {
+                    <a class="recon-btn secondary" href="@Url.Action("Export", "PosInvoiceReconciliation", new { area = "Pos" })">تصدير تقرير المراجعة</a>
+                }
+            </div>
+            <div class="recon-note">هذه الشاشة للمراجعة فقط. لن يتم إضافة أو تعديل أو حذف أي فاتورة من هنا.</div>
+        </form>
+    </section>
+
+    <section class="recon-panel recon-tab-panel sticky-filter" id="tab-saved">
+        <h2>تحليل الفواتير المستوردة من Excel داخل قاعدة البيانات</h2>
+        <form method="post" action="@Url.Action("AnalyzeSaved", "PosInvoiceReconciliation", new { area = "Pos" })">
+            @Html.AntiForgeryToken()
+            <div class="recon-grid">
+                <label class="recon-field">
+                    <span>الشهر</span>
+                    <input type="month" name="month" value="@Model.Month" />
+                </label>
+                <label class="recon-field">
+                    <span>من تاريخ</span>
+                    <input type="date" name="fromDate" value="@Model.FromDate.ToString("yyyy-MM-dd")" required />
+                </label>
+                <label class="recon-field">
+                    <span>إلى تاريخ</span>
+                    <input type="date" name="toDate" value="@Model.ToDate.ToString("yyyy-MM-dd")" required />
+                </label>
+                <label class="recon-field">
+                    <span>الفرع</span>
+                    <select name="branchId">
+                        <option value="">كل الفروع</option>
+                        @foreach (var branch in Model.Branches)
+                        {
+                            <option value="@branch.BranchId" @(Model.BranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                        }
+                    </select>
+                </label>
+                <label class="recon-field">
+                    <span>نوع الخدمة</span>
+                    <select name="serviceType">
+                        <option value="" @(string.IsNullOrWhiteSpace(Model.ServiceType) ? "selected" : "")>الكل</option>
+                        <option value="Cash In" @(Model.ServiceType == "Cash In" ? "selected" : "")>إيداع / شحن</option>
+                        <option value="Cash Out" @(Model.ServiceType == "Cash Out" ? "selected" : "")>سحب</option>
+                        <option value="Card" @(Model.ServiceType == "Card" ? "selected" : "")>كارت / توكن</option>
+                        <option value="Violations" @(Model.ServiceType == "Violations" ? "selected" : "")>مخالفات</option>
+                    </select>
+                </label>
+                <label class="recon-field">
+                    <span>المستخدم / التلر</span>
+                    <select name="tellerUserId">
+                        <option value="">كل المستخدمين</option>
+                        @foreach (var user in Model.Users)
+                        {
+                            <option value="@user.UserId" @(Model.UserId == user.UserId ? "selected" : "")>@user.UserName @(string.IsNullOrWhiteSpace(user.EmpName) ? "" : " - " + user.EmpName)</option>
+                        }
+                    </select>
+                </label>
+                <label class="recon-field">
+                    <span>مصدر الفاتورة</span>
+                    <select name="importSource">
+                        <option value="Both" @(Model.ImportSource == "Both" || string.IsNullOrWhiteSpace(Model.ImportSource) ? "selected" : "")>الاثنان معا</option>
+                        <option value="Excel" @(Model.ImportSource == "Excel" ? "selected" : "")>فواتير مستوردة من Excel</option>
+                        <option value="Normal" @(Model.ImportSource == "Normal" ? "selected" : "")>فواتير مدخلة من النظام</option>
+                    </select>
+                </label>
+                <label class="recon-field">
+                    <span>مستوى الخطورة</span>
+                    <select name="riskLevel">
+                        <option value="" @(string.IsNullOrWhiteSpace(Model.RiskLevel) ? "selected" : "")>كل المستويات</option>
+                        <option value="Critical" @(Model.RiskLevel == "Critical" ? "selected" : "")>حرج جدا</option>
+                        <option value="High" @(Model.RiskLevel == "High" ? "selected" : "")>مرتفع</option>
+                        <option value="Medium" @(Model.RiskLevel == "Medium" ? "selected" : "")>متوسط</option>
+                        <option value="Low" @(Model.RiskLevel == "Low" ? "selected" : "")>منخفض</option>
+                    </select>
+                </label>
+                <label class="recon-field">
+                    <span>بحث ذكي</span>
+                    <input type="search" name="searchTerm" value="@Model.SearchTerm" placeholder="هاتف / عميل / توكن / رقم فاتورة" />
+                </label>
+                <label class="recon-field">
+                    <span>المبلغ من</span>
+                    <input type="number" step="0.01" name="minAmount" value="@(Model.MinAmount.HasValue ? Model.MinAmount.Value.ToString("0.##") : "")" />
+                </label>
+                <label class="recon-field">
+                    <span>المبلغ إلى</span>
+                    <input type="number" step="0.01" name="maxAmount" value="@(Model.MaxAmount.HasValue ? Model.MaxAmount.Value.ToString("0.##") : "")" />
+                </label>
+                <label class="recon-field">
+                    <span>التوكن</span>
+                    <input type="text" name="token" value="@Model.Token" />
+                </label>
+                <label class="recon-field">
+                    <span>الهاتف</span>
+                    <input type="text" name="phone" value="@Model.Phone" />
+                </label>
+                <label class="recon-field">
+                    <span>الرقم القومي</span>
+                    <input type="text" name="nationalId" value="@Model.NationalId" />
+                </label>
+                <label class="recon-field">
+                    <span>اسم العميل</span>
+                    <input type="text" name="customerName" value="@Model.CustomerName" />
+                </label>
+                <label class="recon-field" style="display:flex;gap:8px;align-items:center;">
+                    <input type="checkbox" name="onlyBothSources" value="true" @(Model.OnlyBothSources ? "checked" : "") style="width:18px;height:18px;" />
+                    <span>عرض الأيام التي بها Excel والنظام معا فقط</span>
+                </label>
+                <label class="recon-field" style="display:flex;gap:8px;align-items:center;">
+                    <input type="checkbox" name="suspiciousOnly" value="true" @(Model.SuspiciousOnly ? "checked" : "") style="width:18px;height:18px;" />
+                    <span>عرض المشتبهات فقط</span>
+                </label>
+            </div>
+            <div class="recon-actions">
+                <button type="submit" class="recon-btn primary">تحليل الفواتير المحفوظة</button>
+                @if (saved != null)
+                {
+                    <a class="recon-btn secondary" href="@Url.Action("ExportSaved", "PosInvoiceReconciliation", new { area = "Pos" })">تصدير تقرير المراجعة</a>
+                    <button type="button" class="recon-btn secondary" disabled>تعليم كمراجع</button>
+                    <button type="button" class="recon-btn secondary" disabled>إنشاء مهمة متابعة</button>
+                }
+            </div>
+            <div class="recon-note">هذا التحليل يقارن الفواتير الموجودة داخل قاعدة البيانات فقط. لن يتم حذف أو دمج أو تعديل أي فاتورة.</div>
+        </form>
+        @if (saved != null && saved.HasUncertainSource)
+        {
+            <div class="recon-note">@saved.SourceDetectionWarning</div>
+        }
+    </section>
+
+    @if (result != null)
+    {
+        <section class="recon-panel upload-result-panel">
+            <h2>ملخص التحليل</h2>
+            <div class="summary-grid">
+                <div class="summary-tile"><small>إجمالي صفوف Excel</small><strong>@result.Summary.TotalExcelRows</strong></div>
+                <div class="summary-tile"><small>صفوف صالحة للمراجعة</small><strong>@result.Summary.ValidRows</strong></div>
+                <div class="summary-tile"><small>صفوف بها أخطاء</small><strong>@result.Summary.InvalidRows</strong></div>
+                <div class="summary-tile"><small>فواتير مطابقة وموجودة</small><strong>@result.Summary.ExactMatches</strong></div>
+                <div class="summary-tile"><small>غالبا مكررة</small><strong>@result.Summary.ProbableDuplicates</strong></div>
+                <div class="summary-tile"><small>تشابه محتمل</small><strong>@result.Summary.PossibleMatches</strong></div>
+                <div class="summary-tile"><small>غير موجودة في النظام</small><strong>@result.Summary.NotFound</strong></div>
+                <div class="summary-tile"><small>اختلاف في المبلغ</small><strong>@result.Summary.AmountMismatches</strong></div>
+                <div class="summary-tile"><small>اختلاف في العميل</small><strong>@result.Summary.CustomerMismatches</strong></div>
+                <div class="summary-tile"><small>اختلاف في التاريخ</small><strong>@result.Summary.DateMismatches</strong></div>
+                <div class="summary-tile"><small>مكرر داخل قاعدة البيانات</small><strong>@result.Summary.DatabaseDuplicates</strong></div>
+                <div class="summary-tile"><small>مكرر داخل ملف Excel</small><strong>@result.Summary.ExcelDuplicates</strong></div>
+            </div>
+        </section>
+
+        <section class="recon-panel upload-result-panel">
+            <h2>خريطة الأعمدة المكتشفة</h2>
+            <div class="mapping-grid">
+                @foreach (var map in result.ColumnMappings)
+                {
+                    <div class="mapping-item">
+                        <small>@map.FieldTitle</small>
+                        <strong>@(string.IsNullOrWhiteSpace(map.HeaderText) ? "لم يتم التعرف عليه" : map.HeaderText)</strong>
+                    </div>
+                }
+            </div>
+        </section>
+
+        if (result.InvalidRows.Count > 0)
+        {
+            <section class="recon-panel upload-result-panel">
+                <h2>صفوف غير صالحة قبل المقارنة</h2>
+                <div class="recon-table-wrap" style="max-height:240px;">
+                    <table class="recon-table" style="min-width:900px;">
+                        <thead><tr><th>الشيت</th><th>رقم الصف</th><th>التاريخ</th><th>رقم الفاتورة</th><th>التوكن</th><th>الهاتف</th><th>المبلغ</th><th>الأخطاء</th></tr></thead>
+                        <tbody>
+                        @foreach (var row in result.InvalidRows)
+                        {
+                            <tr>
+                                <td>@row.SheetName</td>
+                                <td>@row.RowNumber</td>
+                                <td>@row.InvoiceDateText</td>
+                                <td>@row.InvoiceNumber</td>
+                                <td>@row.Token</td>
+                                <td>@row.Phone</td>
+                                <td>@(row.Amount.HasValue ? row.Amount.Value.ToString("0.##") : "")</td>
+                                <td><ul class="invalid-list">@foreach (var error in row.Errors) { <li>@arReason(error)</li> }</ul></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
+
+        <section class="recon-panel upload-result-panel">
+            <h2>نتيجة المطابقة</h2>
+            <div class="table-tools">
+                <select id="statusFilter">
+                    <option value="">كل الحالات</option>
+                    <option value="Exact Match">مطابق وموجود من قبل</option>
+                    <option value="Probable Duplicate">غالبا مكرر</option>
+                    <option value="Possible Match">تشابه محتمل</option>
+                    <option value="Amount Mismatch">اختلاف في المبلغ</option>
+                    <option value="Customer Mismatch">اختلاف في العميل</option>
+                    <option value="Date Mismatch">اختلاف في التاريخ</option>
+                    <option value="Not Found">غير موجود</option>
+                    <option value="Database Duplicate">مكرر داخل قاعدة البيانات</option>
+                    <option value="Excel Duplicate">مكرر داخل Excel</option>
+                </select>
+                <select id="serviceFilter">
+                    <option value="">كل الخدمات</option>
+                    <option value="Cash In">إيداع / شحن</option>
+                    <option value="Cash Out">سحب</option>
+                    <option value="Card">كارت / توكن</option>
+                    <option value="Violations">مخالفات</option>
+                </select>
+                <input id="branchFilter" type="search" placeholder="فرع الملف / النظام" />
+                <input id="textFilter" type="search" placeholder="توكن / هاتف / عميل" />
+                <label class="recon-field" style="display:flex;gap:8px;align-items:center;">
+                    <input id="needsActionOnly" type="checkbox" style="width:18px;height:18px;" />
+                    <span>عرض الصفوف التي تحتاج مراجعة فقط</span>
+                </label>
+            </div>
+            <div class="recon-table-wrap">
+                <table class="recon-table" id="resultTable">
+                    <thead>
+                    <tr>
+                        <th>صف Excel</th><th>الحالة</th><th>درجة التشابه</th><th>سبب التصنيف</th><th>تاريخ Excel</th><th>تاريخ النظام</th><th>رقم فاتورة Excel</th><th>رقم حركة النظام</th><th>سيريال / IPN في النظام</th><th>التوكن</th><th>الهاتف</th><th>عميل Excel</th><th>عميل النظام</th><th>مبلغ Excel</th><th>مبلغ النظام</th><th>الفرق</th><th>فرع Excel</th><th>فرع النظام</th><th>مستخدم Excel</th><th>مستخدم النظام</th><th>نوع الخدمة</th><th>تنبيهات</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var row in result.Rows)
+                    {
+                        <tr data-status="@row.Status" data-service="@row.ServiceType" data-branch="@((row.ExcelBranch + " " + row.DbBranch).ToLowerInvariant())" data-text="@((row.Token + " " + row.Phone + " " + row.ExcelCustomerName + " " + row.DbCustomerName).ToLowerInvariant())">
+                            <td>@row.ExcelRowNumber</td>
+                            <td><span class="status-chip @statusClass(row.Status)">@arStatus(row.Status)</span></td>
+                            <td>@row.MatchScore</td>
+                            <td>@arReason(row.Reason)</td>
+                            <td>@(row.ExcelInvoiceDate.HasValue ? row.ExcelInvoiceDate.Value.ToString("yyyy-MM-dd") : "")</td>
+                            <td>@(row.DbInvoiceDate.HasValue ? row.DbInvoiceDate.Value.ToString("yyyy-MM-dd") : "")</td>
+                            <td>@row.ExcelInvoiceNumber</td>
+                            <td>@row.DbTransactionId</td>
+                            <td>@row.DbSerial</td>
+                            <td>@row.Token</td>
+                            <td>@row.Phone</td>
+                            <td>@row.ExcelCustomerName</td>
+                            <td>@row.DbCustomerName</td>
+                            <td>@(row.ExcelAmount.HasValue ? row.ExcelAmount.Value.ToString("0.##") : "")</td>
+                            <td>@(row.DbAmount.HasValue ? row.DbAmount.Value.ToString("0.##") : "")</td>
+                            <td>@(row.Difference.HasValue ? row.Difference.Value.ToString("0.##") : "")</td>
+                            <td>@row.ExcelBranch</td>
+                            <td>@row.DbBranch</td>
+                            <td>@row.ExcelUser</td>
+                            <td>@row.DbUser</td>
+                            <td>@arService(row.ServiceType)</td>
+                            <td>
+                                @if (row.Warnings.Count > 0)
+                                {
+                                    <ul class="warnings">@foreach (var warning in row.Warnings) { <li>@arReason(warning)</li> }</ul>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+    @if (saved != null)
+    {
+        <section class="recon-panel recon-tab-panel" id="tab-period">
+            <h2>ملخص الفترة</h2>
+            <div class="summary-grid">
+                <div class="summary-tile"><small>عدد فواتير Excel</small><strong>@saved.PeriodSummary.ExcelImportedCount</strong></div>
+                <div class="summary-tile"><small>إجمالي Excel</small><strong>@saved.PeriodSummary.ExcelImportedAmount.ToString("0.##")</strong></div>
+                <div class="summary-tile"><small>عدد فواتير النظام</small><strong>@saved.PeriodSummary.NormalPosCount</strong></div>
+                <div class="summary-tile"><small>إجمالي النظام</small><strong>@saved.PeriodSummary.NormalPosAmount.ToString("0.##")</strong></div>
+                <div class="summary-tile"><small>عدد التشابهات الخطرة</small><strong>@saved.PeriodSummary.SuspiciousDuplicatePairs</strong></div>
+                <div class="summary-tile"><small>مستوى الخطورة</small><strong>@arRisk(saved.PeriodSummary.RiskLevel)</strong></div>
+                <div class="summary-tile"><small>فرق عدد الفواتير</small><strong>@saved.PeriodSummary.CountDifference</strong></div>
+                <div class="summary-tile"><small>فرق الإجمالي</small><strong>@saved.PeriodSummary.AmountDifference.ToString("0.##")</strong></div>
+                <div class="summary-tile"><small>أيام بها المصدران</small><strong>@saved.DayBranchSummaries.Count(x => x.ExcelImportedCount > 0 && x.NormalPosCount > 0)</strong></div>
+                <div class="summary-tile"><small>مشاكل التوكن</small><strong>@saved.TokenConflicts.Count</strong></div>
+                <div class="summary-tile"><small>فواتير تحتاج مراجعة</small><strong>@(saved.ExcelInvoices.Count(x => x.ReviewStatus != "No Issue") + saved.SystemInvoices.Count(x => x.ReviewStatus != "No Issue"))</strong></div>
+            </div>
+            <div class="recon-note">@arReason(saved.PeriodSummary.Reason)</div>
+            <h3>حسب نوع الخدمة</h3>
+            @RenderDimensionSummary(saved.ServiceTypeSummaries)
+            <h3>حسب المستخدم / التلر</h3>
+            @RenderDimensionSummary(saved.TellerSummaries)
+            <h3>حسب مصدر الفاتورة</h3>
+            @RenderDimensionSummary(saved.SourceSummaries)
+        </section>
+
+        <section class="recon-panel recon-tab-panel" id="tab-branches">
+            <h2>ملخص الفروع</h2>
+            <div class="recon-table-wrap">
+                <table class="recon-table" style="min-width:1300px;">
+                    <thead><tr><th>الفرع</th><th>عدد Excel</th><th>إجمالي Excel</th><th>عدد النظام</th><th>إجمالي النظام</th><th>فرق العدد</th><th>فرق الإجمالي</th><th>تشابهات تحتاج مراجعة</th><th>الخطورة</th><th>السبب</th></tr></thead>
+                    <tbody>
+                    @foreach (var row in saved.BranchSummaries)
+                    {
+                        <tr>
+                            <td>@row.BranchName</td>
+                            <td>@row.ExcelImportedCount</td>
+                            <td>@row.ExcelImportedAmount.ToString("0.##")</td>
+                            <td>@row.NormalPosCount</td>
+                            <td>@row.NormalPosAmount.ToString("0.##")</td>
+                            <td>@row.CountDifference</td>
+                            <td>@row.AmountDifference.ToString("0.##")</td>
+                            <td>@row.SuspiciousDuplicatePairs</td>
+                            <td><span class="status-chip @(row.RiskLevel == "Critical" ? "danger" : row.RiskLevel == "High" ? "warn" : row.RiskLevel == "Medium" ? "info" : "ok")">@arRisk(row.RiskLevel)</span></td>
+                            <td>@arReason(row.Reason)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="recon-panel recon-tab-panel" id="tab-days">
+            <h2>الأيام والفروع</h2>
+            <div class="investigation-shell">
+            <div class="recon-table-wrap">
+                <table class="recon-table" style="min-width:1500px;">
+                    <thead><tr><th>التاريخ</th><th>الفرع</th><th>الخدمة</th><th>عدد Excel</th><th>إجمالي Excel</th><th>عدد النظام</th><th>إجمالي النظام</th><th>فرق العدد</th><th>فرق الإجمالي</th><th>تشابهات</th><th>الخطورة</th><th>السبب</th></tr></thead>
+                    <tbody>
+                    @foreach (var row in saved.DayBranchSummaries.Where(x => (!Model.OnlyBothSources || (x.ExcelImportedCount > 0 && x.NormalPosCount > 0)) && (!Model.SuspiciousOnly || x.PotentialDuplicateMatches > 0 || x.RiskLevel == "Critical" || x.RiskLevel == "High")))
+                    {
+                        <tr class="clickable-row day-branch-row" data-date="@row.Date.ToString("yyyy-MM-dd")" data-branch-id="@row.BranchId">
+                            <td>@row.Date.ToString("yyyy-MM-dd")</td>
+                            <td>@row.BranchName</td>
+                            <td>@arService(row.ServiceType)</td>
+                            <td>@row.ExcelImportedCount</td>
+                            <td>@row.ExcelImportedAmount.ToString("0.##")</td>
+                            <td>@row.NormalPosCount</td>
+                            <td>@row.NormalPosAmount.ToString("0.##")</td>
+                            <td>@row.CountDifference</td>
+                            <td>@row.AmountDifference.ToString("0.##")</td>
+                            <td>@row.PotentialDuplicateMatches</td>
+                            <td><span class="status-chip @(row.RiskLevel == "Critical" ? "danger" : row.RiskLevel == "High" ? "warn" : row.RiskLevel == "Medium" ? "info" : "ok")">@arRisk(row.RiskLevel)</span></td>
+                            <td>@arReason(row.Reason)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <aside class="detail-drawer" id="dayBranchDrawer">
+                <h3>تفاصيل اليوم والفرع</h3>
+                <p>اضغط على أي صف من الأيام والفروع لعرض فواتير Excel وفواتير النظام والتشابهات بينهم.</p>
+                <div class="mini-grid" id="dayMiniSummary"></div>
+                <div id="dayDetailsContent"></div>
+            </aside>
+            </div>
+        </section>
+
+        <section class="recon-panel recon-tab-panel" id="tab-excel-invoices">
+            <div class="toolbar-line">
+                <h2>فواتير Excel المحفوظة في النظام</h2>
+                @if (Model.CanDeleteInvoices)
+                {
+                    <button type="button" class="recon-btn danger-action delete-selected-btn">حذف الفواتير المحددة</button>
+                }
+            </div>
+            @RenderInvoiceList(saved.ExcelInvoices, true)
+        </section>
+
+        <section class="recon-panel recon-tab-panel" id="tab-system-invoices">
+            <div class="toolbar-line">
+                <h2>فواتير النظام</h2>
+                @if (Model.CanDeleteInvoices)
+                {
+                    <button type="button" class="recon-btn danger-action delete-selected-btn">حذف الفواتير المحددة</button>
+                }
+            </div>
+            @RenderInvoiceList(saved.SystemInvoices, true)
+        </section>
+
+        <section class="recon-panel recon-tab-panel" id="tab-pairs">
+            <div class="toolbar-line">
+                <h2>المشتبهات الذكية</h2>
+                <strong>عدد الحالات: @saved.DuplicatePairs.Count</strong>
+                @if (Model.CanDeleteInvoices)
+                {
+                    <button type="button" class="recon-btn danger-action delete-selected-btn">حذف الفواتير المحددة</button>
+                }
+            </div>
+            @if (saved.DuplicatePairs.Count == 0)
+            {
+                <div class="recon-note">
+                    لا توجد مشتبهات ظاهرة حسب الفلاتر الحالية.
+                    @if (saved.ExcelInvoices.Count == 0)
+                    {
+                        <span>لا توجد فواتير مصنفة كمستوردة من Excel داخل هذه الفترة/الفلاتر.</span>
+                    }
+                    @if (saved.SystemInvoices.Count == 0)
+                    {
+                        <span>لا توجد فواتير نظام عادية داخل هذه الفترة/الفلاتر.</span>
+                    }
+                    <span>جرب اختيار المصدر "الاثنان معا"، أو إزالة فلتر مستوى الخطورة، أو توسيع التاريخ/الفرع ثم اضغط "تحليل الفواتير المحفوظة".</span>
+                </div>
+            }
+            else
+            {
+                @RenderPairs(saved.DuplicatePairs)
+            }
+        </section>
+
+        <section class="recon-panel recon-tab-panel" id="tab-tokens">
+            <h2>مشاكل الكروت والتوكينات</h2>
+            @RenderPairs(saved.TokenConflicts)
+        </section>
+
+        <section class="recon-panel recon-tab-panel" id="tab-actions">
+            <h2>سجل الإجراءات</h2>
+            <div class="recon-table-wrap">
+                <table class="recon-table" style="min-width:1000px;">
+                    <thead><tr><th>الوقت</th><th>المستخدم</th><th>الإجراء</th><th>رقم الفاتورة</th><th>المصدر</th><th>السبب</th><th>تم تحقق كلمة المرور</th><th>النتيجة</th></tr></thead>
+                    <tbody id="actionLogBody">
+                    @foreach (var action in saved.ActionLog)
+                    {
+                        <tr><td>@action.ActionDate.ToString("yyyy-MM-dd HH:mm")</td><td>@action.UserName</td><td>@action.ActionType</td><td>@action.TransactionId</td><td>@arSource(action.Source)</td><td>@action.Reason</td><td>@(action.PasswordVerified ? "نعم" : "لا")</td><td>@action.ResultMessage</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+</main>
+<div class="recon-panel" id="deleteModal" style="display:none;position:fixed;inset:8% 12%;z-index:50;overflow:auto;box-shadow:0 24px 70px rgba(15,23,42,.35);">
+    <h2>تأكيد حذف الفواتير المحددة</h2>
+    <div class="recon-note">سيتم حذف/إلغاء الفواتير المحددة وكل القيود والمدفوعات والحركات المرتبطة بها حسب منطق النظام. لا تكمل إلا إذا كنت متأكدا.</div>
+    <div id="deleteList" class="recon-note"></div>
+    <label class="recon-field"><span>كلمة مرور المستخدم الحالي</span><input type="password" id="deletePassword" /></label>
+    <label class="recon-field"><span>سبب الحذف</span><input type="text" id="deleteReason" /></label>
+    <div class="recon-actions">
+        <button type="button" class="recon-btn danger-action" id="confirmDeleteBtn">تأكيد الحذف الآمن</button>
+        <button type="button" class="recon-btn secondary" id="cancelDeleteBtn">إلغاء</button>
+    </div>
+</div>
+@functions {
+    public static string ArStatus(string status)
+    {
+        if (status == "Exact Match") return "مطابق وموجود من قبل";
+        if (status == "Probable Duplicate") return "غالبا مكرر ويحتاج مراجعة";
+        if (status == "Possible Match") return "تشابه محتمل";
+        if (status == "Amount Mismatch") return "اختلاف في المبلغ";
+        if (status == "Customer Mismatch") return "اختلاف في بيانات العميل";
+        if (status == "Date Mismatch") return "اختلاف في التاريخ";
+        if (status == "Not Found") return "غير موجود في النظام";
+        if (status == "Database Duplicate") return "مكرر داخل قاعدة البيانات";
+        if (status == "Excel Duplicate") return "مكرر داخل ملف Excel";
+        if (status == "Confirmed Duplicate") return "تكرار مؤكد";
+        if (status == "Possible Duplicate") return "تكرار محتمل";
+        if (status == "Token Conflict") return "تعارض في التوكن";
+        if (status == "Phone Conflict") return "تعارض في رقم الهاتف";
+        if (status == "Needs Review") return "يحتاج مراجعة";
+        if (status == "No Issue") return "لا توجد مشكلة واضحة";
+        return string.IsNullOrWhiteSpace(status) ? "" : status;
+    }
+
+    public static string ArRisk(string risk)
+    {
+        if (risk == "Critical") return "حرج جدا";
+        if (risk == "High") return "مرتفع";
+        if (risk == "Medium") return "متوسط";
+        if (risk == "Low") return "منخفض";
+        return string.IsNullOrWhiteSpace(risk) ? "" : risk;
+    }
+
+    public static string ArService(string service)
+    {
+        if (service == "Cash In") return "إيداع / شحن";
+        if (service == "Cash Out") return "سحب";
+        if (service == "Card") return "كارت / توكن";
+        if (service == "Violations") return "مخالفات";
+        return string.IsNullOrWhiteSpace(service) ? "" : service;
+    }
+
+    public static string ArSource(string source)
+    {
+        if (source == "Excel Imported" || source == "Estimated Excel") return "مستورد من Excel";
+        if (source == "POS Manual/System" || source == "Estimated Manual") return "مدخل من النظام";
+        if (source == "Normal POS") return "مدخل من النظام";
+        if (source == "Unknown") return "مصدر غير مؤكد";
+        return string.IsNullOrWhiteSpace(source) ? "" : source;
+    }
+
+    public static string ArReason(string reason)
+    {
+        if (string.IsNullOrWhiteSpace(reason)) return "";
+        return reason
+            .Replace("Same token exists in Excel-imported and normal invoice", "نفس التوكن موجود في فاتورة مستوردة من Excel وفاتورة مدخلة من النظام")
+            .Replace("Same phone + same amount + same date exists in both sources", "نفس الهاتف ونفس المبلغ ونفس التاريخ موجودين في المصدرين")
+            .Replace("Same national ID + same amount/date exists in both sources", "نفس الرقم القومي مع نفس المبلغ والتاريخ موجود في المصدرين")
+            .Replace("Large amount difference or many similar matches", "يوجد فرق كبير في الإجمالي أو عدد كبير من التشابهات")
+            .Replace("Potential duplicate matches found", "تم العثور على فواتير متشابهة تحتاج مراجعة")
+            .Replace("Same day has both Excel and normal entries", "نفس اليوم يحتوي فواتير مستوردة وفواتير مدخلة من النظام")
+            .Replace("Single source only in selected filters", "النتائج من مصدر واحد فقط حسب الفلاتر المختارة")
+            .Replace("Same token", "نفس التوكن")
+            .Replace("Same card serial", "نفس رقم الكارت")
+            .Replace("Same national ID + phone", "نفس الرقم القومي ورقم الهاتف")
+            .Replace("Same manual/IPN + date + branch", "نفس الرقم اليدوي أو IPN مع نفس التاريخ والفرع")
+            .Replace("Same phone + amount + date", "نفس الهاتف والمبلغ والتاريخ")
+            .Replace("Same national ID + amount + date", "نفس الرقم القومي والمبلغ والتاريخ")
+            .Replace("Same token but amount differs", "نفس التوكن لكن المبلغ مختلف")
+            .Replace("Same normalized customer name + phone", "نفس اسم العميل بعد التنسيق ونفس الهاتف")
+            .Replace("Same amount + service + branch + close time", "نفس المبلغ والخدمة والفرع في وقت قريب")
+            .Replace("Same phone + close amount", "نفس الهاتف مع مبلغ قريب")
+            .Replace("Same amount only in same branch/day", "نفس المبلغ فقط في نفس الفرع واليوم")
+            .Replace("Similar customer name only", "تشابه في اسم العميل فقط")
+            .Replace("Same teller + amount + service + date", "نفس المستخدم والمبلغ والخدمة والتاريخ")
+            .Replace("Amount differs for a matching token/phone", "المبلغ مختلف مع تطابق التوكن أو الهاتف")
+            .Replace("Customer name differs for a matching token/phone", "اسم العميل مختلف مع تطابق التوكن أو الهاتف")
+            .Replace("Card sale invoice exists but issue voucher is missing", "فاتورة بيع الكارت موجودة لكن سند الصرف غير موجود")
+            .Replace("Issue voucher exists but sale invoice is missing", "سند الصرف موجود لكن فاتورة البيع غير موجودة")
+            .Replace("Amount differs for a likely same transaction", "المبلغ مختلف رغم أن الفاتورة تبدو لنفس العملية")
+            .Replace(" | ", " - ");
+    }
+}
+@helper RenderDimensionSummary(System.Collections.Generic.IList<MyERP.Areas.Pos.Models.PosSavedInvoiceDimensionSummary> rows)
+{
+    <div class="recon-table-wrap" style="max-height:34vh;">
+        <table class="recon-table" style="min-width:1200px;">
+            <thead><tr><th>البند</th><th>عدد Excel</th><th>إجمالي Excel</th><th>عدد النظام</th><th>إجمالي النظام</th><th>فرق العدد</th><th>فرق الإجمالي</th><th>تشابهات تحتاج مراجعة</th><th>الخطورة</th><th>السبب</th></tr></thead>
+            <tbody>
+            @foreach (var row in rows)
+            {
+                <tr>
+                    <td>@ArSource(ArService(row.DimensionName))</td>
+                    <td>@row.ExcelImportedCount</td>
+                    <td>@row.ExcelImportedAmount.ToString("0.##")</td>
+                    <td>@row.NormalPosCount</td>
+                    <td>@row.NormalPosAmount.ToString("0.##")</td>
+                    <td>@row.CountDifference</td>
+                    <td>@row.AmountDifference.ToString("0.##")</td>
+                    <td>@row.SuspiciousDuplicatePairs</td>
+                    <td><span class="status-chip @(row.RiskLevel == "Critical" ? "danger" : row.RiskLevel == "High" ? "warn" : row.RiskLevel == "Medium" ? "info" : "ok")">@ArRisk(row.RiskLevel)</span></td>
+                    <td>@ArReason(row.Reason)</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+@helper RenderInvoiceList(System.Collections.Generic.IList<MyERP.Areas.Pos.Models.PosSavedInvoiceListItem> rows, bool selectable)
+{
+    <div class="recon-table-wrap">
+        <table class="recon-table invoice-list-table" style="min-width:1500px;">
+            <thead><tr>@if (selectable) { <th>اختيار</th> }<th>رقم الفاتورة</th><th>التاريخ</th><th>السيريال</th><th>الخدمة</th><th>المصدر</th><th>الفرع</th><th>المستخدم</th><th>التوكن</th><th>الهاتف</th><th>العميل</th><th>المبلغ</th><th>الخطورة</th><th>الحالة</th></tr></thead>
+            <tbody>
+            @foreach (var row in rows)
+            {
+                <tr class="clickable-row invoice-row" data-transaction-id="@row.TransactionId">
+                    @if (selectable) { <td><input type="checkbox" class="invoice-select" value="@row.TransactionId" /></td> }
+                    <td>@row.TransactionId</td>
+                    <td>@(row.InvoiceDate.HasValue ? row.InvoiceDate.Value.ToString("yyyy-MM-dd HH:mm") : "")</td>
+                    <td>@row.Serial</td>
+                    <td>@ArService(row.ServiceType)</td>
+                    <td>@ArSource(row.Source)</td>
+                    <td>@row.BranchName</td>
+                    <td>@row.UserName</td>
+                    <td>@row.Token</td>
+                    <td>@row.Phone</td>
+                    <td>@row.CustomerName</td>
+                    <td>@row.Amount.ToString("0.##")</td>
+                    <td><span class="status-chip @(row.RiskLevel == "Critical" ? "danger" : row.RiskLevel == "High" ? "warn" : row.RiskLevel == "Medium" ? "info" : "ok")">@ArRisk(row.RiskLevel)</span></td>
+                    <td>@ArStatus(row.ReviewStatus)</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+@helper RenderPairs(System.Collections.Generic.IList<MyERP.Areas.Pos.Models.PosSavedInvoiceDuplicatePair> pairs)
+{
+    <div class="recon-table-wrap">
+        <table class="recon-table" style="min-width:2200px;">
+            <thead>
+                <tr>
+                    <th>اختيار</th><th>رقم فاتورة Excel في النظام</th><th>وقت فاتورة Excel</th><th>سيريال / IPN Excel</th><th>مصدر Excel / الدفعة</th><th>رقم فاتورة النظام</th><th>وقت فاتورة النظام</th><th>سيريال / IPN النظام</th><th>الخدمة</th><th>الفرع</th><th>مستخدم Excel</th><th>مستخدم النظام</th><th>توكن Excel</th><th>توكن النظام</th><th>هاتف Excel</th><th>هاتف النظام</th><th>رقم قومي Excel</th><th>رقم قومي النظام</th><th>عميل Excel</th><th>عميل النظام</th><th>مبلغ Excel</th><th>مبلغ النظام</th><th>الفرق</th><th>فرق الوقت بالدقائق</th><th>درجة التشابه</th><th>التصنيف</th><th>سبب الاشتباه والتنبيهات</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var row in pairs)
+            {
+                <tr class="clickable-row pair-row" data-excel-id="@row.ExcelTransactionId" data-system-id="@row.NormalTransactionId">
+                    <td><input type="checkbox" class="invoice-select" value="@row.ExcelTransactionId" /> <input type="checkbox" class="invoice-select" value="@row.NormalTransactionId" /></td>
+                    <td>@row.ExcelTransactionId</td>
+                    <td>@(row.ExcelInvoiceDate.HasValue ? row.ExcelInvoiceDate.Value.ToString("yyyy-MM-dd HH:mm") : "")</td>
+                    <td>@row.ExcelSerial</td>
+                    <td>@ArSource(row.ExcelSource) @(row.ExcelImportBatchId.HasValue ? " / دفعة " + row.ExcelImportBatchId.Value : "") @(string.IsNullOrWhiteSpace(row.ExcelSourceFileName) ? "" : " / " + row.ExcelSourceFileName)</td>
+                    <td>@row.NormalTransactionId</td>
+                    <td>@(row.NormalInvoiceDate.HasValue ? row.NormalInvoiceDate.Value.ToString("yyyy-MM-dd HH:mm") : "")</td>
+                    <td>@row.NormalSerial</td>
+                    <td>@ArService(row.ServiceType)</td>
+                    <td>@row.BranchName</td>
+                    <td>@row.ExcelUserName</td>
+                    <td>@row.NormalUserName</td>
+                    <td>@row.ExcelToken</td>
+                    <td>@row.NormalToken</td>
+                    <td>@row.ExcelPhone</td>
+                    <td>@row.NormalPhone</td>
+                    <td>@row.ExcelNationalId</td>
+                    <td>@row.NormalNationalId</td>
+                    <td>@row.ExcelCustomerName</td>
+                    <td>@row.NormalCustomerName</td>
+                    <td>@row.ExcelAmount.ToString("0.##")</td>
+                    <td>@row.NormalAmount.ToString("0.##")</td>
+                    <td>@row.AmountDifference.ToString("0.##")</td>
+                    <td>@(row.TimeDifferenceMinutes.HasValue ? row.TimeDifferenceMinutes.Value.ToString("0.#") : "")</td>
+                    <td>@row.MatchScore</td>
+                    <td><span class="status-chip @(row.MatchClassification == "Confirmed Duplicate" || row.MatchClassification == "Token Conflict" ? "danger" : row.MatchClassification == "Probable Duplicate" || row.MatchClassification == "Amount Mismatch" ? "warn" : "info")">@ArStatus(row.MatchClassification)</span></td>
+                    <td>@ArReason(string.Join(" | ", row.Reasons.Concat(row.Warnings)))</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+<script>
+(function () {
+    var buttons = document.querySelectorAll("[data-tab-target]");
+    var panels = document.querySelectorAll(".recon-tab-panel");
+    var uploadResults = document.querySelectorAll(".upload-result-panel");
+    function openTab(id) {
+        var target = document.getElementById(id);
+        if (!target) {
+            id = "tab-saved";
+        }
+        Array.prototype.forEach.call(buttons, function (b) { b.classList.toggle("active", b.getAttribute("data-tab-target") === id); });
+        Array.prototype.forEach.call(panels, function (p) { p.classList.toggle("active", p.id === id); });
+        Array.prototype.forEach.call(uploadResults, function (p) { p.style.display = id === "tab-upload" ? "" : "none"; });
+    }
+    Array.prototype.forEach.call(buttons, function (b) { b.addEventListener("click", function () { openTab(b.getAttribute("data-tab-target")); }); });
+    openTab("@(saved != null ? "tab-period" : "tab-upload")");
+})();
+(function () {
+    var table = document.getElementById("resultTable");
+    if (!table) return;
+    var status = document.getElementById("statusFilter");
+    var service = document.getElementById("serviceFilter");
+    var branch = document.getElementById("branchFilter");
+    var text = document.getElementById("textFilter");
+    var needsAction = document.getElementById("needsActionOnly");
+    function apply() {
+        var statusValue = status.value;
+        var serviceValue = service.value;
+        var branchValue = (branch.value || "").toLowerCase();
+        var textValue = (text.value || "").toLowerCase();
+        Array.prototype.forEach.call(table.tBodies[0].rows, function (row) {
+            var rowStatus = row.getAttribute("data-status") || "";
+            var visible = true;
+            if (statusValue && rowStatus !== statusValue) visible = false;
+            if (serviceValue && (row.getAttribute("data-service") || "") !== serviceValue) visible = false;
+            if (branchValue && (row.getAttribute("data-branch") || "").indexOf(branchValue) < 0) visible = false;
+            if (textValue && (row.getAttribute("data-text") || "").indexOf(textValue) < 0) visible = false;
+            if (needsAction.checked && rowStatus === "Exact Match") visible = false;
+            row.style.display = visible ? "" : "none";
+        });
+    }
+    [status, service, branch, text, needsAction].forEach(function (control) {
+        control.addEventListener("input", apply);
+        control.addEventListener("change", apply);
+    });
+})();
+(function () {
+    function qs(name) { return document.querySelector(name); }
+    function qsa(name) { return Array.prototype.slice.call(document.querySelectorAll(name)); }
+    function money(v) { return Number(v || 0).toLocaleString("ar-EG", { maximumFractionDigits: 2 }); }
+    function postJson(url, data) {
+        return fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data || {})
+        }).then(function (r) { return r.json(); });
+    }
+    function getJson(url) { return fetch(url).then(function (r) { return r.json(); }); }
+    function invoiceTable(title, rows) {
+        var html = "<h4>" + title + "</h4><div class='recon-table-wrap' style='max-height:260px'><table class='recon-table' style='min-width:900px'><thead><tr><th>رقم</th><th>وقت</th><th>عميل</th><th>هاتف</th><th>توكن</th><th>مبلغ</th><th>خطورة</th></tr></thead><tbody>";
+        (rows || []).forEach(function (x) {
+            html += "<tr class='clickable-row invoice-row' data-transaction-id='" + x.TransactionId + "'><td>" + x.TransactionId + "</td><td>" + (x.InvoiceDate ? x.InvoiceDate.replace("T", " ").substring(0, 16) : "") + "</td><td>" + (x.CustomerName || "") + "</td><td>" + (x.Phone || "") + "</td><td>" + (x.Token || "") + "</td><td>" + money(x.Amount) + "</td><td>" + (x.RiskLevel || "") + "</td></tr>";
+        });
+        return html + "</tbody></table></div>";
+    }
+    qsa(".day-branch-row").forEach(function (row) {
+        row.addEventListener("click", function () {
+            var date = row.getAttribute("data-date");
+            var branchId = row.getAttribute("data-branch-id") || "";
+            getJson("@Url.Action("GetReconciliationDayDetails", "PosInvoiceReconciliation", new { area = "Pos" })" + "?date=" + encodeURIComponent(date) + "&branchId=" + encodeURIComponent(branchId)).then(function (data) {
+                if (!data.success) { alert(data.message || "تعذر تحميل التفاصيل"); return; }
+                var s = data.summary || {};
+                qs("#dayMiniSummary").innerHTML =
+                    "<div class='mini-cell'><small>عدد Excel</small><strong>" + s.excelCount + "</strong></div>" +
+                    "<div class='mini-cell'><small>إجمالي Excel</small><strong>" + money(s.excelTotal) + "</strong></div>" +
+                    "<div class='mini-cell'><small>عدد النظام</small><strong>" + s.systemCount + "</strong></div>" +
+                    "<div class='mini-cell'><small>إجمالي النظام</small><strong>" + money(s.systemTotal) + "</strong></div>" +
+                    "<div class='mini-cell'><small>الفرق</small><strong>" + money(s.difference) + "</strong></div>" +
+                    "<div class='mini-cell'><small>تشابهات</small><strong>" + s.suspiciousCount + "</strong></div>";
+                qs("#dayDetailsContent").innerHTML =
+                    "<p class='recon-note'>" + (s.riskReason || "") + "</p>" +
+                    invoiceTable("فواتير Excel", data.excel) +
+                    invoiceTable("فواتير النظام", data.system) +
+                    "<h4>التشابهات بينهما</h4><p>" + ((data.pairs || []).length) + " تشابه يحتاج مراجعة</p>";
+            });
+        });
+    });
+    document.addEventListener("click", function (e) {
+        var row = e.target.closest && e.target.closest(".invoice-row");
+        if (!row || e.target.type === "checkbox") return;
+        getJson("@Url.Action("GetInvoiceReconciliationDetails", "PosInvoiceReconciliation", new { area = "Pos" })" + "?transactionId=" + encodeURIComponent(row.getAttribute("data-transaction-id"))).then(function (data) {
+            if (!data.success) { alert(data.message || "تعذر تحميل الفاتورة"); return; }
+            var x = data.invoice;
+            alert("فاتورة رقم: " + x.TransactionId + "\nالعميل: " + (x.CustomerName || "") + "\nالهاتف: " + (x.Phone || "") + "\nالتوكن: " + (x.Token || "") + "\nالمبلغ: " + money(x.Amount) + "\nعدد التشابهات: " + (data.similarPairs || []).length);
+        });
+    });
+    var modal = qs("#deleteModal");
+    qsa(".delete-selected-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            var ids = qsa(".invoice-select:checked").map(function (x) { return x.value; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
+            if (!ids.length) { alert("اختر فاتورة واحدة على الأقل."); return; }
+            qs("#deleteList").innerHTML = "الفواتير المختارة: " + ids.join("، ");
+            modal.setAttribute("data-ids", ids.join(","));
+            modal.style.display = "block";
+        });
+    });
+    var cancelDelete = qs("#cancelDeleteBtn");
+    if (cancelDelete) cancelDelete.addEventListener("click", function () { modal.style.display = "none"; });
+    var confirmDelete = qs("#confirmDeleteBtn");
+    if (confirmDelete) confirmDelete.addEventListener("click", function () {
+        var ids = (modal.getAttribute("data-ids") || "").split(",").filter(Boolean).map(function (x) { return parseInt(x, 10); });
+        postJson("@Url.Action("DeleteOrCancelReconciliationInvoices", "PosInvoiceReconciliation", new { area = "Pos" })", {
+            TransactionIds: ids,
+            Password: qs("#deletePassword").value,
+            Reason: qs("#deleteReason").value
+        }).then(function (data) {
+            alert(data.message || (data.success ? "تم تنفيذ الإجراء" : "تعذر تنفيذ الإجراء"));
+            if (data.success) window.location.reload();
+        });
+    });
+})();
+</script>
+</body>
+</html>

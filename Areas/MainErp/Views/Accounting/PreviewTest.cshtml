@@ -7,9 +7,9 @@
     <div class="main-erp-title-row">
         <div>
             <h3>@Model.ArabicTitle</h3>
-            <p>Preview-only accounting validation. No database rows are written from this page.</p>
+            <p>تحقق محاسبي آمن للمعاينة فقط. لا يتم إنشاء أي صفوف في قاعدة البيانات من هذه الصفحة.</p>
         </div>
-        <span class="main-erp-badge">Preview</span>
+        <span class="main-erp-badge">معاينة</span>
     </div>
     @foreach (var error in Model.Errors)
     {
@@ -22,13 +22,13 @@
     <table class="main-erp-table">
         <thead>
             <tr>
-                <th>Line</th>
-                <th>Account</th>
-                <th>Debit</th>
-                <th>Credit</th>
-                <th>Branch</th>
-                <th>Project</th>
-                <th>Description</th>
+                <th>السطر</th>
+                <th>الحساب</th>
+                <th>مدين</th>
+                <th>دائن</th>
+                <th>الفرع</th>
+                <th>المشروع</th>
+                <th>البيان</th>
             </tr>
         </thead>
         <tbody>

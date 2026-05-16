@@ -19,6 +19,7 @@
         .GroupBy(x => string.IsNullOrWhiteSpace(x.SourceDisplay) ? x.Source : x.SourceDisplay)
         .Select(g => new { Source = g.Key, Count = g.Count(), Paid = g.Sum(x => x.PaidValue), Remaining = g.Sum(x => x.RemainingValue) })
         .ToList();
+    var traceBalance = Model.DebitTotal - Model.CreditTotal;
 }
 
 <section class="main-erp-panel voucher-workspace voucher-details-page" dir="rtl">
@@ -60,6 +61,7 @@
     </div>
 
     <nav class="voucher-tab-strip" aria-label="أقسام السند">
+        <a href="#voucher-trace">&#1605;&#1587;&#1575;&#1585; &#1575;&#1604;&#1602;&#1610;&#1583;</a>
         <a href="#voucher-header">بيانات السند</a>
         <a href="#voucher-allocation">تفاصيل السداد/التخصيص</a>
         <a href="#voucher-accounting">القيود المحاسبية</a>
@@ -83,6 +85,20 @@
     </div>
 
     <div class="voucher-section-stack">
+        <section id="voucher-trace" class="voucher-section">
+            <div class="voucher-section-title">
+                <h4>&#1605;&#1587;&#1575;&#1585; &#1575;&#1604;&#1587;&#1606;&#1583; &#1608;&#1575;&#1604;&#1571;&#1579;&#1585; &#1575;&#1604;&#1605;&#1575;&#1604;&#1610;</h4>
+                <span class="voucher-status @(Model.IsBalanced ? "is-balanced" : "is-unbalanced")">@(Model.IsBalanced ? "Balanced" : "Needs review")</span>
+            </div>
+            <div class="voucher-metric-strip voucher-allocation-summary">
+                <article><span>Source</span><strong>&#1587;&#1606;&#1583; &#1602;&#1576;&#1590;</strong><small>NoteID @h.NoteId / @FormatVoucherSerial(h.NoteSerial)</small></article>
+                <article><span>Party</span><strong>@(String.IsNullOrWhiteSpace(h.PartyDisplay) ? "-" : h.PartyDisplay)</strong><small>@(String.IsNullOrWhiteSpace(h.AccountDisplay) ? "No linked account shown" : h.AccountDisplay)</small></article>
+                <article><span>Branch / project</span><strong>@(String.IsNullOrWhiteSpace(h.BranchDisplay) ? "-" : h.BranchDisplay)</strong><small>@(String.IsNullOrWhiteSpace(h.ProjectDisplay) ? "No project" : h.ProjectDisplay)</small></article>
+                <article><span>Accounting lines</span><strong>@Model.AccountingEntries.Count</strong><small>Dr @Model.DebitTotal.ToString("N2") / Cr @Model.CreditTotal.ToString("N2") / Diff @traceBalance.ToString("N2")</small></article>
+                <article><span>Linked documents</span><strong>@Model.RelatedNotes.Count</strong><small>@Model.Allocations.Count allocation rows</small></article>
+            </div>
+            <p class="main-erp-muted">Finance trace: this voucher is read from Notes and DOUBLE_ENTREY_VOUCHERS, with allocation rows shown below so finance can follow document -> accounting effect -> linked document without hidden posting assumptions.</p>
+        </section>
         <section id="voucher-header" class="voucher-section">
             <h4>بيانات السند</h4>
             <dl class="voucher-definition-grid">
@@ -101,7 +117,7 @@
                 <div><dt>مركز التكلفة</dt><dd>@h.CostCenterDisplay</dd></div>
                 <div><dt>المشروع</dt><dd>@h.ProjectDisplay</dd></div>
                 <div><dt>VAT</dt><dd>@(h.IncludeVat ? "شامل الضريبة" : "غير شامل / غير محدد")</dd></div>
-                <div><dt>تقرير VB6</dt><dd>@h.ReportName</dd></div>
+                <div><dt>التقرير</dt><dd>@h.ReportName</dd></div>
             </dl>
         </section>
 
@@ -151,7 +167,7 @@
 
         <section id="voucher-print" class="voucher-section">
             <h4>التقارير والطباعة</h4>
-            <p class="main-erp-muted">الطباعة تعمل من نفس بيانات السند والقيد عبر stored procedures. تقرير VB6 المرجعي: @h.ReportName</p>
+            <p class="main-erp-muted">الطباعة تعمل من نفس بيانات السند والقيد عبر stored procedures. التقرير المرجعي: @h.ReportName</p>
         </section>
 
         <section id="voucher-log" class="voucher-section">

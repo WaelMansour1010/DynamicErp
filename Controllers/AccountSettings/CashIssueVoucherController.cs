@@ -745,7 +745,7 @@ namespace MyERP.Controllers.AccountSettings
                         }))
                         .ToList();
                     var IssueAnalysisDetail = MyXML.GetXML(IssueAnalysisDetailRecords);
-                    db.CashIssueVoucher_Update(cashIssueVoucher.Id, cashIssueVoucher.DocumentNumber, cashIssueVoucher.DepartmentId,
+                    db.CashIssueVoucher_Update(cashIssueVoucher.Id, cashIssueVoucher.DocumentNumber, cashIssueVoucher.BranchId,
                         cashIssueVoucher.MoneyAmount, cashIssueVoucher.SourceTypeId, cashIssueVoucher.DirectExpensesId,
                         cashIssueVoucher.Date, cashIssueVoucher.CurrencyId, cashIssueVoucher.AccountId, cashIssueVoucher.IsLinked,
                         cashIssueVoucher.IsPosted, cashIssueVoucher.IsActive, cashIssueVoucher.IsDeleted, cashIssueVoucher.UserId,
@@ -874,7 +874,7 @@ namespace MyERP.Controllers.AccountSettings
 
                     try
                     {
-                        db.CashIssueVoucher_Insert(idResult, cashIssueVoucher.DepartmentId, cashIssueVoucher.MoneyAmount,
+                        db.CashIssueVoucher_Insert(idResult, cashIssueVoucher.BranchId, cashIssueVoucher.MoneyAmount,
                             cashIssueVoucher.SourceTypeId, cashIssueVoucher.DirectExpensesId, cashIssueVoucher.Date,
                             cashIssueVoucher.CurrencyId, cashIssueVoucher.AccountId, cashIssueVoucher.IsLinked, false,
                             cashIssueVoucher.IsActive, cashIssueVoucher.IsDeleted, cashIssueVoucher.UserId,
@@ -923,7 +923,11 @@ namespace MyERP.Controllers.AccountSettings
                         });
 
                         ModelState.AddModelError("", errorDetails);
-                        throw new Exception(errorDetails);
+                        return Json(new
+                        {
+                            success = "false",
+                            message = errorDetails
+                        });
                     }
                     catch (Exception ex)
                     {
@@ -936,7 +940,11 @@ namespace MyERP.Controllers.AccountSettings
                         }
 
                         ModelState.AddModelError("", errorMessage);
-                        throw new Exception(errorMessage);
+                        return Json(new
+                        {
+                            success = "false",
+                            message = errorMessage
+                        });
                     }
 
 
@@ -1039,7 +1047,7 @@ namespace MyERP.Controllers.AccountSettings
                             }))
                             .ToList();
                         var IssueAnalysisDetail = MyXML.GetXML(IssueAnalysisDetailRecords);
-                        db.CashIssueVoucher_Update(id, cashIssueVoucher.DocumentNumber, cashIssueVoucher.DepartmentId,
+                        db.CashIssueVoucher_Update(id, cashIssueVoucher.DocumentNumber, cashIssueVoucher.BranchId,
                             cashIssueVoucher.MoneyAmount, cashIssueVoucher.SourceTypeId, cashIssueVoucher.DirectExpensesId,
                             cashIssueVoucher.Date, cashIssueVoucher.CurrencyId, cashIssueVoucher.AccountId, cashIssueVoucher.IsLinked,
                             cashIssueVoucher.IsPosted, cashIssueVoucher.IsActive, cashIssueVoucher.IsDeleted, cashIssueVoucher.UserId,
@@ -1085,6 +1093,21 @@ namespace MyERP.Controllers.AccountSettings
                     .Where(x => x.Value.Errors.Count > 0)
                     .Select(x => new { x.Key, x.Value.Errors })
                     .ToArray();
+
+            if (errors.Any())
+            {
+                var modelStateMessage = string.Join("\n", errors.SelectMany(x => x.Errors.Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? x.Key : e.ErrorMessage)));
+                return Json(new
+                {
+                    success = "false",
+                    message = string.IsNullOrWhiteSpace(modelStateMessage) ? "Validation failed" : modelStateMessage,
+                    errors = errors.Select(x => new
+                    {
+                        key = x.Key,
+                        messages = x.Errors.Select(e => e.ErrorMessage).ToArray()
+                    }).ToArray()
+                });
+            }
 
 
             DepartmentRepository departmentRepository = new DepartmentRepository(db);

@@ -23,6 +23,8 @@
     var salesIndexCache = [];
     var salesIndexXhr = null;
     var salesIndexSequence = 0;
+    var salesIndexLoading = false;
+    var todayInvoicesLoading = false;
     var salesBranchCache = null;
     var salesBranchLoading = false;
     var posEntryInitialized = false;
@@ -30,6 +32,7 @@
     var serviceLoadSequence = 0;
     var primaryServiceCache = {};
     var secondaryServiceCache = {};
+    var defaultServiceCache = {};
     var commissionCache = {};
     var commissionRules = null;
     var commissionsReady = false;
@@ -54,6 +57,8 @@
     var loadedInvoiceCanEdit = false;
     var loadedInvoiceCanEditKyc = false;
     var kycSaveInProgress = false;
+    var kycUnusedLookupXhr = null;
+    var kycUnusedLookupSequence = 0;
     var kycCardAvailabilityTimer = null;
     var kycCardAvailabilityXhr = null;
     var kycAvailableCardsTimer = null;
@@ -68,6 +73,7 @@
     var uxLoadingCount = 0;
     var uxSaving = false;
     var saveRequestInFlight = false;
+    var activeSaveClientRequestId = "";
     var uxLastActionAt = 0;
     var uxCurrentStep = "service";
     var uxDebounceMs = 200;
@@ -165,6 +171,32 @@
         var parsed = parseDisplayDate(value);
         if (!parsed) { return ""; }
         return ("0" + parsed.getDate()).slice(-2) + "/" + ("0" + (parsed.getMonth() + 1)).slice(-2) + "/" + parsed.getFullYear();
+    }
+    function isExactInvoiceSearchTerm(value) {
+        var text = (value || "").trim();
+        return /^[0-9]{3,}$/.test(text) || text.length >= 8;
+    }
+    function dateRangeDays(fromDate, toDate) {
+        if (!fromDate || !toDate) { return 0; }
+        var from = parseDisplayDate(fromDate);
+        var to = parseDisplayDate(toDate);
+        if (!from || !to) { return 0; }
+        var diff = Math.abs(to.getTime() - from.getTime());
+        return Math.floor(diff / 86400000) + 1;
+    }
+    function setButtonBusy(id, busy, busyText) {
+        var button = byId(id);
+        if (!button) { return; }
+        if (busy) {
+            if (!button.getAttribute("data-original-text")) {
+                button.setAttribute("data-original-text", button.innerText || "");
+            }
+            button.disabled = true;
+            button.innerText = busyText || "جاري التحميل...";
+        } else {
+            button.disabled = false;
+            button.innerText = button.getAttribute("data-original-text") || button.innerText;
+        }
     }
     function currentTransactionDate() {
         var dateInput = byId("transactionDate");
@@ -364,7 +396,7 @@
         var value = (cardNo || "").trim();
         if (value.length === 18) { return 1; }
         if (value.length === 8) { return 19; }
-        return 19;
+        return null;
     }
 
     function cardTypeNameFromCardNo(cardNo) {
@@ -481,15 +513,20 @@
         var xhr = new XMLHttpRequest();
         xhr.open(method, url, true);
         xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        xhr.setRequestHeader("Accept", "application/json");
         xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== 4) { return; }
 
             var data = null;
-            try {
-                data = xhr.responseText ? JSON.parse(xhr.responseText) : null;
-            } catch (ignore) {
+            if (looksLikeHtmlResponse(xhr)) {
                 data = nonJsonResponse("تعذر قراءة رد السيرفر", xhr.status, xhr.responseText);
+            } else {
+                try {
+                    data = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+                } catch (ignore) {
+                    data = nonJsonResponse("تعذر قراءة رد السيرفر", xhr.status, xhr.responseText);
+                }
             }
 
             callback(xhr.status, data);
@@ -543,17 +580,41 @@
         };
     }
 
+    function looksLikeHtmlResponse(xhr) {
+        if (!xhr) { return false; }
+        var contentType = "";
+        try {
+            contentType = (xhr.getResponseHeader && xhr.getResponseHeader("Content-Type")) || "";
+        } catch (ignore) {
+            contentType = "";
+        }
+
+        if (contentType.toLowerCase().indexOf("text/html") >= 0) {
+            return true;
+        }
+
+        var text = (xhr.responseText || "").replace(/^\s+/, "");
+        return text.indexOf("<!DOCTYPE") === 0
+            || text.indexOf("<!doctype") === 0
+            || text.indexOf("<html") === 0
+            || text.indexOf("<HTML") === 0;
+    }
+
     function requestFormData(url, formData, callback) {
         var xhr = new XMLHttpRequest();
         xhr.open("POST", url, true);
         xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        xhr.setRequestHeader("Accept", "application/json");
         xhr.timeout = 60000;
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== 4) { return; }
 
             var data = null;
             try {
-                if (xhr.responseText) {
+                if (looksLikeHtmlResponse(xhr)) {
+                    data = nonJsonResponse("تعذر قراءة رد السيرفر أثناء حفظ بيانات الكارت", xhr.status, xhr.responseText);
+                    data.technicalDetails = data.technicalMessage;
+                } else if (xhr.responseText) {
                     data = JSON.parse(xhr.responseText);
                 } else {
                     data = {
@@ -1448,7 +1509,8 @@
     function setMode(mode, suppressServiceLoad) {
         var config = modes[mode] || modes["cash-in"];
         var page = byId("posPage");
-        page.className = "pos-page " + config.colorClass;
+        var standaloneKycClass = page.classList.contains("pos-kyc-standalone") ? " pos-kyc-standalone" : "";
+        page.className = "pos-page " + config.colorClass + standaloneKycClass;
         byId("transactionType").value = mode;
         byId("isCashOut").value = config.isCashOut ? "true" : "false";
         byId("isPOS").value = config.isPOS ? "true" : "false";
@@ -1561,8 +1623,12 @@
             resetServiceRows();
             if (mode === "card") {
                 var cardItemId = cardServiceItemIdFromCardNo(byId("visaNumber").value);
-                setSelectSingleOption("serviceItemId", cardItemId, cardItemId === 1 ? "كارت ميزة كيشني" : "كارت البنك الأهلي");
-                loadDefaultServiceItem(mode, false, cardItemId);
+                if (cardItemId) {
+                    setSelectSingleOption("serviceItemId", cardItemId, cardItemId === 1 ? "كارت ميزة كيشني" : "كارت البنك الأهلي");
+                    loadDefaultServiceItem(mode, false, cardItemId);
+                } else {
+                    setSelectSingleOption("serviceItemId", "", "اختر الكارت أولاً");
+                }
             } else {
                 loadPrimaryServiceItems(mode);
             }
@@ -1963,7 +2029,12 @@
         }
 
         var term = (byId("kycCardNo").value || "").trim();
-        if (!forceOpen && term.length < 2) {
+        var storeId = parseInt(byId("storeId").value, 10) || 0;
+        if (!storeId) {
+            renderAvailableKycCards([], "حدد المخزن أولاً قبل البحث عن الكروت المتاحة");
+            return;
+        }
+        if (!forceOpen && term.length < 3) {
             hideAvailableKycCards();
             return;
         }
@@ -1974,7 +2045,7 @@
 
         renderAvailableKycCards([], "جاري تحميل الكروت المتاحة...");
         var query = "?term=" + encodeURIComponent(term)
-            + "&storeId=" + encodeURIComponent(parseInt(byId("storeId").value, 10) || "");
+            + "&storeId=" + encodeURIComponent(storeId);
         kycAvailableCardsXhr = requestJson("GET", url + query, null, function (status, data) {
             if (status < 200 || status >= 300 || !data || data.success === false) {
                 renderAvailableKycCards([], (data && data.message) || "تعذر تحميل الكروت المتاحة");
@@ -1989,7 +2060,7 @@
         window.clearTimeout(kycAvailableCardsTimer);
         kycAvailableCardsTimer = window.setTimeout(function () {
             searchAvailableKycCards(forceOpen);
-        }, forceOpen ? 0 : 250);
+        }, forceOpen ? 0 : 600);
     }
 
     function selectAvailableKycCard(index) {
@@ -2000,9 +2071,10 @@
         byId("kycCardNo").value = token;
         byId("visaNumber").value = token;
         byId("paymentCardNo").value = token;
-        var cardItemId = cardServiceItemIdFromCardNo(token);
+        var cardItemId = parseInt(card.ItemId || card.itemId || 0, 10) || cardServiceItemIdFromCardNo(token);
         if (cardItemId) {
-            byId("serviceItemId").value = cardItemId;
+            setSelectSingleOption("serviceItemId", cardItemId, card.ItemName || card.itemName || (cardItemId === 1 ? "كارت ميزة كيشني" : "كارت البنك الأهلي"));
+            loadDefaultServiceItem("card", false, cardItemId);
         }
         if (byId("cardTypeName")) {
             byId("cardTypeName").value = cardTypeNameFromCardNo(token);
@@ -2470,8 +2542,37 @@
     }
 
     function submitConfirmedSave() {
+        if (saveRequestInFlight || uxIsBusy()) { return; }
+        var button = byId("confirmSaveBtn");
+        if (button) {
+            button.disabled = true;
+            button.innerText = "جاري الحفظ...";
+        }
         saveTransaction({
             preventDefault: function () { }
+        });
+    }
+
+    function resetSaveConfirmButton() {
+        var button = byId("confirmSaveBtn");
+        if (!button) { return; }
+        button.disabled = false;
+        button.innerText = "تأكيد العملية";
+    }
+
+    function newClientRequestId() {
+        if (window.crypto && window.crypto.getRandomValues) {
+            var bytes = new Uint8Array(16);
+            window.crypto.getRandomValues(bytes);
+            bytes[6] = (bytes[6] & 0x0f) | 0x40;
+            bytes[8] = (bytes[8] & 0x3f) | 0x80;
+            var hex = Array.prototype.map.call(bytes, function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+            return hex.substr(0, 8) + "-" + hex.substr(8, 4) + "-" + hex.substr(12, 4) + "-" + hex.substr(16, 4) + "-" + hex.substr(20);
+        }
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0;
+            var v = c === "x" ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
         });
     }
 
@@ -2500,10 +2601,14 @@
             return;
         }
         pendingSaveConfirmation = false;
+        activeSaveClientRequestId = activeSaveClientRequestId || newClientRequestId();
+        request.ClientRequestId = activeSaveClientRequestId;
         if (reviewMode) {
             var password = window.prompt("أدخل كلمة مرور المستخدم الحالي لتأكيد تعديل الفاتورة");
             if (!password) {
                 byId("validationSummary").innerText = "كلمة المرور غير صحيحة، لم يتم حفظ التعديل";
+                activeSaveClientRequestId = "";
+                resetSaveConfirmButton();
                 return;
             }
             request.EditPassword = password;
@@ -2529,22 +2634,28 @@
                     enableDeleteIfAllowed();
                     enableCancelIfAllowed();
                     loadEmployeeBalances();
-                    loadTodayInvoices();
+                    markInvoiceListsStale("تم الحفظ. اضغط بحث لتحديث قائمة الفواتير عند الحاجة.");
                     byId("saveResult").innerHTML = successMessage;
                     if (window.confirm("تم الحفظ بنجاح. هل تريد الطباعة؟")) {
                         openPrintForTransaction(lastSavedTransactionId);
                     }
 
+                    activeSaveClientRequestId = "";
+                    resetSaveConfirmButton();
                     reloadContextAndReset(successMessage);
                     return;
                 }
 
+                activeSaveClientRequestId = "";
+                resetSaveConfirmButton();
                 showSaveError(data);
             }, "جاري الحفظ...");
         } catch (error) {
             saveRequestInFlight = false;
             uxSaving = false;
+            activeSaveClientRequestId = "";
             uxSetOverlay(false);
+            resetSaveConfirmButton();
             updateSaveButtonState();
             throw error;
         }
@@ -2612,8 +2723,14 @@
         var dateRangeEnabled = byId("todayDateRangeEnabled") && byId("todayDateRangeEnabled").checked;
         var fromDate = dateRangeEnabled && byId("todayFromDate") ? byId("todayFromDate").value : "";
         var toDate = dateRangeEnabled && byId("todayToDate") ? byId("todayToDate").value : "";
-        if (trimmedTerm && trimmedTerm.length < 2) {
-            if (list) { list.innerText = "اكتب حرفين على الأقل للبحث في الفواتير."; }
+        if (todayInvoicesLoading) { return; }
+        if (trimmedTerm && trimmedTerm.length < 3 && !isExactInvoiceSearchTerm(trimmedTerm)) {
+            if (list) { list.innerText = "اكتب 3 أحرف على الأقل للبحث في الفواتير."; }
+            byId("todayInvoiceSummary").innerHTML = "";
+            return;
+        }
+        if (currentContext && currentContext.CanChangeDefaults === true && dateRangeEnabled && dateRangeDays(fromDate, toDate) > 7 && !isExactInvoiceSearchTerm(trimmedTerm)) {
+            if (list) { list.innerText = "بحث كل الفروع متاح لمدة 7 أيام فقط. اكتب رقم فاتورة/توكن محدد أو قلل الفترة."; }
             byId("todayInvoiceSummary").innerHTML = "";
             return;
         }
@@ -2623,13 +2740,17 @@
             todayInvoicesXhr.abort();
         }
 
+        todayInvoicesLoading = true;
+        setButtonBusy("searchTodayInvoicesBtn", true, "جاري البحث...");
         if (list) { list.innerText = "جاري البحث..."; }
         var excelOnly = byId("todayExcelOnly") && byId("todayExcelOnly").checked;
         var excelWithWarnings = byId("todayExcelWarningsOnly") && byId("todayExcelWarningsOnly").checked;
         todayInvoicesXhr = requestJson("GET", url + "?term=" + encodeURIComponent(trimmedTerm) + "&operationType=" + encodeURIComponent(operationType || "") + "&excelOnly=" + encodeURIComponent((excelOnly || excelWithWarnings) ? "true" : "false") + "&excelWithWarnings=" + encodeURIComponent(excelWithWarnings ? "true" : "false") + "&fromDate=" + encodeURIComponent(fromDate) + "&toDate=" + encodeURIComponent(toDate), null, function (status, data) {
             if (sequence !== todayInvoicesSequence) { return; }
+            todayInvoicesLoading = false;
+            setButtonBusy("searchTodayInvoicesBtn", false);
             if (status < 200 || status >= 300 || !data) {
-                byId("todayInvoicesList").innerText = "تعذر تحميل فواتير اليوم";
+                byId("todayInvoicesList").innerText = (data && data.message) || "تعذر تحميل فواتير اليوم";
                 return;
             }
 
@@ -2649,6 +2770,7 @@
         }
 
         for (var i = 0; i < invoices.length; i++) {
+            var serviceType = normalizeServiceTypeDisplay(invoices[i].ServiceType);
             var item = document.createElement("button");
             item.type = "button";
             item.className = "today-invoice-item";
@@ -2657,7 +2779,7 @@
             var excelWarningBadge = invoices[i].HasExcelImportWarning ? ' | <span class="excel-warning-badge">ملاحظة IPN</span>' : '';
             item.innerHTML =
                 '<strong>' + escapeHtml(invoices[i].NoteSerial1 || invoices[i].Transaction_ID) + '</strong>' +
-                '<span>' + escapeHtml(invoices[i].ServiceType || "") + (invoices[i].IsCancelled ? ' | ملغاة' : '') + ' | ' + escapeHtml(invoices[i].TransactionTime || "") + (invoices[i].IsExcelImported ? ' | Excel' : '') + excelWarningBadge + '</span>' +
+                '<span>' + escapeHtml(serviceType || "") + (invoices[i].IsCancelled ? ' | ملغاة' : '') + ' | ' + escapeHtml(invoices[i].TransactionTime || "") + (invoices[i].IsExcelImported ? ' | Excel' : '') + excelWarningBadge + '</span>' +
                 '<span>' + escapeHtml(invoices[i].CustomerName || "") + ' - ' + escapeHtml(invoices[i].CustomerPhone || "") + '</span>' +
                 '<span>الصافي: ' + escapeHtml(decimalText(invoices[i].NetValue || invoices[i].PayedValue || 0)) + '</span>';
             container.appendChild(item);
@@ -2667,11 +2789,12 @@
     function showTodayInvoiceSummary(index) {
         var invoice = todayInvoicesCache[index];
         if (!invoice) { return; }
+        var serviceType = normalizeServiceTypeDisplay(invoice.ServiceType);
 
         byId("todayInvoiceSummary").innerHTML =
             '<div><strong>رقم الفاتورة:</strong> ' + escapeHtml(invoice.NoteSerial1 || "") + '</div>' +
             '<div><strong>رقم الحركة:</strong> ' + escapeHtml(invoice.Transaction_ID || "") + '</div>' +
-            '<div><strong>النوع:</strong> ' + escapeHtml(invoice.ServiceType || "") + '</div>' +
+            '<div><strong>النوع:</strong> ' + escapeHtml(serviceType || "") + '</div>' +
             '<div><strong>الحالة:</strong> ' + (invoice.IsCancelled ? "ملغاة" : "سارية") + '</div>' +
             '<div><strong>المصدر:</strong> ' + (invoice.IsExcelImported ? "Excel" : "إدخال يدوي") + '</div>' +
             (invoice.HasExcelImportWarning ? '<div class="excel-warning-summary"><strong>ملاحظة Excel:</strong> ' + escapeHtml(invoice.ExcelImportWarningMessage || "يوجد تنبيه على IPN لهذه الفاتورة.") + '</div>' : '') +
@@ -2684,7 +2807,12 @@
     }
 
     function salesIndexFirst() {
+        if (kycStandalone()) { return false; }
         return readBool(getPageValue("data-sales-index-first"));
+    }
+
+    function kycStandalone() {
+        return readBool(getPageValue("data-kyc-standalone"));
     }
 
     function showSalesIndex() {
@@ -2715,7 +2843,7 @@
         var entryPanel = byId("salesEntryPanel");
         if (indexPanel) { indexPanel.classList.add("is-hidden-ui"); }
         if (entryPanel) { entryPanel.classList.remove("is-hidden-ui"); }
-        initializePosEntry(queryValue("openKyc") === "true");
+        initializePosEntry(queryValue("openKyc") === "true" || kycStandalone());
     }
 
     function initSalesIndexFilters() {
@@ -2822,6 +2950,38 @@
         container.innerHTML = html;
     }
 
+    function removeInvoiceFromCaches(transactionId) {
+        transactionId = parseInt(transactionId, 10) || 0;
+        if (!transactionId) { return; }
+        todayInvoicesCache = todayInvoicesCache.filter(function (row) { return parseInt(row.Transaction_ID, 10) !== transactionId; });
+        salesIndexCache = salesIndexCache.filter(function (row) { return parseInt(row.Transaction_ID, 10) !== transactionId; });
+        renderTodayInvoices(todayInvoicesCache, !!(byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()));
+        renderSalesIndex(salesIndexCache, !!(byId("salesSearchText") && byId("salesSearchText").value.trim()));
+    }
+
+    function markInvoiceCancelledInCaches(transactionId) {
+        transactionId = parseInt(transactionId, 10) || 0;
+        if (!transactionId) { return; }
+        [todayInvoicesCache, salesIndexCache].forEach(function (cache) {
+            for (var i = 0; i < cache.length; i++) {
+                if (parseInt(cache[i].Transaction_ID, 10) === transactionId) {
+                    cache[i].IsCancelled = true;
+                }
+            }
+        });
+        renderTodayInvoices(todayInvoicesCache, !!(byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()));
+        renderSalesIndex(salesIndexCache, !!(byId("salesSearchText") && byId("salesSearchText").value.trim()));
+    }
+
+    function markInvoiceListsStale(message) {
+        if (byId("todayInvoicesList") && (!todayInvoicesCache || !todayInvoicesCache.length)) {
+            byId("todayInvoicesList").innerText = message || "اضغط بحث لتحديث قائمة الفواتير.";
+        }
+        if (byId("salesIndexMessage")) {
+            byId("salesIndexMessage").innerText = message || "اضغط بحث لتحديث النتائج.";
+        }
+    }
+
     function loadSalesIndexInvoices() {
         var url = getUrl("data-today-invoices-url");
         var termInput = byId("salesSearchText");
@@ -2840,9 +3000,14 @@
         var excelWithWarnings = excelWarningsInput && excelWarningsInput.checked;
         var message = byId("salesIndexMessage");
         if (!url) { return; }
+        if (salesIndexLoading) { return; }
 
-        if (term && term.length < 2) {
-            if (message) { message.innerText = "اكتب حرفين على الأقل للبحث."; }
+        if (term && term.length < 3 && !isExactInvoiceSearchTerm(term)) {
+            if (message) { message.innerText = "اكتب 3 أحرف على الأقل للبحث."; }
+            return;
+        }
+        if (currentContext && currentContext.CanChangeDefaults === true && !branchId && dateRangeDays(fromDate, toDate) > 7 && !isExactInvoiceSearchTerm(term)) {
+            if (message) { message.innerText = "بحث كل الفروع متاح لمدة 7 أيام فقط. اختر فرعاً أو اكتب رقم فاتورة/توكن محدد."; }
             return;
         }
 
@@ -2852,6 +3017,8 @@
             salesIndexXhr.abort();
         }
 
+        salesIndexLoading = true;
+        setButtonBusy("salesSearchBtn", true, "جاري البحث...");
         if (byId("salesIndexResults")) { byId("salesIndexResults").innerHTML = '<div class="empty-state">جاري البحث...</div>'; }
         salesIndexXhr = requestJson("GET", url + "?term=" + encodeURIComponent(term) +
             "&operationType=" + encodeURIComponent(operationType || "") +
@@ -2861,8 +3028,10 @@
             "&excelOnly=" + encodeURIComponent((excelOnly || excelWithWarnings) ? "true" : "false") +
             "&excelWithWarnings=" + encodeURIComponent(excelWithWarnings ? "true" : "false"), null, function (status, data) {
             if (sequence !== salesIndexSequence) { return; }
+            salesIndexLoading = false;
+            setButtonBusy("salesSearchBtn", false);
             if (status < 200 || status >= 300 || !data) {
-                if (message) { message.innerText = "تعذر تحميل الفواتير."; }
+                if (message) { message.innerText = (data && data.message) || "تعذر تحميل الفواتير."; }
                 renderSalesIndex([], !!term);
                 return;
             }
@@ -2900,8 +3069,7 @@
             if (lastSavedTransactionId === transactionId) {
                 reloadContextAndReset(data.message || "تم حذف الفاتورة.");
             }
-            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
-            if (salesIndexFirst()) { loadSalesIndexInvoices(); }
+            removeInvoiceFromCaches(transactionId);
         }, "جاري حذف الفاتورة...");
     }
 
@@ -2930,8 +3098,7 @@
 
             byId("saveResult").innerText = data.message || "تم إلغاء الفاتورة.";
             loadInvoiceForReview(transactionId);
-            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
-            if (salesIndexFirst()) { loadSalesIndexInvoices(); }
+            markInvoiceCancelledInCaches(transactionId);
         }, "جاري إلغاء الفاتورة...");
     }
 
@@ -3265,6 +3432,16 @@
             .replace(/'/g, "&#039;");
     }
 
+    function normalizeServiceTypeDisplay(value) {
+        var text = String(value || "").trim();
+        if (!text) { return ""; }
+        if (text === "cash-in" || text === "cash in" || text === "كاش ان" || text === "كاش إن" || text.indexOf("ط¥ظ†") >= 0) { return "كاش إن"; }
+        if (text === "cash-out" || text === "cash out" || text === "كاش اوت" || text === "كاش أوت" || text.indexOf("ط£ظˆطھ") >= 0) { return "كاش أوت"; }
+        if (text === "card" || text === "كارت كيشني" || text.indexOf("ظƒط§ط±طھ") >= 0) { return "كارت كيشني"; }
+        if (text === "violations" || text === "مخالفات" || text.indexOf("ظ…ط®ط§ظ„") >= 0) { return "مخالفات"; }
+        return text;
+    }
+
     function populatePaymentTypes() {
         requestJsonWithLoading("GET", getUrl("data-payment-types-url"), null, function (status, data) {
             var select = byId("paymentType");
@@ -3550,6 +3727,40 @@
         return (mode || "") + "|" + (itemId || "");
     }
 
+    function defaultServiceCacheKey(mode, itemId) {
+        return (mode || "") + "|" + (itemId || "");
+    }
+
+    function prewarmServiceCaches() {
+        var warmModes = ["cash-in", "cash-out"];
+        for (var i = 0; i < warmModes.length; i++) {
+            (function (mode) {
+                var services = primaryServiceCache[mode] || [];
+                if (!services.length) { return; }
+                var selectedId = parseInt(services[0].Id || services[0].id || services[0].ItemID || services[0].itemID || 0, 10) || 0;
+                if (!selectedId) { return; }
+
+                var secondaryKey = secondaryCacheKey(mode, selectedId);
+                if (!secondaryServiceCache[secondaryKey]) {
+                    requestJson("GET", getUrl("data-secondary-services-url") + "?serviceType=" + encodeURIComponent(mode) + "&itemId=" + encodeURIComponent(selectedId), null, function (status, data) {
+                        if (status >= 200 && status < 300) {
+                            secondaryServiceCache[secondaryKey] = data || [];
+                        }
+                    });
+                }
+
+                var defaultKey = defaultServiceCacheKey(mode, selectedId);
+                if (!defaultServiceCache[defaultKey]) {
+                    requestJson("GET", getUrl("data-default-service-url") + "?serviceType=" + encodeURIComponent(mode) + "&itemId=" + encodeURIComponent(selectedId), null, function (status, data) {
+                        if (status >= 200 && status < 300 && data && data.length) {
+                            defaultServiceCache[defaultKey] = data;
+                        }
+                    });
+                }
+            })(warmModes[i]);
+        }
+    }
+
     function preloadCommissionSettings(callback) {
         commissionsReady = false;
         updateSaveButtonState();
@@ -3565,6 +3776,7 @@
                 commissionRules = data.commissionRules || data.CommissionRules || null;
                 commissionCache = {};
                 commissionsReady = true;
+                prewarmServiceCaches();
             } else {
                 commissionRules = null;
                 commissionsReady = false;
@@ -3587,7 +3799,7 @@
         }
 
         setSelectLoading(byId("serviceItemId"), "تحميل...");
-        requestJsonWithLoading("GET", getUrl("data-primary-services-url") + "?serviceType=" + encodeURIComponent(requestedMode), null, function (status, data) {
+        requestJson("GET", getUrl("data-primary-services-url") + "?serviceType=" + encodeURIComponent(requestedMode), null, function (status, data) {
             if (reviewMode || byId("transactionType").value !== requestedMode) {
                 return;
             }
@@ -3626,7 +3838,7 @@
         }
 
         setSelectLoading(select, "تحميل...");
-        requestJsonWithLoading("GET", getUrl("data-secondary-services-url") + "?serviceType=" + encodeURIComponent(mode) + "&itemId=" + encodeURIComponent(itemId), null, function (status, data) {
+        requestJson("GET", getUrl("data-secondary-services-url") + "?serviceType=" + encodeURIComponent(mode) + "&itemId=" + encodeURIComponent(itemId), null, function (status, data) {
             if (reviewMode || byId("transactionType").value !== mode || byId("serviceItemId").value !== String(itemId)) {
                 return;
             }
@@ -3711,8 +3923,16 @@
             url += "&itemId=" + encodeURIComponent(itemId);
         }
 
-        markCommissionPending("جاري تحميل خدمة كيشني وإعدادات العمولات...");
-        requestJsonWithLoading("GET", url, null, function (status, data) {
+        var cacheKey = defaultServiceCacheKey(requestedMode, itemId || "");
+        if (defaultServiceCache[cacheKey]) {
+            markCommissionPending("جاري حساب القيمة...");
+            var cachedRow = append ? createEmptyItemRow() : byId("itemsTable").querySelector("tbody tr");
+            applyServiceItem(cachedRow, defaultServiceCache[cacheKey][0]);
+            return;
+        }
+
+        markCommissionPending("جاري حساب القيمة...");
+        requestJson("GET", url, null, function (status, data) {
             if (reviewMode || requestId !== serviceLoadSequence || byId("transactionType").value !== requestedMode) {
                 return;
             }
@@ -3724,6 +3944,7 @@
                 return;
             }
 
+            defaultServiceCache[cacheKey] = data;
             var row = append ? createEmptyItemRow() : byId("itemsTable").querySelector("tbody tr");
             applyServiceItem(row, data[0]);
         });
@@ -3939,6 +4160,11 @@
         if (data.VisaNumber) {
             byId("visaNumber").value = data.VisaNumber;
             byId("paymentCardNo").value = data.VisaNumber;
+            var cardItemId = cardServiceItemIdFromCardNo(data.VisaNumber);
+            if (cardItemId) {
+                setSelectSingleOption("serviceItemId", cardItemId, cardItemId === 1 ? "كارت ميزة كيشني" : "كارت البنك الأهلي");
+                loadDefaultServiceItem("card", false, cardItemId);
+            }
             if (byId("cardTypeName")) {
                 byId("cardTypeName").value = cardTypeNameFromCardNo(data.VisaNumber);
             }
@@ -4222,8 +4448,8 @@
             byId("kycSearchResults").innerHTML = "أدخل رقم موبايل أو توكن أو رقم قومي أو اسم عميل للبحث";
             return;
         }
-        if (term.length < 2) {
-            byId("kycSearchResults").innerHTML = "اكتب حرفين على الأقل للبحث";
+        if (term.length < 3) {
+            byId("kycSearchResults").innerHTML = "اكتب 3 أحرف على الأقل للبحث";
             return;
         }
 
@@ -4233,8 +4459,10 @@
         }
 
         byId("kycSearchResults").innerHTML = "جاري البحث...";
+        setButtonBusy("kycSearchBtn", true, "جاري البحث...");
         kycSearchXhr = requestJson("GET", getUrl("data-customer-search-url") + "?term=" + encodeURIComponent(term), null, function (status, data) {
             if (sequence !== kycSearchSequence) { return; }
+            setButtonBusy("kycSearchBtn", false);
             var resultsBox = byId("kycSearchResults");
             if (status < 200 || status >= 300 || !data) {
                 resultsBox.innerHTML = "لا توجد نتائج";
@@ -4299,14 +4527,20 @@
 
         kycUnusedLookupTimer = window.setTimeout(function () {
             lookupUnusedKycCustomer(value);
-        }, 350);
+        }, 700);
     }
 
     function lookupUnusedKycCustomer(term) {
         var url = getUrl("data-unused-kyc-lookup-url");
         if (!url || !term || savedKycCustomerId() > 0) { return; }
 
-        requestJson("GET", url + "?term=" + encodeURIComponent(term), null, function (status, data) {
+        var sequence = ++kycUnusedLookupSequence;
+        if (kycUnusedLookupXhr && kycUnusedLookupXhr.readyState !== 4 && kycUnusedLookupXhr.abort) {
+            kycUnusedLookupXhr.abort();
+        }
+
+        kycUnusedLookupXhr = requestJson("GET", url + "?term=" + encodeURIComponent(term), null, function (status, data) {
+            if (sequence !== kycUnusedLookupSequence) { return; }
             if (status < 200 || status >= 300 || !data) { return; }
             if (savedKycCustomerId() > 0) { return; }
 
@@ -5011,6 +5245,7 @@
             return;
         }
         if (event.target.id === "confirmSaveBtn") {
+            if (saveRequestInFlight || uxIsBusy() || event.target.disabled) { return; }
             pendingSaveConfirmation = true;
             uxLastActionAt = 0;
             closeSaveConfirmation();
@@ -5041,6 +5276,9 @@
         }
         if (event.target.id === "salesSearchBtn") {
             loadSalesIndexInvoices();
+        }
+        if (event.target.id === "searchTodayInvoicesBtn") {
+            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
         }
         if (event.target.id === "deleteCurrentInvoiceBtn") {
             deleteInvoice(savedTransactionId());
@@ -5167,6 +5405,21 @@
         if (event.key === "Escape") {
             hideAvailableKycCards();
         }
+        if (event.key === "Enter" && event.target && event.target.id === "kycSearchTerm") {
+            event.preventDefault();
+            searchKeshniCardCustomers();
+            return;
+        }
+        if (event.key === "Enter" && event.target && event.target.id === "todayInvoiceSearch") {
+            event.preventDefault();
+            loadTodayInvoices(event.target.value.trim());
+            return;
+        }
+        if (event.key === "Enter" && event.target && event.target.id === "salesSearchText") {
+            event.preventDefault();
+            loadSalesIndexInvoices();
+            return;
+        }
         if (event.key === "Enter" && isAmountInput(event.target)) {
             event.preventDefault();
             amountEnterAdvancePending = true;
@@ -5224,8 +5477,13 @@
             if (byId("cardTypeName")) {
                 byId("cardTypeName").value = cardTypeName;
             }
-            setSelectSingleOption("serviceItemId", cardItemId, cardItemId === 1 ? "كارت ميزة كيشني" : "كارت البنك الأهلي");
-            loadDefaultServiceItem("card", false, cardItemId);
+            if (cardItemId) {
+                setSelectSingleOption("serviceItemId", cardItemId, cardItemId === 1 ? "كارت ميزة كيشني" : "كارت البنك الأهلي");
+                loadDefaultServiceItem("card", false, cardItemId);
+            } else {
+                setSelectSingleOption("serviceItemId", "", "اختر الكارت أولاً");
+                resetServiceRows();
+            }
         }
 
         if (event.target.id === "cardNationalId" && byId("transactionType").value === "card") {
@@ -5296,19 +5554,11 @@
         }
 
         if (event.target.id === "todayInvoiceSearch") {
-            window.clearTimeout(todayInvoicesTimer);
-            todayInvoicesTimer = window.setTimeout(function () {
-                loadTodayInvoices(event.target.value.trim());
-            }, 400);
+            byId("todayInvoiceSummary").innerHTML = "";
         }
 
         if (event.target.id === "salesSearchText") {
-            window.clearTimeout(todayInvoicesTimer);
-            todayInvoicesTimer = window.setTimeout(function () {
-                if ((event.target.value || "").trim().length >= 2) {
-                    loadSalesIndexInvoices();
-                }
-            }, 500);
+            if (byId("salesIndexMessage")) { byId("salesIndexMessage").innerText = "اضغط بحث البيانات لتنفيذ البحث."; }
         }
         if (event.target.id === "salesSearchBranchText") {
             if (byId("salesSearchBranchId")) { byId("salesSearchBranchId").value = ""; }
@@ -5399,7 +5649,8 @@
             setMode(byId("transactionType").value);
         }
         if (event.target.id === "todayInvoiceTypeFilter") {
-            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
+            byId("todayInvoicesList").innerText = "اضغط بحث لعرض الفواتير حسب الفلاتر الحالية.";
+            byId("todayInvoiceSummary").innerHTML = "";
         }
         if (event.target.id === "todayDateRangeEnabled") {
             if (event.target.checked) {
@@ -5407,31 +5658,35 @@
                 if (byId("todayFromDate") && !byId("todayFromDate").value) { byId("todayFromDate").value = today; }
                 if (byId("todayToDate") && !byId("todayToDate").value) { byId("todayToDate").value = today; }
             }
-            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
+            byId("todayInvoicesList").innerText = "اضغط بحث لعرض الفواتير حسب الفلاتر الحالية.";
+            byId("todayInvoiceSummary").innerHTML = "";
         }
         if (event.target.id === "todayFromDate" || event.target.id === "todayToDate") {
             if (byId("todayDateRangeEnabled")) { byId("todayDateRangeEnabled").checked = true; }
-            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
+            byId("todayInvoicesList").innerText = "اضغط بحث لعرض الفواتير حسب الفترة الحالية.";
+            byId("todayInvoiceSummary").innerHTML = "";
         }
         if (event.target.id === "todayExcelOnly") {
-            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
+            byId("todayInvoicesList").innerText = "اضغط بحث لعرض فواتير Excel.";
+            byId("todayInvoiceSummary").innerHTML = "";
         }
         if (event.target.id === "todayExcelWarningsOnly") {
             if (event.target.checked && byId("todayExcelOnly")) { byId("todayExcelOnly").checked = true; }
-            loadTodayInvoices((byId("todayInvoiceSearch") && byId("todayInvoiceSearch").value.trim()) || "");
+            byId("todayInvoicesList").innerText = "اضغط بحث لعرض فواتير Excel بملاحظات.";
+            byId("todayInvoiceSummary").innerHTML = "";
         }
         if (event.target.id === "salesSearchType") {
-            loadSalesIndexInvoices();
+            if (byId("salesIndexMessage")) { byId("salesIndexMessage").innerText = "اضغط بحث البيانات لتنفيذ البحث."; }
         }
         if (event.target.id === "salesExcelOnly") {
-            loadSalesIndexInvoices();
+            if (byId("salesIndexMessage")) { byId("salesIndexMessage").innerText = "اضغط بحث البيانات لتنفيذ البحث."; }
         }
         if (event.target.id === "salesExcelWarningsOnly") {
             if (event.target.checked && byId("salesExcelOnly")) { byId("salesExcelOnly").checked = true; }
-            loadSalesIndexInvoices();
+            if (byId("salesIndexMessage")) { byId("salesIndexMessage").innerText = "اضغط بحث البيانات لتنفيذ البحث."; }
         }
         if (event.target.id === "salesSearchFromDate" || event.target.id === "salesSearchToDate") {
-            loadSalesIndexInvoices();
+            if (byId("salesIndexMessage")) { byId("salesIndexMessage").innerText = "اضغط بحث البيانات لتنفيذ البحث."; }
         }
         uxApplyFlow();
     });
@@ -5457,7 +5712,7 @@
     if (salesIndexFirst()) {
         showSalesIndex();
     } else {
-        initializePosEntry(queryValue("openKyc") === "true");
+        initializePosEntry(queryValue("openKyc") === "true" || kycStandalone());
     }
     updateSaveButtonState();
     uxApplyFlow();

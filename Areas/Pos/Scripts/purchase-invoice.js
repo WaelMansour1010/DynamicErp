@@ -570,6 +570,31 @@
             searchBody.innerHTML = "<tr><td colspan=\"8\" class=\"empty-index-row\">" + escapeHtml(messageText) + "</td></tr>";
         }
 
+        var searchRunning = false;
+        function setSearchBusy(value) {
+            var button = byId("purchaseSearchBtn");
+            if (!button) { return; }
+            button.disabled = !!value;
+            button.innerText = value ? "جاري البحث..." : "بحث";
+        }
+
+        function validateSearch() {
+            var invoice = (byId("purchaseSearchInvoice").value || "").trim();
+            var supplier = (byId("purchaseSearchSupplier").value || "").trim();
+            var fromDate = byId("purchaseSearchFrom").value || "";
+            var toDate = byId("purchaseSearchTo").value || "";
+            if (invoice && invoice.length < 3 && !/^[0-9]{3,}$/.test(invoice)) {
+                return "اكتب 3 أحرف على الأقل في رقم الفاتورة/البحث.";
+            }
+            if (supplier && supplier.length < 3 && !/^[0-9]{3,}$/.test(supplier)) {
+                return "اكتب 3 أحرف على الأقل في بحث المورد.";
+            }
+            if (!fromDate || !toDate) {
+                return (invoice.length >= 3 || supplier.length >= 3) ? "" : "حدد فترة البحث أو اكتب بحثاً محدداً من 3 أحرف على الأقل.";
+            }
+            return "";
+        }
+
         function renderSearchRows(items) {
             if (!items || !items.length) {
                 emptyRow("لا توجد فواتير مطابقة للفلاتر.");
@@ -591,6 +616,14 @@
         }
 
         function search() {
+            var validationMessage = validateSearch();
+            if (validationMessage) {
+                emptyRow(validationMessage);
+                return;
+            }
+            if (searchRunning) { return; }
+            searchRunning = true;
+            setSearchBusy(true);
             emptyRow("جاري البحث...");
             fetch(getUrl("data-search-url"), {
                 method: "POST",
@@ -613,7 +646,11 @@
                     }
                     renderSearchRows(result.data.rows || []);
                 })
-                .catch(function (error) { emptyRow(error.message); });
+                .catch(function (error) { emptyRow(error.message); })
+                .then(function () {
+                    searchRunning = false;
+                    setSearchBusy(false);
+                });
         }
 
         function loadInvoice(transactionId) {

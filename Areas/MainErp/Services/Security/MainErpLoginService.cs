@@ -46,7 +46,7 @@ namespace MyERP.Areas.MainErp.Services.Security
                 }
 
                 var context = BuildContext(connection, user);
-                context.ConnectionStringName = "MainErp_ConnectionString";
+                context.ConnectionStringName = MainErpDbConnectionFactory.ResolveActiveConnectionStringName();
                 context.DatabaseName = connection.Database;
                 return context;
             }
@@ -63,7 +63,7 @@ namespace MyERP.Areas.MainErp.Services.Security
                 }
 
                 var context = BuildContext(connection, user);
-                context.ConnectionStringName = "MainErp_ConnectionString";
+                context.ConnectionStringName = MainErpDbConnectionFactory.ResolveActiveConnectionStringName();
                 context.DatabaseName = connection.Database;
                 return context;
             }

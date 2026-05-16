@@ -1,9 +1,18 @@
 /*
     Kishny POS - Sales invoice and KYC search performance.
     SQL Server 2012 compatible.
+    Invoice side-list reads use NOLOCK because this endpoint is display-only and
+    must not deadlock with dbo.usp_POS_SaveTransaction during teller traffic.
 */
 
 SET NOCOUNT ON;
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET NUMERIC_ROUNDABORT OFF;
 GO
 
 IF OBJECT_ID(N'dbo.Transactions', N'U') IS NOT NULL
@@ -120,7 +129,7 @@ BEGIN
 
         INSERT INTO #CandidateTransactions (Transaction_ID)
         SELECT TOP (75) t.Transaction_ID
-        FROM dbo.Transactions t
+        FROM dbo.Transactions t WITH (NOLOCK)
         WHERE t.Transaction_Type = 21
           AND t.Transaction_Date >= @from
           AND t.Transaction_Date < @toExclusive
@@ -131,7 +140,7 @@ BEGIN
 
         INSERT INTO #CandidateTransactions (Transaction_ID)
         SELECT TOP (75) t.Transaction_ID
-        FROM dbo.Transactions t
+        FROM dbo.Transactions t WITH (NOLOCK)
         WHERE t.Transaction_Type = 21
           AND t.Transaction_Date >= @from
           AND t.Transaction_Date < @toExclusive
@@ -143,7 +152,7 @@ BEGIN
 
         INSERT INTO #CandidateTransactions (Transaction_ID)
         SELECT TOP (75) t.Transaction_ID
-        FROM dbo.Transactions t
+        FROM dbo.Transactions t WITH (NOLOCK)
         WHERE t.Transaction_Type = 21
           AND t.Transaction_Date >= @from
           AND t.Transaction_Date < @toExclusive
@@ -157,7 +166,7 @@ BEGIN
         BEGIN
             INSERT INTO #CandidateTransactions (Transaction_ID)
             SELECT TOP (75) t.Transaction_ID
-            FROM dbo.Transactions t
+            FROM dbo.Transactions t WITH (NOLOCK)
             WHERE t.Transaction_Type = 21
               AND t.Transaction_Date >= @from
               AND t.Transaction_Date < @toExclusive
@@ -179,7 +188,7 @@ BEGIN
         BEGIN
             INSERT INTO #CandidateTransactions (Transaction_ID)
             SELECT TOP (50) t.Transaction_ID
-            FROM dbo.Transactions t
+            FROM dbo.Transactions t WITH (NOLOCK)
             WHERE t.Transaction_Type = 21
               AND t.Transaction_Date >= @from
               AND t.Transaction_Date < @toExclusive
@@ -188,7 +197,7 @@ BEGIN
               AND EXISTS
               (
                   SELECT 1
-                  FROM dbo.Transaction_Details d
+                   FROM dbo.Transaction_Details d WITH (NOLOCK)
                   WHERE d.Transaction_ID = t.Transaction_ID
                     AND d.ItemSerial LIKE @search + N'%'
               )
@@ -218,7 +227,7 @@ BEGIN
                 t.IsCashOut,
                 t.IsCancelled
             FROM #CandidateTransactions c
-            INNER JOIN dbo.Transactions t ON t.Transaction_ID = c.Transaction_ID
+            INNER JOIN dbo.Transactions t WITH (NOLOCK) ON t.Transaction_ID = c.Transaction_ID
             WHERE
               (
                   @operationType = N''
@@ -233,7 +242,7 @@ BEGIN
                   OR EXISTS
                   (
                       SELECT 1
-                      FROM dbo.POS_ImportBatchRow er
+                       FROM dbo.POS_ImportBatchRow er WITH (NOLOCK)
                       WHERE er.TransactionId = t.Transaction_ID
                         AND er.Status = N'Imported'
                   )
@@ -244,7 +253,7 @@ BEGIN
                   OR EXISTS
                   (
                       SELECT 1
-                      FROM dbo.POS_ImportBatchRow wr
+                       FROM dbo.POS_ImportBatchRow wr WITH (NOLOCK)
                       WHERE wr.TransactionId = t.Transaction_ID
                         AND wr.Status = N'Imported'
                         AND CHARINDEX(N'[ExcelImportWarning]', ISNULL(wr.Message, N'')) > 0
@@ -280,7 +289,7 @@ BEGIN
         OUTER APPLY
         (
             SELECT TOP (1) r.RowId, r.BatchId, r.Message
-            FROM dbo.POS_ImportBatchRow r
+            FROM dbo.POS_ImportBatchRow r WITH (NOLOCK)
             WHERE r.TransactionId = b.Transaction_ID
               AND r.Status = N'Imported'
             ORDER BY r.RowId DESC
@@ -312,7 +321,7 @@ BEGIN
             t.TrafficViolations,
             t.IsCashOut,
             t.IsCancelled
-        FROM dbo.Transactions t
+        FROM dbo.Transactions t WITH (NOLOCK)
         WHERE t.Transaction_Type = 21
           AND t.Transaction_Date >= @from
           AND t.Transaction_Date < @toExclusive
@@ -354,7 +363,7 @@ BEGIN
               OR EXISTS
               (
                   SELECT 1
-                  FROM dbo.Transaction_Details d
+                   FROM dbo.Transaction_Details d WITH (NOLOCK)
                   WHERE d.Transaction_ID = t.Transaction_ID
                     AND ISNULL(d.ItemSerial, N'') LIKE @like
               )
@@ -365,7 +374,7 @@ BEGIN
               OR EXISTS
               (
                   SELECT 1
-                  FROM dbo.POS_ImportBatchRow er
+                   FROM dbo.POS_ImportBatchRow er WITH (NOLOCK)
                   WHERE er.TransactionId = t.Transaction_ID
                     AND er.Status = N'Imported'
               )
@@ -376,7 +385,7 @@ BEGIN
               OR EXISTS
               (
                   SELECT 1
-                  FROM dbo.POS_ImportBatchRow wr
+                   FROM dbo.POS_ImportBatchRow wr WITH (NOLOCK)
                   WHERE wr.TransactionId = t.Transaction_ID
                     AND wr.Status = N'Imported'
                     AND CHARINDEX(N'[ExcelImportWarning]', ISNULL(wr.Message, N'')) > 0
@@ -412,7 +421,7 @@ BEGIN
     OUTER APPLY
     (
         SELECT TOP (1) r.RowId, r.BatchId, r.Message
-        FROM dbo.POS_ImportBatchRow r
+        FROM dbo.POS_ImportBatchRow r WITH (NOLOCK)
         WHERE r.TransactionId = b.Transaction_ID
           AND r.Status = N'Imported'
         ORDER BY r.RowId DESC

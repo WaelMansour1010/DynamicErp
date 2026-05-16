@@ -1,0 +1,148 @@
+@model MyERP.Areas.MainErp.ViewModels.Options.OptionsIndexViewModel
+@using System.Linq
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "إعدادات النظام";
+    var canEdit = Model.Permissions != null && Model.Permissions.CanEdit;
+    var firstCategory = Model.Categories.FirstOrDefault();
+}
+
+<link href="@Url.Content("~/Areas/MainErp/Content/options.css?v=20260514")" rel="stylesheet" />
+
+<section class="main-erp-panel options-page" dir="rtl" id="optionsPage"
+         data-save-url="@Url.Action("Save", "Options", new { area = "MainErp" })">
+    @Html.AntiForgeryToken()
+
+    <header class="options-hero">
+        <div>
+            <span>إعدادات النظام</span>
+            <h2>إعدادات النظام الافتراضية</h2>
+            <p>محرر حديث لإعدادات <b>TblOptions</b> بنفس الحقول الأصلية، مع تقسيم ذكي للتبويبات وحفظ مباشر على نفس صف الإعدادات المستخدم في النظام.</p>
+        </div>
+        <div class="options-actions">
+            <button type="button" id="optionsSaveBtn" @(canEdit ? "" : "disabled")><i class="fas fa-save"></i> حفظ الإعدادات</button>
+        </div>
+    </header>
+
+    <div id="optionsStatus" class="options-status" hidden></div>
+
+    <section class="options-summary">
+        <article>
+            <i class="fas fa-building"></i>
+            <span>الشركة</span>
+            <strong>@(String.IsNullOrWhiteSpace(Model.Summary.CompanyArabicName) ? "غير محدد" : Model.Summary.CompanyArabicName)</strong>
+        </article>
+        <article>
+            <i class="fas fa-file-invoice"></i>
+            <span>الرقم الضريبي</span>
+            <strong>@(String.IsNullOrWhiteSpace(Model.Summary.VatRegistrationNumber) ? "غير محدد" : Model.Summary.VatRegistrationNumber)</strong>
+        </article>
+        <article>
+            <i class="fas fa-toggle-on"></i>
+            <span>إعدادات منطقية</span>
+            <strong>@Model.Summary.BooleanFieldsCount</strong>
+        </article>
+        <article>
+            <i class="fas fa-database"></i>
+            <span>إجمالي الحقول</span>
+            <strong>@Model.Summary.FieldsCount</strong>
+        </article>
+    </section>
+
+    <section class="options-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+            <strong>تنبيه إنتاجي</strong>
+            <span>هذه الإعدادات تؤثر على الحسابات، الأصناف، الفواتير، الطباعة، والفاتورة الإلكترونية. راجع التغيير قبل الحفظ.</span>
+        </div>
+    </section>
+
+    <div class="options-shell">
+        <aside class="options-nav">
+            <div class="options-search">
+                <i class="fas fa-search"></i>
+                <input type="search" id="optionsSearch" placeholder="بحث باسم الإعداد أو اسم العمود" />
+            </div>
+            <div class="options-tabs" role="tablist">
+                @foreach (var category in Model.Categories)
+                {
+                    var active = firstCategory != null && category.Key == firstCategory.Key;
+                    <button type="button" class="options-tab @(active ? "active" : "")" data-category="@category.Key">
+                        <i class="@category.IconCssClass"></i>
+                        <span>@category.Title</span>
+                        <small>@category.Fields.Count</small>
+                    </button>
+                }
+            </div>
+        </aside>
+
+        <main class="options-workspace">
+            @foreach (var category in Model.Categories)
+            {
+                var active = firstCategory != null && category.Key == firstCategory.Key;
+                <section class="options-category @(active ? "active" : "")" data-category-panel="@category.Key">
+                    <header>
+                        <div>
+                            <span>TblOptions</span>
+                            <h3><i class="@category.IconCssClass"></i> @category.Title</h3>
+                        </div>
+                        <strong>@category.Fields.Count حقل</strong>
+                    </header>
+
+                    <div class="options-fields">
+                        @foreach (var field in category.Fields)
+                        {
+                            <label class="option-field-card @(field.IsBoolean ? "boolean" : "") @(field.IsSensitive ? "sensitive" : "") @(field.IsEditable ? "" : "readonly")"
+                                   data-field-card
+                                   data-search="@((field.Label + " " + field.Name).ToLowerInvariant())">
+                                <span class="field-title">@field.Label</span>
+                                <span class="field-column">@field.Name</span>
+
+                                @if (!field.IsEditable)
+                                {
+                                    <input type="text" value="غير قابل للتحرير" disabled />
+                                }
+                                else if (field.IsBoolean)
+                                {
+                                    <span class="option-toggle">
+                                        <input class="option-field" type="checkbox" data-name="@field.Name" @(field.Value == "true" ? "checked" : "") @(canEdit ? "" : "disabled") />
+                                        <b></b>
+                                    </span>
+                                }
+                                else if (field.HasChoices)
+                                {
+                                    <select class="option-field" data-name="@field.Name" @(canEdit ? "" : "disabled")>
+                                        @foreach (var choice in field.Choices)
+                                        {
+                                            <option value="@choice.Value" @(String.Equals(choice.Value, field.Value, StringComparison.OrdinalIgnoreCase) ? "selected" : "")>@choice.Text</option>
+                                        }
+                                    </select>
+                                }
+                                else if (field.IsLongText || field.IsSensitive)
+                                {
+                                    <textarea class="option-field" data-name="@field.Name" rows="3" @(canEdit ? "" : "disabled")>@field.Value</textarea>
+                                }
+                                else if (field.IsNumber)
+                                {
+                                    <input class="option-field" type="number" step="any" data-name="@field.Name" value="@field.Value" @(canEdit ? "" : "disabled") />
+                                }
+                                else if (field.IsDate)
+                                {
+                                    <input class="option-field" type="date" data-name="@field.Name" value="@field.Value" @(canEdit ? "" : "disabled") />
+                                }
+                                else
+                                {
+                                    <input class="option-field" type="text" data-name="@field.Name" value="@field.Value" maxlength="@(field.MaxLength.HasValue && field.MaxLength.Value > 0 ? field.MaxLength.Value.ToString() : "")" @(canEdit ? "" : "disabled") />
+                                }
+
+                                <small>@field.HelpText</small>
+                            </label>
+                        }
+                    </div>
+                </section>
+            }
+        </main>
+    </div>
+</section>
+
+<script src="@Url.Content("~/Areas/MainErp/Scripts/options.js?v=20260514")"></script>

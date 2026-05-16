@@ -81,6 +81,11 @@
         {
             <div class="alert warning">تم منع التطبيق لأن قاعدة البيانات الحالية لا تحتوي على كائنات POS المطلوبة.</div>
         }
+        @if (status != null && !status.CanApplyUpdates && !string.IsNullOrWhiteSpace(status.PermissionMessage))
+        {
+            <div class="alert error">@status.PermissionMessage</div>
+        }
+
         @if (status != null && status.HashMismatchCount > 0)
         {
             <div class="alert error">يوجد اختلاف Hash في سكريبت مطبق سابقاً. التنفيذ متوقف حتى تتم المراجعة الفنية.</div>
@@ -107,7 +112,7 @@
                     <input type="checkbox" name="confirmBackup" value="true" />
                     أؤكد أنه تم أخذ نسخة احتياطية كاملة من قاعدة البيانات قبل تطبيق التحديثات.
                 </label>
-                <button type="submit" class="danger" @(status == null || !status.IsPosDatabase || status.HashMismatchCount > 0 ? "disabled" : "")>تطبيق التحديثات المنتظرة</button>
+                <button type="submit" class="danger" @(status == null || !status.IsPosDatabase || !status.CanApplyUpdates || status.HashMismatchCount > 0 ? "disabled" : "")>تطبيق التحديثات المنتظرة</button>
             }
             @if (status != null && status.LastRunId.HasValue)
             {

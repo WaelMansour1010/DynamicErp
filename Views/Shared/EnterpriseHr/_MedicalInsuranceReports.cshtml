@@ -1,17 +1,17 @@
+﻿@{ var hrArea = (ViewBag.SharedHrArea as string) ?? (ViewContext.RouteData.DataTokens["area"] as string) ?? string.Empty; Func<string, string> hrUrl = action => Url.Action(action, "EmployeePayroll", new { area = hrArea }); }
 <main class="ep-page" data-screen="insurance-reports"
-      data-lookups-url="@Url.Action("Lookups", "EmployeePayroll")"
-      data-subscriptions-url="@Url.Action("InsuranceSubscriptionReport", "EmployeePayroll")"
-      data-deductions-url="@Url.Action("InsuranceDeductionReport", "EmployeePayroll")">
+      data-lookups-url="@hrUrl("Lookups")"
+      data-subscriptions-url="@hrUrl("InsuranceSubscriptionReport")"
+      data-deductions-url="@hrUrl("InsuranceDeductionReport")">
     <header class="ep-header">
         <div>
             <h1>تقارير التأمين الطبي</h1>
             <p>متابعة الموظفين المشتركين وخصومات التأمين وتكلفة الشركة حسب الفترة.</p>
         </div>
         <div class="ep-header-actions">
-            <a class="ep-link" href="@Url.Action("Employees", "EmployeePayroll")"><i class="fas fa-users"></i> الموظفون</a>
-            <a class="ep-link" href="@Url.Action("SalaryRun", "EmployeePayroll")"><i class="fas fa-file-invoice-dollar"></i> مسير الرواتب</a>
-            <a class="ep-link" href="@Url.Action("MedicalInsurance", "EmployeePayroll")"><i class="fas fa-briefcase-medical"></i> إعدادات التأمين</a>
-        </div>
+            <a class="ep-link" href="@hrUrl("Employees")"><i class="fas fa-users"></i> الموظفون</a>
+            <a class="ep-link" href="@hrUrl("SalaryRun")"><i class="fas fa-file-invoice-dollar"></i> مسير الرواتب</a>
+                    </div>
     </header>
 
     <section class="ep-toolbar">
@@ -46,3 +46,4 @@
     </section>
     <div class="ep-message" id="epMessage"></div>
 </main>
+

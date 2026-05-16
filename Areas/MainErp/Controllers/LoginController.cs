@@ -62,6 +62,7 @@ namespace MyERP.Areas.MainErp.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Logout()
         {
+            ClearPosBridgeContext();
             Session.Remove(MainErpSessionKeys.Context);
             Session.Remove(MainErpSessionKeys.UserId);
             Session.Remove(MainErpSessionKeys.UserName);
@@ -85,6 +86,7 @@ namespace MyERP.Areas.MainErp.Controllers
 
         private void StoreContext(MainErpUserContext context)
         {
+            ClearPosBridgeContext();
             Session[MainErpSessionKeys.Context] = context;
             Session[MainErpSessionKeys.UserId] = context.UserId;
             Session[MainErpSessionKeys.UserName] = context.UserName;
@@ -92,6 +94,13 @@ namespace MyERP.Areas.MainErp.Controllers
             Session[MainErpSessionKeys.BranchId] = context.BranchId;
             Session[MainErpSessionKeys.StoreId] = context.StoreId;
             Session[MainErpSessionKeys.BoxId] = context.BoxId;
+        }
+
+        private void ClearPosBridgeContext()
+        {
+            Session.Remove(MainErpPosSessionBridge.SourceSessionKey);
+            Session.Remove(MainErpPosSessionBridge.PosUserIdSessionKey);
+            Session.Remove(MainErpPosSessionBridge.PosUserNameSessionKey);
         }
 
         private MainErpUserContext GetContext()

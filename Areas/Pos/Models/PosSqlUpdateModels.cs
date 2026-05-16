@@ -31,6 +31,9 @@ namespace MyERP.Areas.Pos.Models
         public int ManualCount { get; set; }
         public DateTime? LastAppliedOn { get; set; }
         public int? LastRunId { get; set; }
+        public bool CanApplyUpdates { get; set; }
+        public bool RequiresDdlPermission { get; set; }
+        public string PermissionMessage { get; set; }
         public IList<PosSqlUpdateScriptViewModel> Scripts { get; set; }
         public IList<PosSqlUpdateRunSummary> RecentRuns { get; set; }
 
@@ -39,6 +42,7 @@ namespace MyERP.Areas.Pos.Models
             Scripts = new List<PosSqlUpdateScriptViewModel>();
             RecentRuns = new List<PosSqlUpdateRunSummary>();
             IsPosDatabase = true;
+            CanApplyUpdates = true;
         }
     }
 

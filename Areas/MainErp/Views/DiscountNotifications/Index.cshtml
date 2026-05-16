@@ -53,7 +53,7 @@
         {
             <section class="main-erp-premium-empty">
                 <h2>شاشة الإشعارات</h2>
-                <p>نقل آمن من FrmDiscounts.frm. الحفظ والترحيل والحذف واستيراد Excel غير مفعلة في هذه المرحلة.</p>
+                <p>عرض آمن للإشعارات. الحفظ والترحيل والحذف واستيراد Excel غير مفعلة في هذه المرحلة.</p>
                 <button type="submit" form="discountNotificationSearchForm">بحث</button>
             </section>
         }
@@ -61,7 +61,7 @@
         {
             <header class="main-erp-cockpit-header">
                 <div>
-                    <span class="main-erp-kicker">FrmDiscounts.frm / Read-only</span>
+                    <span class="main-erp-kicker">الإشعارات / مراجعة آمنة</span>
                     <h2>@d.NotificationTypeName - @d.NoteSerial</h2>
                     <p>@d.CustomerName · @d.BranchName · @String.Format("{0:yyyy-MM-dd}", d.NoteDate)</p>
                 </div>
@@ -187,7 +187,7 @@
         }
         var disabled = document.querySelectorAll(".main-erp-discount-notifications-screen .is-disabled-action");
         for (var i = 0; i < disabled.length; i++) {
-            disabled[i].addEventListener("click", function () { alert("هذه الوظيفة لم يتم ترحيلها بعد - Read Only Mode"); });
+            disabled[i].addEventListener("click", function () { alert("هذا الإجراء قيد الاعتماد ولا يكتب بيانات في الوضع الحالي."); });
         }
     })();
 </script>

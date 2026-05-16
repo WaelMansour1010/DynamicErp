@@ -1,0 +1,110 @@
+@model MyERP.Areas.MainErp.ViewModels.Security.MainErpPermissionsIndexViewModel
+@using System.Linq
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "الصلاحيات";
+}
+
+<section class="erp-ui-page users-page" dir="rtl">
+    <header class="erp-page-header">
+        <div>
+            <span>ScreenJuncUser</span>
+            <h1>الصلاحيات</h1>
+            <p>مصفوفة صلاحيات MainErp كما هي محفوظة في قاعدة Eng مع عرض الشاشات والمستخدمين داخل النظام.</p>
+        </div>
+        <form method="get" class="erp-filter-grid">
+            <label class="erp-field">
+                <span>بحث</span>
+                <input type="search" name="searchText" value="@Model.SearchText" placeholder="اسم شاشة، مستخدم، أو مجموعة" />
+            </label>
+            <button type="submit" class="erp-btn erp-btn-primary"><i class="fas fa-search"></i><span>بحث</span></button>
+            <a class="erp-btn" href="@Url.Action("Index", "Users", new { area = "MainErp" })"><i class="fas fa-users-cog"></i><span>المستخدمين</span></a>
+        </form>
+    </header>
+
+    <div class="erp-kpi-grid">
+        <article><span>المستخدمون</span><strong>@Model.TotalUsers</strong><small>ضمن النطاق الحالي</small></article>
+        <article><span>الشاشات</span><strong>@Model.TotalScreens</strong><small>ScreenJuncUser</small></article>
+        <article><span>سطور الصلاحيات</span><strong>@Model.TotalPermissionRows</strong><small>قراءة فعلية من Eng</small></article>
+        <article><span>النطاق</span><strong>@(Model.IsAdminView ? "مدير" : "مستخدم")</strong><small>غير المدير يرى صلاحياته فقط</small></article>
+    </div>
+
+    <div class="erp-split-grid">
+        <section class="erp-table-card">
+            <header><h2>ملخص المستخدمين</h2><span>@Model.Users.Count مستخدم</span></header>
+            <div class="erp-table-wrap">
+                <table class="erp-table">
+                    <thead>
+                        <tr>
+                            <th>المستخدم</th>
+                            <th>الشاشات</th>
+                            <th>صلاحية كاملة</th>
+                            <th>مخفية</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model.Users)
+                        {
+                            <tr>
+                                <td><strong>@user.UserName</strong><small>#@user.UserId</small></td>
+                                <td>@user.ScreenCount</td>
+                                <td><span class="erp-status is-active">@user.FullAccessCount</span></td>
+                                <td><span class="erp-status">@user.HiddenCount</span></td>
+                            </tr>
+                        }
+                        @if (!Model.Users.Any())
+                        {
+                            <tr><td colspan="4" class="erp-empty">لا توجد نتائج مطابقة.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="erp-table-card">
+            <header><h2>مصفوفة الشاشات</h2><span>@Model.Screens.Count شاشة</span></header>
+            <div class="erp-table-wrap">
+                <table class="erp-table">
+                    <thead>
+                        <tr>
+                            <th>الشاشة</th>
+                            <th>المجموعة</th>
+                            <th>مستخدمون</th>
+                            <th>عرض</th>
+                            <th>إضافة</th>
+                            <th>تعديل</th>
+                            <th>حذف</th>
+                            <th>طباعة</th>
+                            <th>بحث</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var screen in Model.Screens)
+                        {
+                            <tr>
+                                <td><strong>@(string.IsNullOrWhiteSpace(screen.DisplayName) ? screen.ScreenName : screen.DisplayName)</strong><small>@screen.ScreenName</small></td>
+                                <td>@(string.IsNullOrWhiteSpace(screen.ModuleName) ? "-" : screen.ModuleName)</td>
+                                <td>@screen.UsersCount</td>
+                                <td>@Flag(screen.CanShow)</td>
+                                <td>@Flag(screen.CanAdd)</td>
+                                <td>@Flag(screen.CanEdit)</td>
+                                <td>@Flag(screen.CanDelete)</td>
+                                <td>@Flag(screen.CanPrint)</td>
+                                <td>@Flag(screen.CanSearch)</td>
+                            </tr>
+                        }
+                        @if (!Model.Screens.Any())
+                        {
+                            <tr><td colspan="9" class="erp-empty">لا توجد شاشات مطابقة.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</section>
+
+@helper Flag(bool value)
+{
+    <span class="erp-status @(value ? "is-active" : "")">@(value ? "نعم" : "لا")</span>
+}

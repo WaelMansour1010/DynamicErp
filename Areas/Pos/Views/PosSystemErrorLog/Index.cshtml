@@ -27,7 +27,7 @@
         .filter-grid input, .filter-grid select { border:1px solid #cbd5e1; border-radius:8px; font:inherit; min-height:42px; padding:8px 10px; }
         .search-panel { border-top:1px solid #e2e8f0; display:flex; justify-content:flex-start; margin-top:16px; padding-top:16px; }
         .search-button { background:#2563eb; border:0; border-radius:8px; color:#fff; cursor:pointer; font:inherit; font-size:17px; font-weight:800; min-height:50px; min-width:200px; padding:12px 24px; box-shadow:0 10px 22px rgba(37,99,235,.18); }
-        .summary-grid { display:grid; grid-template-columns:repeat(7,minmax(130px,1fr)); gap:10px; }
+        .summary-grid { display:grid; grid-template-columns:repeat(5,minmax(150px,1fr)); gap:10px; }
         .summary-card { border:1px solid #dbe4ee; border-radius:8px; padding:12px; background:#fbfdff; min-height:78px; }
         .summary-card span { color:#64748b; display:block; font-size:12px; font-weight:700; }
         .summary-card strong { color:#0f172a; display:block; font-size:22px; margin-top:8px; word-break:break-word; }
@@ -47,6 +47,10 @@
         .timeline-item.deadlock { border-right-color:#dc2626; }
         .timeline-item.success { border-right-color:#059669; }
         .timeline-meta { color:#64748b; font-size:12px; }
+        .diagnostic-line { direction:ltr; text-align:left; unicode-bidi:embed; font-family:Consolas,"Courier New",monospace; white-space:normal; word-break:break-word; }
+        .flag { border-radius:999px; display:inline-block; font-size:12px; font-weight:800; margin-inline-start:4px; padding:2px 8px; }
+        .flag-deadlock { background:#fee2e2; color:#991b1b; }
+        .flag-timeout { background:#fef3c7; color:#92400e; }
         @@media (max-width: 1100px) { .filter-grid, .summary-grid { grid-template-columns:repeat(2,minmax(160px,1fr)); } }
         @@media (max-width: 700px) { body { padding:12px; } .filter-grid, .summary-grid { grid-template-columns:1fr; } .error-log-title { align-items:flex-start; flex-direction:column; } }
     </style>
@@ -218,6 +222,37 @@
                 return String(text === null || text === undefined ? "" : text)
                     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
             }
+            function parseJsonResponse(response) {
+                var contentType = response.headers.get("content-type") || "";
+                return response.text().then(function (text) {
+                    if (contentType.indexOf("application/json") < 0) {
+                        var looksHtml = /^\s*</.test(text || "");
+                        return {
+                            status: response.status,
+                            data: {
+                                success: false,
+                                message: looksHtml
+                                    ? "رد السيرفر ليس JSON. غالبا الجلسة انتهت أو السيرفر رجع صفحة خطأ/صلاحيات."
+                                    : "رد السيرفر ليس JSON.",
+                                details: text ? text.substring(0, 300) : ""
+                            }
+                        };
+                    }
+
+                    try {
+                        return { status: response.status, data: JSON.parse(text || "{}") };
+                    } catch (error) {
+                        return {
+                            status: response.status,
+                            data: {
+                                success: false,
+                                message: "تعذر قراءة رد السيرفر كـ JSON.",
+                                details: error.message
+                            }
+                        };
+                    }
+                });
+            }
             function displayDate(value) {
                 if (!value) { return ""; }
                 if (typeof value === "string" && value.indexOf("/Date(") === 0) {
@@ -254,7 +289,7 @@
                 table.hidden = true;
                 body.innerHTML = "";
                 fetch(errorsUrl + query, { credentials: "same-origin" })
-                    .then(function (response) { return response.json().then(function (data) { return { status: response.status, data: data }; }); })
+                    .then(parseJsonResponse)
                     .then(function (result) {
                         if (result.status < 200 || result.status >= 300 || !result.data || result.data.success === false) {
                             message.textContent = (result.data && result.data.message) || "تعذر تحميل سجل الأخطاء";
@@ -285,17 +320,37 @@
             }
             function updateSummary(summary) {
                 summary = summary || {};
+                function ensureCard(key, label) {
+                    var grid = byId("attemptSummary");
+                    if (!grid || document.querySelector("#attemptSummary [data-key='" + key + "']")) { return; }
+                    var card = document.createElement("div");
+                    card.className = "summary-card";
+                    card.innerHTML = "<span>" + escapeHtml(label) + "</span><strong data-key='" + key + "'>-</strong>";
+                    grid.appendChild(card);
+                }
+                ensureCard("TimeoutAffectedAttempts", "Timeout Attempts");
+                ensureCard("FailedAttempts", "Failed Attempts");
+                ensureCard("AverageRetryDelayMs", "Avg Retry Delay");
+                ensureCard("MaxRetryDelayMs", "Max Retry Delay");
+                ensureCard("TopSqlErrorNumber", "Top SQL Error");
+                ensureCard("TopOperationFingerprint", "Top Operation");
                 function set(key, value) {
                     var el = document.querySelector("#attemptSummary [data-key='" + key + "']");
                     if (el) { el.textContent = value; }
                 }
                 set("TotalSaveAttempts", summary.TotalSaveAttempts || 0);
                 set("DeadlockAffectedAttempts", summary.DeadlockAffectedAttempts || 0);
+                set("TimeoutAffectedAttempts", summary.TimeoutAffectedAttempts || 0);
+                set("FailedAttempts", summary.FailedAttempts || 0);
                 set("RetriedSucceeded", summary.RetriedSucceeded || 0);
                 set("RetriedFailed", summary.RetriedFailed || 0);
                 set("AverageDurationMs", Math.round(summary.AverageDurationMs || 0) + " ms");
                 set("MaxDurationMs", (summary.MaxDurationMs || 0) + " ms");
+                set("AverageRetryDelayMs", Math.round(summary.AverageRetryDelayMs || 0) + " ms");
+                set("MaxRetryDelayMs", (summary.MaxRetryDelayMs || 0) + " ms");
                 set("TopDeadlockBranch", summary.TopDeadlockBranch || "-");
+                set("TopSqlErrorNumber", summary.TopSqlErrorNumber || "-");
+                set("TopOperationFingerprint", summary.TopOperationFingerprint || "-");
             }
             function timelineHtml(items) {
                 return "<div class='timeline'>" + (items || []).map(function (item) {
@@ -310,8 +365,28 @@
                         item.Transaction_ID ? "Transaction_ID " + item.Transaction_ID : "",
                         item.Status || ""
                     ].filter(Boolean).join(" | ");
-                    return "<div class='timeline-item" + cls + "'><strong>" + escapeHtml(eventName) + "</strong><div class='timeline-meta'>" + escapeHtml(meta) + "</div><div>" + escapeHtml(item.Message || "") + "</div><div class='muted'>" + escapeHtml(item.RequestSummary || "") + "</div></div>";
+                    var operation = [
+                        item.StoreID ? "Store=" + item.StoreID : "",
+                        item.BoxID ? "Box=" + item.BoxID : "",
+                        item.PaymentType ? "Pay=" + item.PaymentType : "",
+                        item.ItemIDService ? "Service=" + item.ItemIDService : "",
+                        item.ItemIDService2 ? "Service2=" + item.ItemIDService2 : "",
+                        item.RechargeValue ? "Value=" + item.RechargeValue : "",
+                        item.ItemCount ? "Items=" + item.ItemCount : "",
+                        item.OperationFingerprint ? "Fingerprint=" + item.OperationFingerprint : ""
+                    ].filter(Boolean).join(" | ");
+                    return "<div class='timeline-item" + cls + "'><strong>" + escapeHtml(eventName) + "</strong><div class='timeline-meta'>" + escapeHtml(meta) + "</div><div class='diagnostic-line'>" + escapeHtml(operation) + "</div><div>" + escapeHtml(item.Message || "") + "</div><div class='muted diagnostic-line'>" + escapeHtml(item.RequestSummary || "") + "</div></div>";
                 }).join("") + "</div>";
+            }
+            function setAttemptsHeader() {
+                var table = byId("attemptLogTable");
+                var row = table && table.querySelector("thead tr");
+                if (!row || row.getAttribute("data-diagnostics") === "1") { return; }
+                row.setAttribute("data-diagnostics", "1");
+                row.innerHTML =
+                    "<th></th><th>SaveAttemptId</th><th>User</th><th>EmpID</th><th>Branch</th><th>Type</th>" +
+                    "<th>Store</th><th>Box</th><th>Pay</th><th>Service</th><th>Value</th><th>Items</th>" +
+                    "<th>Start</th><th>End</th><th>Duration</th><th>Retry</th><th>Max Delay</th><th>SQL</th><th>Flags</th><th>Status</th><th>Transaction_ID</th><th>Last Error</th>";
             }
             function loadAttempts() {
                 var query = "?FromDate=" + encodeURIComponent(value("attemptFromDate")) +
@@ -325,14 +400,16 @@
                 var message = byId("attemptLogMessage");
                 var table = byId("attemptLogTable");
                 var body = table.querySelector("tbody");
+                setAttemptsHeader();
                 message.textContent = "جاري تحميل محاولات حفظ POS...";
                 table.hidden = true;
                 body.innerHTML = "";
                 fetch(attemptsUrl + query, { credentials: "same-origin" })
-                    .then(function (response) { return response.json().then(function (data) { return { status: response.status, data: data }; }); })
+                    .then(parseJsonResponse)
                     .then(function (result) {
                         if (result.status < 200 || result.status >= 300 || !result.data || result.data.success === false) {
                             message.textContent = (result.data && result.data.message) || "تعذر تحميل محاولات حفظ POS";
+                            if (result.data && result.data.details) { message.textContent += " | " + result.data.details; }
                             updateSummary({});
                             return;
                         }
@@ -343,6 +420,7 @@
                         rows.forEach(function (row, index) {
                             var tr = document.createElement("tr");
                             var detailsId = "attemptTimeline" + index;
+                            var flags = (row.HasDeadlock ? "<span class='flag flag-deadlock'>Deadlock</span>" : "") + (row.HasTimeout ? "<span class='flag flag-timeout'>Timeout</span>" : "");
                             tr.innerHTML =
                                 "<td><button type='button' class='expand-button' data-target='" + detailsId + "'>التفاصيل</button></td>" +
                                 "<td>" + escapeHtml(row.SaveAttemptId || "") + "</td>" +
@@ -350,10 +428,19 @@
                                 "<td>" + escapeHtml(row.EmpID || "") + "</td>" +
                                 "<td>" + escapeHtml(row.BranchName || row.BranchId || "") + "</td>" +
                                 "<td>" + escapeHtml(row.TransactionType || "") + "</td>" +
+                                "<td>" + escapeHtml(row.StoreID || "") + "</td>" +
+                                "<td>" + escapeHtml(row.BoxID || "") + "</td>" +
+                                "<td>" + escapeHtml(row.PaymentType || "") + "</td>" +
+                                "<td>" + escapeHtml([row.ItemIDService || "", row.ItemIDService2 || ""].filter(Boolean).join(" / ")) + "</td>" +
+                                "<td>" + escapeHtml(row.RechargeValue || "") + "</td>" +
+                                "<td>" + escapeHtml(row.ItemCount || "") + "</td>" +
                                 "<td>" + escapeHtml(displayDate(row.StartTime)) + "</td>" +
                                 "<td>" + escapeHtml(displayDate(row.EndTime)) + "</td>" +
                                 "<td>" + escapeHtml(row.DurationMs !== null && row.DurationMs !== undefined ? row.DurationMs + " ms" : "") + "</td>" +
                                 "<td>" + escapeHtml(row.RetryCount || 0) + "</td>" +
+                                "<td>" + escapeHtml(row.MaxDelayMs ? row.MaxDelayMs + " ms" : "") + "</td>" +
+                                "<td>" + escapeHtml(row.LastSqlErrorNumber || "") + "</td>" +
+                                "<td>" + flags + "</td>" +
                                 "<td class='" + statusClass(row.FinalStatus) + "'>" + escapeHtml(row.FinalStatus || "") + "</td>" +
                                 "<td>" + escapeHtml(row.Transaction_ID || "") + "</td>" +
                                 "<td>" + escapeHtml(row.LastErrorMessage || "") + "</td>";
@@ -361,7 +448,7 @@
                             var details = document.createElement("tr");
                             details.id = detailsId;
                             details.hidden = true;
-                            details.innerHTML = "<td class='timeline-cell' colspan='13'>" + timelineHtml(row.Timeline) + "</td>";
+                            details.innerHTML = "<td class='timeline-cell' colspan='22'>" + timelineHtml(row.Timeline) + "</td>";
                             body.appendChild(details);
                         });
                     })

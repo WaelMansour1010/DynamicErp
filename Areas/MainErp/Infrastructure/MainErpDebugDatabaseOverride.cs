@@ -68,10 +68,11 @@ namespace MyERP.Areas.MainErp.Infrastructure
                 return selected + " (debug override)";
             }
 
-            var setting = ConfigurationManager.ConnectionStrings["MainErp_ConnectionString"];
+            var connectionName = MainErpDbConnectionFactory.ResolveActiveConnectionStringName();
+            var setting = ConfigurationManager.ConnectionStrings[connectionName];
             if (setting == null || string.IsNullOrWhiteSpace(setting.ConnectionString))
             {
-                return "MainErp_ConnectionString not configured";
+                return connectionName + " not configured";
             }
 
             try
@@ -80,7 +81,7 @@ namespace MyERP.Areas.MainErp.Infrastructure
             }
             catch
             {
-                return "MainErp_ConnectionString";
+                return connectionName;
             }
         }
     }

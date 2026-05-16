@@ -1,0 +1,210 @@
+@model MyERP.Common.JournalEntries.SharedJournalWorkspaceViewModel
+@{
+    var branches = Model.Branches ?? new List<MyERP.Common.JournalEntries.SharedBranchDto>();
+}
+
+<main class="html-report-page erp-ui-page journal-entry-page"
+      data-search-url="@Model.SearchUrl"
+      data-get-url="@Model.GetUrl"
+      data-save-url="@Model.SaveUrl"
+      data-account-lookup-url="@Model.AccountLookupUrl"
+      data-account-tree-url="@Model.AccountTreeUrl"
+      data-can-create="@(Model.CanCreate ? "true" : "false")"
+      data-can-edit="@(Model.CanEdit ? "true" : "false")">
+
+    <header class="erp-hero-card">
+        <div>
+            <h1>@Model.Title</h1>
+            <p>@Model.Intro</p>
+        </div>
+        <strong>Dynamic ERP</strong>
+    </header>
+
+    <section class="erp-card journal-command-card no-print">
+        <div class="erp-card-head">
+            <div>
+                <h2>@Model.CommandTitle</h2>
+                <p>@Model.CommandIntro</p>
+            </div>
+            <div class="erp-actions erp-actions-inline">
+                <button type="button" class="erp-btn erp-btn-primary" id="browseJournalBtn">استعراض القيود</button>
+                <button type="button" class="erp-btn erp-btn-secondary" id="newJournalBtn">قيد جديد</button>
+            </div>
+        </div>
+        <div id="journalMessage" class="pos-validation"></div>
+    </section>
+
+    <section class="erp-card journal-form-card">
+        <div class="erp-card-head">
+            <div>
+                <h2>بيانات القيد</h2>
+                <p id="entryKindLabel">قيد يدوي جديد</p>
+            </div>
+            <span class="erp-badge" id="journalStatusBadge">جاهز للإدخال</span>
+        </div>
+        <input type="hidden" id="noteId" />
+        <div class="erp-filter-grid journal-header-grid">
+            <label class="erp-field">
+                <span>رقم القيد</span>
+                <input type="text" id="noteSerialDisplay" readonly placeholder="يتم تحديده بعد الحفظ أو الفتح" />
+            </label>
+            <label class="erp-field">
+                <span>التاريخ</span>
+                <input type="date" id="noteDate" value="@DateTime.Today.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)" />
+            </label>
+            <label class="erp-field">
+                <span>الفرع</span>
+                <select id="branchId" @(Model.IsAdmin ? "" : "disabled")>
+                    @foreach (var branch in branches)
+                    {
+                        <option value="@branch.BranchId" @(Model.SelectedBranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                    }
+                </select>
+            </label>
+            <label class="erp-field erp-field-wide">
+                <span>البيان</span>
+                <input type="text" id="entryDescription" placeholder="اكتب بيان القيد" />
+            </label>
+            <label class="erp-field">
+                <span>مصدر القيد الآلي</span>
+                <input type="text" id="autoSourceDisplay" readonly />
+            </label>
+            <label class="erp-field">
+                <span>السند الأصلي</span>
+                <button type="button" class="erp-btn erp-btn-secondary" id="openAutoSourceBtn" style="display:none">فتح السند الأصلي</button>
+            </label>
+            <label class="erp-field" id="adminPasswordWrap" style="display:none">
+                <span>كلمة مرور المدير العام</span>
+                <input type="password" id="adminPassword" autocomplete="off" />
+            </label>
+        </div>
+    </section>
+
+    <section class="erp-card journal-lines-card">
+        <div class="erp-card-head">
+            <div>
+                <h2>تفاصيل القيد</h2>
+                <p>اختر الحسابات وأدخل المدين والدائن، ويجب أن يتساوى الإجمالي قبل الحفظ.</p>
+            </div>
+            <button type="button" class="erp-btn erp-btn-secondary" id="addLineBtn">إضافة سطر</button>
+        </div>
+        <div class="html-report-table-wrap">
+            <table class="html-report-table erp-data-table journal-lines-table">
+                <thead>
+                    <tr>
+                        <th>رقم الحساب</th>
+                        <th>اسم الحساب</th>
+                        <th>البيان</th>
+                        <th>مدين</th>
+                        <th>دائن</th>
+                        <th>حذف</th>
+                    </tr>
+                </thead>
+                <tbody id="journalLinesBody"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="erp-card journal-totals-card">
+        <div class="journal-totals-grid">
+            <div>
+                <span>إجمالي المدين</span>
+                <strong id="debitTotal">0.00</strong>
+            </div>
+            <div>
+                <span>إجمالي الدائن</span>
+                <strong id="creditTotal">0.00</strong>
+            </div>
+            <div>
+                <span>الفرق</span>
+                <strong id="journalDifference">0.00</strong>
+            </div>
+        </div>
+        <div class="erp-actions">
+            <button type="button" class="erp-btn erp-btn-primary" id="saveJournalBtn">حفظ القيد</button>
+        </div>
+    </section>
+
+    <div class="erp-modal journal-browse-inline" id="journalBrowseModal" aria-hidden="false">
+        <div class="erp-modal-backdrop" id="journalBrowseBackdrop"></div>
+        <div class="erp-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="journalBrowseTitle">
+            <div class="erp-modal-head">
+                <div>
+                    <h2 id="journalBrowseTitle">استعراض القيود</h2>
+                    <p>ابحث برقم القيد أو الفترة أو الحساب أو البيان، ثم اختر القيد المطلوب.</p>
+                </div>
+                <button type="button" class="erp-icon-btn" id="closeJournalBrowseBtn" aria-label="إغلاق">×</button>
+            </div>
+            <div class="erp-filter-grid journal-browse-grid">
+                <label class="erp-field">
+                    <span>رقم القيد</span>
+                    <input type="text" id="searchVoucherNo" placeholder="رقم القيد" />
+                </label>
+                <label class="erp-field">
+                    <span>من تاريخ</span>
+                    <input type="date" id="searchFromDate" value="@DateTime.Today.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)" />
+                </label>
+                <label class="erp-field">
+                    <span>إلى تاريخ</span>
+                    <input type="date" id="searchToDate" value="@DateTime.Today.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)" />
+                </label>
+                <label class="erp-field">
+                    <span>الفرع</span>
+                    <select id="searchBranchId" @(Model.IsAdmin ? "" : "disabled")>
+                        <option value="">كل الفروع</option>
+                        @foreach (var branch in branches)
+                        {
+                            <option value="@branch.BranchId" @(Model.SelectedBranchId == branch.BranchId ? "selected" : "")>@branch.BranchName</option>
+                        }
+                    </select>
+                </label>
+                <label class="erp-field erp-field-wide">
+                    <span>البيان</span>
+                    <input type="text" id="searchDescription" placeholder="كلمة من البيان" />
+                </label>
+                <input type="hidden" id="searchAccountCode" />
+                <input type="hidden" id="searchAccountCodes" />
+                <div class="erp-account-picker">
+                    <div>
+                        <strong>الحسابات</strong>
+                        <span id="journalAccountTreeSummary">لم يتم اختيار حسابات</span>
+                    </div>
+                    <button type="button"
+                            class="erp-btn erp-btn-secondary js-account-selector"
+                            data-target-input="searchAccountCodes"
+                            data-summary-target="journalAccountTreeSummary"
+                            data-account-tree-url="@Model.AccountTreeUrl">
+                        اختيار الحسابات
+                    </button>
+                </div>
+            </div>
+            <div class="erp-actions">
+                <button type="button" class="erp-btn erp-btn-primary" id="searchJournalBtn">بحث</button>
+                <button type="button" class="erp-btn erp-btn-secondary" id="clearJournalSearchBtn">مسح الفلاتر</button>
+            </div>
+            <div class="html-report-table-wrap journal-browse-results">
+                <table class="html-report-table erp-data-table">
+                    <thead>
+                        <tr>
+                            <th>رقم القيد</th>
+                            <th>التاريخ</th>
+                            <th>الفرع</th>
+                            <th>النوع</th>
+                            <th>مصدر القيد الآلي</th>
+                            <th>البيان</th>
+                            <th>مدين</th>
+                            <th>دائن</th>
+                            <th>السند الأصلي</th>
+                            <th>إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody id="journalSearchBody">
+                        <tr><td colspan="10" class="empty-cell">اضغط بحث لعرض القيود.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <datalist id="journalAccountOptions"></datalist>
+</main>

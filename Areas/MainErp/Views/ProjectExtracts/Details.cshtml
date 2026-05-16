@@ -6,20 +6,24 @@
     Func<decimal?, string> money = v => String.Format("{0:n2}", v ?? 0m);
     Func<double?, string> moneyDouble = v => String.Format("{0:n2}", v ?? 0d);
     Func<decimal?, string> percent = v => String.Format("{0:n1}%", v ?? 0m);
+    var completionPercent = Model.DetailLines.Count == 0
+        ? Convert.ToDecimal(Math.Min(100d, Math.Abs(Model.Results.GetValueOrDefault())))
+        : Math.Min(100m, Math.Max(0m, Model.DetailLines.Average(x => x.TotalPercent ?? x.CurrPercent ?? 0m)));
+    var billedPercent = Model.Total.GetValueOrDefault() == 0 ? 0m : Math.Min(100m, Math.Round((Model.DetailFinalTotal / Model.Total.GetValueOrDefault()) * 100m, 1));
+    var collectedPercent = Model.DetailFinalTotal == 0 ? 0m : Math.Min(100m, Math.Round((Model.AdvancePaidTotal / Model.DetailFinalTotal) * 100m, 1));
+    var retentionTotal = Convert.ToDecimal(Model.PerformanceBond.GetValueOrDefault()) + Model.DetailLines.Sum(x => x.PerformanceLineDiscount ?? 0m);
+    var netPayable = Convert.ToDecimal(Model.NetValue.GetValueOrDefault());
 }
 
 <section class="main-erp-panel project-extract-workspace" dir="rtl">
     <div class="main-erp-title-row">
         <div>
             <h3>مركز التحكم المالي للمستخلص</h3>
-            <p>قراءة فعلية من `project_billl` و `project_bill_details` مع الدفعات المقدمة والقيود المحاسبية المرتبطة. لا توجد أي عمليات حفظ أو ترحيل في هذه المرحلة.</p>
+            <p>قراءة فعلية من `project_billl` و `project_bill_details` مع الدفعات المقدمة والقيود المحاسبية المرتبطة، بهدف مراجعة المستخلص ماليًا وتشغيليًا من شاشة واحدة.</p>
         </div>
         <div class="main-erp-actions">
             <a class="main-erp-button" href="@Url.Action("Report", "ProjectExtracts", new { area = "MainErp", id = Model.Id })">تقرير المستخلص</a>
             <a class="main-erp-button" href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })">رجوع للقائمة</a>
-            <button type="button" class="main-erp-button" disabled title="غير مفعل حتى اعتماد منطق الترحيل">حفظ فعلي</button>
-            <button type="button" class="main-erp-button" disabled title="غير مفعل حتى اعتماد منطق الترحيل">ترحيل</button>
-            <button type="button" class="main-erp-button" disabled title="غير مفعل حتى اعتماد منطق الحذف">حذف</button>
         </div>
     </div>
 
@@ -28,6 +32,51 @@
         <div class="main-erp-warning">@Model.Warning</div>
     }
 
+    <section class="erp-project-dashboard">
+        <div class="erp-project-hero">
+            <span>Project Financial Dashboard</span>
+            <h2>@(String.IsNullOrWhiteSpace(Model.ProjectName) ? "مستخلص غير محدد" : Model.ProjectName)</h2>
+            <p>@Model.CustomerName · @Model.ProjectFullCode · @String.Format("{0:yyyy-MM-dd}", Model.BillDate)</p>
+            <div class="erp-project-progress">
+                <i style="width:@((int)Math.Min(100m, completionPercent))%"></i>
+            </div>
+        </div>
+        <aside class="erp-side-summary">
+            <h4>حالة المشروع خلال 5 ثوان</h4>
+            <dl>
+                <dt>قيمة المستخلص</dt><dd>@money(Model.Total)</dd>
+                <dt>نسبة الإنجاز</dt><dd>@completionPercent.ToString("N1")%</dd>
+                <dt>المفوتر فعليًا</dt><dd>@billedPercent.ToString("N1")%</dd>
+                <dt>المحصل / الدفعات</dt><dd>@collectedPercent.ToString("N1")%</dd>
+                <dt>المحتجزات</dt><dd>@retentionTotal.ToString("N2")</dd>
+                <dt>صافي المستحق</dt><dd class="@(netPayable < 0 ? "is-danger" : "")">@netPayable.ToString("N2")</dd>
+            </dl>
+        </aside>
+    </section>
+
+    <section class="erp-insight-layout project-analytics-strip">
+        <div class="erp-insight-main">
+            <article class="erp-finance-meter">
+                <span>المنفذ</span>
+                <strong>@completionPercent.ToString("N1")%</strong>
+                <div class="erp-meter is-success"><i style="width:@((int)Math.Min(100m, completionPercent))%"></i></div>
+                <small>من نسب البنود الحالية/الإجمالية.</small>
+            </article>
+            <article class="erp-finance-meter">
+                <span>المفوتر</span>
+                <strong>@billedPercent.ToString("N1")%</strong>
+                <div class="erp-meter"><i style="width:@((int)Math.Min(100m, billedPercent))%"></i></div>
+                <small>صافي البنود النهائية إلى قيمة المستخلص.</small>
+            </article>
+            <article class="erp-finance-meter">
+                <span>المحصل</span>
+                <strong>@collectedPercent.ToString("N1")%</strong>
+                <div class="erp-meter @(collectedPercent < 50m ? "is-warning" : "is-success")"><i style="width:@((int)Math.Min(100m, collectedPercent))%"></i></div>
+                <small>@(collectedPercent < 50m ? "تنبيه متابعة تحصيل" : "تحصيل جيد")</small>
+            </article>
+        </div>
+    </section>
+
     <div class="main-erp-cockpit-header">
         <div>
             <span class="main-erp-eyebrow">Project Extract</span>
@@ -35,7 +84,7 @@
             <p>@Model.ProjectFullCode</p>
         </div>
         <div class="main-erp-status-stack">
-            <span class="main-erp-badge">Read-only</span>
+            <span class="main-erp-badge">قراءة آمنة</span>
             <span class="main-erp-badge @(voucherBalanced ? "is-success" : "is-danger")">@(voucherBalanced ? "القيد متوازن" : "يوجد فرق قيود")</span>
         </div>
     </div>
@@ -72,6 +121,26 @@
             <small>مسدد @money(Model.AdvancePaidTotal)</small>
         </div>
     </div>
+
+    <section class="erp-workflow-strip project-extract-approval-flow" aria-label="Project extract approval flow">
+        <article class="is-done"><span>1</span><strong>بيانات المستخلص</strong></article>
+        <article class="@(Model.DetailLines.Count > 0 ? "is-done" : "is-current")"><span>2</span><strong>بنود التنفيذ</strong></article>
+        <article class="@(Model.DetailLines.Count > 0 ? "is-done" : "")"><span>3</span><strong>الخصومات والضريبة</strong></article>
+        <article class="@(voucherBalanced ? "is-done" : "is-current")"><span>4</span><strong>مراجعة القيد</strong></article>
+        <article class="@(voucherBalanced && Model.NoteId.HasValue ? "is-done" : "")"><span>5</span><strong>اعتماد/تقرير</strong></article>
+        <article><span>6</span><strong>إقفال تشغيلي</strong></article>
+    </section>
+
+    <section class="main-erp-tabs">
+        <h4>&#1578;&#1578;&#1576;&#1593; &#1605;&#1575;&#1604;&#1610; &#1604;&#1604;&#1605;&#1587;&#1578;&#1582;&#1604;&#1589;</h4>
+        <div class="main-erp-kpi-grid">
+            <div class="main-erp-kpi-card"><span>Source document</span><strong>Project Extract @Model.Id</strong><small>Note @Model.NoteId / @Model.NoteSerial</small></div>
+            <div class="main-erp-kpi-card"><span>Customer / project</span><strong>@Model.CustomerName</strong><small>@Model.ProjectName</small></div>
+            <div class="main-erp-kpi-card"><span>Accounting effect</span><strong>@Model.VoucherLines.Count lines</strong><small>Dr @money(Model.VoucherDebitTotal) / Cr @money(Model.VoucherCreditTotal)</small></div>
+            <div class="main-erp-kpi-card"><span>Review status</span><strong>@(voucherBalanced ? "Balanced" : "Needs finance review")</strong><small>Diff @money(Model.VoucherBalanceDifference)</small></div>
+        </div>
+        <p class="main-erp-muted">This trace keeps the financial reviewer on one path: extract header, line details, deductions/VAT/retention, advance payments, and the linked accounting voucher.</p>
+    </section>
 
     <div class="main-erp-tabs premium-tabs">
         <section>
@@ -324,7 +393,7 @@
                 <div class="main-erp-kpi-card"><span>القيود</span><strong>@Model.VoucherLines.Count</strong><small>@(voucherBalanced ? "متوازنة" : "تحتاج مراجعة")</small></div>
             </div>
             <p class="main-erp-remarks">@Model.Remarks</p>
-            <div class="main-erp-warning">الطباعة والتقارير محفوظة كمدخلات Read-only حاليًا، ولن يتم تفعيلها قبل مراجعة تقارير `projectsbill.frm` وربطها بدون تأثير مالي.</div>
+            <div class="main-erp-warning">الطباعة والتقارير محفوظة كمدخلات قراءة آمنة حاليًا، ولن يتم تفعيلها قبل اعتماد قوالب التقارير وربطها بدون تأثير مالي.</div>
         </section>
     </div>
 </section>

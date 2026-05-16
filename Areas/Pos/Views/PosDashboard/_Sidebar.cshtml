@@ -3,6 +3,11 @@
     var activeScreen = (ViewBag.ActiveScreen as string) ?? "sales";
     var canViewReports = posContext != null && posContext.CanViewReports;
     var isAdmin = posContext != null && (posContext.UserType.GetValueOrDefault(-1) == 0 || posContext.IsFullAccess);
+    var legacyPermissionService = new MyERP.Areas.Pos.Services.PosLegacyScreenPermissionService();
+    var canOpenEmployeePayroll = isAdmin || (posContext != null && (legacyPermissionService.CanView(posContext, "FrmEmployee") || legacyPermissionService.CanView(posContext, "FrmEmpSalary5")));
+    var canOpenCashing = isAdmin || (posContext != null && legacyPermissionService.CanView(posContext, "FrmCashing"));
+    var canOpenFinanceOperations = isAdmin || (posContext != null && (posContext.CanViewAccountingReports || posContext.CanOpenPayments || posContext.CanViewJournalEntry || posContext.CanCreateJournalEntry || posContext.CanEditJournalEntry || posContext.CanDeleteJournalEntry || legacyPermissionService.CanView(posContext, "FrmCashing")));
+    var canManagePrintTemplates = isAdmin || (posContext != null && posContext.CanManagePrintTemplates);
     var hasReportMenuAccess = isAdmin || (posContext != null && (
         posContext.CanViewReports
         || posContext.CanViewAccountingReports
@@ -19,15 +24,20 @@
         : (System.IO.File.Exists(Server.MapPath(logoAltPath)) ? logoAltPath : null);
     Func<string, bool> isActive = key => string.Equals(activeScreen, key, StringComparison.OrdinalIgnoreCase);
     Func<string[], bool> sectionActive = keys => keys.Any(k => string.Equals(activeScreen, k, StringComparison.OrdinalIgnoreCase));
-    var dailyOpen = sectionActive(new[] { "sales", "kyc", "closing", "payments", "stock-transfer", "purchase-invoice", "excel-import" });
-    var financeOpen = sectionActive(new[] { "cashing", "payment-vouchers", "journal-entries", "discount-notifications", "accounting-reports" });
-    var reportsOpen = sectionActive(new[] { "reports", "financial-intelligence", "sales-performance" });
-    var peopleOpen = sectionActive(new[] { "employee-payroll", "salary-run", "medical-insurance", "medical-insurance-reports", "sales-targets" });
-    var adminOpen = sectionActive(new[] { "dashboard", "kyc-bank-follow-up", "permissions", "system-health", "system-error-log", "sql-updates", "print-templates" });
+    Func<string, string> sharedMainErpUrl = path => Url.Content("~/MainErp/" + (path ?? string.Empty).TrimStart('/') + "?fromPos=1&host=pos");
+    var excelOpen = sectionActive(new[] { "excel-import", "invoice-reconciliation", "token-invoice-lookup", "master-data-import", "excel-error-reports" });
+    var salesOpen = sectionActive(new[] { "sales", "kyc", "kyc-bank-follow-up", "closing", "sales-performance", "sales-targets", "sales-collections" });
+    var reportsOpen = sectionActive(new[] { "reports", "accounting-reports", "financial-intelligence", "dynamic-reports", "dynamic-reports-admin" });
+    var purchasesOpen = sectionActive(new[] { "purchase-invoice" });
+    var inventoryOpen = sectionActive(new[] { "enterprise-items", "stores", "stock-taking", "stock-transfer", "inventory-profitability" });
+    var accountsOpen = sectionActive(new[] { "account-charts", "payments", "cashing", "payment-vouchers", "journal-entries", "discount-notifications", "branch-performance", "cash-flow", "expenses", "custody", "abnormal-journals", "root-cause" });
+    var hrOpen = sectionActive(new[] { "employee-payroll", "salary-run", "medical-insurance", "medical-insurance-reports", "employee-receivables" });
+    var settingsOpen = sectionActive(new[] { "legacy-branches-data", "print-templates", "branches", "options", "branch-account-linking" });
+    var systemOpen = sectionActive(new[] { "dashboard", "permissions", "main-erp-permissions", "legacy-users", "system-health", "system-error-log", "sql-updates" });
     var userStorageKey = posContext != null ? posContext.UserId.ToString(System.Globalization.CultureInfo.InvariantCulture) : "guest";
-    if (!(dailyOpen || financeOpen || reportsOpen || peopleOpen || adminOpen))
+    if (!(excelOpen || salesOpen || reportsOpen || purchasesOpen || inventoryOpen || accountsOpen || hrOpen || settingsOpen || systemOpen))
     {
-        dailyOpen = true;
+        salesOpen = true;
     }
 }
 
@@ -122,374 +132,139 @@
     </section>
 
     <nav class="pos-main-nav pos-modern-nav" aria-label="قائمة نقطة البيع">
-        <a class="pos-nav-link pos-nav-home @(isActive("dashboard") ? "active" : "")"
-           href="@Url.Action("Index", "PosDashboard", new { area = "Pos" })"
-           data-dashboard-screen="true"
-           data-nav-id="dashboard"
-           data-nav-section="الإدارة والإعدادات"
-           data-nav-text="لوحة التحكم dashboard admin management"
-           title="لوحة التحكم">
-            @PosIcon("gauge")<span>لوحة التحكم</span>
-        </a>
-
-        <section class="pos-nav-section teller-sales-section @(dailyOpen ? "is-open" : "")" data-section-id="daily">
-            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="العمليات اليومية" aria-expanded="@(dailyOpen ? "true" : "false")">
-                <span>@PosIcon("store")<b>العمليات اليومية</b><small>بيع، KYC، إغلاق، مخزون</small></span>
+        <section class="pos-nav-section teller-sales-section @(salesOpen ? "is-open" : "")" data-section-id="sales">
+            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="المبيعات" aria-expanded="@(salesOpen ? "true" : "false")">
+                <span>@PosIcon("store")<b>المبيعات</b><small>بيع، KYC، كروت، تشغيل يومي</small></span>
                 @PosIcon("chevron-down", "nav-chevron")
             </button>
             <div class="pos-nav-submenu">
-                <a class="pos-nav-link teller-sales-link @(isActive("sales") ? "active" : "")"
-                   href="@Url.Action("Sales", "PosDashboard", new { area = "Pos" })"
-                   data-screen-url="@Url.Content("~/Pos/PosTransaction/Index")"
-                   data-nav-id="sales"
-                   data-nav-section="العمليات اليومية"
-                   data-nav-text="نقطة البيع شاشة البيع pos sales cashier teller فاتورة بيع"
-                   title="شاشة البيع">
-                    @PosIcon("terminal")<span>نقطة البيع POS</span>
-                </a>
-                <a class="pos-nav-link @(isActive("kyc") ? "active" : "")"
-                   href="@Url.Action("Kyc", "PosDashboard", new { area = "Pos" })"
-                   data-screen-url="@Url.Content("~/Pos/PosTransaction/Index?openKyc=true")"
-                   data-nav-id="kyc"
-                   data-nav-section="العمليات اليومية"
-                   data-nav-text="KYC اعرف عميلك كارت بطاقة customer card bank"
-                   title="KYC">
-                    @PosIcon("id-card")<span>KYC</span>
-                </a>
-                <a class="pos-nav-link @(isActive("closing") ? "active" : "")"
-                   href="@Url.Action("Closing", "PosDashboard", new { area = "Pos" })"
-                   data-screen-url="@Url.Content("~/Pos/PosClosing/Index")"
-                   data-nav-id="closing"
-                   data-nav-section="العمليات اليومية"
-                   data-nav-text="الإغلاق إغلاق اليومية closing day close cashier"
-                   title="الإغلاق">
-                    @PosIcon("lock-check")<span>إغلاق اليومية</span>
-                </a>
-                @if (isAdmin || (posContext != null && posContext.CanOpenPayments))
-                {
-                    <a class="pos-nav-link @(isActive("payments") ? "active" : "")"
-                       href="@Url.Action("Payments", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/Payments/Index")"
-                       data-nav-id="payments"
-                       data-nav-section="العمليات اليومية"
-                       data-nav-text="تمويل العهدة payments custody cash box funding"
-                       title="تمويل العهدة">
-                        @PosIcon("wallet")<span>تمويل العهدة</span>
-                    </a>
-                }
-                @if (isAdmin || (posContext != null && posContext.CanSave))
-                {
-                    <a class="pos-nav-link @(isActive("stock-transfer") ? "active" : "")"
-                       href="@Url.Action("StockTransfer", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/StockTransfer/Index")"
-                       data-nav-id="stock-transfer"
-                       data-nav-section="العمليات اليومية"
-                       data-nav-text="تحويل مخزون stock transfer store inventory"
-                       title="تحويل مخزون">
-                        @PosIcon("arrows-left-right")<span>تحويل مخزون</span>
-                    </a>
-                    <a class="pos-nav-link @(isActive("purchase-invoice") ? "active" : "")"
-                       href="@Url.Action("PurchaseInvoice", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/PurchaseInvoice/Index")"
-                       data-nav-id="purchase-invoice"
-                       data-nav-section="العمليات اليومية"
-                       data-nav-text="فاتورة مشتريات purchases purchase invoice supplier"
-                       title="فواتير مشتريات">
-                        @PosIcon("receipt")<span>فاتورة مشتريات</span>
-                    </a>
-                    if (isAdmin || (posContext != null && posContext.CanImportExcel))
-                    {
-                    <a class="pos-nav-link @(isActive("excel-import") ? "active" : "")"
-                       href="@Url.Action("ExcelImport", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/ExcelImport/Index")"
-                       data-nav-id="excel-import"
-                       data-nav-section="العمليات اليومية"
-                       data-nav-text="استيراد Excel العمليات import excel upload"
-                       title="استيراد العمليات من Excel">
-                        @PosIcon("spreadsheet")<span>استيراد العمليات من Excel</span>
-                    </a>
-                    }
-                }
-            </div>
-        </section>
-
-        <section class="pos-nav-section @(financeOpen ? "is-open" : "")" data-section-id="finance">
-            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="المالية" aria-expanded="@(financeOpen ? "true" : "false")">
-                <span>@PosIcon("landmark")<b>المالية</b><small>سندات، قيود، إشعارات</small></span>
-                @PosIcon("chevron-down", "nav-chevron")
-            </button>
-            <div class="pos-nav-submenu">
-                @if (isAdmin || (posContext != null && posContext.CanViewAccountingReports))
-                {
-                    <a class="pos-nav-link @(isActive("cashing") ? "active" : "")"
-                       href="@Url.Action("Cashing", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/Cashing/Index")"
-                       data-nav-id="cashing"
-                       data-nav-section="المالية"
-                       data-nav-text="سند قبض قبض cashing receipt voucher receive"
-                       title="سندات القبض">
-                        @PosIcon("receipt-plus")<span>سندات القبض</span>
-                    </a>
-                    <a class="pos-nav-link @(isActive("payment-vouchers") ? "active" : "")"
-                       href="@Url.Content("~/Pos/Payments/Vouchers")"
-                       data-screen-url="@Url.Content("~/Pos/Payments/Vouchers")"
-                       data-nav-id="payment-vouchers"
-                       data-nav-section="المالية"
-                       data-nav-text="سند صرف صرف payment voucher payable"
-                       title="سندات الصرف">
-                        @PosIcon("banknote-arrow")<span>سندات الصرف</span>
-                    </a>
-                }
-                @if (isAdmin || (posContext != null && (posContext.CanViewJournalEntry || posContext.CanCreateJournalEntry || posContext.CanEditJournalEntry || posContext.CanDeleteJournalEntry)))
-                {
-                    <a class="pos-nav-link @(isActive("journal-entries") ? "active" : "")"
-                       href="@Url.Action("JournalEntries", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/JournalEntries/Index")"
-                       data-nav-id="journal-entries"
-                       data-nav-section="المالية"
-                       data-nav-text="قيود يومية قيد journal entries accounting"
-                       title="إدخال واستعراض القيود">
-                        @PosIcon("book-open")<span>القيود اليومية</span>
-                    </a>
-                    <a class="pos-nav-link @(isActive("discount-notifications") ? "active" : "")"
-                       href="@Url.Content("~/Pos/DiscountNotifications/Index")"
-                       data-screen-url="@Url.Content("~/Pos/DiscountNotifications/Index")"
-                       data-nav-id="discount-notifications"
-                       data-nav-section="المالية"
-                       data-nav-text="إشعارات خصم discount notifications debit credit"
-                       title="الإشعارات">
-                        @PosIcon("file-percent")<span>إشعارات الخصم</span>
-                    </a>
-                }
-                @if (isAdmin || (posContext != null && posContext.CanViewAccountingReports))
-                {
-                    <a class="pos-nav-link @(isActive("accounting-reports") ? "active" : "")"
-                       href="@Url.Action("AccountingReports", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/AccountingReports/Index")"
-                       data-nav-id="accounting-reports"
-                       data-nav-section="المالية"
-                       data-nav-text="تقارير مالية حسابات accounting reports financial"
-                       title="تقارير الحسابات">
-                        @PosIcon("chart-pie")<span>التقارير المالية</span>
-                    </a>
-                }
+                <a class="pos-nav-link teller-sales-link @(isActive("sales") ? "active" : "")" href="@Url.Action("Sales", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/PosTransaction/Index")" data-nav-id="sales" data-nav-section="المبيعات" data-nav-text="شاشة البيع فاتورة بيع نقطة البيع pos sales cashier teller" title="شاشة البيع">@PosIcon("terminal")<span>شاشة البيع</span></a>
+                <a class="pos-nav-link @(isActive("kyc") ? "active" : "")" href="@Url.Action("Kyc", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/PosTransaction/Kyc")" data-nav-id="kyc" data-nav-section="المبيعات" data-nav-text="KYC العملاء الكروت كيشني كارت اعرف عميلك customer card bank" title="KYC">@PosIcon("id-card")<span>KYC</span></a>
+                <a class="pos-nav-link @(isActive("kyc-bank-follow-up") ? "active" : "")" href="@Url.Action("KycBankFollowUp", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/KycBankFollowUp/Index")" data-nav-id="kyc-bank-follow-up" data-nav-section="المبيعات" data-nav-text="متابعة KYC البنك bank follow up customer service" title="متابعة KYC">@PosIcon("landmark")<span>متابعة KYC</span></a>
+                <a class="pos-nav-link @(isActive("closing") ? "active" : "")" href="@Url.Action("Closing", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/PosClosing/Index")" data-nav-id="closing" data-nav-section="المبيعات" data-nav-text="إغلاق اليومية closing day close cashier" title="إغلاق اليومية">@PosIcon("lock-check")<span>إغلاق اليومية</span></a>
+                <a class="pos-nav-link @(isActive("sales-performance") ? "active" : "")" href="@Url.Content("~/Pos/SalesRepresentativesPerformance/Index")" data-screen-url="@Url.Content("~/Pos/SalesRepresentativesPerformance/Index")" data-nav-id="sales-performance" data-nav-section="المبيعات" data-nav-text="أداء المناديب المبيعات sales representatives performance targets" title="أداء المناديب والمبيعات">@PosIcon("briefcase-user")<span>أداء المناديب والمبيعات</span></a>
+                <a class="pos-nav-link @(isActive("sales-targets") ? "active" : "")" href="@Url.Content("~/Pos/SalesTargets/Index")" data-screen-url="@Url.Content("~/Pos/SalesTargets/Index")" data-nav-id="sales-targets" data-nav-section="المبيعات" data-nav-text="تارجت المناديب sales targets" title="تارجت المناديب">@PosIcon("target")<span>تارجت المناديب</span></a>
+                <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/SalesCollections")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/SalesCollections")" data-nav-id="sales-collections" data-nav-section="المبيعات" data-nav-text="المبيعات والتحصيل sales collections" title="تحليل المبيعات والتحصيل">@PosIcon("chart-line")<span>تحليل المبيعات والتحصيل</span></a>
             </div>
         </section>
 
         <section class="pos-nav-section @(reportsOpen ? "is-open" : "")" data-section-id="reports">
-            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="التقارير والتحليلات" aria-expanded="@(reportsOpen ? "true" : "false")">
-                <span>@PosIcon("chart-line")<b>التقارير والتحليلات</b><small>تشغيل، فروع، مؤشرات</small></span>
+            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="التقارير" aria-expanded="@(reportsOpen ? "true" : "false")">
+                <span>@PosIcon("chart-bar")<b>التقارير</b><small>كيشني، مالية، حسابات، تقارير ديناميكية</small></span>
                 @PosIcon("chevron-down", "nav-chevron")
             </button>
             <div class="pos-nav-submenu">
-                @if (hasReportMenuAccess)
+                <a class="pos-nav-link @(isActive("reports") ? "active" : "")" href="@Url.Action("Reports", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/PosReports/Index")" data-nav-id="reports" data-nav-section="التقارير" data-nav-text="تقارير كيشني الإغلاقات المبيعات التشغيل الكروت التوكينات المخالفات kishny reports" title="تقارير كيشني">@PosIcon("chart-bar")<span>تقارير كيشني</span></a>
+                <a class="pos-nav-link @(isActive("financial-intelligence") ? "active" : "")" href="@Url.Action("FinancialIntelligence", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/Index")" data-nav-id="financial-intelligence" data-nav-section="التقارير" data-nav-text="التقارير المالية مؤشرات مالية financial reports dashboard" title="التقارير المالية">@PosIcon("gauge")<span>التقارير المالية</span></a>
+                <a class="pos-nav-link @(isActive("accounting-reports") ? "active" : "")" href="@Url.Action("AccountingReports", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/AccountingReports/Index")" data-nav-id="accounting-reports" data-nav-section="التقارير" data-nav-text="تقارير الحسابات البنوك الخزن accounting reports" title="تقارير الحسابات">@PosIcon("landmark")<span>تقارير الحسابات</span></a>
+                <a class="pos-nav-link" href="@Url.Content("~/Pos/DynamicReportsAdmin/Index")" data-screen-url="@Url.Content("~/Pos/DynamicReportsAdmin/Index")" data-nav-id="dynamic-reports-admin" data-nav-section="التقارير" data-nav-text="إدارة التقارير الديناميكية dynamic reports admin" title="إدارة التقارير الديناميكية">@PosIcon("settings")<span>إدارة التقارير الديناميكية</span></a>
+                <a class="pos-nav-link" href="@Url.Content("~/Pos/DynamicReports/Index")" data-screen-url="@Url.Content("~/Pos/DynamicReports/Index")" data-nav-id="dynamic-reports" data-nav-section="التقارير" data-nav-text="مصمم التقارير الديناميكي dynamic report designer" title="مصمم التقارير الديناميكي">@PosIcon("sliders")<span>مصمم التقارير الديناميكي</span></a>
+            </div>
+        </section>
+
+        <section class="pos-nav-section @(inventoryOpen ? "is-open" : "")" data-section-id="inventory">
+            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="المخزون" aria-expanded="@(inventoryOpen ? "true" : "false")">
+                <span>@PosIcon("boxes")<b>المخزون</b><small>أصناف، مخازن، جرد، تحويل</small></span>
+                @PosIcon("chevron-down", "nav-chevron")
+            </button>
+            <div class="pos-nav-submenu">
+                <a class="pos-nav-link @(isActive("enterprise-items") ? "active" : "")" href="@sharedMainErpUrl("Items")" data-screen-url="@sharedMainErpUrl("Items")" data-nav-id="enterprise-items" data-nav-section="المخزون" data-nav-text="الأصناف item master shared enterprise" title="الأصناف">@PosIcon("boxes")<span>الأصناف</span></a>
+                <a class="pos-nav-link @(isActive("stores") ? "active" : "")" href="@Url.Content("~/Pos/Stores/Index")" data-screen-url="@Url.Content("~/Pos/Stores/Index")" data-nav-id="stores" data-nav-section="المخزون" data-nav-text="المخازن stores warehouses inventory" title="المخازن">@PosIcon("building")<span>المخازن</span></a>
+                <a class="pos-nav-link @(isActive("stock-taking") ? "active" : "")" href="@sharedMainErpUrl("Stocktaking")" data-screen-url="@sharedMainErpUrl("Stocktaking")" data-nav-id="stock-taking" data-nav-section="المخزون" data-nav-text="سند الجرد inventory count shared enterprise" title="سند الجرد">@PosIcon("table")<span>سند الجرد</span></a>
+                <a class="pos-nav-link @(isActive("stock-transfer") ? "active" : "")" href="@Url.Action("StockTransfer", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/StockTransfer/Index")" data-nav-id="stock-transfer" data-nav-section="المخزون" data-nav-text="تحويل مخزني تحويل مخزون stock transfer inventory" title="التحويل المخزني">@PosIcon("arrows-left-right")<span>التحويل المخزني</span></a>
+                <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/InventoryProfitability")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/InventoryProfitability")" data-nav-id="inventory-profitability" data-nav-section="المخزون" data-nav-text="المخزون والربحية inventory profitability reports" title="مؤشرات المخزون والربحية">@PosIcon("chart-pie")<span>مؤشرات المخزون والربحية</span></a>
+            </div>
+        </section>
+
+        <section class="pos-nav-section @(accountsOpen ? "is-open" : "")" data-section-id="accounts">
+            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="الحسابات" aria-expanded="@(accountsOpen ? "true" : "false")">
+                <span>@PosIcon("landmark")<b>الحسابات</b><small>خزن، بنوك، عهد، قيود</small></span>
+                @PosIcon("chevron-down", "nav-chevron")
+            </button>
+            <div class="pos-nav-submenu">
+                <a class="pos-nav-link @(isActive("account-charts") ? "active" : "")" href="@sharedMainErpUrl("AccountCharts")" data-screen-url="@sharedMainErpUrl("AccountCharts")" data-nav-id="account-charts" data-nav-section="الحسابات" data-nav-text="دليل الحسابات chart of accounts shared enterprise" title="دليل الحسابات">@PosIcon("book-open")<span>دليل الحسابات</span></a>
+                <a class="pos-nav-link @(isActive("cashing") ? "active" : "")" href="@Url.Action("Cashing", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/Cashing/Index")" data-nav-id="cashing" data-nav-section="الحسابات" data-nav-text="الخزن سند قبض cashboxes cashing receipt voucher" title="الخزن / سندات القبض">@PosIcon("receipt-plus")<span>الخزن / سندات القبض</span></a>
+                <a class="pos-nav-link @(isActive("payments") ? "active" : "")" href="@Url.Action("Payments", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/Payments/Index")" data-nav-id="payments" data-nav-section="الحسابات" data-nav-text="العهد كيشني كارت تمويل العهدة payments custody cash box funding" title="العهد / كيشني كارت">@PosIcon("wallet")<span>العهد / كيشني كارت</span></a>
+                <a class="pos-nav-link @(isActive("payment-vouchers") ? "active" : "")" href="@Url.Content("~/Pos/Payments/Vouchers")" data-screen-url="@Url.Content("~/Pos/Payments/Vouchers")" data-nav-id="payment-vouchers" data-nav-section="الحسابات" data-nav-text="سند صرف payment voucher payable" title="سندات الصرف">@PosIcon("banknote-arrow")<span>سندات الصرف</span></a>
+                <a class="pos-nav-link @(isActive("journal-entries") ? "active" : "")" href="@Url.Action("JournalEntries", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/JournalEntries/Index")" data-nav-id="journal-entries" data-nav-section="الحسابات" data-nav-text="قيود يومية journal entries accounting" title="القيود اليومية">@PosIcon("book-open")<span>القيود اليومية</span></a>
+                <a class="pos-nav-link @(isActive("discount-notifications") ? "active" : "")" href="@Url.Content("~/Pos/DiscountNotifications/Index")" data-screen-url="@Url.Content("~/Pos/DiscountNotifications/Index")" data-nav-id="discount-notifications" data-nav-section="الحسابات" data-nav-text="إشعارات خصم discount notifications debit credit" title="إشعارات الخصم">@PosIcon("file-percent")<span>إشعارات الخصم</span></a>
+                <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/BranchPerformance")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/BranchPerformance")" data-nav-id="branch-performance" data-nav-section="الحسابات" data-nav-text="أداء الفروع المالي branch performance" title="أداء الفروع المالي">@PosIcon("building")<span>أداء الفروع المالي</span></a>
+                <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/CashFlow")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/CashFlow")" data-nav-id="cash-flow" data-nav-section="الحسابات" data-nav-text="التدفقات النقدية cash flow" title="تحليل التدفقات النقدية">@PosIcon("coins")<span>تحليل التدفقات النقدية</span></a>
+                <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/Expenses")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/Expenses")" data-nav-id="expenses" data-nav-section="الحسابات" data-nav-text="المصروفات expenses" title="تحليل المصروفات">@PosIcon("chart-pie")<span>تحليل المصروفات</span></a>
+                <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/Custody")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/Custody")" data-nav-id="custody" data-nav-section="الحسابات" data-nav-text="العهد custody advances" title="العهد">@PosIcon("wallet")<span>العهد</span></a>
+                <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/AbnormalJournals")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/AbnormalJournals")" data-nav-id="abnormal-journals" data-nav-section="الحسابات" data-nav-text="تنبيهات مراجعة محاسبية قيود غير طبيعية abnormal journals" title="تنبيهات محاسبية">@PosIcon("alert-triangle")<span>تنبيهات محاسبية</span></a>
+                <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/RootCause")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/RootCause")" data-nav-id="root-cause" data-nav-section="الحسابات" data-nav-text="تحليل سبب المشكلة root cause" title="تحليل سبب المشكلة">@PosIcon("search")<span>تحليل سبب المشكلة</span></a>
+            </div>
+        </section>
+
+        <section class="pos-nav-section @(purchasesOpen ? "is-open" : "")" data-section-id="purchases">
+            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="المشتريات" aria-expanded="@(purchasesOpen ? "true" : "false")">
+                <span>@PosIcon("receipt")<b>المشتريات</b><small>فواتير وموردون</small></span>
+                @PosIcon("chevron-down", "nav-chevron")
+            </button>
+            <div class="pos-nav-submenu">
+                <a class="pos-nav-link @(isActive("purchase-invoice") ? "active" : "")" href="@Url.Action("PurchaseInvoice", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/PurchaseInvoice/Index")" data-nav-id="purchase-invoice" data-nav-section="المشتريات" data-nav-text="فاتورة مشتريات purchases purchase invoice supplier" title="فاتورة مشتريات">@PosIcon("receipt")<span>فاتورة مشتريات</span></a>
+            </div>
+        </section>
+
+        <section class="pos-nav-section @(hrOpen ? "is-open" : "")" data-section-id="hr">
+            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="الموارد البشرية" aria-expanded="@(hrOpen ? "true" : "false")">
+                <span>@PosIcon("users")<b>الموارد البشرية</b><small>موظفون، تأمين، رواتب</small></span>
+                @PosIcon("chevron-down", "nav-chevron")
+            </button>
+            <div class="pos-nav-submenu">
+                <a class="pos-nav-link @(isActive("employee-payroll") ? "active" : "")" href="@Url.Action("EmployeePayroll", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/EmployeePayroll/Employees")" data-nav-id="employee-payroll" data-nav-section="الموارد البشرية" data-nav-text="الموظفين employees payroll hr" title="الموظفون">@PosIcon("users")<span>الموظفون</span></a>
+                <a class="pos-nav-link @(isActive("medical-insurance") ? "active" : "")" href="@Url.Action("MedicalInsurance", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/EmployeePayroll/MedicalInsurance")" data-nav-id="medical-insurance" data-nav-section="الموارد البشرية" data-nav-text="التأمين الطبي medical insurance" title="التأمين الطبي">@PosIcon("heart-pulse")<span>التأمين الطبي</span></a>
+                <a class="pos-nav-link @(isActive("medical-insurance-reports") ? "active" : "")" href="@Url.Action("MedicalInsuranceReports", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/EmployeePayroll/MedicalInsuranceReports")" data-nav-id="medical-insurance-reports" data-nav-section="الموارد البشرية" data-nav-text="تقارير التأمين medical insurance reports" title="تقارير التأمين">@PosIcon("chart-bar")<span>تقارير التأمين</span></a>
+                <a class="pos-nav-link @(isActive("salary-run") ? "active" : "")" href="@Url.Action("SalaryRun", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/EmployeePayroll/SalaryRun")" data-nav-id="salary-run" data-nav-section="الموارد البشرية" data-nav-text="مسير الرواتب salary payroll" title="مسير الرواتب">@PosIcon("receipt")<span>مسير الرواتب</span></a>
+                <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/EmployeeReceivables")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/EmployeeReceivables")" data-nav-id="employee-receivables" data-nav-section="الموارد البشرية" data-nav-text="ذمم الموظفين employee receivables" title="ذمم الموظفين">@PosIcon("user-check")<span>ذمم الموظفين</span></a>
+            </div>
+        </section>
+
+        <section class="pos-nav-section @(settingsOpen ? "is-open" : "")" data-section-id="settings">
+            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="الإعدادات والإدارة" aria-expanded="@(settingsOpen ? "true" : "false")">
+                <span>@PosIcon("settings")<b>الإعدادات والإدارة</b><small>فروع، خيارات، ربط، طباعة</small></span>
+                @PosIcon("chevron-down", "nav-chevron")
+            </button>
+            <div class="pos-nav-submenu">
+                <a class="pos-nav-link @(isActive("branches") ? "active" : "")" href="@sharedMainErpUrl("Branches")" data-screen-url="@sharedMainErpUrl("Branches")" data-nav-id="branches" data-nav-section="الإعدادات والإدارة" data-nav-text="الفروع branches shared enterprise" title="الفروع">@PosIcon("building")<span>الفروع</span></a>
+                <a class="pos-nav-link @(isActive("options") ? "active" : "")" href="@sharedMainErpUrl("Options")" data-screen-url="@sharedMainErpUrl("Options")" data-nav-id="options" data-nav-section="الإعدادات والإدارة" data-nav-text="إعدادات النظام FRMOptions shared enterprise" title="إعدادات النظام">@PosIcon("settings")<span>إعدادات النظام</span></a>
+                <a class="pos-nav-link @(isActive("legacy-branches-data") ? "active" : "")" href="@Url.Action("BranchesData", "PosLegacyAdmin", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/PosLegacyAdmin/BranchesData")" data-nav-id="legacy-branches-data" data-nav-section="الإعدادات العامة" data-nav-text="إعدادات الربط أنشطة وفروع branches activities integration" title="إعدادات الربط">@PosIcon("building")<span>إعدادات الربط</span></a>
+                @if (canManagePrintTemplates)
                 {
-                    <a class="pos-nav-link @(isActive("reports") ? "active" : "")"
-                       href="@Url.Action("Reports", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/PosReports/Index")"
-                       data-nav-id="reports"
-                       data-nav-section="التقارير والتحليلات"
-                       data-nav-text="تقارير تشغيلية تقرير الحركات اليومية reports operational daily transactions"
-                       title="التقارير التشغيلية">
-                        @PosIcon("chart-bar")<span>التقارير التشغيلية</span>
-                    </a>
-                    <a class="pos-nav-link"
-                       href="@Url.Content("~/Pos/HtmlReports/Index")"
-                       data-screen-url="@Url.Content("~/Pos/HtmlReports/Index")"
-                       data-nav-id="html-reports"
-                       data-nav-section="التقارير والتحليلات"
-                       data-nav-text="تقارير ذكية html reports report viewer"
-                       title="التقارير الذكية">
-                        @PosIcon("table")<span>التقارير الذكية</span>
-                    </a>
-                    <a class="pos-nav-link"
-                       href="@Url.Content("~/Pos/DynamicReports/Index")"
-                       data-screen-url="@Url.Content("~/Pos/DynamicReports/Index")"
-                       data-nav-id="dynamic-reports"
-                       data-nav-section="التقارير والتحليلات"
-                       data-nav-text="مصمم التقارير الديناميكي dynamic report designer"
-                       title="مصمم التقارير الديناميكي">
-                        @PosIcon("sliders")<span>مصمم التقارير الديناميكي</span>
-                    </a>
-                }
-                @if (isAdmin || (posContext != null && (posContext.CanReportSalesmen || posContext.CanReportSalesComplete || posContext.CanReportAllSales || posContext.CanViewReports)))
-                {
-                    <a class="pos-nav-link @(isActive("sales-performance") ? "active" : "")"
-                       href="@Url.Content("~/Pos/SalesRepresentativesPerformance/Index")"
-                       data-screen-url="@Url.Content("~/Pos/SalesRepresentativesPerformance/Index")"
-                       data-nav-id="sales-performance"
-                       data-nav-section="التقارير والتحليلات"
-                       data-nav-text="أداء المناديب المبيعات sales representatives performance targets"
-                       title="لوحة أداء المناديب والمبيعات">
-                        @PosIcon("briefcase-user")<span>أداء المناديب والمبيعات</span>
-                    </a>
-                }
-                @if (isAdmin || (posContext != null && posContext.CanViewAccountingReports))
-                {
-                    <a class="pos-nav-link @(isActive("financial-intelligence") ? "active" : "")"
-                       href="@Url.Action("FinancialIntelligence", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/Index")"
-                       data-nav-id="financial-intelligence"
-                       data-nav-section="التقارير والتحليلات"
-                       data-nav-text="لوحة المؤشرات المالية financial intelligence dashboard"
-                       title="لوحة المؤشرات المالية">
-                        @PosIcon("gauge")<span>لوحة المؤشرات المالية</span>
-                    </a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/BranchPerformance")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/BranchPerformance")" data-nav-id="branch-performance" data-nav-section="التقارير والتحليلات" data-nav-text="أداء الفروع المالي branch performance" title="أداء الفروع المالي">@PosIcon("building")<span>أداء الفروع المالي</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/CashFlow")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/CashFlow")" data-nav-id="cash-flow" data-nav-section="التقارير والتحليلات" data-nav-text="التدفقات النقدية cash flow" title="تحليل التدفقات النقدية">@PosIcon("coins")<span>تحليل التدفقات النقدية</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/SalesCollections")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/SalesCollections")" data-nav-id="sales-collections" data-nav-section="التقارير والتحليلات" data-nav-text="المبيعات والتحصيل sales collections" title="تحليل المبيعات والتحصيل">@PosIcon("chart-line")<span>تحليل المبيعات والتحصيل</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/Expenses")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/Expenses")" data-nav-id="expenses" data-nav-section="التقارير والتحليلات" data-nav-text="المصروفات expenses" title="تحليل المصروفات">@PosIcon("chart-pie")<span>تحليل المصروفات</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/InventoryProfitability")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/InventoryProfitability")" data-nav-id="inventory-profitability" data-nav-section="التقارير والتحليلات" data-nav-text="المخزون والربحية inventory profitability" title="مؤشرات المخزون والربحية">@PosIcon("boxes")<span>مؤشرات المخزون والربحية</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/EmployeeReceivables")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/EmployeeReceivables")" data-nav-id="employee-receivables" data-nav-section="التقارير والتحليلات" data-nav-text="ذمم الموظفين employee receivables" title="تشخيص ذمم الموظفين">@PosIcon("user-check")<span>ذمم الموظفين</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/Custody")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/Custody")" data-nav-id="custody" data-nav-section="التقارير والتحليلات" data-nav-text="العهد والسلف custody advances" title="تشخيص العهد والسلف">@PosIcon("wallet")<span>العهد والسلف</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/AbnormalJournals")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/AbnormalJournals")" data-nav-id="abnormal-journals" data-nav-section="التقارير والتحليلات" data-nav-text="تنبيهات مراجعة محاسبية قيود غير طبيعية abnormal journals" title="تنبيهات ومراجعة محاسبية">@PosIcon("alert-triangle")<span>تنبيهات محاسبية</span></a>
-                    <a class="pos-nav-link" href="@Url.Content("~/Pos/FinancialIntelligence/RootCause")" data-screen-url="@Url.Content("~/Pos/FinancialIntelligence/RootCause")" data-nav-id="root-cause" data-nav-section="التقارير والتحليلات" data-nav-text="تحليل سبب المشكلة root cause" title="تحليل سبب المشكلة">@PosIcon("search")<span>تحليل سبب المشكلة</span></a>
+                    <a class="pos-nav-link @(isActive("print-templates") ? "active" : "")" href="@Url.Action("PrintTemplates", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/PrintTemplate/Index?name=KycCard")" data-nav-id="print-templates" data-nav-section="الإعدادات العامة" data-nav-text="تصميم كارت KYC إعدادات الطباعة نماذج الطباعة print templates designer kyc card" title="تصميم كارت KYC">@PosIcon("id-card")<span>تصميم كارت KYC</span></a>
                 }
             </div>
         </section>
 
-        @if (isAdmin)
-        {
-            <section class="pos-nav-section @(peopleOpen ? "is-open" : "")" data-section-id="people">
-                <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="الموظفون والمبيعات" aria-expanded="@(peopleOpen ? "true" : "false")">
-                    <span>@PosIcon("users")<b>الموظفون والمبيعات</b><small>رواتب، تأمين، تارجت</small></span>
-                    @PosIcon("chevron-down", "nav-chevron")
-                </button>
-                <div class="pos-nav-submenu">
-                @if (isAdmin)
-                {
-                    <a class="pos-nav-link @(isActive("employee-payroll") ? "active" : "")"
-                       href="@Url.Action("EmployeePayroll", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/EmployeePayroll/Employees")"
-                       data-nav-id="employee-payroll"
-                       data-nav-section="الموظفون والمبيعات"
-                       data-nav-text="الموظفون employees payroll hr"
-                       title="الموظفون">
-                        @PosIcon("users")<span>الموظفون</span>
-                    </a>
-                    <a class="pos-nav-link @(isActive("salary-run") ? "active" : "")"
-                       href="@Url.Action("SalaryRun", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/EmployeePayroll/SalaryRun")"
-                       data-nav-id="salary-run"
-                       data-nav-section="الموظفون والمبيعات"
-                       data-nav-text="مسير الرواتب salary payroll"
-                       title="مسير الرواتب">
-                        @PosIcon("receipt")<span>مسير الرواتب</span>
-                    </a>
-                    <a class="pos-nav-link @(isActive("medical-insurance") ? "active" : "")"
-                       href="@Url.Action("MedicalInsurance", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/EmployeePayroll/MedicalInsurance")"
-                       data-nav-id="medical-insurance"
-                       data-nav-section="الموظفون والمبيعات"
-                       data-nav-text="التأمين الطبي medical insurance"
-                       title="التأمين الطبي">
-                        @PosIcon("heart-pulse")<span>التأمين الطبي</span>
-                    </a>
-                    <a class="pos-nav-link @(isActive("medical-insurance-reports") ? "active" : "")"
-                       href="@Url.Action("MedicalInsuranceReports", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/EmployeePayroll/MedicalInsuranceReports")"
-                       data-nav-id="medical-insurance-reports"
-                       data-nav-section="الموظفون والمبيعات"
-                       data-nav-text="تقارير التأمين medical insurance reports"
-                       title="تقارير التأمين الطبي">
-                        @PosIcon("chart-bar")<span>تقارير التأمين</span>
-                    </a>
-                    <a class="pos-nav-link @(isActive("sales-targets") ? "active" : "")"
-                       href="@Url.Content("~/Pos/SalesTargets/Index")"
-                       data-screen-url="@Url.Content("~/Pos/SalesTargets/Index")"
-                       data-nav-id="sales-targets"
-                       data-nav-section="الموظفون والمبيعات"
-                       data-nav-text="تارجت المناديب sales targets"
-                       title="إدارة تارجت المناديب">
-                        @PosIcon("target")<span>تارجت المناديب</span>
-                    </a>
-                }
+        <section class="pos-nav-section @(systemOpen ? "is-open" : "")" data-section-id="system">
+            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="النظام والمراقبة" aria-expanded="@(systemOpen ? "true" : "false")">
+                <span>@PosIcon("shield-check")<b>النظام والمراقبة</b><small>مستخدمون، صلاحيات، سجلات</small></span>
+                @PosIcon("chevron-down", "nav-chevron")
+            </button>
+            <div class="pos-nav-submenu">
+                <a class="pos-nav-link pos-nav-home @(isActive("dashboard") ? "active" : "")" href="@Url.Action("Index", "PosDashboard", new { area = "Pos" })" data-dashboard-screen="true" data-nav-id="dashboard" data-nav-section="مدير النظام" data-nav-text="لوحة التحكم dashboard admin management" title="لوحة التحكم">@PosIcon("gauge")<span>لوحة التحكم</span></a>
+                <a class="pos-nav-link @(isActive("legacy-users") ? "active" : "")" href="@Url.Action("Users", "PosLegacyAdmin", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/PosLegacyAdmin/Users")" data-nav-id="legacy-users" data-nav-section="مدير النظام" data-nav-text="المستخدمين users POS kishny" title="المستخدمين">@PosIcon("users")<span>المستخدمين</span></a>
+                <a class="pos-nav-link @(isActive("permissions") ? "active" : "")" href="@Url.Action("Index", "PosPermissions", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/PosPermissions/Index")" data-nav-id="permissions" data-nav-section="مدير النظام" data-nav-text="الصلاحيات permissions users roles authorization" title="الصلاحيات">@PosIcon("shield-check")<span>الصلاحيات</span></a>
+                <a class="pos-nav-link @(isActive("main-erp-permissions") ? "active" : "")" href="@sharedMainErpUrl("Permissions")" data-screen-url="@sharedMainErpUrl("Permissions")" data-nav-id="main-erp-permissions" data-nav-section="مدير النظام" data-nav-text="الصلاحيات على الشاشات shared enterprise permissions" title="الصلاحيات على الشاشات">@PosIcon("shield-check")<span>الصلاحيات على الشاشات</span></a>
+                <a class="pos-nav-link @(isActive("system-health") ? "active" : "")" href="@Url.Action("SystemHealth", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/PosSystemHealth/Index")" data-nav-id="system-health" data-nav-section="مدير النظام" data-nav-text="مراقبة النظام system health monitor" title="مراقبة النظام">@PosIcon("monitor")<span>مراقبة النظام</span></a>
+                <a class="pos-nav-link @(isActive("system-error-log") ? "active" : "")" href="@Url.Content("~/Pos/PosSystemErrorLog/Index")" data-screen-url="@Url.Content("~/Pos/PosSystemErrorLog/Index")" data-nav-id="system-error-log" data-nav-section="مدير النظام" data-nav-text="سجل أخطاء النظام error log bugs" title="سجل أخطاء النظام">@PosIcon("bug")<span>سجل أخطاء النظام</span></a>
+                <a class="pos-nav-link @(isActive("sql-updates") ? "active" : "")" href="@Url.Action("SqlUpdates", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/PosSqlUpdates/Index")" data-nav-id="sql-updates" data-nav-section="مدير النظام" data-nav-text="تحديثات قاعدة البيانات sql updates database" title="تحديثات قاعدة البيانات">@PosIcon("database")<span>تحديثات قاعدة البيانات</span></a>
             </div>
         </section>
-        }
 
-        @if (isAdmin || (posContext != null && posContext.IsFullAccessCustomerService) || (posContext != null && posContext.CanManagePrintTemplates))
-        {
-            <section class="pos-nav-section @(adminOpen ? "is-open" : "")" data-section-id="admin">
-                <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="الإدارة والإعدادات" aria-expanded="@(adminOpen ? "true" : "false")">
-                    <span>@PosIcon("shield-check")<b>الإدارة والإعدادات</b><small>صلاحيات، نظام، طباعة</small></span>
-                    @PosIcon("chevron-down", "nav-chevron")
-                </button>
-                <div class="pos-nav-submenu">
-                    @if (isAdmin || (posContext != null && posContext.IsFullAccessCustomerService))
-                    {
-                    <a class="pos-nav-link @(isActive("kyc-bank-follow-up") ? "active" : "")"
-                       href="@Url.Action("KycBankFollowUp", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/KycBankFollowUp/Index")"
-                       data-nav-id="kyc-bank-follow-up"
-                       data-nav-section="الإدارة والإعدادات"
-                       data-nav-text="متابعة KYC البنك bank follow up customer service"
-                       title="متابعة KYC والبنك">
-                        @PosIcon("landmark")<span>متابعة KYC والبنك</span>
-                    </a>
-                    }
-                    @if (isAdmin)
-                    {
-                    <a class="pos-nav-link @(isActive("system-health") ? "active" : "")"
-                       href="@Url.Action("SystemHealth", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/PosSystemHealth/Index")"
-                       data-nav-id="system-health"
-                       data-nav-section="الإدارة والإعدادات"
-                       data-nav-text="مراقبة النظام system health monitor"
-                       title="مراقبة النظام">
-                        @PosIcon("monitor")<span>مراقبة النظام</span>
-                    </a>
-                    <a class="pos-nav-link @(isActive("system-error-log") ? "active" : "")"
-                       href="@Url.Content("~/Pos/PosSystemErrorLog/Index")"
-                       data-screen-url="@Url.Content("~/Pos/PosSystemErrorLog/Index")"
-                       data-nav-id="system-error-log"
-                       data-nav-section="الإدارة والإعدادات"
-                       data-nav-text="سجل أخطاء النظام error log bugs"
-                       title="سجل أخطاء النظام">
-                        @PosIcon("bug")<span>سجل أخطاء النظام</span>
-                    </a>
-                    <a class="pos-nav-link @(isActive("permissions") ? "active" : "")"
-                       href="@Url.Action("Index", "PosPermissions", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/PosPermissions/Index")"
-                       data-nav-id="permissions"
-                       data-nav-section="الإدارة والإعدادات"
-                       data-nav-text="صلاحيات POS permissions users roles authorization"
-                       title="صلاحيات POS">
-                        @PosIcon("shield-check")<span>صلاحيات POS</span>
-                    </a>
-                    <a class="pos-nav-link @(isActive("sql-updates") ? "active" : "")"
-                       href="@Url.Action("SqlUpdates", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/PosSqlUpdates/Index")"
-                       data-nav-id="sql-updates"
-                       data-nav-section="الإدارة والإعدادات"
-                       data-nav-text="تحديثات قاعدة البيانات sql updates database"
-                       title="إدارة تحديثات قاعدة البيانات">
-                        @PosIcon("database")<span>تحديثات قاعدة البيانات</span>
-                    </a>
-                    <a class="pos-nav-link"
-                       href="@Url.Content("~/Pos/DynamicReportsAdmin/Index")"
-                       data-screen-url="@Url.Content("~/Pos/DynamicReportsAdmin/Index")"
-                       data-nav-id="dynamic-reports-admin"
-                       data-nav-section="الإدارة والإعدادات"
-                       data-nav-text="إدارة التقارير الديناميكية dynamic reports admin"
-                       title="إدارة التقارير الديناميكية">
-                        @PosIcon("settings")<span>إدارة التقارير الديناميكية</span>
-                    </a>
-                    }
-                    @if (isAdmin || (posContext != null && posContext.CanManagePrintTemplates))
-                    {
-                    <a class="pos-nav-link @(isActive("print-templates") ? "active" : "")"
-                       href="@Url.Action("PrintTemplates", "PosDashboard", new { area = "Pos" })"
-                       data-screen-url="@Url.Content("~/Pos/PrintTemplate/Index?name=KycCard")"
-                       data-nav-id="print-templates"
-                       data-nav-section="الإدارة والإعدادات"
-                       data-nav-text="مصمم نماذج الطباعة print templates designer"
-                       title="مصمم نماذج الطباعة">
-                        @PosIcon("printer")<span>نماذج الطباعة</span>
-                    </a>
-                    }
-                </div>
-            </section>
-        }
+        <section class="pos-nav-section @(excelOpen ? "is-open" : "")" data-section-id="excel">
+            <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="إدارة Excel والاستيراد والمطابقة" aria-expanded="@(excelOpen ? "true" : "false")">
+                <span>@PosIcon("spreadsheet")<b>إدارة Excel والاستيراد والمطابقة</b><small>استيراد، توكينات، مطابقة، تقارير أخطاء</small></span>
+                @PosIcon("chevron-down", "nav-chevron")
+            </button>
+            <div class="pos-nav-submenu">
+                <a class="pos-nav-link @(isActive("token-invoice-lookup") ? "active" : "")" href="@Url.Action("TokenInvoiceLookup", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/TokenInvoiceLookup/Index")" data-nav-id="token-invoice-lookup" data-nav-section="إدارة Excel والاستيراد والمطابقة" data-nav-text="بحث التوكينات من Excel token invoice lookup excel" title="بحث التوكينات من Excel">@PosIcon("spreadsheet")<span>بحث التوكينات من Excel</span></a>
+                <a class="pos-nav-link @(isActive("excel-import") ? "active" : "")" href="@Url.Action("ExcelImport", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/ExcelImport/Index")" data-nav-id="excel-import" data-nav-section="إدارة Excel والاستيراد والمطابقة" data-nav-text="استيراد فواتير Excel import upload invoices" title="استيراد فواتير Excel">@PosIcon("spreadsheet")<span>استيراد فواتير Excel</span></a>
+                <a class="pos-nav-link @(isActive("invoice-reconciliation") ? "active" : "")" href="@Url.Action("InvoiceReconciliation", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/PosInvoiceReconciliation/Index")" data-nav-id="invoice-reconciliation" data-nav-section="إدارة Excel والاستيراد والمطابقة" data-nav-text="مطابقة وتسوية فواتير Excel reconciliation matching duplicate mismatch" title="مطابقة وتسوية فواتير Excel">@PosIcon("table")<span>مطابقة وتسوية فواتير Excel</span></a>
+                <a class="pos-nav-link @(isActive("master-data-import") ? "active" : "")" href="@sharedMainErpUrl("MasterDataImport")" data-screen-url="@sharedMainErpUrl("MasterDataImport")" data-nav-id="master-data-import" data-nav-section="إدارة Excel والاستيراد والمطابقة" data-nav-text="استيراد بيانات ERP من Excel master data import" title="استيراد بيانات ERP من Excel">@PosIcon("spreadsheet")<span>استيراد بيانات ERP من Excel</span></a>
+                <a class="pos-nav-link @(isActive("system-error-log") ? "active" : "")" href="@Url.Content("~/Pos/PosSystemErrorLog/Index?source=excel")" data-screen-url="@Url.Content("~/Pos/PosSystemErrorLog/Index?source=excel")" data-nav-id="excel-error-reports" data-nav-section="إدارة Excel والاستيراد والمطابقة" data-nav-text="تقارير أخطاء Excel excel error reports" title="تقارير أخطاء Excel">@PosIcon("bug")<span>تقارير أخطاء Excel</span></a>
+            </div>
+        </section>
     </nav>
 </aside>

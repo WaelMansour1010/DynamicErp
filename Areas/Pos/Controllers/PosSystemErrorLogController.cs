@@ -34,69 +34,70 @@ namespace MyERP.Areas.Pos.Controllers
         [HttpGet]
         public JsonResult Search(PosSystemErrorLogSearchRequest request)
         {
-            Response.ContentEncoding = Encoding.UTF8;
-            Response.Charset = "utf-8";
-
-            var context = GetPosContext();
-            if (context == null)
-            {
-                Response.StatusCode = 401;
-                Response.TrySkipIisCustomErrors = true;
-                return Json(new { success = false, message = "انتهت الجلسة، برجاء تسجيل الدخول مرة أخرى" }, JsonRequestBehavior.AllowGet);
-            }
-
-            if (!IsAdmin(context))
-            {
-                Response.StatusCode = 403;
-                Response.TrySkipIisCustomErrors = true;
-                return Json(new { success = false, message = "ليست لديك صلاحية استعراض سجل أخطاء النظام" }, JsonRequestBehavior.AllowGet);
-            }
+            PrepareJsonResponse();
 
             try
             {
+                var context = GetPosContext();
+                if (context == null)
+                {
+                    return JsonFailure(401, "انتهت الجلسة، برجاء تسجيل الدخول مرة أخرى");
+                }
+
+                if (!IsAdmin(context))
+                {
+                    return JsonFailure(403, "ليست لديك صلاحية استعراض سجل أخطاء النظام");
+                }
+
                 var result = _repository.SearchPosSystemErrorLogs(request);
                 return Json(new { success = true, data = result.Items, count = result.Count }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                Response.StatusCode = 500;
-                Response.TrySkipIisCustomErrors = true;
-                return Json(new { success = false, message = "تعذر تحميل سجل الأخطاء", details = ex.Message }, JsonRequestBehavior.AllowGet);
+                return JsonFailure(500, "تعذر تحميل سجل الأخطاء", ex.Message);
             }
         }
 
         [HttpGet]
         public JsonResult SearchSaveAttempts(PosSaveAttemptSearchRequest request)
         {
-            Response.ContentEncoding = Encoding.UTF8;
-            Response.Charset = "utf-8";
-
-            var context = GetPosContext();
-            if (context == null)
-            {
-                Response.StatusCode = 401;
-                Response.TrySkipIisCustomErrors = true;
-                return Json(new { success = false, message = "انتهت الجلسة، برجاء تسجيل الدخول مرة أخرى" }, JsonRequestBehavior.AllowGet);
-            }
-
-            if (!IsAdmin(context))
-            {
-                Response.StatusCode = 403;
-                Response.TrySkipIisCustomErrors = true;
-                return Json(new { success = false, message = "ليست لديك صلاحية استعراض سجل أخطاء النظام" }, JsonRequestBehavior.AllowGet);
-            }
+            PrepareJsonResponse();
 
             try
             {
+                var context = GetPosContext();
+                if (context == null)
+                {
+                    return JsonFailure(401, "انتهت الجلسة، برجاء تسجيل الدخول مرة أخرى");
+                }
+
+                if (!IsAdmin(context))
+                {
+                    return JsonFailure(403, "ليست لديك صلاحية استعراض سجل أخطاء النظام");
+                }
+
                 var result = _repository.SearchPosSaveAttempts(request);
                 return Json(new { success = true, data = result.Items, summary = result.Summary, count = result.Count }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
-                Response.StatusCode = 500;
-                Response.TrySkipIisCustomErrors = true;
-                return Json(new { success = false, message = "تعذر تحميل محاولات حفظ POS", details = ex.Message }, JsonRequestBehavior.AllowGet);
+                return JsonFailure(500, "تعذر تحميل محاولات حفظ POS", ex.Message);
             }
+        }
+
+        private void PrepareJsonResponse()
+        {
+            Response.ContentEncoding = Encoding.UTF8;
+            Response.Charset = "utf-8";
+            Response.ContentType = "application/json";
+            Response.TrySkipIisCustomErrors = true;
+        }
+
+        private JsonResult JsonFailure(int statusCode, string message, string details = null)
+        {
+            PrepareJsonResponse();
+            Response.StatusCode = statusCode;
+            return Json(new { success = false, message = message, details = details }, JsonRequestBehavior.AllowGet);
         }
 
         private static bool IsAdmin(PosUserContext context)

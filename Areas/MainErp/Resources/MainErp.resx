@@ -101,7 +101,7 @@
   <data name="ReadOnly" xml:space="preserve"><value>Read only</value></data>
   <data name="Report" xml:space="preserve"><value>Report</value></data>
   <data name="ReportRun" xml:space="preserve"><value>Run Report</value></data>
-  <data name="RealMigratedFromVb6" xml:space="preserve"><value>Real migrated from VB6</value></data>
+  <data name="RealMigratedFromVb6" xml:space="preserve"><value>Approved operating workflow</value></data>
   <data name="Reports" xml:space="preserve"><value>Reports</value></data>
   <data name="ReportsAndAttachments" xml:space="preserve"><value>Reports and Attachments</value></data>
   <data name="Sales" xml:space="preserve"><value>Sales</value></data>
@@ -123,7 +123,7 @@
   <data name="FinancialIndicators" xml:space="preserve"><value>Financial Indicators</value></data>
   <data name="GeneratedAccountingRows" xml:space="preserve"><value>Generated Accounting Rows</value></data>
   <data name="AffectedAccounts" xml:space="preserve"><value>Affected Accounts</value></data>
-  <data name="WorkflowReadOnly" xml:space="preserve"><value>Workflow is currently read-only. Save, posting, deletion and account creation are disabled.</value></data>
+  <data name="WorkflowReadOnly" xml:space="preserve"><value>Workflow is protected. Save, posting, deletion and account creation require explicit approval.</value></data>
   <data name="MiniAccountPreview" xml:space="preserve"><value>Mini Account Preview</value></data>
   <data name="Voucher" xml:space="preserve"><value>Voucher</value></data>
   <data name="VoucherLines" xml:space="preserve"><value>Voucher Lines</value></data>

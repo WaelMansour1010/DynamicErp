@@ -10,9 +10,9 @@
     <div class="main-erp-title-row">
         <div>
             <h3>@Model.ArabicTitle</h3>
-            <p>شاشة قراءة تشغيلية من المصدر الرئيسي `FrmSaleBill6.frm`. تعرض الفواتير والتفاصيل والقيود فقط، بدون حفظ أو ترحيل.</p>
+            <p>شاشة قراءة تشغيلية تعرض الفواتير والتفاصيل والقيود فقط، بدون حفظ أو ترحيل.</p>
         </div>
-        <span class="main-erp-badge">Read-only / Main ERP</span>
+        <span class="main-erp-badge">قراءة آمنة / MainErp</span>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(Model.Warning))
@@ -30,7 +30,7 @@
 
     <div class="main-erp-kpi-grid">
         <div class="main-erp-kpi-card"><span>عدد النتائج</span><strong>@Model.TotalCount</strong><small>صفوف مطابقة للفلاتر</small></div>
-        <div class="main-erp-kpi-card"><span>مصدر الشاشة</span><strong>FrmSaleBill6</strong><small>Main ERP فقط</small></div>
+        <div class="main-erp-kpi-card"><span>مصدر البيانات</span><strong>MainErp</strong><small>قاعدة التشغيل الرئيسية</small></div>
         <div class="main-erp-kpi-card"><span>نوع القراءة</span><strong>@(isPump ? "TypeInvoice = 2" : "TypeInvoice <> 2")</strong><small>Transaction_Type: 21,42,38,9</small></div>
         <div class="main-erp-kpi-card"><span>حالة التنفيذ</span><strong>قراءة فقط</strong><small>لا يوجد حفظ أو ترحيل</small></div>
     </div>

@@ -53,6 +53,17 @@ namespace MyERP.Areas.MainErp.Controllers
             return Json(new { success = data != null, message = data == null ? "لم يتم العثور على مستند الجرد." : "", data }, JsonRequestBehavior.AllowGet);
         }
 
+        [HttpGet]
+        public JsonResult LookupItems(string term)
+        {
+            if (!_permissionService.CanView(MainErpUserContext, ScreenName) && !_permissionService.CanView(MainErpUserContext, "FrmNewGard1"))
+            {
+                return Json(new { success = false, message = "الصلاحية غير كافية لعرض أصناف الجرد." }, JsonRequestBehavior.AllowGet);
+            }
+
+            return Json(new { success = true, items = _service.SearchItems(term, 40) }, JsonRequestBehavior.AllowGet);
+        }
+
         [HttpPost]
         public JsonResult Save(StocktakingSaveRequest request)
         {

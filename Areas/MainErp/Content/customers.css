@@ -37,6 +37,7 @@
 
 .customers-card {
     border-radius: 8px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .045);
 }
 
 .customers-section-head {
@@ -129,6 +130,26 @@
     border-color: #bfdbfe;
     background: #eff6ff;
     color: #1e3a8a;
+}
+
+.customers-page .main-erp-cockpit-header {
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .06);
+}
+
+.customers-results tbody tr:hover {
+    background: #f8fbff;
+}
+
+.customers-form-grid input:focus,
+.customers-form-grid select:focus,
+.customers-form-grid textarea:focus {
+    border-color: #1769aa;
+    box-shadow: 0 0 0 3px rgba(23, 105, 170, .12);
+    outline: 0;
+}
+
+.customers-search {
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .045);
 }
 
 @media (max-width: 1180px) {

@@ -1,6 +1,7 @@
 ﻿@{
     Layout = null;
-    ViewBag.Title = "كيشني - شاشة البيع";
+    var kycStandalone = ViewBag.KycStandalone as bool? == true;
+    ViewBag.Title = kycStandalone ? "كيشني - KYC" : "كيشني - شاشة البيع";
     var posContext = ViewBag.PosContext as MyERP.Areas.Pos.Models.PosUserContext;
     var primaryLogoPath = "~/Areas/Pos/assets/images/company-logo.png";
     var alternateLogoPath = "~/Areas/Pos/assets/images/company-logo-1.png";
@@ -28,7 +29,7 @@
 <meta charset="utf-8" />
 <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css?v=20260513-light-default")" rel="stylesheet" />
 
-<div class="pos-page pos-mode-cash-in"
+<div class="pos-page pos-mode-cash-in @(kycStandalone ? "pos-kyc-standalone" : "")"
      id="posPage"
      dir="rtl"
      data-save-url="@Url.Action("Save", "PosTransaction", new { area = "Pos" })"
@@ -94,6 +95,7 @@
       data-is-full-access="@(posContext != null && posContext.IsFullAccess ? "true" : "false")"
      data-can-change-defaults="@(posContext != null && posContext.CanChangeDefaults ? "true" : "false")"
      data-can-teller="@(posContext != null && posContext.CanTeller ? "true" : "false")"
+     data-kyc-standalone="@(kycStandalone ? "true" : "false")"
      data-sales-index-first="@(showSalesIndexFirst ? "true" : "false")">
     <div class="pos-shell">
         <div class="pos-logo-strip">
@@ -113,7 +115,7 @@
 
         <header class="pos-header">
             <div class="pos-header-content">
-                <h1>كيشني - شاشة البيع</h1>
+                <h1>@(kycStandalone ? "KYC" : "كيشني - شاشة البيع")</h1>
                 <p class="cash-db-warning">المستخدم: @(posContext != null ? posContext.UserName : "") | الفرع: @(posContext != null ? posContext.BranchName : "") | العهدة: @(posContext != null ? posContext.BoxName : "")</p>
                 <div class="pos-balances">
                     <span id="employeeBalanceText" class="is-hidden-ui">ذمة الموظف: غير محملة</span>
@@ -474,6 +476,7 @@
             </div>
             <div class="today-invoices-body" id="todayInvoicesBody">
                 <input type="text" id="todayInvoiceSearch" class="today-search" placeholder="ابحث برقم الفاتورة أو الهاتف أو التوكن أو اسم العميل أو IPN" />
+                <button type="button" class="secondary-action compact-action" id="searchTodayInvoicesBtn">بحث</button>
                 <select id="todayInvoiceTypeFilter" class="today-type-filter" aria-label="فلتر نوع الفاتورة">
                     <option value="">كل الفواتير</option>
                     <option value="cash-in">كاش إن</option>
@@ -518,4 +521,4 @@
     </div>
 </div>
 
-<script src="@Url.Content("~/Areas/Pos/Scripts/pos-transaction.js?v=20260513-sales-search")"></script>
+<script src="@Url.Content("~/Areas/Pos/Scripts/pos-transaction.js?v=20260514-today-invoice-arabic")"></script>

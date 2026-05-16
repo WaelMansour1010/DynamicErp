@@ -49,6 +49,14 @@ namespace MyERP.Areas.MainErp
             );
             projectExtractRoute.DataTokens["UseNamespaceFallback"] = false;
 
+            var journalOpeningBalanceRoute = context.MapRoute(
+                "MainErp_journal_opening_balance",
+                "MainErp/JournalEntries/OpeningBalance",
+                new { controller = "JournalEntries", action = "OpeningBalance" },
+                new[] { "MyERP.Areas.MainErp.Controllers" }
+            );
+            journalOpeningBalanceRoute.DataTokens["UseNamespaceFallback"] = false;
+
             var journalNoteRoute = context.MapRoute(
                 "MainErp_journal_details_by_note",
                 "MainErp/JournalEntries/DetailsByNote/{noteId}",

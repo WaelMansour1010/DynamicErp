@@ -336,7 +336,8 @@ BEGIN
             GROUP BY td.Item_ID
             HAVING SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)) > 0
         ) serialItem
-        WHERE ISNULL(serialItem.Item_ID, -1) <> it.ItemId
+        WHERE serialItem.Item_ID IS NOT NULL
+          AND serialItem.Item_ID <> it.ItemId
     )
         RAISERROR(N'يوجد سيريال لا يخص الصنف المحدد', 16, 1);
 

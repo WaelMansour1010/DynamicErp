@@ -1,0 +1,199 @@
+@model MyERP.Common.StoreData.StoreDataIndexViewModel
+@using System.Linq
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "بيانات المخازن";
+    var selected = Model.Selected ?? new MyERP.Common.StoreData.StoreDataEditViewModel();
+    var canSave = selected.StoreId > 0 ? Model.Permissions.CanEdit : Model.Permissions.CanAdd;
+    var message = (ViewBag.StoreDataMessage as string) ?? Model.SuccessMessage;
+}
+
+<link href="@Url.Content("~/Areas/MainErp/Content/store-data.css?v=20260514")" rel="stylesheet" />
+
+<section class="erp-page store-data-page" dir="rtl">
+    <header class="store-data-hero">
+        <div>
+            <span>إدارة المخازن</span>
+            <h1>بيانات المخازن</h1>
+            <p>إدارة مركزية للمخازن، الفروع، الحسابات التشغيلية، المستخدمين، وربط المخزن بالمجموعات.</p>
+        </div>
+        <div class="store-data-actions">
+            <a class="store-data-btn primary" href="@Url.Action("New", "StoreData", new { area = "MainErp", branchId = Model.BranchId })" @(Model.Permissions.CanAdd ? "" : "aria-disabled=true")><i class="fas fa-plus"></i> مخزن جديد</a>
+        </div>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <div class="store-data-alert">@message</div>
+    }
+
+    <section class="store-data-summary">
+        <div><small>إجمالي المخازن</small><strong>@Model.TotalCount</strong></div>
+        <div><small>مرتبطة بالمجموعات</small><strong>@Model.LinkedCount</strong></div>
+        <div><small>غير مرتبطة</small><strong>@Model.UnlinkedCount</strong></div>
+        <div><small>مخازن معمل</small><strong>@Model.LabCount</strong></div>
+        <div><small>بدون قيد إنتاج</small><strong>@Model.NoEntryCount</strong></div>
+    </section>
+
+    <div class="store-data-layout">
+        <aside class="store-data-card">
+            @using (Html.BeginForm("Index", "StoreData", FormMethod.Get, new { area = "MainErp", @class = "store-data-filter" }))
+            {
+                <label class="store-data-field"><span>بحث</span><input type="search" name="searchText" value="@Model.SearchText" placeholder="كود / اسم / هاتف" /></label>
+                <label class="store-data-field">
+                    <span>الفرع</span>
+                    <select name="branchId">
+                        <option value="">كل الفروع</option>
+                        @foreach (var branch in Model.Branches)
+                        {
+                            <option value="@branch.Value" @(Convert.ToString(Model.BranchId) == branch.Value ? "selected" : "")>@branch.Text</option>
+                        }
+                    </select>
+                </label>
+                <label class="store-data-field">
+                    <span>الحالة التشغيلية</span>
+                    <select name="mode">
+                        <option value="">كل الحالات</option>
+                        <option value="linked" @(Model.Mode == "linked" ? "selected" : "")>مرتبطة بالمجموعات</option>
+                        <option value="unlinked" @(Model.Mode == "unlinked" ? "selected" : "")>غير مرتبطة</option>
+                        <option value="lab" @(Model.Mode == "lab" ? "selected" : "")>مخزن معمل</option>
+                        <option value="no-entry" @(Model.Mode == "no-entry" ? "selected" : "")>بدون قيد إنتاج</option>
+                    </select>
+                </label>
+                <button class="store-data-btn primary" type="submit"><i class="fas fa-search"></i> بحث</button>
+            }
+
+            <div class="store-data-list" aria-label="قائمة المخازن">
+                @foreach (var store in Model.Stores)
+                {
+                    <a class="store-data-row @(selected.StoreId == store.StoreId ? "active" : "")" href="@Url.Action("Index", "StoreData", new { area = "MainErp", searchText = Model.SearchText, branchId = Model.BranchId, mode = Model.Mode, id = store.StoreId })">
+                        <strong>@store.StoreName</strong>
+                        <small>@store.Code - @store.BranchName</small>
+                        <div class="store-data-chips">
+                            <span class="store-chip @(store.Linked ? "ok" : "warn")">@(store.Linked ? "مرتبط" : "غير مرتبط")</span>
+                            @if (store.IsLab) { <span class="store-chip">معمل</span> }
+                            @if (store.IsNotCreateEntry) { <span class="store-chip danger">بدون قيد</span> }
+                            <span class="store-chip">@store.UserCount مستخدم</span>
+                        </div>
+                    </a>
+                }
+                @if (!Model.Stores.Any())
+                {
+                    <div class="store-data-row">لا توجد مخازن مطابقة.</div>
+                }
+            </div>
+        </aside>
+
+        <main class="store-data-workspace">
+            @using (Html.BeginForm("Save", "StoreData", FormMethod.Post, new { area = "MainErp" }))
+            {
+                @Html.AntiForgeryToken()
+                @Html.Hidden("StoreId", selected.StoreId)
+                <div class="store-data-section-title">
+                    <div>
+                        <span>@(selected.StoreId > 0 ? "تعديل مخزن" : "مخزن جديد")</span>
+                        <h2>@(selected.StoreId > 0 ? selected.StoreName : "إضافة مخزن")</h2>
+                    </div>
+                    <div class="store-data-actions">
+                        <button class="store-data-btn primary" type="submit" @(canSave ? "" : "disabled")><i class="fas fa-save"></i> حفظ</button>
+                    </div>
+                </div>
+
+                <section class="store-data-grid">
+                    <label class="store-data-field"><span>كود المخزن</span><input name="Code" value="@selected.Code" maxlength="255" /></label>
+                    <label class="store-data-field">
+                        <span>الفرع</span>
+                        <select name="BranchId" required>
+                            <option value="">اختر الفرع</option>
+                            @foreach (var branch in Model.Branches)
+                            {
+                                <option value="@branch.Value" @(Convert.ToString(selected.BranchId) == branch.Value ? "selected" : "")>@branch.Text</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="store-data-field"><span>الهاتف</span><input name="Phone" value="@selected.Phone" maxlength="50" /></label>
+                    <label class="store-data-field wide"><span>اسم المخزن عربي</span><input name="StoreName" value="@selected.StoreName" maxlength="50" required /></label>
+                    <label class="store-data-field"><span>اسم المخزن إنجليزي</span><input name="StoreNameEnglish" value="@selected.StoreNameEnglish" maxlength="255" /></label>
+                    <label class="store-data-field wide"><span>العنوان</span><input name="Address" value="@selected.Address" maxlength="50" /></label>
+                    <label class="store-data-field">
+                        <span>أمين المستودع</span>
+                        <select name="EmployeeId">
+                            <option value="">غير محدد</option>
+                            @foreach (var employee in Model.Employees)
+                            {
+                                <option value="@employee.Value" @(Convert.ToString(selected.EmployeeId) == employee.Value ? "selected" : "")>@employee.Text</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="store-data-field">
+                        <span>مندوب المبيعات</span>
+                        <select name="SalesPersonId"><option value="">غير محدد</option>@foreach (var employee in Model.Employees) { <option value="@employee.Value" @(Convert.ToString(selected.SalesPersonId) == employee.Value ? "selected" : "")>@employee.Text</option> }</select>
+                    </label>
+                    <label class="store-data-field">
+                        <span>مندوب المشتريات</span>
+                        <select name="PurchasePersonId"><option value="">غير محدد</option>@foreach (var employee in Model.Employees) { <option value="@employee.Value" @(Convert.ToString(selected.PurchasePersonId) == employee.Value ? "selected" : "")>@employee.Text</option> }</select>
+                    </label>
+                    <label class="store-data-field">
+                        <span>الصندوق</span>
+                        <select name="BoxId"><option value="">غير محدد</option>@foreach (var box in Model.Boxes) { <option value="@box.Value" @(Convert.ToString(selected.BoxId) == box.Value ? "selected" : "")>@box.Text</option> }</select>
+                    </label>
+                    <label class="store-data-field full"><span>ملاحظات تشغيلية</span><textarea name="Remarks">@selected.Remarks</textarea></label>
+                </section>
+
+                <section class="store-data-panel">
+                    <div class="store-data-checks">
+                        <label><input type="hidden" name="Linked" value="false" /><input type="checkbox" name="Linked" value="true" @(selected.Linked ? "checked" : "") /> ربط المخزن بالمجموعات</label>
+                        <label><input type="hidden" name="IsLab" value="false" /><input type="checkbox" name="IsLab" value="true" @(selected.IsLab ? "checked" : "") /> مخزن معمل</label>
+                        <label><input type="hidden" name="IsNotCreateEntry" value="false" /><input type="checkbox" name="IsNotCreateEntry" value="true" @(selected.IsNotCreateEntry ? "checked" : "") /> لا ينشأ قيد الإنتاج</label>
+                        <label><input type="hidden" name="AutoCreateAccounts" value="false" /><input type="checkbox" name="AutoCreateAccounts" value="true" @(selected.AutoCreateAccounts ? "checked" : "") /> إنشاء حسابات عند الإضافة</label>
+                    </div>
+                </section>
+
+                <section class="store-data-panel">
+                    <div class="store-data-section-title"><div><span>الحسابات المرتبطة</span><h3>حسابات المخزون والتسويات</h3></div></div>
+                    <div class="store-data-grid">
+                        <label class="store-data-field"><span>حساب المخزون الرئيسي</span><input name="InventoryParentAccount" value="@selected.InventoryParentAccount" list="storeAccounts" /></label>
+                        <label class="store-data-field"><span>حساب التسويات الرئيسي</span><input name="SettlementParentAccount" value="@selected.SettlementParentAccount" list="storeAccounts" /></label>
+                        <label class="store-data-field"><span>حساب فقد وتلف الرئيسي</span><input name="LossParentAccount" value="@selected.LossParentAccount" list="storeAccounts" /></label>
+                        <label class="store-data-field"><span>حساب هدايا وعينات الرئيسي</span><input name="GiftParentAccount" value="@selected.GiftParentAccount" list="storeAccounts" /></label>
+                        <label class="store-data-field"><span>حساب المخزون</span><input name="InventoryAccount" value="@selected.InventoryAccount" list="storeAccounts" /></label>
+                        <label class="store-data-field"><span>حساب التسويات</span><input name="SettlementAccount" value="@selected.SettlementAccount" list="storeAccounts" /></label>
+                        <label class="store-data-field"><span>حساب فقد وتلف</span><input name="LossAccount" value="@selected.LossAccount" list="storeAccounts" /></label>
+                        <label class="store-data-field"><span>حساب هدايا وعينات</span><input name="GiftAccount" value="@selected.GiftAccount" list="storeAccounts" /></label>
+                        <label class="store-data-field"><span>الحساب الأب</span><input name="ParentAccount" value="@selected.ParentAccount" list="storeAccounts" /></label>
+                    </div>
+                    <datalist id="storeAccounts">
+                        @foreach (var account in Model.Accounts)
+                        {
+                            <option value="@account.Value">@account.Text</option>
+                        }
+                    </datalist>
+                </section>
+
+                <section class="store-data-panel">
+                    <div class="store-data-section-title"><div><span>المستخدمون</span><h3>المستخدمون المصرح لهم بالمخزن</h3></div></div>
+                    <div class="store-data-user-grid">
+                        @foreach (var user in Model.Users)
+                        {
+                            <label><input type="checkbox" name="UserIds" value="@user.UserId" @(selected.UserIds.Contains(user.UserId) ? "checked" : "") /> @user.DisplayName</label>
+                        }
+                    </div>
+                </section>
+            }
+
+            @if (selected.StoreId > 0)
+            {
+                using (Html.BeginForm("Delete", "StoreData", FormMethod.Post, new { area = "MainErp", onsubmit = "return confirm('هل تريد حذف هذا المخزن بعد التحقق من عدم وجود حركات؟');" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.Hidden("storeId", selected.StoreId)
+                    <div class="store-data-actions" style="margin-top:16px">
+                        <button type="submit" class="store-data-btn danger" @(Model.Permissions.CanDelete && selected.TransactionCount == 0 && selected.VoucherAccountUseCount == 0 ? "" : "disabled")><i class="fas fa-trash"></i> حذف المخزن</button>
+                        <span class="store-chip">حركات: @selected.TransactionCount</span>
+                        <span class="store-chip">قيود حسابات: @selected.VoucherAccountUseCount</span>
+                    </div>
+                }
+            }
+        </main>
+    </div>
+</section>

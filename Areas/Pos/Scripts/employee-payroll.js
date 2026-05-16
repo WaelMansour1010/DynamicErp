@@ -3,6 +3,7 @@
     var root = document.querySelector(".ep-page");
     if (!root) { return; }
     var screen = root.getAttribute("data-screen");
+    var readOnly = root.getAttribute("data-read-only") === "true";
     var enterpriseDependents = [];
     var enterpriseRules = [];
     var enterpriseCoverageRows = [];
@@ -28,15 +29,30 @@
         el.classList.toggle("error", !!error);
     }
     function getJson(url) {
-        return fetch(url, { credentials: "same-origin" }).then(function (r) { return r.json(); });
+        return fetch(url, { credentials: "same-origin" }).then(function (r) {
+            return r.json().catch(function () {
+                return { success: false, message: "Unexpected server response." };
+            });
+        }).catch(function () {
+            return { success: false, message: "Network or server error." };
+        });
     }
     function postJson(url, data) {
+        if (!url) {
+            return Promise.resolve({ success: false, message: "This action is not available in this area." });
+        }
         return fetch(url, {
             method: "POST",
             credentials: "same-origin",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data || {})
-        }).then(function (r) { return r.json(); });
+        }).then(function (r) {
+            return r.json().catch(function () {
+                return { success: false, message: "Unexpected server response." };
+            });
+        }).catch(function () {
+            return { success: false, message: "Network or server error." };
+        });
     }
     function queryString(data) {
         var params = new URLSearchParams();
@@ -67,8 +83,8 @@
         if (!url) { return Promise.resolve({}); }
         return getJson(url).then(function (res) {
             var data = res.data || {};
-            ["epBranchFilter", "epBranch", "epRunBranch"].forEach(function (id) { fillSelect(byId(id), data.Branches, id === "epBranch" ? "غير محدد" : "كل الفروع"); });
-            ["epDepartmentFilter", "epDepartment", "epRunDepartment"].forEach(function (id) { fillSelect(byId(id), data.Departments, id === "epDepartment" ? "غير محدد" : "كل الإدارات"); });
+            ["epBranchFilter", "epBranch", "epRunBranch", "epMedBranch"].forEach(function (id) { fillSelect(byId(id), data.Branches, id === "epBranch" ? "غير محدد" : "كل الفروع"); });
+            ["epDepartmentFilter", "epDepartment", "epRunDepartment", "epMedDepartment"].forEach(function (id) { fillSelect(byId(id), data.Departments, id === "epDepartment" ? "غير محدد" : "كل الإدارات"); });
             fillSelect(byId("epJob"), data.Jobs, "غير محدد");
             fillSelect(byId("epInsurancePlan"), data.MedicalInsurancePlans, "غير محدد");
             fillSelect(byId("epReportProvider"), data.MedicalInsuranceProviders, "كل الشركات");
@@ -115,6 +131,12 @@
             message("تم تحميل " + (res.rows || []).length + " موظف");
         });
     }
+    function enforceReadOnlyRows() {
+        var tbody = byId("epEmployeesRows");
+        if (!readOnly || !tbody) { return; }
+        tbody.querySelectorAll("[data-active]").forEach(function (x) { x.remove(); });
+        tbody.querySelectorAll("[data-edit] i").forEach(function (x) { x.className = "fas fa-eye"; });
+    }
     function openEditor(employee) {
         employee = employee || { IsActive: true, MedicalInsurance: { IsMonthly: true, EmployeeShareType: "Amount", CompanyShareType: "AutoBalance" }, MedicalInsuranceHistory: [] };
         byId("epEmployeeId").value = employee.EmployeeId || "";
@@ -148,6 +170,11 @@
         renderInsuranceHistory(employee.MedicalInsuranceHistory || []);
         updateInsurancePreview();
         byId("epEmployeeEditor").hidden = false;
+        if (readOnly) {
+            byId("epEmployeeEditor").querySelectorAll("input, select, textarea").forEach(function (el) {
+                el.disabled = true;
+            });
+        }
     }
     function renderInsuranceHistory(rows) {
         var tbody = byId("epInsuranceHistory");
@@ -623,6 +650,160 @@
         return "مبلغ";
     }
 
+    function medStatusLabel(value) {
+        if (value === "Renewal Due") { return "تجديد قريب"; }
+        if (value === "Suspended") { return "موقوف"; }
+        if (value === "Expired") { return "منتهي"; }
+        return "نشط";
+    }
+    function medStatusClass(value) {
+        if (value === "Renewal Due") { return "renewal"; }
+        if (value === "Suspended") { return "suspended"; }
+        if (value === "Expired") { return "expired"; }
+        return "active";
+    }
+    function medOperationalFilter() {
+        return {
+            Term: byId("epMedTerm") ? byId("epMedTerm").value : "",
+            BranchId: byId("epMedBranch") && byId("epMedBranch").value ? byId("epMedBranch").value : null,
+            DepartmentId: byId("epMedDepartment") && byId("epMedDepartment").value ? byId("epMedDepartment").value : null,
+            Status: byId("epMedStatus") ? byId("epMedStatus").value : "",
+            RenewalDays: 45
+        };
+    }
+    function renderMedAccounting(rows) {
+        var host = byId("epMedAccountingPreview");
+        if (!host) { return; }
+        host.innerHTML = "";
+        (rows || []).forEach(function (x) {
+            host.insertAdjacentHTML("beforeend",
+                '<article class="ep-med-journal-line"><div><span>' + html(x.Step) + '</span><strong>' + formatMoney(x.Amount) + '</strong></div><dl><div><dt>Debit</dt><dd>' + html(x.DebitAccount) + '</dd></div><div><dt>Credit</dt><dd>' + html(x.CreditAccount) + '</dd></div></dl><p>' + html(x.Explanation) + '</p></article>');
+        });
+        if (!host.innerHTML) {
+            host.innerHTML = '<div class="ep-empty-card">سيظهر نموذج القيد بعد تحميل بيانات التأمين.</div>';
+        }
+    }
+    function renderMedMembershipCard(row) {
+        var host = byId("epMedMembershipCard");
+        var depHost = byId("epMedDependents");
+        if (!host) { return; }
+        if (!row) {
+            host.innerHTML = '<div class="ep-empty-card">اختر موظفا لعرض بطاقة التأمين وبيانات الاشتراك.</div>';
+            if (depHost) { depHost.innerHTML = ""; }
+            return;
+        }
+        var status = medStatusClass(row.Status);
+        var mode = root.getAttribute("data-card-mode") || "full";
+        host.classList.toggle("wallet", mode === "wallet");
+        host.innerHTML =
+            '<article class="ep-med-id-card ' + status + '">' +
+            '<div class="ep-med-id-bg"></div>' +
+            '<div class="ep-med-id-top"><div class="ep-med-brand"><span>Dania</span><strong>Medical Insurance</strong></div><div class="ep-med-provider-logo">' + html((row.ProviderName || "MI").substring(0, 2)) + '</div></div>' +
+            '<div class="ep-med-id-main"><div class="ep-med-avatar">' + html(row.AvatarText || "MI") + '</div><div><h3>' + html(row.EmployeeName || "Employee") + '</h3><p>' + html(row.EmployeeCode || "") + ' - ' + html(row.MembershipNumber || "") + '</p><b class="ep-med-badge ' + status + '">' + medStatusLabel(row.Status) + '</b></div></div>' +
+            '<div class="ep-med-id-plan"><span>' + html(row.ProviderName || "Provider") + '</span><strong>' + html(row.PlanName || "Plan") + '</strong></div>' +
+            '<dl class="ep-med-id-metrics"><div><dt>Renewal</dt><dd>' + html(dateInput(row.RenewalDate || row.EndDate) || "Open") + '</dd></div><div><dt>Payroll</dt><dd>' + (row.PayrollLinked ? "Linked" : "Review") + '</dd></div><div><dt>Family</dt><dd>' + html(row.DependentsCount || 0) + '</dd></div></dl>' +
+            '<div class="ep-med-id-footer"><span>Coverage: employee ' + formatMoney(row.EmployeeMonthlyDeduction) + ' / company ' + formatMoney(row.CompanyMonthlyCost) + '</span><em>QR</em></div>' +
+            '</article>';
+        if (depHost) {
+            depHost.innerHTML = "";
+            (row.Dependents || []).forEach(function (x) {
+                depHost.insertAdjacentHTML("beforeend",
+                    '<article class="ep-med-dependent-card"><i class="fas fa-user"></i><div><strong>' + html(x.Name || "Dependent") + '</strong><span>' + html(x.Relation || "Family") + ' - ' + html(x.Age || 0) + ' سنة - ' + formatMoney(x.CoveragePercent).replace(".00", "") + '%</span></div><b>' + (x.IsActive ? "نشط" : "غير نشط") + '</b></article>');
+            });
+            if (!depHost.innerHTML) { depHost.innerHTML = '<div class="ep-empty-card">لا توجد بيانات تابعين لهذا الموظف.</div>'; }
+        }
+    }
+    function renderMedBars(hostId, rows) {
+        var host = byId(hostId);
+        if (!host) { return; }
+        host.innerHTML = "";
+        var max = Math.max.apply(Math, (rows || []).map(function (x) { return number(x.TotalCost); }).concat([1]));
+        (rows || []).forEach(function (x) {
+            var width = Math.max(4, Math.round(number(x.TotalCost) * 100 / max));
+            host.insertAdjacentHTML("beforeend",
+                '<div class="ep-med-bar-row"><div><strong>' + html(x.Name || "غير محدد") + '</strong><span>' + html(x.Employees || 0) + ' موظف - ' + formatMoney(x.TotalCost) + '</span></div><em><i style="width:' + width + '%"></i></em></div>');
+        });
+        if (!host.innerHTML) { host.innerHTML = '<div class="ep-empty-card">No cost distribution yet.</div>'; }
+    }
+    function renderMedAlerts(rows) {
+        var host = byId("epMedAlerts");
+        if (!host) { return; }
+        host.innerHTML = "";
+        (rows || []).forEach(function (x) {
+            var sev = String(x.Severity || "Info").toLowerCase();
+            host.insertAdjacentHTML("beforeend",
+                '<article class="ep-med-alert ' + sev + '"><i class="fas fa-bell"></i><div><strong>' + html(x.Title) + '</strong><p>' + html(x.Description) + '</p><span>' + html(x.EmployeeName || "") + ' - ' + html(x.BranchName || "") + (x.DueDate ? ' - ' + html(dateInput(x.DueDate)) : '') + '</span></div></article>');
+        });
+        if (!host.innerHTML) { host.innerHTML = '<div class="ep-empty-card">لا توجد تنبيهات مهمة في الفترة الحالية.</div>'; }
+    }
+    function renderMedEmployees(rows) {
+        var host = byId("epMedEmployees");
+        if (!host) { return; }
+        host.innerHTML = "";
+        root._medRows = rows || [];
+        (rows || []).forEach(function (x, index) {
+            var status = medStatusClass(x.Status);
+            var flags = [];
+            if (x.PayrollLinked) { flags.push('<span><i class="fas fa-link"></i> Payroll-linked</span>'); }
+            if (x.DependentsCount) { flags.push('<span><i class="fas fa-users"></i> ' + html(x.DependentsCount) + ' family</span>'); }
+            if (x.OverdueInstallments) { flags.push('<span class="danger"><i class="fas fa-bell"></i> ' + html(x.OverdueInstallments) + ' overdue</span>'); }
+            host.insertAdjacentHTML("beforeend",
+                '<article class="ep-med-employee-card ' + status + (index === 0 ? ' selected' : '') + '" data-med-employee="' + index + '">' +
+                '<div class="ep-med-employee-head"><div><span>' + html(x.EmployeeCode || "") + '</span><h3>' + html(x.EmployeeName || "Employee") + '</h3></div><b class="ep-med-badge ' + status + '">' + medStatusLabel(x.Status) + '</b></div>' +
+                '<div class="ep-med-provider"><i class="fas fa-hospital"></i><div><strong>' + html(x.ProviderName || "غير محدد") + '</strong><span>' + html(x.PlanName || "خطة غير محددة") + '</span></div></div>' +
+                '<dl class="ep-med-card-metrics"><div><dt>Employee</dt><dd>' + formatMoney(x.EmployeeMonthlyDeduction) + '</dd></div><div><dt>Company</dt><dd>' + formatMoney(x.CompanyMonthlyCost) + '</dd></div><div><dt>Overdue</dt><dd>' + formatMoney(x.OverdueAmount) + '</dd></div></dl>' +
+                '<p class="ep-med-card-meta">' + html(x.BranchName || "فرع غير محدد") + ' / ' + html(x.DepartmentName || "إدارة غير محددة") + '</p>' +
+                '<div class="ep-med-flags">' + flags.join("") + '</div>' +
+                '</article>');
+        });
+        if (!host.innerHTML) {
+            host.innerHTML = '<div class="ep-empty-card">لا توجد اشتراكات مطابقة. جرّب تعديل الفلاتر أو تحميل البيانات.</div>';
+        }
+        renderMedMembershipCard((rows || [])[0]);
+    }
+    function renderMedDashboard(dashboard) {
+        dashboard = dashboard || {};
+        setText("epMedActive", dashboard.ActiveInsured || 0);
+        setText("epMedUninsured", dashboard.UninsuredEmployees || 0);
+        setText("epMedEmployeeShare", formatMoney(dashboard.MonthlyEmployeeShare));
+        setText("epMedCompanyShare", formatMoney(dashboard.MonthlyCompanyShare));
+        setText("epMedRenewals", dashboard.UpcomingRenewals || 0);
+        setText("epMedOverdue", dashboard.OverdueInstallments || 0);
+        setText("epMedInactive", (dashboard.Suspended || 0) + (dashboard.Expired || 0));
+        setText("epMedPayable", formatMoney(dashboard.MonthlyPayable));
+        var total = Math.max(1, dashboard.TotalEmployees || 0);
+        var insured = dashboard.ActiveInsured || 0;
+        var coverage = Math.round(insured * 100 / total);
+        setText("epMedCoveragePercent", coverage + "%");
+        var donut = byId("epMedDonut");
+        if (donut) {
+            donut.style.setProperty("--active", String(Math.max(0, dashboard.ActiveInsured - dashboard.UpcomingRenewals)));
+            donut.style.setProperty("--renewal", String(dashboard.UpcomingRenewals || 0));
+            donut.style.setProperty("--expired", String(dashboard.Expired || 0));
+            donut.style.setProperty("--suspended", String(dashboard.Suspended || 0));
+        }
+        renderMedEmployees(dashboard.Employees || []);
+        renderMedAccounting(dashboard.AccountingPreview || []);
+        renderMedBars("epMedBranchCosts", dashboard.BranchCosts || []);
+        renderMedBars("epMedDepartmentCosts", dashboard.DepartmentCosts || []);
+        renderMedAlerts(dashboard.Alerts || []);
+        if (!dashboard.SchemaReady) {
+            message(dashboard.Message || "Medical insurance setup is not installed in this database.", true);
+        } else {
+            message("تم تحميل بيانات التأمين الطبي بنجاح.");
+        }
+    }
+
+    function loadMedOperationalDashboard() {
+        var url = root.getAttribute("data-dashboard-url");
+        if (!url) { return Promise.resolve(); }
+        message("جاري تحميل مؤشرات التأمين...");
+        return getJson(url + "?" + queryString(medOperationalFilter())).then(function (res) {
+            if (!res.success) { message(res.message || "تعذر تحميل التأمين الطبي.", true); return; }
+            renderMedDashboard(res.dashboard);
+        });
+    }
+
     function reportFilter() {
         return {
             PeriodFrom: byId("epReportFrom").value || null,
@@ -659,10 +840,15 @@
         });
     }
 
+    if (readOnly && byId("epEmployeesRows") && window.MutationObserver) {
+        new MutationObserver(enforceReadOnlyRows).observe(byId("epEmployeesRows"), { childList: true, subtree: true });
+    }
+
     loadLookups().then(function () {
         if (screen === "employees") { loadEmployees(); }
         if (screen === "insurance-settings") { loadInsuranceSettings(); }
         if (screen === "insurance-reports") { loadReports(); }
+        if (screen === "insurance-operational") { loadMedOperationalDashboard(); }
     });
 
     root.addEventListener("click", function (e) {
@@ -683,6 +869,13 @@
             return;
         }
         var btn = e.target.closest("button");
+        var medCard = e.target.closest("[data-med-employee]");
+        if (screen === "insurance-operational" && medCard) {
+            var index = parseInt(medCard.getAttribute("data-med-employee"), 10);
+            root.querySelectorAll("[data-med-employee]").forEach(function (x) { x.classList.toggle("selected", x === medCard); });
+            renderMedMembershipCard((root._medRows || [])[index]);
+            return;
+        }
         if (!btn) { return; }
         if (screen === "insurance-settings" && btn.hasAttribute("data-close-drawer")) { closeDrawers(); return; }
         if (screen === "insurance-settings" && btn.id === "epOpenProviderDrawer") { fillProviderForm({ IsActive: true }); openDrawer("epProviderDrawer"); return; }
@@ -699,16 +892,30 @@
             return;
         }
         if (btn.id === "epSearchBtn") { loadEmployees(); }
-        if (btn.id === "epNewEmployee") { openEditor(); }
+        if (btn.id === "epNewEmployee") {
+            if (readOnly) { message("POS operational view only. Manage employees from MainErp.", true); return; }
+            openEditor();
+        }
         if (btn.id === "epCloseEditor") { byId("epEmployeeEditor").hidden = true; }
         if (btn.id === "epPreviewRun") { previewSalary(); }
         if (btn.id === "epSaveRun") {
+            if (readOnly || !root.getAttribute("data-save-url")) { message("Salary run saving is protected in POS. Use MainErp for administration.", true); return; }
             postJson(root.getAttribute("data-save-url"), salaryRequest()).then(function (res) {
                 message(res.success ? res.result.Message : res.message, !res.success);
                 previewSalary();
             });
         }
         if (btn.id === "epLoadReports") { loadReports(); }
+        if (btn.id === "epMedRefresh" || btn.id === "epMedSearch") { loadMedOperationalDashboard(); }
+        if (btn.id === "epMedPrintCard") { window.print(); }
+        if (screen === "insurance-operational" && btn.hasAttribute("data-card-mode")) {
+            root.setAttribute("data-card-mode", btn.getAttribute("data-card-mode"));
+            root.querySelectorAll("[data-card-mode]").forEach(function (x) { x.classList.toggle("active", x === btn); });
+            var selectedCard = root.querySelector("[data-med-employee].selected");
+            var selectedIndex = selectedCard ? parseInt(selectedCard.getAttribute("data-med-employee"), 10) : 0;
+            renderMedMembershipCard((root._medRows || [])[selectedIndex]);
+            return;
+        }
         if (btn.id === "epSaveDraftPlan") {
             if (byId("epPlanLifecycleStatus")) { byId("epPlanLifecycleStatus").value = "Draft"; }
             updateHeroSummary();
@@ -774,6 +981,7 @@
             getJson(root.getAttribute("data-get-url") + "?id=" + encodeURIComponent(btn.getAttribute("data-edit"))).then(function (res) { openEditor(res.employee); });
         }
         if (btn.hasAttribute("data-active")) {
+            if (readOnly || !root.getAttribute("data-active-url")) { message("Employee status changes are managed from MainErp.", true); return; }
             postJson(root.getAttribute("data-active-url"), { id: btn.getAttribute("data-active"), active: btn.getAttribute("data-state") === "true" }).then(loadEmployees);
         }
         if (btn.hasAttribute("data-tab")) {
@@ -813,6 +1021,9 @@
         if (screen === "insurance-settings" && e.target && e.target.id === "epMasterStatus") {
             renderMasterCards(root._providers || [], root._plans || []);
         }
+        if (screen === "insurance-operational" && e.target && (e.target.id === "epMedBranch" || e.target.id === "epMedDepartment" || e.target.id === "epMedStatus")) {
+            loadMedOperationalDashboard();
+        }
     });
     root.addEventListener("input", function (e) {
         if (e.target && e.target.closest("[data-tab-panel='insurance']")) { updateInsurancePreview(); }
@@ -831,6 +1042,7 @@
     if (screen === "employees") {
         byId("epEmployeeForm").addEventListener("submit", function (e) {
             e.preventDefault();
+            if (readOnly || !root.getAttribute("data-save-url")) { message("POS operational view only. Manage employee data from MainErp.", true); return; }
             postJson(root.getAttribute("data-save-url"), collectEmployee()).then(function (res) {
                 message(res.message || (res.success ? "تم الحفظ" : "تعذر الحفظ"), !res.success);
                 if (res.success) {
@@ -869,4 +1081,13 @@
             });
         });
     }
+    if (screen === "insurance-operational" && byId("epMedTerm")) {
+        byId("epMedTerm").addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                loadMedOperationalDashboard();
+            }
+        });
+    }
 })();
+

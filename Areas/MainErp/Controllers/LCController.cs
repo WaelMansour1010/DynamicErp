@@ -36,6 +36,11 @@ namespace MyERP.Areas.MainErp.Controllers
         {
             ViewBag.ActiveScreen = "lc";
             SetPermissions();
+            if (!CanViewLc())
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية عرض الاعتمادات المستندية.");
+            }
+
             const int pageSize = 20;
             var data = _repository.Search(searchText, bankId, vendorId, branchId, page, pageSize);
             var model = new LCIndexViewModel
@@ -351,6 +356,11 @@ namespace MyERP.Areas.MainErp.Controllers
         {
             ViewBag.ActiveScreen = "lc";
             SetPermissions();
+            if (!CanViewLc())
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية عرض الاعتمادات المستندية.");
+            }
+
             return View(_repository.GetDetails(id));
         }
 
@@ -376,6 +386,11 @@ namespace MyERP.Areas.MainErp.Controllers
             ViewBag.CanRebuildLc = CanRebuildLc();
             ViewBag.CanDeleteLc = CanDeleteLc();
             ViewBag.CanReportLc = CanReportLc();
+        }
+
+        private bool CanViewLc()
+        {
+            return _permissionService.CanView(MainErpUserContext, LegacyScreenName);
         }
 
         private bool CanEditLc()

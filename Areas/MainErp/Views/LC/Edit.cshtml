@@ -4,6 +4,7 @@
     var isEdit = Model.TblLCID.HasValue && Model.TblLCID.Value > 0;
     ViewBag.Title = isEdit ? "تعديل اعتماد مستندي" : "إضافة اعتماد مستندي";
     Func<decimal?, string> money = v => String.Format("{0:n2}", v ?? 0m);
+    Func<DateTime?, string> isoDate = v => v.HasValue ? v.Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) : "";
     var marginVoucherValue = (Model.Value ?? 0m) * ((Model.PercentV ?? 0m) / 100m) * (Model.CurrencyRate ?? 1m);
     var expenseVoucherValue = (Model.OpenValue ?? 0m) * (Model.CurrencyRate ?? 1m);
 }
@@ -11,9 +12,9 @@
 <section class="main-erp-lc-editor" dir="rtl">
     <header class="lc-editor-hero">
         <div>
-            <span class="main-erp-kicker">FrmLC Real Migration</span>
+            <span class="main-erp-kicker">الاعتمادات المستندية</span>
             <h2>@ViewBag.Title</h2>
-            <p>شاشة تشغيل للاعتمادات المستندية مطابقة لمنطق VB6 قدر الإمكان، مع حفظ آمن وإنشاء قيود الاعتماد المؤكدة فقط.</p>
+            <p>شاشة تشغيل للاعتمادات المستندية مع حفظ آمن وإنشاء قيود الاعتماد المؤكدة فقط.</p>
         </div>
         <div class="lc-editor-actions">
             <a href="@Url.Action("Index", "LC", new { area = "MainErp", selectedId = Model.TblLCID })">رجوع للـ Workbench</a>
@@ -66,6 +67,29 @@
         </article>
     </section>
 
+    <section class="lc-editor-summary" aria-label="LC finance trace">
+        <article>
+            <span>Finance trace</span>
+            <strong>@(Model.HasPostedVoucher ? "Posted voucher linked" : "Draft / no posted voucher")</strong>
+            <small>LC source @Model.TblLCID / @Model.LCNO</small>
+        </article>
+        <article>
+            <span>Branch / project</span>
+            <strong>@(Model.BranchID.HasValue ? Model.BranchID.Value.ToString() : "-")</strong>
+            <small>@(Model.ProjectId.HasValue ? "Project " + Model.ProjectId.Value.ToString() : "No project")</small>
+        </article>
+        <article>
+            <span>Bank / box</span>
+            <strong>@(Model.BankId.HasValue ? "Bank " + Model.BankId.Value.ToString() : "-")</strong>
+            <small>@(Model.BoxID.HasValue ? "Box " + Model.BoxID.Value.ToString() : "No box")</small>
+        </article>
+        <article>
+            <span>Account impact</span>
+            <strong>@(String.IsNullOrWhiteSpace(Model.LCAccountCode) ? "-" : Model.LCAccountCode)</strong>
+            <small>Margin @money(marginVoucherValue) / expense @money(expenseVoucherValue)</small>
+        </article>
+    </section>
+
     @using (Html.BeginForm("Save", "LC", new { area = "MainErp" }, FormMethod.Post, new { @class = "lc-editor-form", data_lc_editor = "1" }))
     {
         @Html.AntiForgeryToken()
@@ -86,7 +110,7 @@
                 <section id="lc-edit-basic" class="lc-editor-pane is-active">
                     <div class="lc-pane-title">
                         <h3>بيانات الاعتماد</h3>
-                        <p>الحقول الأساسية المقابلة لرأس شاشة `FrmLC.frm`.</p>
+                        <p>الحقول الأساسية لرأس الاعتماد المستندي.</p>
                     </div>
                     <div class="lc-field-grid">
                         <label><span>رقم الاعتماد</span>@Html.TextBoxFor(x => x.LCNO, new { @class = "main-erp-input", autocomplete = "off" })</label>
@@ -128,7 +152,7 @@
                         <p>الأكواد هنا مفاتيح داخلية مؤقتة للحفظ والترحيل. العرض النهائي للمستخدم يتم بصيغة: Account_Serial - Account_Name.</p>
                     </div>
                     <div class="main-erp-warning">
-                        عند تفعيل "إنشاء الحسابات الناقصة"، سيتم إنشاء حساب ابن تحت الحساب الأب المحدد بنفس نمط VB6 وبقفل `sp_getapplock`.
+                        عند تفعيل "إنشاء الحسابات الناقصة"، سيتم إنشاء حساب ابن تحت الحساب الأب المحدد بقفل `sp_getapplock`.
                     </div>
                     <div class="lc-account-editor-grid">
                         <article>
@@ -165,7 +189,7 @@
                 <section id="lc-edit-grids" class="lc-editor-pane" hidden>
                     <div class="lc-pane-title">
                         <h3>جريدات الاعتماد</h3>
-                        <p>تم تفعيل حفظ وتعديل الصفوف الأساسية فقط. ترحيل قيود الجريدات ما زال محميًا حتى اكتمال مطابقة منطق VB6.</p>
+                        <p>تم تفعيل حفظ وتعديل الصفوف الأساسية فقط. ترحيل قيود الجريدات ما زال محميًا حتى اكتمال الاعتماد التشغيلي.</p>
                     </div>
 
                     <div class="main-erp-warning">
@@ -208,14 +232,14 @@
                                         <tr>
                                             <td>@Html.HiddenFor(x => x.MarginRows[i].ID)@Html.TextBoxFor(x => x.MarginRows[i].Serial, new { type = "number" })</td>
                                             <td>@Html.TextBoxFor(x => x.MarginRows[i].MarginNo, new { type = "number" })</td>
-                                            <td>@Html.TextBoxFor(x => x.MarginRows[i].GuaranteeDate, "{0:yyyy-MM-dd}", new { type = "date" })</td>
+                                            <td><input type="date" name="MarginRows[@(i)].GuaranteeDate" id="MarginRows_@(i)__GuaranteeDate" value="@isoDate(Model.MarginRows[i].GuaranteeDate)" /></td>
                                             <td>@Html.TextBoxFor(x => x.MarginRows[i].Amount, new { type = "number", step = "0.0001" })</td>
                                             <td>@Html.DropDownListFor(x => x.MarginRows[i].MarginAccountCode, new SelectList(Model.Accounts, "Value", "Text", Model.MarginRows[i].MarginAccountCode), "-- اختر --")</td>
                                             <td>@Html.DropDownListFor(x => x.MarginRows[i].BankAccountCode, new SelectList(Model.Accounts, "Value", "Text", Model.MarginRows[i].BankAccountCode), "-- اختر --")</td>
                                             <td>@Html.TextBoxFor(x => x.MarginRows[i].PayedAmount, new { type = "number", step = "0.0001" })</td>
                                             <td>@Html.TextBoxFor(x => x.MarginRows[i].StillAmount, new { type = "number", step = "0.0001" })</td>
-                                            <td>@Html.TextBoxFor(x => x.MarginRows[i].OrderDate, "{0:yyyy-MM-dd}", new { type = "date" })</td>
-                                            <td>@Html.TextBoxFor(x => x.MarginRows[i].PayDate, "{0:yyyy-MM-dd}", new { type = "date" })</td>
+                                            <td><input type="date" name="MarginRows[@(i)].OrderDate" id="MarginRows_@(i)__OrderDate" value="@isoDate(Model.MarginRows[i].OrderDate)" /></td>
+                                            <td><input type="date" name="MarginRows[@(i)].PayDate" id="MarginRows_@(i)__PayDate" value="@isoDate(Model.MarginRows[i].PayDate)" /></td>
                                             <td>@Html.CheckBoxFor(x => x.MarginRows[i].IsFullPayed)</td>
                                             <td>@Html.DisplayFor(x => x.MarginRows[i].NoteID)</td>
                                         </tr>
@@ -236,7 +260,7 @@
                                         <tr>
                                             <td>@Html.HiddenFor(x => x.Margin2Rows[i].ID)@Html.TextBoxFor(x => x.Margin2Rows[i].Serial, new { type = "number" })</td>
                                             <td>@Html.TextBoxFor(x => x.Margin2Rows[i].MarginNo, new { type = "number" })</td>
-                                            <td>@Html.TextBoxFor(x => x.Margin2Rows[i].GuaranteeDate, "{0:yyyy-MM-dd}", new { type = "date" })</td>
+                                            <td><input type="date" name="Margin2Rows[@(i)].GuaranteeDate" id="Margin2Rows_@(i)__GuaranteeDate" value="@isoDate(Model.Margin2Rows[i].GuaranteeDate)" /></td>
                                             <td>@Html.TextBoxFor(x => x.Margin2Rows[i].Amount, new { type = "number", step = "0.0001" })</td>
                                             <td>@Html.DropDownListFor(x => x.Margin2Rows[i].MarginAccountCode, new SelectList(Model.Accounts, "Value", "Text", Model.Margin2Rows[i].MarginAccountCode), "-- اختر --")</td>
                                             <td>@Html.DropDownListFor(x => x.Margin2Rows[i].BankAccountCode, new SelectList(Model.Accounts, "Value", "Text", Model.Margin2Rows[i].BankAccountCode), "-- اختر --")</td>
@@ -264,7 +288,7 @@
                                         <tr>
                                             <td>@Html.HiddenFor(x => x.OpenBalanceRows[i].ID)@Html.TextBoxFor(x => x.OpenBalanceRows[i].Serial, new { type = "number" })</td>
                                             <td>@Html.TextBoxFor(x => x.OpenBalanceRows[i].MarginNo, new { type = "number" })</td>
-                                            <td>@Html.TextBoxFor(x => x.OpenBalanceRows[i].GuaranteeDate, "{0:yyyy-MM-dd}", new { type = "date" })</td>
+                                            <td><input type="date" name="OpenBalanceRows[@(i)].GuaranteeDate" id="OpenBalanceRows_@(i)__GuaranteeDate" value="@isoDate(Model.OpenBalanceRows[i].GuaranteeDate)" /></td>
                                             <td>@Html.TextBoxFor(x => x.OpenBalanceRows[i].Amount, new { type = "number", step = "0.0001" })</td>
                                             <td>@Html.TextBoxFor(x => x.OpenBalanceRows[i].AmountP, new { type = "number", step = "0.0001" })</td>
                                             <td>@Html.TextBoxFor(x => x.OpenBalanceRows[i].TotalAmount, new { type = "number", step = "0.0001" })</td>
@@ -273,7 +297,7 @@
                                             <td>@Html.TextBoxFor(x => x.OpenBalanceRows[i].PercentA, new { type = "number", step = "0.0001" })</td>
                                             <td>@Html.DropDownListFor(x => x.OpenBalanceRows[i].MarginAccountCode, new SelectList(Model.Accounts, "Value", "Text", Model.OpenBalanceRows[i].MarginAccountCode), "-- اختر --")</td>
                                             <td>@Html.DropDownListFor(x => x.OpenBalanceRows[i].BankAccountCode, new SelectList(Model.Accounts, "Value", "Text", Model.OpenBalanceRows[i].BankAccountCode), "-- اختر --")</td>
-                                            <td>@Html.TextBoxFor(x => x.OpenBalanceRows[i].PayDate, "{0:yyyy-MM-dd}", new { type = "date" })</td>
+                                            <td><input type="date" name="OpenBalanceRows[@(i)].PayDate" id="OpenBalanceRows_@(i)__PayDate" value="@isoDate(Model.OpenBalanceRows[i].PayDate)" /></td>
                                             <td>@Html.DisplayFor(x => x.OpenBalanceRows[i].NoteID)</td>
                                         </tr>
                                     }
@@ -289,24 +313,24 @@
                         <p>تواريخ الاعتماد والشحن والشيكات كما تظهر في Workflow الأصلي.</p>
                     </div>
                     <div class="lc-field-grid">
-                        <label><span>من تاريخ</span>@Html.TextBoxFor(x => x.FromDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date" })</label>
-                        <label><span>إلى تاريخ</span>@Html.TextBoxFor(x => x.ToDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date" })</label>
-                        <label><span>تاريخ الإغلاق</span>@Html.TextBoxFor(x => x.CloseDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date" })</label>
-                        <label><span>آخر شحنة</span>@Html.TextBoxFor(x => x.LastParcilDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date" })</label>
-                        <label><span>تاريخ الرصيد الافتتاحي</span>@Html.TextBoxFor(x => x.OpenBalanceDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date" })</label>
+                        <label><span>من تاريخ</span><input class="main-erp-input" type="date" name="FromDate" id="FromDate" value="@isoDate(Model.FromDate)" /></label>
+                        <label><span>إلى تاريخ</span><input class="main-erp-input" type="date" name="ToDate" id="ToDate" value="@isoDate(Model.ToDate)" /></label>
+                        <label><span>تاريخ الإغلاق</span><input class="main-erp-input" type="date" name="CloseDate" id="CloseDate" value="@isoDate(Model.CloseDate)" /></label>
+                        <label><span>آخر شحنة</span><input class="main-erp-input" type="date" name="LastParcilDate" id="LastParcilDate" value="@isoDate(Model.LastParcilDate)" /></label>
+                        <label><span>تاريخ الرصيد الافتتاحي</span><input class="main-erp-input" type="date" name="OpenBalanceDate" id="OpenBalanceDate" value="@isoDate(Model.OpenBalanceDate)" /></label>
                         <label><span>قيمة الرصيد الافتتاحي</span>@Html.TextBoxFor(x => x.OpenBalance, new { @class = "main-erp-input", type = "number", step = "0.0001" })</label>
                         <label><span>نوع الرصيد الافتتاحي</span>@Html.DropDownListFor(x => x.OpenBalanceType, new SelectList(new[] { new { Value = "", Text = "-- بدون --" }, new { Value = "0", Text = "مدين" }, new { Value = "1", Text = "دائن" } }, "Value", "Text", Model.OpenBalanceType), new { @class = "main-erp-input" })</label>
                         <label><span>مجموعة قيد الرصيد الافتتاحي</span>@Html.TextBoxFor(x => x.OpeningBalanceVoucherId, new { @class = "main-erp-input", @readonly = "readonly" })</label>
                         <label><span>طريقة الدفع</span>@Html.TextBoxFor(x => x.PaymentTypeID, new { @class = "main-erp-input", type = "number" })</label>
                         <label><span>رقم الشيك</span>@Html.TextBoxFor(x => x.ChequeNumber, new { @class = "main-erp-input" })</label>
-                        <label><span>تاريخ الشيك</span>@Html.TextBoxFor(x => x.ChequeDueDate, "{0:yyyy-MM-dd}", new { @class = "main-erp-input", type = "date" })</label>
+                        <label><span>تاريخ الشيك</span><input class="main-erp-input" type="date" name="ChequeDueDate" id="ChequeDueDate" value="@isoDate(Model.ChequeDueDate)" /></label>
                     </div>
                 </section>
 
                 <section id="lc-edit-notes" class="lc-editor-pane" hidden>
                     <div class="lc-pane-title">
                         <h3>ملاحظات وتحكم</h3>
-                        <p>الحفظ متاح، أما الحذف وإعادة بناء القيود والجريدات المالية فهي مؤجلة حتى اعتماد كل تفاصيل VB6.</p>
+                        <p>الحفظ متاح، أما الحذف وإعادة بناء القيود والجريدات المالية فهي مؤجلة حتى اعتماد كل التفاصيل المالية.</p>
                     </div>
                     <label class="lc-wide-label"><span>ملاحظات الاعتماد</span>@Html.TextAreaFor(x => x.Remarks, new { @class = "main-erp-input", rows = "6" })</label>
                     <div class="lc-disabled-panel">
@@ -353,7 +377,7 @@
         var disabled = document.querySelectorAll(".lc-disabled-action");
         for (var d = 0; d < disabled.length; d++) {
             disabled[d].addEventListener("click", function () {
-                alert("هذه الوظيفة لم يتم ترحيلها بعد - Read Only / Protected Mode");
+                alert("هذا الإجراء محمي ولا يتم تنفيذه إلا بعد اكتمال الصلاحيات والاعتماد.");
             });
         }
     })();

@@ -5,6 +5,7 @@ namespace MyERP.Areas.Pos.Models
 {
     public class PosSaveTransactionRequest
     {
+        public string ClientRequestId { get; set; }
         public int? Transaction_ID { get; set; }
         public string TransactionType { get; set; }
         public string TransactionDate { get; set; }
@@ -151,6 +152,14 @@ namespace MyERP.Areas.Pos.Models
         public PosSystemOptionsDto SystemOptions { get; set; }
     }
 
+    public class PosSaveIdempotencyResult
+    {
+        public bool Started { get; set; }
+        public string Status { get; set; }
+        public int? Transaction_ID { get; set; }
+        public string NoteSerial1 { get; set; }
+    }
+
     public class PosJournalSearchRequest
     {
         public string VoucherNo { get; set; }
@@ -241,6 +250,7 @@ namespace MyERP.Areas.Pos.Models
         public decimal PercentVisaPur { get; set; }
         public decimal MinVisaPur { get; set; }
         public decimal MaxVisaPur { get; set; }
+        public string POSVoucherSerialScope { get; set; }
         public string Todo { get; set; }
     }
 

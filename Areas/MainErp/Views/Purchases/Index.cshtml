@@ -6,17 +6,17 @@
     <div class="main-erp-title-row">
         <div>
             <h3>فاتورة مشتريات</h3>
-            <p>Reused from Kishny generic module. تم نقل شكل العمل العام من شاشة مشتريات Kishny/POS مع إزالة جلسة POS وتعطيل الحفظ والاستيراد مؤقتا.</p>
+            <p>مساحة مراجعة لفواتير المشتريات داخل MainErp. تعرض نموذج العمل الأساسي والبحث والتفاصيل، وتبقي إجراءات الكتابة تحت الإغلاق التشغيلي حتى اكتمال ربط مستودع المشتريات.</p>
         </div>
-        <span class="main-erp-badge">Reused from Kishny generic module</span>
+        <span class="main-erp-badge">مراجعة تشغيلية</span>
     </div>
 
     <div class="main-erp-vb6-toolbar">
         <button type="button">بحث</button>
         <button type="button">فاتورة جديدة</button>
-        <button type="button" disabled>حفظ معطل لحين فصل POS dependencies</button>
-        <button type="button" disabled>استيراد Excel معطل</button>
-        <button type="button" disabled>طباعة</button>
+        <button type="button" disabled>حفظ تحت المراجعة</button>
+        <button type="button" disabled>استيراد Excel تحت المراجعة</button>
+        <button type="button" disabled>طباعة بعد اعتماد التقرير</button>
     </div>
 
     <section class="main-erp-tabs">
@@ -31,7 +31,7 @@
                 <label><span>المخزن</span><input type="text" placeholder="كل المخازن" /></label>
                 <label><span>طريقة الدفع</span><select><option>كل الطرق</option><option>آجل / على المورد</option><option>نقدي</option><option>بنك</option></select></label>
             </div>
-            <div class="main-erp-reused-note">هذه الفلاتر من شاشة Kishny/POS العامة. الخطوة التالية هي توصيلها بمستودع MainErp يقرأ من قاعدة Eng عبر MainErp_ConnectionString.</div>
+            <div class="main-erp-reused-note">الفلاتر جاهزة كواجهة تشغيلية، وسيتم تفعيل النتائج والحفظ بعد اعتماد مستودع المشتريات على قاعدة Eng.</div>
         </section>
 
         <section>
@@ -67,7 +67,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td colspan="9">سيتم تحميل البنود من MainErp بعد فصل Repository عن PosSqlRepository.</td></tr>
+                        <tr><td colspan="9">لا توجد بنود معروضة حتى يتم اختيار فاتورة مشتريات من البحث.</td></tr>
                     </tbody>
                 </table>
             </div>

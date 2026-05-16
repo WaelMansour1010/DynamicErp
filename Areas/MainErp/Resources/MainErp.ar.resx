@@ -101,7 +101,7 @@
   <data name="ReadOnly" xml:space="preserve"><value>قراءة فقط</value></data>
   <data name="Report" xml:space="preserve"><value>تقرير</value></data>
   <data name="ReportRun" xml:space="preserve"><value>عرض التقرير</value></data>
-  <data name="RealMigratedFromVb6" xml:space="preserve"><value>ترحيل حقيقي من VB6</value></data>
+  <data name="RealMigratedFromVb6" xml:space="preserve"><value>دورة تشغيل معتمدة</value></data>
   <data name="Reports" xml:space="preserve"><value>التقارير</value></data>
   <data name="ReportsAndAttachments" xml:space="preserve"><value>التقارير والمرفقات</value></data>
   <data name="Sales" xml:space="preserve"><value>المبيعات</value></data>

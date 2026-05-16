@@ -1,0 +1,267 @@
+@model MyERP.Areas.MainErp.ViewModels.FinancialAdministration.FinancialAdministrationIndexViewModel
+@using System.Globalization
+@using System.Linq
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "إدارة البنوك والصناديق";
+    Func<decimal, string> money = v => v.ToString("N2", CultureInfo.InvariantCulture);
+    Func<DateTime?, string> dateText = d => d.HasValue ? d.Value.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) : "لا توجد حركة";
+}
+
+<section class="fa-admin-page" data-financial-admin
+         data-bank-details-url="@Url.Action("BankDetails", "FinancialAdministration", new { area = "MainErp" })"
+         data-box-details-url="@Url.Action("BoxDetails", "FinancialAdministration", new { area = "MainErp" })"
+         data-save-bank-url="@Url.Action("SaveBank", "FinancialAdministration", new { area = "MainErp" })"
+         data-save-box-url="@Url.Action("SaveBox", "FinancialAdministration", new { area = "MainErp" })"
+         data-account-lookup-url="@Url.Action("AccountLookup", "FinancialAdministration", new { area = "MainErp" })">
+    @Html.AntiForgeryToken()
+    <form class="fa-admin-hero" method="get">
+        <div class="fa-admin-hero-copy">
+            <span class="fa-admin-eyebrow">الإدارة المالية</span>
+            <h2>إدارة البنوك والصناديق</h2>
+            <p>واجهة Enterprise موحدة لإدارة البنوك والصناديق وربط الحسابات والأرصدة الافتتاحية داخل MainErp.</p>
+        </div>
+        <div class="fa-admin-search">
+            <label>
+                <span>بحث سريع</span>
+                <input type="search" name="SearchText" value="@Model.Search.SearchText" placeholder="اسم، حساب، IBAN، أمين صندوق" />
+            </label>
+            <label>
+                <span>النطاق</span>
+                <select name="Scope">
+                    <option value="all" @(Model.Search.Scope == "all" ? "selected" : "")>الكل</option>
+                    <option value="banks" @(Model.Search.Scope == "banks" ? "selected" : "")>البنوك</option>
+                    <option value="boxes" @(Model.Search.Scope == "boxes" ? "selected" : "")>الصناديق</option>
+                </select>
+            </label>
+            <button type="submit"><i class="fas fa-search"></i><span>بحث</span></button>
+        </div>
+    </form>
+
+    <div class="fa-admin-stats">
+        <article>
+            <span>البنوك</span>
+            <strong>@Model.Summary.BanksCount</strong>
+            <small>@Model.Summary.LinkedBankAccountsCount حسابات مرتبطة</small>
+        </article>
+        <article>
+            <span>الصناديق</span>
+            <strong>@Model.Summary.BoxesCount</strong>
+            <small>@Model.Summary.LinkedBoxAccountsCount حسابات مرتبطة</small>
+        </article>
+        <article>
+            <span>أرصدة افتتاحية للبنوك</span>
+            <strong>@money(Model.Summary.BankOpeningBalance)</strong>
+            <small>حسب BanksData.OpenBalance</small>
+        </article>
+        <article>
+            <span>أرصدة افتتاحية للصناديق</span>
+            <strong>@money(Model.Summary.BoxOpeningBalance)</strong>
+            <small>حسب tblBoxesData.OpenBalance</small>
+        </article>
+        <article>
+            <span>نقاط تحصيل / محافظ</span>
+            <strong>@Model.Summary.PosTerminalBoxesCount / @Model.Summary.WalletBoxesCount</strong>
+            <small>يتوقف على أعمدة قاعدة الهدف</small>
+        </article>
+    </div>
+
+    <div class="fa-admin-grid">
+        @if (Model.Permissions.CanViewBanks && Model.Search.Scope != "boxes")
+        {
+            <section class="fa-admin-panel fa-admin-panel-wide">
+                <header>
+                    <div>
+                        <span>إدارة البنوك</span>
+                        <h3>البنوك والحسابات البنكية</h3>
+                    </div>
+                    <div class="fa-admin-actions">
+                        @if (Model.Permissions.CanAddBanks)
+                        {
+                            <button type="button" data-new-bank title="إضافة بنك"><i class="fas fa-plus"></i></button>
+                        }
+                        <button type="button" data-export-table="#banksTable"><i class="fas fa-download"></i></button>
+                    </div>
+                </header>
+                <div class="fa-admin-table-wrap">
+                    <table id="banksTable" class="fa-admin-table">
+                        <thead>
+                            <tr>
+                                <th>البنك</th>
+                                <th>الحساب</th>
+                                <th>الفرع</th>
+                                <th>العملة</th>
+                                <th>IBAN</th>
+                                <th>الرصيد</th>
+                                <th>آخر حركة</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var bank in Model.Banks)
+                            {
+                                <tr data-edit-bank="@bank.BankId">
+                                    <td><strong>@bank.BankName</strong><small>@bank.BankNameEnglish</small></td>
+                                    <td><code>@bank.AccountCode</code><small>@bank.AccountName</small></td>
+                                    <td>@bank.BranchName</td>
+                                    <td>@bank.CurrencyCode</td>
+                                    <td class="fa-admin-ltr">@bank.Iban</td>
+                                    <td>@money(bank.OpeningBalance)</td>
+                                    <td><span>@dateText(bank.LastMovementDate)</span><small>@money(bank.LastMovementValue)</small></td>
+                                    <td>
+                                        @if (bank.ApprovalRequired) { <span class="fa-badge warning">اعتماد</span> }
+                                        @if (bank.LoanBank) { <span class="fa-badge info">قروض</span> }
+                                    </td>
+                                </tr>
+                            }
+                            @if (!Model.Banks.Any())
+                            {
+                                <tr><td colspan="8" class="fa-empty">لا توجد بنوك مطابقة في قاعدة MainErp الحالية.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
+
+        @if (Model.Permissions.CanViewBoxes && Model.Search.Scope != "banks")
+        {
+            <section class="fa-admin-panel fa-admin-panel-wide">
+                <header>
+                    <div>
+                        <span>إدارة الصناديق</span>
+                        <h3>الصناديق ونقاط التحصيل</h3>
+                    </div>
+                    <div class="fa-admin-actions">
+                        @if (Model.Permissions.CanAddBoxes)
+                        {
+                            <button type="button" data-new-box title="إضافة صندوق"><i class="fas fa-plus"></i></button>
+                        }
+                        <button type="button" data-export-table="#boxesTable"><i class="fas fa-download"></i></button>
+                    </div>
+                </header>
+                <div class="fa-admin-table-wrap">
+                    <table id="boxesTable" class="fa-admin-table">
+                        <thead>
+                            <tr>
+                                <th>الصندوق</th>
+                                <th>الحساب</th>
+                                <th>الفرع</th>
+                                <th>المسؤول</th>
+                                <th>النوع</th>
+                                <th>الحد / الرصيد</th>
+                                <th>آخر حركة</th>
+                                <th>مؤشرات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var box in Model.Boxes)
+                            {
+                                <tr data-edit-box="@box.BoxId">
+                                    <td><strong>@box.BoxName</strong><small>@box.BoxNameEnglish</small></td>
+                                    <td><code>@box.AccountCode</code><small>@box.AccountName</small></td>
+                                    <td>@box.BranchName</td>
+                                    <td>@box.EmployeeName</td>
+                                    <td>@(box.Type.HasValue ? box.Type.ToString() : "-")</td>
+                                    <td><span>@money(box.LimitValue)</span><small>@money(box.OpeningBalance)</small></td>
+                                    <td><span>@dateText(box.LastMovementDate)</span><small>@money(box.LastMovementValue)</small></td>
+                                    <td>
+                                        @if (box.HasChequeBox) { <span class="fa-badge info">شيكات</span> }
+                                        @if (box.IsTerminalPos) { <span class="fa-badge success">نقطة تحصيل</span> }
+                                        @if (box.IsWallet) { <span class="fa-badge warning">محفظة</span> }
+                                    </td>
+                                </tr>
+                            }
+                            @if (!Model.Boxes.Any())
+                            {
+                                <tr><td colspan="8" class="fa-empty">لا توجد صناديق مطابقة في قاعدة MainErp الحالية.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
+
+        <section class="fa-admin-panel">
+            <header><div><span>Usage</span><h3>توزيع الفروع</h3></div></header>
+            <div class="fa-admin-metrics">
+                @foreach (var item in Model.BranchBreakdown)
+                {
+                    <div><strong>@item.Name</strong><span>@item.Count سجل</span><small>@money(item.Value)</small></div>
+                }
+                @if (!Model.BranchBreakdown.Any())
+                {
+                    <p class="fa-empty">لا توجد بيانات توزيع حتى الآن.</p>
+                }
+            </div>
+        </section>
+
+        <section class="fa-admin-panel">
+            <header><div><span>Currency</span><h3>عملات البنوك</h3></div></header>
+            <div class="fa-admin-metrics">
+                @foreach (var item in Model.CurrencyBreakdown)
+                {
+                    <div><strong>@item.Name</strong><span>@item.Count بنك</span><small>@money(item.Value)</small></div>
+                }
+                @if (!Model.CurrencyBreakdown.Any())
+                {
+                    <p class="fa-empty">لا توجد بنوك مرتبطة بعملات.</p>
+                }
+            </div>
+        </section>
+    </div>
+
+    <aside class="fa-editor" id="faEditor" hidden>
+        <form class="fa-editor-card" id="faEditorForm">
+            <header>
+                <div>
+                    <span id="faEditorSource">Legacy</span>
+                    <h3 id="faEditorTitle">تحرير</h3>
+                </div>
+                <button type="button" class="fa-icon-button" data-close-editor><i class="fas fa-times"></i></button>
+            </header>
+            <input type="hidden" name="BankId" id="faBankId" />
+            <input type="hidden" name="BoxId" id="faBoxId" />
+            <input type="hidden" name="mode" id="faEditorMode" />
+
+            <div class="fa-editor-grid">
+                <label><span>الاسم العربي</span><input name="BankName" id="faName" required /></label>
+                <label><span>الاسم الإنجليزي</span><input name="BankNameEnglish" id="faNameEnglish" /></label>
+                <label><span>الحساب الرئيسي</span><input name="AccountCode" id="faAccountCode" class="fa-account-search" autocomplete="off" required /></label>
+                <label><span>حساب إضافي 1</span><input name="AccountCode1" id="faAccountCode1" class="fa-account-search" autocomplete="off" /></label>
+                <label><span>حساب إضافي 2</span><input name="AccountCode2" id="faAccountCode2" class="fa-account-search" autocomplete="off" /></label>
+                <label><span>حساب إضافي 3</span><input name="AccountCode3" id="faAccountCode3" class="fa-account-search" autocomplete="off" /></label>
+                <label><span>الحساب الأب</span><input name="ParentAccount" id="faParentAccount" class="fa-account-search" autocomplete="off" /></label>
+                <label><span>الفرع</span><select name="BranchId" id="faBranchId"><option value="">غير محدد</option>@foreach (var x in Model.Branches) { <option value="@x.Id">@x.Name</option> }</select></label>
+                <label class="fa-bank-only"><span>العملة</span><select name="CurrencyId" id="faCurrencyId"><option value="">غير محدد</option>@foreach (var x in Model.Currencies) { <option value="@x.Id">@x.Name</option> }</select></label>
+                <label class="fa-box-only"><span>المسؤول</span><select name="EmployeeId" id="faEmployeeId"><option value="">غير محدد</option>@foreach (var x in Model.Employees) { <option value="@x.Id">@x.Name</option> }</select></label>
+                <label class="fa-bank-only"><span>رقم الحساب</span><input name="AccountNo" id="faAccountNo" /></label>
+                <label class="fa-bank-only"><span>IBAN</span><input name="Iban" id="faIban" class="fa-admin-ltr" /></label>
+                <label class="fa-bank-only"><span>رقم الفرع البنكي</span><input name="BranchNo" id="faBranchNo" /></label>
+                <label><span>الرصيد الافتتاحي</span><input name="OpeningBalance" id="faOpeningBalance" type="number" step="0.01" value="0" /></label>
+                <label><span>نوع الرصيد</span><select name="OpeningBalanceType" id="faOpeningBalanceType"><option value="">غير محدد</option><option value="0">مدين</option><option value="1">دائن</option><option value="2">بدون</option></select></label>
+                <label class="fa-box-only"><span>حد الصندوق</span><input name="LimitValue" id="faLimitValue" type="number" step="0.01" value="0" /></label>
+                <label class="fa-box-only"><span>نوع الصندوق</span><select name="Type" id="faBoxType"><option value="">غير محدد</option><option value="0">صندوق</option><option value="1">عهدة</option></select></label>
+                <label><span>هاتف</span><input name="Telephone" id="faTelephone" /></label>
+                <label class="fa-bank-only"><span>بريد إلكتروني</span><input name="Email" id="faEmail" type="email" /></label>
+                <label class="fa-bank-only fa-wide"><span>العنوان</span><input name="Address" id="faAddress" /></label>
+                <label class="fa-box-only fa-wide"><span>ملاحظات الصندوق</span><input name="Comments" id="faComments" /></label>
+                <label class="fa-bank-only fa-wide"><span>ملاحظات البنك</span><input name="Remarks" id="faRemarks" /></label>
+                <label class="fa-check fa-bank-only"><input type="checkbox" name="ApprovalRequired" id="faApprovalRequired" /><span>يتطلب اعتماد</span></label>
+                <label class="fa-check fa-bank-only"><input type="checkbox" name="LoanBank" id="faLoanBank" /><span>بنك قروض</span></label>
+                <label class="fa-check fa-box-only"><input type="checkbox" name="HasChequeBox" id="faHasChequeBox" /><span>له صندوق شيكات</span></label>
+            </div>
+            <div class="fa-account-results" id="faAccountResults" hidden></div>
+            <footer>
+                <span class="fa-editor-message" id="faEditorMessage"></span>
+                <button type="button" data-close-editor>إلغاء</button>
+                <button type="submit" class="fa-editor-save"><i class="fas fa-save"></i><span>حفظ</span></button>
+            </footer>
+        </form>
+    </aside>
+</section>
+
+@section scripts {
+    <link href="@Url.Content("~/Areas/MainErp/Content/financial-administration.css?v=20260514")" rel="stylesheet" />
+    <script src="@Url.Content("~/Areas/MainErp/Scripts/financial-administration.js?v=20260514")"></script>
+}

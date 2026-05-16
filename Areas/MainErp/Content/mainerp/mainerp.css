@@ -483,9 +483,9 @@
     padding: 2px 0 4px 8px;
 }
 
-/* MainErp shell adapted from Areas/Pos/Content/pos-transaction.css.
-   Class names intentionally keep the POS shell contract so the proven sidebar/dashboard
-   behavior can be reused without bringing POS routes, session, or business logic. */
+/* MainErp shell adapted from the shared transaction shell foundation.
+   Class names intentionally keep the established shell contract so the proven sidebar/dashboard
+   behavior can be reused without bringing cross-area routes, session, or business logic. */
 .pos-main-shell.main-erp-app-shell {
     background: #eef2f7;
     color: #162033;

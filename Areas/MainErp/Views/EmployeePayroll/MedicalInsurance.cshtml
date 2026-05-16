@@ -1,13 +1,13 @@
 @{
-    ViewBag.Title = "إعدادات التأمين الطبي";
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "التأمين الطبي";
 }
+
 <div class="ep-body" data-base="@Url.Action("MedicalInsurance", "EmployeePayroll", new { area = "MainErp" })">
-    @Html.Partial("~/Areas/Pos/Views/EmployeePayroll/_MedicalInsuranceSettings.cshtml")
+    @Html.Partial("~/Views/Shared/EnterpriseHr/_MedicalInsuranceSettings.cshtml")
 </div>
 
-@section Styles {
-    <link href="@Url.Content("~/Areas/Pos/Content/employee-payroll.css")" rel="stylesheet" />
-}
-@section Scripts {
-    <script src="@Url.Content("~/Areas/Pos/Scripts/employee-payroll.js")"></script>
+@section scripts {
+    <link href="@Url.Content("~/Areas/MainErp/Content/employee-payroll.css?v=20260515-shared-hr")" rel="stylesheet" />
+    <script src="@Url.Content("~/Areas/MainErp/Scripts/employee-payroll.js?v=20260515-shared-hr")"></script>
 }

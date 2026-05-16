@@ -37,8 +37,68 @@ namespace MyERP.Areas.MainErp.Repositories.LegacyOperations
                 Departments = Lookup("SELECT DeparmentID, DepartmentName, NULL AccountCode FROM dbo.TblEmpDepartments ORDER BY DepartmentName", "DeparmentID", "DepartmentName", "AccountCode"),
                 Items = Lookup("SELECT TOP 1000 ItemID, ItemName, NULL AccountCode FROM dbo.tblItems ORDER BY ItemName", "ItemID", "ItemName", "AccountCode"),
                 Cars = Lookup("SELECT TOP 1000 id, COALESCE(NULLIF(BoardNO,N''), NULLIF(Name,N''), Fullcode) DisplayName, NULL AccountCode FROM dbo.TblCarsData ORDER BY id DESC", "id", "DisplayName", "AccountCode"),
-                FixedAssets = Lookup("SELECT TOP 1000 id, COALESCE(NULLIF(Name,N''), NULLIF(namee,N''), code) DisplayName, code AccountCode FROM dbo.FixedAssets ORDER BY id DESC", "id", "DisplayName", "AccountCode")
+                FixedAssets = Lookup("SELECT TOP 1000 id, COALESCE(NULLIF(Name,N''), NULLIF(namee,N''), code) DisplayName, code AccountCode FROM dbo.FixedAssets ORDER BY id DESC", "id", "DisplayName", "AccountCode"),
+                ItemGroups = LoadItemGroups(),
+                ItemTreeItems = LoadItemTreeItems()
             };
+        }
+
+        private IList<LegacyItemGroupNode> LoadItemGroups()
+        {
+            var rows = new List<LegacyItemGroupNode>();
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = @"
+SELECT g.GroupID, g.ParentID, g.GroupName, g.Fullcode,
+       (SELECT COUNT(1) FROM dbo.tblItems i WHERE i.GroupID=g.GroupID AND ISNULL(i.IsArchive,0)=0) ItemsCount
+FROM dbo.Groups g
+ORDER BY ISNULL(g.ParentID,0), g.GroupCode, g.GroupName;";
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rows.Add(new LegacyItemGroupNode
+                        {
+                            Id = ReadInt(reader, "GroupID"),
+                            ParentId = ReadNullableInt(reader, "ParentID"),
+                            Text = ReadString(reader, "GroupName"),
+                            Code = ReadString(reader, "Fullcode"),
+                            ItemsCount = ReadNullableInt(reader, "ItemsCount") ?? 0
+                        });
+                    }
+                }
+            }
+            return rows;
+        }
+
+        private IList<LegacyItemTreeItem> LoadItemTreeItems()
+        {
+            var rows = new List<LegacyItemTreeItem>();
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = @"
+SELECT TOP 3000 ItemID, GroupID, ItemCode, ItemName, SallingPrice
+FROM dbo.tblItems
+WHERE ISNULL(IsArchive,0)=0
+ORDER BY GroupID, ItemCode, ItemName;";
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rows.Add(new LegacyItemTreeItem
+                        {
+                            Id = ReadInt(reader, "ItemID"),
+                            GroupId = ReadNullableInt(reader, "GroupID"),
+                            Code = ReadString(reader, "ItemCode"),
+                            Text = ReadString(reader, "ItemName"),
+                            Price = ReadDecimal(reader, "SallingPrice")
+                        });
+                    }
+                }
+            }
+            return rows;
         }
 
         public IList<CashBoxListItem> SearchBoxes(string search)

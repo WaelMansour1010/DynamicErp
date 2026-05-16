@@ -3,9 +3,9 @@
     ViewBag.Title = "الموظفون";
 }
 <div class="ep-body" data-base="@Url.Action("Employees", "EmployeePayroll", new { area = "MainErp" })">
-    @Html.Partial("~/Areas/Pos/Views/EmployeePayroll/_EmployeePayrollEmployees.cshtml")
+    @Html.Partial("~/Views/Shared/EnterpriseHr/_EmployeePayrollEmployees.cshtml")
 </div>
 @section scripts {
-    <link href="@Url.Content("~/Areas/Pos/Content/employee-payroll.css")" rel="stylesheet" />
-    <script src="@Url.Content("~/Areas/Pos/Scripts/employee-payroll.js")"></script>
+    <link href="@Url.Content("~/Areas/MainErp/Content/employee-payroll.css?v=20260514")" rel="stylesheet" />
+    <script src="@Url.Content("~/Areas/MainErp/Scripts/employee-payroll.js?v=20260514")"></script>
 }

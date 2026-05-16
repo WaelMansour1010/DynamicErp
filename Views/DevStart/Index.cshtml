@@ -3,6 +3,23 @@
     ViewBag.Title = "Debug Run Mode";
     var selected = Convert.ToString(ViewBag.MainErpSelectedDatabase);
     var originalSelected = Convert.ToString(ViewBag.OriginalWebDebugDatabase);
+    var selectedConnection = Convert.ToString(ViewBag.MainErpSelectedConnection);
+    var connectionOptions = ViewBag.MainErpConnectionOptions as IEnumerable<SelectListItem>
+        ?? new[]
+        {
+            new SelectListItem
+            {
+                Text = "MainErp_ConnectionString: Wael\\Sql2019 / Toger",
+                Value = "MainErp_ConnectionString",
+                Selected = selectedConnection == "MainErp_ConnectionString" || String.IsNullOrWhiteSpace(selectedConnection)
+            },
+            new SelectListItem
+            {
+                Text = "MainErp_Toger2012_ConnectionString: . / Toger",
+                Value = "MainErp_Toger2012_ConnectionString",
+                Selected = selectedConnection == "MainErp_Toger2012_ConnectionString"
+            }
+        };
 }
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -33,14 +50,14 @@
                 <span>/Home/Index</span>
                 <small>@ViewBag.MyErpConnection</small>
             </a>
-            <a class="main-erp-module" href="@Url.Content("~/MainErp")">
+            <a class="main-erp-module" href="#mainerp-local-run">
                 <strong>تشغيل النظام الرئيسي الجديد</strong>
                 <span>/MainErp</span>
                 <small>@ViewBag.MainErpConnection</small>
             </a>
         </section>
 
-        <section class="main-erp-panel main-erp-devstart-panel">
+        <section id="mainerp-local-run" class="main-erp-panel main-erp-devstart-panel">
             <div class="main-erp-title-row">
                 <div>
                     <h3>قاعدة الويب الأصلي للاختبار المحلي</h3>
@@ -74,7 +91,15 @@
             @using (Html.BeginForm("SelectMainErpDatabase", "DevStart", FormMethod.Post, new { @class = "main-erp-filter" }))
             {
                 @Html.AntiForgeryToken()
+                <select name="connectionStringName">
+                    @foreach (var item in connectionOptions)
+                    {
+                        <option value="@item.Value" @(item.Selected ? "selected" : "")>@item.Text</option>
+                    }
+                </select>
                 <select name="databaseName">
+                    <option value="" @(String.IsNullOrWhiteSpace(selected) ? "selected" : "")>استخدم قاعدة الكونكشن</option>
+                    <option value="Toger" @(selected == "Toger" ? "selected" : "")>Toger</option>
                     <option value="Eng" @(selected == "Eng" ? "selected" : "")>Eng</option>
                     <option value="Nagahat" @(selected == "Nagahat" ? "selected" : "")>Nagahat</option>
                     <option value="MyErp" @(selected == "MyErp" ? "selected" : "")>MyErp</option>

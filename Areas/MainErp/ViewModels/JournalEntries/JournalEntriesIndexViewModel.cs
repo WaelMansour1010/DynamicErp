@@ -8,8 +8,16 @@ namespace MyERP.Areas.MainErp.ViewModels.JournalEntries
         public JournalEntriesIndexViewModel()
         {
             Items = new List<JournalEntryListItemViewModel>();
+            ModeMessages = new List<string>();
         }
 
+        public string Mode { get; set; }
+        public bool IsOpeningBalance { get; set; }
+        public bool IsPostingEnabled { get; set; }
+        public string ScreenTitle { get; set; }
+        public string ScreenIntro { get; set; }
+        public string ModeBadge { get; set; }
+        public string SearchActionName { get; set; }
         public string SearchText { get; set; }
         public int? BranchId { get; set; }
         public DateTime? FromDate { get; set; }
@@ -18,6 +26,7 @@ namespace MyERP.Areas.MainErp.ViewModels.JournalEntries
         public int PageSize { get; set; }
         public int TotalCount { get; set; }
         public string Warning { get; set; }
+        public IList<string> ModeMessages { get; private set; }
         public IList<JournalEntryListItemViewModel> Items { get; private set; }
     }
 

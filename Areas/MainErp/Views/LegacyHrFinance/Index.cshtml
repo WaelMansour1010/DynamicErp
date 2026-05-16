@@ -1,0 +1,133 @@
+@model MyERP.Areas.MainErp.ViewModels.LegacyHrFinance.LegacyHrFinancePageViewModel
+@using System.Linq
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = Model.Title;
+}
+
+<section class="lhf-page" data-lhf-page="@Model.ModuleKey"
+         data-component-details-url="@Url.Action("ComponentDetails", "LegacyHrFinance", new { area = "MainErp" })"
+         data-save-component-url="@Url.Action("SaveComponent", "LegacyHrFinance", new { area = "MainErp" })">
+    @Html.AntiForgeryToken()
+    <header class="lhf-hero">
+        <div>
+            <span>@Model.SourceSystem</span>
+            <h2>@Model.Title</h2>
+            <p>@Model.SourceForm · @Model.LegacyTable</p>
+        </div>
+        <form method="get" class="lhf-search">
+            <input type="search" name="searchText" value="@Model.SearchText" placeholder="بحث بالكود أو الموظف أو البيان" />
+            <button type="submit"><i class="fas fa-search"></i><span>بحث</span></button>
+        </form>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="lhf-warning"><i class="fas fa-exclamation-triangle"></i><span>@Model.Warning</span></div>
+    }
+
+    <div class="lhf-metrics">
+        @foreach (var metric in Model.Metrics)
+        {
+            <article><span>@metric.Label</span><strong>@metric.Value</strong><small>@metric.Hint</small></article>
+        }
+    </div>
+
+    @if (Model.ModuleKey == "components")
+    {
+        <section class="lhf-panel">
+            <header>
+                <h3>كتالوج مكونات الرواتب</h3>
+                @if (Model.Permissions.CanAdd)
+                {
+                    <button type="button" class="lhf-primary" data-new-component><i class="fas fa-plus"></i><span>مكون جديد</span></button>
+                }
+            </header>
+            <div class="lhf-table-wrap">
+                <table class="lhf-table">
+                    <thead><tr><th>المكون</th><th>الحساب</th><th>التصنيف</th><th>طريقة الحساب</th><th>ظهور</th></tr></thead>
+                    <tbody>
+                        @foreach (var row in Model.Components)
+                        {
+                            <tr data-component-id="@row.Id">
+                                <td><strong>@row.Name</strong><small>@row.NameEnglish</small></td>
+                                <td><code>@row.AccountCode</code><small>@row.AccountCode1</small></td>
+                                <td>
+                                    <span class="lhf-badge @(row.AddOrDiscount ? "success" : "danger")">@(row.AddOrDiscount ? "إضافة" : "خصم")</span>
+                                    @if (row.Salary) { <span class="lhf-badge info">راتب</span> }
+                                    @if (row.Insurance) { <span class="lhf-badge warning">تأمين</span> }
+                                    @if (row.Reward) { <span class="lhf-badge success">مكافأة</span> }
+                                </td>
+                                <td>@(row.FixedOrChanged ? "متغير" : "ثابت") · وحدة @row.Unit</td>
+                                <td>@(row.ViewComponent ? "ظاهر" : "مخفي")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+    else
+    {
+        <section class="lhf-panel">
+            <header><h3>السجلات</h3><span>دورة قراءة محكومة</span></header>
+            <div class="lhf-table-wrap">
+                <table class="lhf-table">
+                    <thead><tr><th>رقم</th><th>البيان</th><th>التاريخ/الفترة</th><th>القيمة</th><th>الحالة</th><th>تفاصيل</th></tr></thead>
+                    <tbody>
+                        @foreach (var row in Model.Rows)
+                        {
+                            <tr>
+                                <td><code>@row.Id</code></td>
+                                <td><strong>@row.Primary</strong><small>@row.Secondary</small></td>
+                                <td>@row.Period</td>
+                                <td>@row.Amount</td>
+                                <td>
+                                    @foreach (var tag in row.Tags)
+                                    {
+                                        <span class="lhf-badge info">@tag</span>
+                                    }
+                                </td>
+                                <td>@row.Details</td>
+                            </tr>
+                        }
+                        @if (!Model.Rows.Any())
+                        {
+                            <tr><td colspan="6" class="lhf-empty">لا توجد سجلات في قاعدة MainErp الحالية.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+
+    <aside class="lhf-editor" id="lhfComponentEditor" hidden>
+        <form class="lhf-editor-card" id="lhfComponentForm">
+            <header><h3>مكون راتب</h3><button type="button" data-close-component><i class="fas fa-times"></i></button></header>
+            <input type="hidden" id="lhfComponentId" name="Id" />
+            <div class="lhf-editor-grid">
+                <label><span>الاسم العربي</span><input id="lhfName" name="Name" required /></label>
+                <label><span>الاسم الإنجليزي</span><input id="lhfNameEnglish" name="NameEnglish" /></label>
+                <label><span>حساب المصروف/الاستحقاق</span><input id="lhfAccountCode" name="AccountCode" /></label>
+                <label><span>حساب مقابل</span><input id="lhfAccountCode1" name="AccountCode1" /></label>
+                <label><span>الوحدة</span><input id="lhfUnit" name="Unit" type="number" /></label>
+                <label><span>AllowIntrod</span><input id="lhfAllowIntroduction" name="AllowIntroduction" type="number" /></label>
+                <label class="lhf-check"><input id="lhfAddOrDiscount" name="AddOrDiscount" type="checkbox" /><span>إضافة وليست خصم</span></label>
+                <label class="lhf-check"><input id="lhfFixedOrChanged" name="FixedOrChanged" type="checkbox" /><span>متغير</span></label>
+                <label class="lhf-check"><input id="lhfViewComponent" name="ViewComponent" type="checkbox" /><span>ظاهر في المسير</span></label>
+                <label class="lhf-check"><input id="lhfSalary" name="Salary" type="checkbox" /><span>يدخل في الراتب</span></label>
+                <label class="lhf-check"><input id="lhfAbsence" name="Absence" type="checkbox" /><span>غياب</span></label>
+                <label class="lhf-check"><input id="lhfLate" name="Late" type="checkbox" /><span>تأخير</span></label>
+                <label class="lhf-check"><input id="lhfOvertime" name="Overtime" type="checkbox" /><span>إضافي</span></label>
+                <label class="lhf-check"><input id="lhfInsurance" name="Insurance" type="checkbox" /><span>تأمين</span></label>
+                <label class="lhf-check"><input id="lhfReward" name="Reward" type="checkbox" /><span>مكافأة</span></label>
+            </div>
+            <footer><span id="lhfEditorMessage"></span><button type="button" data-close-component>إلغاء</button><button type="submit" class="lhf-primary">حفظ</button></footer>
+        </form>
+    </aside>
+</section>
+
+@section scripts {
+    <link href="@Url.Content("~/Areas/MainErp/Content/legacy-hr-finance.css?v=20260514")" rel="stylesheet" />
+    <script src="@Url.Content("~/Areas/MainErp/Scripts/legacy-hr-finance.js?v=20260514")"></script>
+}

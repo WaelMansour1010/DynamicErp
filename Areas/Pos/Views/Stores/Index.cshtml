@@ -1,0 +1,92 @@
+@model IEnumerable<MyERP.Common.StoreData.OperationalStoreViewModel>
+@using System.Linq
+@{
+    Layout = null;
+    ViewBag.Title = "المخازن التشغيلية";
+    var context = ViewBag.PosContext as MyERP.Areas.Pos.Models.PosUserContext;
+    var searchText = ViewBag.SearchText as string;
+    var databaseName = Convert.ToString(ViewBag.PosOperationalDatabase ?? "");
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Content/bootstrap.min.css")" rel="stylesheet" />
+    <style>
+        body { direction: rtl; margin: 0; background: #f4f6f8; color: #172033; font-family: Tahoma, Arial, sans-serif; }
+        .pos-store-page { padding: 18px; }
+        .pos-store-hero, .pos-store-filter, .pos-store-card { background: #fff; border: 1px solid #dde5ef; border-radius: 8px; box-shadow: 0 10px 24px rgba(21,32,50,.06); }
+        .pos-store-hero { display: flex; justify-content: space-between; gap: 16px; padding: 18px; margin-bottom: 14px; }
+        .pos-store-hero h1 { margin: 0 0 6px; font-size: 24px; font-weight: 800; }
+        .pos-store-hero p { margin: 0; color: #607086; }
+        .pos-store-filter { padding: 14px; margin-bottom: 14px; }
+        .pos-store-filter form { display: grid; grid-template-columns: minmax(180px, 1fr) auto; gap: 10px; }
+        .pos-store-filter input { min-height: 40px; border: 1px solid #cad5e2; border-radius: 7px; padding: 8px 11px; }
+        .pos-store-filter button { border: 0; border-radius: 7px; background: #0f766e; color: #fff; font-weight: 800; padding: 8px 16px; }
+        .pos-store-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+        .pos-store-card { padding: 14px; }
+        .pos-store-card h2 { margin: 0 0 6px; font-size: 17px; font-weight: 800; }
+        .pos-store-card p { margin: 0 0 8px; color: #64748b; }
+        .pos-store-meta { display: grid; gap: 5px; color: #475569; font-size: 13px; }
+        .pos-store-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .pos-store-chip { display: inline-flex; align-items: center; min-height: 24px; border-radius: 999px; padding: 3px 8px; background: #eef2f7; color: #344256; font-size: 12px; font-weight: 800; }
+        .pos-store-chip.ok { background: #e7f8f1; color: #0f6848; }
+        .pos-store-chip.warn { background: #fff7db; color: #8a5a00; }
+        .pos-store-chip.danger { background: #ffecec; color: #a32626; }
+        .pos-store-empty { padding: 28px; text-align: center; color: #64748b; }
+    @@media (max-width: 640px) {
+            .pos-store-hero, .pos-store-filter form { display: grid; grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <main class="pos-store-page">
+        <header class="pos-store-hero">
+            <div>
+                <h1>المخازن التشغيلية</h1>
+                <p>عرض قراءة فقط للمخازن المتاحة للفرع الحالي واستخدامات نقطة البيع.</p>
+            </div>
+            <div>
+                <span class="pos-store-chip">DB: @databaseName</span>
+                <span class="pos-store-chip ok">@(context != null ? context.BranchName : "")</span>
+            </div>
+        </header>
+
+        <section class="pos-store-filter">
+            @using (Html.BeginForm("Index", "Stores", FormMethod.Get, new { area = "Pos" }))
+            {
+                <input type="search" name="searchText" value="@searchText" placeholder="بحث باسم أو كود المخزن" />
+                <button type="submit">بحث</button>
+            }
+        </section>
+
+        <section class="pos-store-grid" aria-label="قائمة المخازن">
+            @foreach (var store in Model)
+            {
+                <article class="pos-store-card">
+                    <h2>@store.StoreName</h2>
+                    <p>@store.Code - @store.StoreNameEnglish</p>
+                    <div class="pos-store-meta">
+                        <span>الفرع: @store.BranchName</span>
+                        <span>الهاتف: @(string.IsNullOrWhiteSpace(store.Phone) ? "غير مسجل" : store.Phone)</span>
+                        <span>آخر حركة: @(store.LastMovementDate.HasValue ? store.LastMovementDate.Value.ToString("yyyy-MM-dd") : "لا توجد")</span>
+                    </div>
+                    <div class="pos-store-chips">
+                        <span class="pos-store-chip @(store.Linked ? "ok" : "warn")">@(store.Linked ? "مرتبط بالمجموعات" : "غير مرتبط")</span>
+                        @if (store.IsLab) { <span class="pos-store-chip">معمل</span> }
+                        @if (store.IsNotCreateEntry) { <span class="pos-store-chip danger">بدون قيد إنتاج</span> }
+                        <span class="pos-store-chip">@store.TransactionCount حركة</span>
+                    </div>
+                </article>
+            }
+            @if (!Model.Any())
+            {
+                <div class="pos-store-card pos-store-empty">لا توجد مخازن متاحة لهذا الفرع.</div>
+            }
+        </section>
+    </main>
+</body>
+</html>

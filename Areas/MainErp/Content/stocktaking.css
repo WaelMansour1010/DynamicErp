@@ -7,6 +7,8 @@
 .stocktaking-search {
     align-self: start;
     padding: 14px;
+    position: sticky;
+    top: 16px;
 }
 
 .stocktaking-editor {
@@ -96,9 +98,40 @@
     color: var(--erp-danger);
 }
 
+.stocktaking-page .main-erp-cockpit-header {
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .06);
+}
+
+.stocktaking-editor > .main-erp-premium-card,
+.stocktaking-search {
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .045);
+}
+
+.stocktaking-results tbody tr:hover,
+.stocktaking-lines tbody tr:hover {
+    background: #f8fbff;
+}
+
+.stocktaking-totals span {
+    background: #f8fafc;
+    border: 1px solid #e6ebf3;
+    border-radius: 8px;
+    min-width: 180px;
+    padding: 10px 12px;
+}
+
+.stocktaking-totals b {
+    color: #1264a3;
+    font-size: 18px;
+}
+
 @media (max-width: 1100px) {
     .stocktaking-layout {
         grid-template-columns: 1fr;
+    }
+
+    .stocktaking-search {
+        position: static;
     }
 
     .stocktaking-form-grid {

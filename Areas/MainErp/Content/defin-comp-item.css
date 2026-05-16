@@ -262,6 +262,139 @@
     border-inline-start: 3px solid var(--defin-receipt);
 }
 
+.defin-comp-item-page .defin-comp-product-workflow {
+    overflow: hidden;
+}
+
+.defin-comp-item-page .defin-comp-flow-badge {
+    background: #ecfdf3;
+    border: 1px solid #bbf7d0;
+    border-radius: 999px;
+    color: #147a50;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 5px 10px;
+}
+
+.defin-comp-item-page .defin-comp-product-cards {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.defin-comp-item-page .defin-comp-product-card {
+    background: #fbfdff;
+    border: 1px solid var(--defin-border);
+    border-radius: 10px;
+    padding: 12px;
+}
+
+.defin-comp-item-page .defin-comp-product-card header {
+    border-bottom: 1px solid #e6edf6;
+    margin-bottom: 10px;
+    padding-bottom: 9px;
+}
+
+.defin-comp-item-page .defin-comp-product-card header span,
+.defin-comp-item-page .defin-comp-product-card header small {
+    color: #64748b;
+    display: block;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.defin-comp-item-page .defin-comp-product-card header strong {
+    color: #172033;
+    display: block;
+    font-size: 16px;
+    margin: 4px 0;
+}
+
+.defin-comp-item-page .defin-comp-mini-flow {
+    align-items: center;
+    display: grid;
+    gap: 6px;
+    grid-template-columns: auto 1fr auto 1fr auto;
+    margin-bottom: 10px;
+}
+
+.defin-comp-item-page .defin-comp-mini-flow b {
+    background: #eef6ff;
+    border: 1px solid #c7dcf5;
+    border-radius: 999px;
+    color: #1f4773;
+    font-size: 11px;
+    padding: 4px 8px;
+}
+
+.defin-comp-item-page .defin-comp-mini-flow i {
+    background: #c8d6e7;
+    height: 2px;
+}
+
+.defin-comp-item-page .defin-comp-product-card dl {
+    display: grid;
+    gap: 7px;
+    grid-template-columns: 1fr auto;
+    margin: 0 0 10px;
+}
+
+.defin-comp-item-page .defin-comp-product-card dt {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.defin-comp-item-page .defin-comp-product-card dd {
+    color: #172033;
+    font-weight: 800;
+    margin: 0;
+}
+
+.defin-comp-item-page .defin-comp-product-card dd.is-warning {
+    color: #a16207;
+}
+
+.defin-comp-item-page .defin-comp-product-card dd.is-ok {
+    color: #147a50;
+}
+
+.defin-comp-item-page .defin-comp-product-card summary {
+    cursor: pointer;
+    font-weight: 800;
+}
+
+.defin-comp-item-page .defin-comp-product-card ul {
+    display: grid;
+    gap: 6px;
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+}
+
+.defin-comp-item-page .defin-comp-product-card li {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e6edf6;
+    border-radius: 8px;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    padding: 8px;
+}
+
+.defin-comp-item-page .defin-comp-product-card li span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.defin-comp-item-page .defin-comp-product-card li strong,
+.defin-comp-item-page .defin-comp-product-card li b {
+    font-size: 12px;
+}
+
 .defin-comp-item-page .defin-comp-form-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -389,7 +522,7 @@
 }
 
 @media (max-width: 1300px) {
-    .defin-comp-layout {
+    .defin-comp-item-page .defin-comp-layout {
         grid-template-columns: 1fr;
     }
 

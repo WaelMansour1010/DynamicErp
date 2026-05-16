@@ -10,6 +10,9 @@ namespace MyERP.Models
     {
         [NotMapped]
         public List<BatchData> PropertyBatches { get; set; }
+
+        [NotMapped]
+        public int? BranchId { get; set; }
     }
 
     public class BatchData

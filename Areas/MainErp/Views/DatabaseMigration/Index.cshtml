@@ -119,7 +119,7 @@
                             <th>Safe</th>
                             <th>Dependencies</th>
                             <th>Status</th>
-                            <th>Preview</th>
+                            <th>معاينة</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -134,7 +134,7 @@
                                 <td class="dbm-hash">@item.ScriptHash</td>
                                 <td>@item.LastModifiedOn.ToString("yyyy-MM-dd HH:mm", inv)</td>
                                 <td>@item.UpdateType</td>
-                                <td>@(item.SafeToRerun ? "Yes" : "No")</td>
+                                <td>@(item.SafeToRerun ? "نعم" : "لا")</td>
                                 <td>@item.Dependencies</td>
                                 <td><span class="dbm-state dbm-state-pending">@item.ValidationStatus</span></td>
                                 <td><a class="dbm-icon-link" href="@Url.Action("PreviewScript", "DatabaseMigration", new { area = "MainErp", id = item.ScriptKey })"><i class="fas fa-eye"></i></a></td>
@@ -153,7 +153,7 @@
                                 <td>@item.UpdateType</td>
                                 <td>@(item.SafeToRerun ? "Yes" : "No")</td>
                                 <td>@item.Dependencies</td>
-                                <td><span class="dbm-state dbm-state-warning">Hash mismatch</span></td>
+                                <td><span class="dbm-state dbm-state-warning">اختلاف بصمة الملف</span></td>
                                 <td><a class="dbm-icon-link" href="@Url.Action("PreviewScript", "DatabaseMigration", new { area = "MainErp", id = item.ScriptKey })"><i class="fas fa-eye"></i></a></td>
                             </tr>
                         }

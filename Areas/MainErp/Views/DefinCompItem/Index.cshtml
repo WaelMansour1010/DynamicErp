@@ -258,6 +258,61 @@
                 </div>
             </section>
 
+            <section class="main-erp-premium-card defin-comp-product-workflow">
+                <div class="main-erp-section-header">
+                    <h4>Workflow المنتج النهائي والمكونات</h4>
+                    <span class="defin-comp-flow-badge">منتج نهائي ← مكونات ← تكلفة ← أثر مخزني</span>
+                </div>
+                <div class="defin-comp-product-cards" id="outputProductCards">
+                    @if (outputGroups != null && outputGroups.Count > 0)
+                    {
+                        foreach (var product in outputGroups)
+                        {
+                            var components = product.Components ?? new List<MyERP.Areas.MainErp.ViewModels.DefinCompItem.DefinCompItemComponentLineViewModel>();
+                            var componentCost = components.Sum(x => Convert.ToDecimal(x.Total.GetValueOrDefault()));
+                            var outputTotal = Convert.ToDecimal(product.Total.GetValueOrDefault());
+                            var productDiff = outputTotal - componentCost;
+                            <article class="defin-comp-product-card" data-line-id="@(product.LineId.GetValueOrDefault(0))">
+                                <header>
+                                    <span>منتج نهائي</span>
+                                    <strong>@(String.IsNullOrWhiteSpace(product.ItemName) ? "منتج غير محدد" : product.ItemName)</strong>
+                                    <small>@product.ItemCode · @product.UnitName</small>
+                                </header>
+                                <div class="defin-comp-mini-flow">
+                                    <b>خامات</b><i></i><b>تشغيل</b><i></i><b>إضافة مخزنية</b>
+                                </div>
+                                <dl>
+                                    <dt>الكمية</dt><dd>@String.Format("{0:n2}", product.Qty)</dd>
+                                    <dt>تكلفة المكونات</dt><dd>@componentCost.ToString("N2")</dd>
+                                    <dt>تكلفة المنتج</dt><dd>@String.Format("{0:n2}", product.Total)</dd>
+                                    <dt>فرق التكلفة</dt><dd class="@(Math.Abs(productDiff) > 0.01m ? "is-warning" : "is-ok")">@productDiff.ToString("N2")</dd>
+                                </dl>
+                                <details>
+                                    <summary>مكونات المنتج (@components.Count)</summary>
+                                    @if (components.Count == 0)
+                                    {
+                                        <p class="main-erp-empty">لا توجد مكونات مرتبطة بهذا المنتج.</p>
+                                    }
+                                    else
+                                    {
+                                        <ul>
+                                            @foreach (var component in components)
+                                            {
+                                                <li><span>@component.ItemName</span><strong>@String.Format("{0:n2}", component.Qty) @component.UnitName</strong><b>@String.Format("{0:n2}", component.Total)</b></li>
+                                            }
+                                        </ul>
+                                    }
+                                </details>
+                            </article>
+                        }
+                    }
+                    else
+                    {
+                        <div class="main-erp-empty">أضف منتجاً نهائياً ليظهر تحليل التكلفة والمكونات هنا.</div>
+                    }
+                </div>
+            </section>
+
             <section class="main-erp-premium-card">
                 <div class="main-erp-section-header">
                     <h4>الأصناف النهائية</h4>

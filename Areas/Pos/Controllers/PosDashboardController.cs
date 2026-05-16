@@ -49,6 +49,11 @@ namespace MyERP.Areas.Pos.Controllers
             return OpenShell("reports");
         }
 
+        public ActionResult TokenInvoiceLookup()
+        {
+            return OpenShell("token-invoice-lookup");
+        }
+
         public ActionResult AccountingReports()
         {
             return OpenShell("accounting-reports");
@@ -84,9 +89,19 @@ namespace MyERP.Areas.Pos.Controllers
             return OpenShell("stock-transfer");
         }
 
+        public ActionResult Stores()
+        {
+            return OpenShell("stores");
+        }
+
         public ActionResult ExcelImport()
         {
             return OpenShell("excel-import");
+        }
+
+        public ActionResult InvoiceReconciliation()
+        {
+            return OpenShell("invoice-reconciliation");
         }
 
         public ActionResult EmployeePayroll()
@@ -200,7 +215,9 @@ namespace MyERP.Areas.Pos.Controllers
                 screen = HasSalesDefaults(context) ? "sales" : "home";
             }
 
-            if (IsTellerOnly(context) && !string.Equals(screen, "sales", StringComparison.OrdinalIgnoreCase))
+            if (IsTellerOnly(context)
+                && !string.Equals(screen, "sales", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(screen, "kyc", StringComparison.OrdinalIgnoreCase))
             {
                 screen = "sales";
             }
@@ -213,6 +230,11 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "accounting-reports" && !CanOpenAccountingReports(context))
             {
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية عرض تقارير الحسابات");
+            }
+
+            if (screen == "token-invoice-lookup" && !CanOpenReports(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية بحث مبيعات التوكينات");
             }
 
             if (screen == "financial-intelligence" && !CanOpenAccountingReports(context))
@@ -255,7 +277,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح سند تحويل المخزون");
             }
 
-            if (screen == "excel-import" && !CanOpenExcelImport(context))
+            if ((screen == "excel-import" || screen == "invoice-reconciliation") && !CanOpenExcelImport(context))
             {
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية استيراد العمليات من Excel");
             }
@@ -302,6 +324,11 @@ namespace MyERP.Areas.Pos.Controllers
         private static bool CanOpenAccountingReports(PosUserContext context)
         {
             return IsAdmin(context) || (context != null && context.CanViewAccountingReports);
+        }
+
+        private static bool CanOpenReports(PosUserContext context)
+        {
+            return IsAdmin(context) || (context != null && context.CanViewReports);
         }
 
         private static bool CanOpenJournalEntries(PosUserContext context)
@@ -406,7 +433,7 @@ namespace MyERP.Areas.Pos.Controllers
 
             if (screen == "kyc")
             {
-                return Url.Content("~/Pos/PosTransaction/Index?openKyc=true");
+                return Url.Content("~/Pos/PosTransaction/Kyc");
             }
 
             if (screen == "kyc-bank-follow-up")
@@ -417,6 +444,11 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "reports")
             {
                 return Url.Content("~/Pos/PosReports/Index");
+            }
+
+            if (screen == "token-invoice-lookup")
+            {
+                return Url.Content("~/Pos/TokenInvoiceLookup/Index");
             }
 
             if (screen == "accounting-reports")
@@ -454,9 +486,19 @@ namespace MyERP.Areas.Pos.Controllers
                 return Url.Content("~/Pos/StockTransfer/Index");
             }
 
+            if (screen == "stores")
+            {
+                return Url.Content("~/Pos/Stores/Index");
+            }
+
             if (screen == "excel-import")
             {
                 return Url.Content("~/Pos/ExcelImport/Index");
+            }
+
+            if (screen == "invoice-reconciliation")
+            {
+                return Url.Content("~/Pos/PosInvoiceReconciliation/Index");
             }
 
             if (screen == "employee-payroll")

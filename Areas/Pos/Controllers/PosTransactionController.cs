@@ -30,6 +30,31 @@ namespace MyERP.Areas.Pos.Controllers
             _repository = new PosSqlRepository();
         }
 
+        protected override void OnException(ExceptionContext filterContext)
+        {
+            if (filterContext != null
+                && filterContext.HttpContext != null
+                && filterContext.HttpContext.Request != null
+                && filterContext.HttpContext.Request.IsAjaxRequest())
+            {
+                try
+                {
+                    System.Diagnostics.Trace.TraceError("Unhandled POS transaction AJAX error: " + filterContext.Exception);
+                }
+                catch
+                {
+                }
+
+                filterContext.ExceptionHandled = true;
+                filterContext.HttpContext.Response.StatusCode = 500;
+                filterContext.HttpContext.Response.TrySkipIisCustomErrors = true;
+                filterContext.Result = Json(Fail("حدث خطأ غير متوقع في نقطة البيع. تم تسجيل التفاصيل للدعم.", filterContext.Exception != null ? filterContext.Exception.Message : "Unhandled POS AJAX exception."), JsonRequestBehavior.AllowGet);
+                return;
+            }
+
+            base.OnException(filterContext);
+        }
+
         public ActionResult Index()
         {
             var context = GetPosContext();
@@ -47,6 +72,20 @@ namespace MyERP.Areas.Pos.Controllers
 
             ViewBag.PosContext = context;
             return View();
+        }
+
+        public ActionResult Kyc()
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                TempData["PosLoginMessage"] = PosLoginController.PosSessionExpiredMessage;
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            ViewBag.PosContext = context;
+            ViewBag.KycStandalone = true;
+            return View("Index");
         }
 
         private static bool HasRequiredSalesDefaults(PosUserContext context)
@@ -163,7 +202,7 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             term = (term ?? string.Empty).Trim();
-            if (term.Length < 2)
+            if (term.Length < 3)
             {
                 return Json(new List<object>(), JsonRequestBehavior.AllowGet);
             }
@@ -174,7 +213,10 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(Fail("الفرع غير محدد", "POS branch context is missing."), JsonRequestBehavior.AllowGet);
             }
 
+            var stopwatch = Stopwatch.StartNew();
             var matches = _repository.SearchKeshniCardCustomersFast(term, context.BranchId, context.CanChangeDefaults);
+            stopwatch.Stop();
+            PosPerformanceLogger.LogQuery("PosTransaction.SearchKeshniCardCustomers", "usp_POS_KycCustomers_Search", stopwatch.ElapsedMilliseconds, matches.Count, context);
             if (matches.Count > 0)
             {
                 return Json(matches, JsonRequestBehavior.AllowGet);
@@ -211,7 +253,10 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(Fail("الفرع غير محدد", "POS branch context is missing."), JsonRequestBehavior.AllowGet);
             }
 
+            var stopwatch = Stopwatch.StartNew();
             var matches = _repository.SearchUnusedKeshniCardCustomersFast(term, context.BranchId, context.CanChangeDefaults);
+            stopwatch.Stop();
+            PosPerformanceLogger.LogQuery("PosTransaction.LookupUnusedKeshniCardCustomer", "usp_POS_KycCustomers_Search", stopwatch.ElapsedMilliseconds, matches.Count, context);
             if (matches.Count == 1)
             {
                 return Json(new
@@ -436,7 +481,11 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
             }
 
-            return Json(_repository.GetEmployeeBalances(context.UserId, context.BoxId), JsonRequestBehavior.AllowGet);
+            var stopwatch = Stopwatch.StartNew();
+            var balances = _repository.GetEmployeeBalances(context.UserId, context.BoxId);
+            stopwatch.Stop();
+            PosPerformanceLogger.LogQuery("PosTransaction.GetEmployeeBalances", "GetEmployeeBalances", stopwatch.ElapsedMilliseconds, 1, context);
+            return Json(balances, JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
@@ -449,9 +498,26 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
             }
 
+            var trimmedTerm = (term ?? string.Empty).Trim();
+            if (trimmedTerm.Length > 0 && trimmedTerm.Length < 3 && !IsExactInvoiceSearchTerm(trimmedTerm))
+            {
+                SetJsonErrorStatus(400);
+                return Json(Fail("اكتب 3 أحرف على الأقل للبحث", "Broad invoice search requires at least 3 characters."), JsonRequestBehavior.AllowGet);
+            }
+
+            if (context.CanChangeDefaults && (!branchId.HasValue || branchId.Value <= 0) && !IsExactInvoiceSearchTerm(trimmedTerm) && IsRangeLongerThanSevenDays(fromDate, toDate))
+            {
+                SetJsonErrorStatus(400);
+                return Json(Fail("بحث كل الفروع متاح لمدة 7 أيام فقط. اختر فرعاً أو اكتب رقم فاتورة/توكن محدد.", "Admin all-branch invoice search requires a branch, a range of 7 days or less, or an exact search term."), JsonRequestBehavior.AllowGet);
+            }
+
             try
             {
-                return Json(_repository.GetTodayInvoicesFast(context.UserId, context.BranchId, context.CanChangeDefaults, context.CanEditInvoice, term, operationType, fromDate, toDate, branchId, excelOnly, excelWithWarnings), JsonRequestBehavior.AllowGet);
+                var stopwatch = Stopwatch.StartNew();
+                var rows = _repository.GetTodayInvoicesFast(context.UserId, context.BranchId, context.CanChangeDefaults, context.CanEditInvoice, trimmedTerm, operationType, fromDate, toDate, branchId, excelOnly, excelWithWarnings);
+                stopwatch.Stop();
+                PosPerformanceLogger.LogQuery("PosTransaction.GetTodayInvoices", "usp_POS_SalesInvoices_Search", stopwatch.ElapsedMilliseconds, rows.Count, context);
+                return Json(rows, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
@@ -927,13 +993,13 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 LogKycFailure("SaveKeshniCardCustomer.SqlException", request, ex, null);
                 SetJsonErrorStatus(IsKeshniActivationValidationSqlError(ex) ? 400 : 500);
-                return Json(Fail(FriendlySqlKycMessage(ex), ex.ToString()));
+                return Json(Fail(FriendlySqlKycMessage(ex), SafeSqlMessageForDisplay(ex.Message)));
             }
             catch (Exception ex)
             {
                 LogKycFailure("SaveKeshniCardCustomer.Exception", request, ex, null);
                 SetJsonErrorStatus(500);
-                return Json(Fail("حدث خطأ أثناء حفظ بيانات الكارت", ex.ToString()));
+                return Json(Fail("حدث خطأ أثناء حفظ بيانات الكارت", "تم تسجيل التفاصيل الفنية للدعم."));
             }
         }
 
@@ -941,6 +1007,9 @@ namespace MyERP.Areas.Pos.Controllers
         public JsonResult Save(PosSaveTransactionRequest request)
         {
             PosUserContext context = null;
+            Guid saveCorrelationId = Guid.Empty;
+            var idempotencyStarted = false;
+            var saveStopwatch = Stopwatch.StartNew();
             try
             {
                 request = request ?? new PosSaveTransactionRequest();
@@ -1075,6 +1144,14 @@ namespace MyERP.Areas.Pos.Controllers
                     request.CardSerial = null;
                 }
 
+                var cardStockErrors = ValidateKeshniCardStockItem(request);
+                if (cardStockErrors.Count > 0)
+                {
+                    LogPosSystemIssue(context, "Save.CardStockValidation", request, null, "POS card token item mismatch", "Error", "Validation", BuildSaveDiagnostic("PosTransactionController.Save", request, cardStockErrors, null));
+                    SetJsonErrorStatus(400);
+                    return Json(Fail("راجع بيانات الكارت قبل الحفظ", "Keshni card token stock item validation failed.", cardStockErrors));
+                }
+
                 // Kishny POS uses fixed cash customer CusID=2 for Transactions.CusID; KYC customer remains in TblCusCsh fields.
                 request.DefaultCustomerId = 2;
                 request.CustomerID = 2;
@@ -1082,15 +1159,53 @@ namespace MyERP.Areas.Pos.Controllers
                 // Legacy POS mapping:
                 // request.IPN is the UI "ID" field.
                 // request.ManualNO is the UI "IPN" field.
+                // ClientRequestId prevents double-click/network retries from creating duplicate invoices.
+                saveCorrelationId = ResolveSaveCorrelationId(request);
+                request.ClientRequestId = saveCorrelationId.ToString("D");
+                if (originalInvoice == null)
+                {
+                    var idempotency = _repository.TryBeginPosSaveIdempotency(saveCorrelationId, request);
+                    idempotencyStarted = idempotency != null && idempotency.Started;
+                    if (!idempotencyStarted)
+                    {
+                        if (idempotency != null
+                            && string.Equals(idempotency.Status, "Completed", StringComparison.OrdinalIgnoreCase)
+                            && idempotency.Transaction_ID.HasValue)
+                        {
+                            return Json(new
+                            {
+                                success = true,
+                                transactionId = idempotency.Transaction_ID.Value,
+                                noteSerial1 = idempotency.NoteSerial1,
+                                branchId = request.BranchId,
+                                userId = request.UserID,
+                                duplicateRequest = true,
+                                correlationId = request.ClientRequestId
+                            });
+                        }
+
+                        SetJsonErrorStatus(409);
+                        return Json(Fail("طلب الحفظ نفسه قيد التنفيذ بالفعل. برجاء الانتظار وعدم الضغط مرة أخرى.", "Duplicate ClientRequestId is already InProgress."));
+                    }
+                }
+
                 var result = _repository.SaveTransaction(request);
                 if (result == null || result.Transaction_ID <= 0 || !_repository.TransactionExists(result.Transaction_ID))
                 {
+                    if (idempotencyStarted)
+                    {
+                        _repository.FailPosSaveIdempotency(saveCorrelationId, "Saved transaction could not be confirmed after save.", SafeElapsedMilliseconds(saveStopwatch));
+                    }
                     SetJsonErrorStatus(500);
                     return Json(Fail("تعذر تأكيد حفظ الفاتورة في قاعدة البيانات", "usp_POS_SaveTransaction returned success but the transaction row was not found after save."));
                 }
 
                 if (!_repository.TransactionHasDetails(result.Transaction_ID))
                 {
+                    if (idempotencyStarted)
+                    {
+                        _repository.FailPosSaveIdempotency(saveCorrelationId, "Saved transaction has no detail rows after save.", SafeElapsedMilliseconds(saveStopwatch));
+                    }
                     SetJsonErrorStatus(500);
                     return Json(Fail("تم إنشاء رأس الفاتورة ولكن لا توجد تفاصيل محفوظة", "Transaction header exists, but Transaction_Details has no rows after save."));
                 }
@@ -1100,17 +1215,27 @@ namespace MyERP.Areas.Pos.Controllers
                     _repository.LogSalesInvoiceEdit(originalInvoice, request, context.UserId, null);
                 }
 
+                if (idempotencyStarted)
+                {
+                    _repository.CompletePosSaveIdempotency(saveCorrelationId, result, SafeElapsedMilliseconds(saveStopwatch));
+                }
+
                 return Json(new
                 {
                     success = true,
                     transactionId = result.Transaction_ID,
                     noteSerial1 = result.NoteSerial1,
                     branchId = request.BranchId,
-                    userId = request.UserID
+                    userId = request.UserID,
+                    correlationId = request.ClientRequestId
                 });
             }
             catch (SqlException ex)
             {
+                if (idempotencyStarted && saveCorrelationId != Guid.Empty)
+                {
+                    _repository.FailPosSaveIdempotency(saveCorrelationId, ex.Message, SafeElapsedMilliseconds(saveStopwatch));
+                }
                 var diagnostic = BuildSaveDiagnostic("PosTransactionController.Save", request, null, ex);
                 LogPosSystemIssue(context, "Save.SqlException", request, ex, ex.Message, "Error", "SqlException", AppendSqlErrorSummary(diagnostic, ex));
                 LogPosSaveFailure("Save.SqlException", request, ex);
@@ -1119,6 +1244,10 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (Exception ex)
             {
+                if (idempotencyStarted && saveCorrelationId != Guid.Empty)
+                {
+                    _repository.FailPosSaveIdempotency(saveCorrelationId, ex.Message, SafeElapsedMilliseconds(saveStopwatch));
+                }
                 var diagnostic = BuildSaveDiagnostic("PosTransactionController.Save", request, null, ex);
                 LogPosSystemIssue(context, "Save.Exception", request, ex, ex.Message, "Error", "Exception", diagnostic);
                 LogPosSaveFailure("Save.Exception", request, ex);
@@ -1141,7 +1270,23 @@ namespace MyERP.Areas.Pos.Controllers
             try
             {
                 var effectiveStoreId = context.CanChangeDefaults ? (storeId ?? context.StoreId) : context.StoreId;
-                var cards = _repository.SearchAvailableKeshniCardTokens(term, effectiveStoreId, context.BranchId, context.CanChangeDefaults, 30);
+                var trimmedTerm = (term ?? string.Empty).Trim();
+                if (!effectiveStoreId.HasValue || effectiveStoreId.Value <= 0)
+                {
+                    SetJsonErrorStatus(400);
+                    return Json(Fail("حدد المخزن أولاً قبل البحث عن الكروت المتاحة", "StoreId is required for available card lookup."), JsonRequestBehavior.AllowGet);
+                }
+
+                if (trimmedTerm.Length > 0 && trimmedTerm.Length < 3)
+                {
+                    SetJsonErrorStatus(400);
+                    return Json(Fail("اكتب 3 أرقام على الأقل من التوكن للبحث", "Available card token search requires at least 3 characters."), JsonRequestBehavior.AllowGet);
+                }
+
+                var stopwatch = Stopwatch.StartNew();
+                var cards = _repository.SearchAvailableKeshniCardTokens(trimmedTerm, effectiveStoreId, context.BranchId, context.CanChangeDefaults, 30);
+                stopwatch.Stop();
+                PosPerformanceLogger.LogQuery("PosTransaction.SearchAvailableKeshniCards", "usp_POS_SearchAvailableKeshniCards", stopwatch.ElapsedMilliseconds, cards.Count, context);
                 return Json(new
                 {
                     success = true,
@@ -1181,6 +1326,36 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return Json(result, JsonRequestBehavior.AllowGet);
+        }
+
+        private static bool IsExactInvoiceSearchTerm(string term)
+        {
+            term = (term ?? string.Empty).Trim();
+            if (term.Length == 0)
+            {
+                return false;
+            }
+
+            return Regex.IsMatch(term, @"^[0-9]{3,}$") || term.Length >= 8;
+        }
+
+        private static bool IsRangeLongerThanSevenDays(DateTime? fromDate, DateTime? toDate)
+        {
+            if (!fromDate.HasValue || !toDate.HasValue)
+            {
+                return false;
+            }
+
+            var from = fromDate.Value.Date;
+            var to = toDate.Value.Date;
+            if (to < from)
+            {
+                var swap = from;
+                from = to;
+                to = swap;
+            }
+
+            return (to - from).TotalDays > 6;
         }
 
         private static Dictionary<string, string> ValidateSaveRequest(PosSaveTransactionRequest request, PosUserContext context)
@@ -1819,6 +1994,7 @@ namespace MyERP.Areas.Pos.Controllers
             var parts = new List<string>
             {
                 "Transaction_ID=" + (request.Transaction_ID.HasValue ? request.Transaction_ID.Value.ToString(CultureInfo.InvariantCulture) : ""),
+                "ClientRequestId=" + (request.ClientRequestId ?? ""),
                 "TransactionType=" + (request.TransactionType ?? ""),
                 "BranchId=" + (request.BranchId.HasValue ? request.BranchId.Value.ToString(CultureInfo.InvariantCulture) : ""),
                 "StoreID=" + (request.StoreID.HasValue ? request.StoreID.Value.ToString(CultureInfo.InvariantCulture) : ""),
@@ -1842,6 +2018,30 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return string.Join("; ", parts);
+        }
+
+        private static Guid ResolveSaveCorrelationId(PosSaveTransactionRequest request)
+        {
+            Guid parsed;
+            if (request != null
+                && !string.IsNullOrWhiteSpace(request.ClientRequestId)
+                && Guid.TryParse(request.ClientRequestId.Trim(), out parsed)
+                && parsed != Guid.Empty)
+            {
+                return parsed;
+            }
+
+            return Guid.NewGuid();
+        }
+
+        private static int SafeElapsedMilliseconds(Stopwatch stopwatch)
+        {
+            if (stopwatch == null)
+            {
+                return 0;
+            }
+
+            return stopwatch.ElapsedMilliseconds > int.MaxValue ? int.MaxValue : Convert.ToInt32(stopwatch.ElapsedMilliseconds, CultureInfo.InvariantCulture);
         }
 
         private static string BuildSaveDiagnostic(string endpointName, PosSaveTransactionRequest request, IDictionary<string, string> validationErrors, Exception exception)
@@ -1940,6 +2140,72 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 errors["ItemIDService"] = "نوع الشحن لا يطابق نوع العملية المحدد";
             }
+        }
+
+        private Dictionary<string, string> ValidateKeshniCardStockItem(PosSaveTransactionRequest request)
+        {
+            var errors = new Dictionary<string, string>();
+            if (request == null || !IsKeshniCardTransaction(request.TransactionType))
+            {
+                return errors;
+            }
+
+            var token = (request.VisaNumber ?? request.CardSerial ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return errors;
+            }
+
+            var selectedItem = request.Items == null
+                ? null
+                : request.Items.FirstOrDefault(i => i != null && i.Item_ID.HasValue && IsKeshniCardStockItem(i.Item_ID.Value));
+            if (selectedItem == null && request.Items != null)
+            {
+                selectedItem = request.Items.FirstOrDefault(i => i != null && i.Item_ID.HasValue && i.Item_ID.Value > 0);
+            }
+            if (selectedItem == null || !selectedItem.Item_ID.HasValue)
+            {
+                errors["Items"] = "لا توجد خدمة كارت محملة";
+                return errors;
+            }
+
+            var selectedItemId = selectedItem.Item_ID.Value;
+            if (request.ItemIDService.HasValue && request.ItemIDService.Value > 0 && request.ItemIDService.Value != selectedItemId)
+            {
+                errors["ItemIDService"] = "نوع الكارت المختار لا يطابق صنف الفاتورة المحمل";
+                return errors;
+            }
+
+            var stockRows = _repository.GetKeshniCardTokenCurrentStockByItem(token, request.StoreID);
+            var positiveRows = stockRows.Where(r => r != null && r.ItemId.HasValue && r.AvailableQty > 0).ToList();
+            if (positiveRows.Count == 0)
+            {
+                errors["VisaNumber"] = "الكارت غير متاح كرصيد موجب في المخزن الحالي";
+                return errors;
+            }
+
+            var matchingRow = positiveRows.FirstOrDefault(r => r.ItemId.Value == selectedItemId);
+            if (matchingRow == null)
+            {
+                var actual = positiveRows[0];
+                errors["ItemIDService"] = "نوع الكارت لا يطابق الرصيد الفعلي للتوكن. المختار: "
+                    + (selectedItem.ItemName ?? selectedItemId.ToString(CultureInfo.InvariantCulture))
+                    + " | الفعلي في المخزن: "
+                    + (actual.ItemName ?? actual.ItemId.Value.ToString(CultureInfo.InvariantCulture));
+                return errors;
+            }
+
+            if (positiveRows.Count > 1)
+            {
+                errors["VisaNumber"] = "الكارت له أكثر من رصيد موجب على أكثر من صنف في نفس المخزن. برجاء مراجعة الإدارة قبل الحفظ";
+            }
+
+            return errors;
+        }
+
+        private static bool IsKeshniCardStockItem(int itemId)
+        {
+            return itemId == 1 || itemId == 19;
         }
 
         private static Dictionary<string, string> ValidateKeshniCardCustomer(PosCashCustomerSaveRequest request)
@@ -2345,6 +2611,11 @@ namespace MyERP.Areas.Pos.Controllers
                 return "هذا الكارت غير متاح بالمخزون أو تم صرفه/استخدامه من قبل.";
             }
 
+            if (HasSqlError(ex, 1205) || message.IndexOf("deadlocked on lock resources", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return "حدث تزاحم أثناء حفظ بيانات الكارت. برجاء المحاولة مرة أخرى، وتم تسجيل التفاصيل للدعم.";
+            }
+
             if (ex != null && (ex.Number == 2601 || ex.Number == 2627))
             {
                 return "البيانات مكررة. راجع رقم الهاتف أو الرقم القومي أو رقم الكارت.";
@@ -2540,7 +2811,8 @@ namespace MyERP.Areas.Pos.Controllers
 
             return string.Format(
                 CultureInfo.InvariantCulture,
-                "Transaction_ID={0}; Type={1}; BranchId={2}; StoreID={3}; BoxID={4}; UserID={5}; Emp_ID={6}; Items={7}; Net={8}; Paid={9}; ManualNO={10}; IPN={11}",
+                "ClientRequestId={0}; Transaction_ID={1}; Type={2}; BranchId={3}; StoreID={4}; BoxID={5}; UserID={6}; Emp_ID={7}; Items={8}; Net={9}; Paid={10}; ManualNO={11}; IPN={12}",
+                request.ClientRequestId,
                 request.Transaction_ID,
                 request.TransactionType,
                 request.BranchId,

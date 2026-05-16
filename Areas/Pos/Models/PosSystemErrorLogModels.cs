@@ -77,6 +77,16 @@ namespace MyERP.Areas.Pos.Models
         public string Status { get; set; }
         public string Message { get; set; }
         public string RequestSummary { get; set; }
+        public int? StoreID { get; set; }
+        public int? BoxID { get; set; }
+        public int? PaymentType { get; set; }
+        public bool? IsCashOut { get; set; }
+        public bool? IsWallet { get; set; }
+        public int? ItemIDService { get; set; }
+        public int? ItemIDService2 { get; set; }
+        public decimal? RechargeValue { get; set; }
+        public int? ItemCount { get; set; }
+        public string OperationFingerprint { get; set; }
     }
 
     public class PosSaveAttemptSearchRequest
@@ -98,6 +108,15 @@ namespace MyERP.Areas.Pos.Models
         public string SaveAttemptId { get; set; }
         public DateTime CreatedAt { get; set; }
         public string EventName { get; set; }
+        public int? StoreID { get; set; }
+        public int? BoxID { get; set; }
+        public int? PaymentType { get; set; }
+        public bool? IsCashOut { get; set; }
+        public bool? IsWallet { get; set; }
+        public int? ItemIDService { get; set; }
+        public int? ItemIDService2 { get; set; }
+        public decimal? RechargeValue { get; set; }
+        public int? ItemCount { get; set; }
         public int? RetryAttempt { get; set; }
         public int? SqlErrorNumber { get; set; }
         public int? DelayMs { get; set; }
@@ -106,6 +125,7 @@ namespace MyERP.Areas.Pos.Models
         public string Status { get; set; }
         public string Message { get; set; }
         public string RequestSummary { get; set; }
+        public string OperationFingerprint { get; set; }
     }
 
     public class PosSaveAttemptGridRow
@@ -117,12 +137,27 @@ namespace MyERP.Areas.Pos.Models
         public int? BranchId { get; set; }
         public string BranchName { get; set; }
         public string TransactionType { get; set; }
+        public int? StoreID { get; set; }
+        public int? BoxID { get; set; }
+        public int? PaymentType { get; set; }
+        public bool? IsCashOut { get; set; }
+        public bool? IsWallet { get; set; }
+        public int? ItemIDService { get; set; }
+        public int? ItemIDService2 { get; set; }
+        public decimal? RechargeValue { get; set; }
+        public int? ItemCount { get; set; }
+        public string OperationFingerprint { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public int? DurationMs { get; set; }
+        public int? MaxDelayMs { get; set; }
         public int RetryCount { get; set; }
+        public bool HasDeadlock { get; set; }
+        public bool HasTimeout { get; set; }
         public string FinalStatus { get; set; }
         public int? Transaction_ID { get; set; }
+        public int? LastSqlErrorNumber { get; set; }
+        public string LastEventName { get; set; }
         public string LastErrorMessage { get; set; }
         public IList<PosSaveAttemptTimelineEntry> Timeline { get; set; }
     }
@@ -131,11 +166,17 @@ namespace MyERP.Areas.Pos.Models
     {
         public int TotalSaveAttempts { get; set; }
         public int DeadlockAffectedAttempts { get; set; }
+        public int TimeoutAffectedAttempts { get; set; }
+        public int FailedAttempts { get; set; }
         public int RetriedSucceeded { get; set; }
         public int RetriedFailed { get; set; }
         public decimal AverageDurationMs { get; set; }
         public int MaxDurationMs { get; set; }
+        public decimal AverageRetryDelayMs { get; set; }
+        public int MaxRetryDelayMs { get; set; }
         public string TopDeadlockBranch { get; set; }
+        public string TopSqlErrorNumber { get; set; }
+        public string TopOperationFingerprint { get; set; }
     }
 
     public class PosSaveAttemptSearchResult

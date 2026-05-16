@@ -58,9 +58,22 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
 
         public PaymentVoucherSaveResultViewModel Save(PaymentVoucherEditViewModel model, int userId)
         {
-            using (var connection = _connectionFactory.CreateOpenConnection())
-            using (var command = new SqlCommand("dbo.usp_DynamicErpVoucher_Save", connection))
+            var validation = ValidateBeforeSave(model);
+            if (!string.IsNullOrWhiteSpace(validation))
             {
+                throw new InvalidOperationException(validation);
+            }
+
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            {
+                validation = ValidateFinancialReferences(connection, model);
+                if (!string.IsNullOrWhiteSpace(validation))
+                {
+                    throw new InvalidOperationException(validation);
+                }
+
+                using (var command = new SqlCommand("dbo.usp_DynamicErpVoucher_Save", connection))
+                {
                 command.CommandType = CommandType.StoredProcedure;
                 command.CommandTimeout = 90;
                 command.Parameters.Add("@noteType", SqlDbType.Int).Value = model.NoteType;
@@ -100,6 +113,7 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
                         VoucherId = PaymentVoucherReadRepository.ReadInt(reader, "Double_Entry_Vouchers_ID"),
                         Message = PaymentVoucherReadRepository.ReadString(reader, "ResultMessage")
                     };
+                }
                 }
             }
         }
@@ -205,6 +219,127 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
         private static string Trim(string value)
         {
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        private static string ValidateBeforeSave(PaymentVoucherEditViewModel model)
+        {
+            if (model == null)
+            {
+                return "بيانات السند غير موجودة.";
+            }
+
+            if (model.NoteDate == DateTime.MinValue)
+            {
+                return "تاريخ السند مطلوب.";
+            }
+
+            if (model.Amount <= 0)
+            {
+                return "قيمة السند يجب أن تكون أكبر من صفر.";
+            }
+
+            if (model.Vat < 0)
+            {
+                return "قيمة الضريبة لا يجوز أن تكون سالبة.";
+            }
+
+            if (string.IsNullOrWhiteSpace(model.PartyAccountCode))
+            {
+                return "حساب الطرف مطلوب قبل حفظ السند.";
+            }
+
+            if (!model.BoxId.HasValue && !model.BankId.HasValue)
+            {
+                return "يجب اختيار خزنة أو بنك للسند.";
+            }
+
+            if (model.BoxId.HasValue && model.BankId.HasValue)
+            {
+                return "لا يمكن اختيار خزنة وبنك في نفس السند.";
+            }
+
+            return null;
+        }
+
+        private static string ValidateFinancialReferences(SqlConnection connection, PaymentVoucherEditViewModel model)
+        {
+            if (!Exists(connection, "ACCOUNTS", "Account_Code", model.PartyAccountCode))
+            {
+                return "حساب الطرف غير موجود في دليل الحسابات.";
+            }
+
+            if (model.BranchId.HasValue && model.BranchId.Value > 0 && !Exists(connection, "TblBranchesData", "branch_id", model.BranchId.Value))
+            {
+                return "فرع السند غير موجود.";
+            }
+
+            if (model.BoxId.HasValue && model.BoxId.Value > 0)
+            {
+                var boxBranch = LookupBranch(connection, "SELECT BranchId FROM dbo.tblBoxesData WHERE BoxID = @Id", model.BoxId.Value);
+                if (!boxBranch.Exists)
+                {
+                    return "الخزنة المحددة غير موجودة.";
+                }
+
+                if (model.BranchId.HasValue && boxBranch.BranchId.HasValue && boxBranch.BranchId.Value > 0 && boxBranch.BranchId.Value != model.BranchId.Value)
+                {
+                    return "فرع السند لا يطابق فرع الخزنة.";
+                }
+            }
+
+            if (model.BankId.HasValue && model.BankId.Value > 0)
+            {
+                var bankBranch = LookupBranch(connection, "SELECT BranchId FROM dbo.BanksData WHERE BankID = @Id", model.BankId.Value);
+                if (!bankBranch.Exists)
+                {
+                    return "البنك المحدد غير موجود.";
+                }
+
+                if (model.BranchId.HasValue && bankBranch.BranchId.HasValue && bankBranch.BranchId.Value > 0 && bankBranch.BranchId.Value != model.BranchId.Value)
+                {
+                    return "فرع السند لا يطابق فرع البنك.";
+                }
+            }
+
+            return null;
+        }
+
+        private static bool Exists(SqlConnection connection, string tableName, string columnName, string value)
+        {
+            using (var command = new SqlCommand("SELECT TOP (1) 1 FROM dbo." + tableName + " WHERE " + columnName + " = @Value", connection))
+            {
+                command.Parameters.Add("@Value", SqlDbType.NVarChar, 100).Value = Trim(value);
+                return command.ExecuteScalar() != null;
+            }
+        }
+
+        private static bool Exists(SqlConnection connection, string tableName, string columnName, int value)
+        {
+            using (var command = new SqlCommand("SELECT TOP (1) 1 FROM dbo." + tableName + " WHERE " + columnName + " = @Value", connection))
+            {
+                command.Parameters.Add("@Value", SqlDbType.Int).Value = value;
+                return command.ExecuteScalar() != null;
+            }
+        }
+
+        private static BranchLookupResult LookupBranch(SqlConnection connection, string sql, int id)
+        {
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+                var value = command.ExecuteScalar();
+                return new BranchLookupResult
+                {
+                    Exists = value != null,
+                    BranchId = value == null || value == DBNull.Value ? (int?)null : Convert.ToInt32(value)
+                };
+            }
+        }
+
+        private struct BranchLookupResult
+        {
+            public bool Exists { get; set; }
+            public int? BranchId { get; set; }
         }
     }
 }

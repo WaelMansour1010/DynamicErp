@@ -7,7 +7,7 @@
 
     Purpose:
     - Create POS helper tables that the application may need for logging,
-      import audit, limited-edit audit, permissions, and POS DEV_Serial allocation.
+    import audit, limited-edit audit, and permissions.
     - Keep CREATE TABLE / CREATE INDEX work out of live cashier save requests.
 */
 
@@ -73,17 +73,6 @@ AND EXISTS
 )
 BEGIN
     ALTER TABLE dbo.Transactions ALTER COLUMN ManualNo2 NVARCHAR(255) NULL;
-END;
-GO
-
-IF OBJECT_ID(N'dbo.POS_DEVSerialAllocator', N'U') IS NULL
-BEGIN
-    CREATE TABLE dbo.POS_DEVSerialAllocator
-    (
-        SerialDate DATE NOT NULL CONSTRAINT PK_POS_DEVSerialAllocator PRIMARY KEY,
-        LastSerialNo INT NOT NULL,
-        UpdatedAt DATETIME NOT NULL CONSTRAINT DF_POS_DEVSerialAllocator_UpdatedAt DEFAULT(GETDATE())
-    );
 END;
 GO
 
@@ -257,7 +246,6 @@ END;
 GO
 
 SELECT
-    POS_DEVSerialAllocator = OBJECT_ID(N'dbo.POS_DEVSerialAllocator', N'U'),
     POS_SaveAttemptLog = OBJECT_ID(N'dbo.POS_SaveAttemptLog', N'U'),
     POS_SystemErrorLog = OBJECT_ID(N'dbo.POS_SystemErrorLog', N'U'),
     POS_UserPermissions = OBJECT_ID(N'dbo.POS_UserPermissions', N'U'),

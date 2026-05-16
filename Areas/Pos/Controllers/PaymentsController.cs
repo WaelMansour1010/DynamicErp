@@ -351,8 +351,17 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" }, JsonRequestBehavior.AllowGet);
             }
 
-            var balance = _repository.GetPosPaymentAccountBalance(EffectiveBranchId(context, branchId), accountCode, asOfDate);
-            return Json(new { success = true, balance = balance }, JsonRequestBehavior.AllowGet);
+            try
+            {
+                var balance = _repository.GetPosPaymentAccountBalance(EffectiveBranchId(context, branchId), accountCode, asOfDate);
+                return Json(new { success = true, balance = balance }, JsonRequestBehavior.AllowGet);
+            }
+            catch (SqlException ex)
+            {
+                Trace.TraceError("POS payment account balance lookup failed. AccountCode={0}; BranchId={1}. {2}", accountCode, branchId, ex);
+                Response.StatusCode = 500;
+                return Json(new { success = false, message = "تعذر تحميل رصيد الحساب من قاعدة البيانات", technicalMessage = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
         }
 
         [HttpGet]
@@ -371,8 +380,17 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" }, JsonRequestBehavior.AllowGet);
             }
 
-            var account = _repository.GetPosPaymentEmployeeCustodyAccount(EffectiveBranchId(context, branchId), employeeId);
-            return Json(new { success = true, account = account }, JsonRequestBehavior.AllowGet);
+            try
+            {
+                var account = _repository.GetPosPaymentEmployeeCustodyAccount(EffectiveBranchId(context, branchId), employeeId);
+                return Json(new { success = true, account = account }, JsonRequestBehavior.AllowGet);
+            }
+            catch (SqlException ex)
+            {
+                Trace.TraceError("POS payment employee custody account lookup failed. EmployeeId={0}; BranchId={1}. {2}", employeeId, branchId, ex);
+                Response.StatusCode = 500;
+                return Json(new { success = false, message = "تعذر تحميل حساب عهدة الموظف من قاعدة البيانات", technicalMessage = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
         }
 
         [HttpPost]
@@ -423,6 +441,13 @@ namespace MyERP.Areas.Pos.Controllers
             if (!context.IsFullAccess)
             {
                 request.BranchId = context.BranchId;
+            }
+
+            var validationMessage = ValidatePaymentSearch(request);
+            if (!string.IsNullOrWhiteSpace(validationMessage))
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = validationMessage });
             }
 
             try
@@ -605,6 +630,24 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return requestedBranchId.GetValueOrDefault(context.BranchId.GetValueOrDefault());
+        }
+
+        private static string ValidatePaymentSearch(PosPaymentSearchRequestDto request)
+        {
+            request = request ?? new PosPaymentSearchRequestDto();
+            var term = (request.SearchText ?? string.Empty).Trim();
+            var hasDateRange = request.FromDate.HasValue && request.ToDate.HasValue;
+            if (term.Length > 0 && term.Length < 3 && !term.All(char.IsDigit))
+            {
+                return "اكتب 3 أحرف على الأقل للبحث العام";
+            }
+
+            if (!hasDateRange && term.Length < 3)
+            {
+                return "حدد فترة البحث أو اكتب بحثاً محدداً من 3 أحرف على الأقل";
+            }
+
+            return string.Empty;
         }
 
         private PosUserContext GetPosContext()

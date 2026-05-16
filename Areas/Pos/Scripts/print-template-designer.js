@@ -41,7 +41,9 @@
         { key: "phoneNo", label: "رقم الهاتف", direction: "LTR" },
         { key: "jobName", label: "الوظيفة" },
         { key: "WorkAddress", label: "عنوان العمل" },
-        { key: "Email", label: "البريد الإلكتروني", direction: "LTR" }
+        { key: "Email", label: "البريد الإلكتروني", direction: "LTR" },
+        { key: "BranchName", label: "اسم الفرع" },
+        { key: "BranchCode", label: "كود الفرع", direction: "LTR" }
     ];
 
     // Special field types (not bound to the customer dictionary) that
@@ -782,6 +784,9 @@
         document.getElementById("printBackground").addEventListener("change", function (e) {
             state.template.PrintBackground = e.target.checked;
         });
+        document.getElementById("showBranchData").addEventListener("change", function (e) {
+            state.template.ShowBranchData = e.target.checked;
+        });
         document.getElementById("showBackgroundDesigner").addEventListener("change", function () {
             applyBackgroundSrc();
         });
@@ -820,6 +825,7 @@
         document.getElementById("globalXShift").value = t.GlobalXShift || 0;
         document.getElementById("globalYShift").value = t.GlobalYShift || 0;
         document.getElementById("printBackground").checked = !!t.PrintBackground;
+        document.getElementById("showBranchData").checked = !!t.ShowBranchData;
     }
 
     // ---------- Toolbar actions ----------

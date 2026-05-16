@@ -29,6 +29,10 @@ namespace MyERP.Areas.Pos.Models
         public string BackgroundFileName { get; set; }
         public bool PrintBackground { get; set; }
 
+        // KYC card templates should not inherit branch/user context unless
+        // the designer explicitly opts into branch data fields.
+        public bool ShowBranchData { get; set; }
+
         // Page dimensions in template units (1/100 inch).
         public float PageWidth { get; set; } = 827F;
         public float PageHeight { get; set; } = 1170F;

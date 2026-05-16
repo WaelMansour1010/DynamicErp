@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.Configuration;
+using System.Data.SqlClient;
 using System.Web.Mvc;
 using MyERP.Areas.Pos.Data;
 using MyERP.Areas.Pos.Services;
@@ -12,10 +13,13 @@ namespace MyERP.Areas.Pos.Controllers
         private readonly EmployeePayrollRepository _repository;
         private readonly PosSqlRepository _posRepository;
         private readonly PosLegacyScreenPermissionService _permissionService;
+        private readonly string _employeePayrollConnectionString;
+        private readonly bool _databaseOverrideActive;
 
         public EmployeePayrollController()
         {
-            _repository = new EmployeePayrollRepository(ResolveConnectionString("KishnyCashConnection"));
+            _employeePayrollConnectionString = ResolveConnectionString("KishnyCashConnection", out _databaseOverrideActive);
+            _repository = new EmployeePayrollRepository(_employeePayrollConnectionString);
             _posRepository = new PosSqlRepository();
             _permissionService = new PosLegacyScreenPermissionService();
         }
@@ -26,6 +30,7 @@ namespace MyERP.Areas.Pos.Controllers
             if (context == null) return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
             if (!CanOpen(context)) return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح شاشة الموظفين");
             ViewBag.ActiveScreen = "employee-payroll";
+            FillOperationalContext(context);
             return View();
         }
 
@@ -35,6 +40,7 @@ namespace MyERP.Areas.Pos.Controllers
             if (context == null) return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
             if (!CanOpen(context)) return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح مسير الرواتب");
             ViewBag.ActiveScreen = "salary-run";
+            FillOperationalContext(context);
             return View();
         }
 
@@ -44,6 +50,7 @@ namespace MyERP.Areas.Pos.Controllers
             if (context == null) return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
             if (!CanOpen(context)) return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح التأمين الطبي");
             ViewBag.ActiveScreen = "medical-insurance";
+            FillOperationalContext(context);
             return View();
         }
 
@@ -53,6 +60,7 @@ namespace MyERP.Areas.Pos.Controllers
             if (context == null) return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
             if (!CanOpen(context)) return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح تقارير التأمين الطبي");
             ViewBag.ActiveScreen = "medical-insurance-reports";
+            FillOperationalContext(context);
             return View();
         }
 
@@ -87,20 +95,9 @@ namespace MyERP.Areas.Pos.Controllers
         [HttpPost]
         public JsonResult SaveProvider(MedicalInsuranceProvider provider)
         {
-            var context = GetContext();
-            if (context == null) return Json(new { success = false, message = "يجب تسجيل الدخول" });
-            if (!CanOpen(context)) return Json(new { success = false, message = "ليست لديك صلاحية" });
-            try
-            {
-                var id = _repository.SaveMedicalInsuranceProvider(provider, context.UserId);
-                return Json(new { success = true, providerId = id, message = "تم حفظ شركة التأمين" });
-            }
-            catch (Exception ex)
-            {
-                Response.StatusCode = 400;
-                return Json(new { success = false, message = ex.Message });
-            }
+            return PosOperationalOnly("Medical insurance provider administration");
         }
+
 
         [HttpGet]
         public JsonResult Plans(bool activeOnly = false)
@@ -119,45 +116,19 @@ namespace MyERP.Areas.Pos.Controllers
         [HttpPost]
         public JsonResult SavePlan(MedicalInsurancePlan plan)
         {
-            var context = GetContext();
-            if (context == null) return Json(new { success = false, message = "يجب تسجيل الدخول" });
-            if (!CanOpen(context)) return Json(new { success = false, message = "ليست لديك صلاحية" });
-            try
-            {
-                var id = _repository.SaveMedicalInsurancePlan(plan, context.UserId);
-                return Json(new { success = true, planId = id, message = "تم حفظ خطة التأمين" });
-            }
-            catch (Exception ex)
-            {
-                Response.StatusCode = 400;
-                return Json(new { success = false, message = ex.Message });
-            }
+            return PosOperationalOnly("Medical insurance plan administration");
         }
 
         [HttpPost]
         public JsonResult Save(EmployeeSaveRequest request)
         {
-            var context = GetContext();
-            if (context == null) return Json(new { success = false, message = "يجب تسجيل الدخول" });
-            if (!CanOpen(context)) return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشات الموظفين والرواتب" });
-            try
-            {
-                var id = _repository.SaveEmployee(request, context.UserId);
-                return Json(new { success = true, employeeId = id, message = "تم حفظ بيانات الموظف" });
-            }
-            catch (Exception ex)
-            {
-                Response.StatusCode = 400;
-                return Json(new { success = false, message = ex.Message });
-            }
+            return PosOperationalOnly("Employee administration");
         }
 
         [HttpPost]
         public JsonResult SetActive(int id, bool active)
         {
-            if (!CanUseJson()) return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشات الموظفين والرواتب" });
-            _repository.SetEmployeeActive(id, active);
-            return Json(new { success = true });
+            return PosOperationalOnly("Employee activation");
         }
 
         [HttpGet]
@@ -166,7 +137,7 @@ namespace MyERP.Areas.Pos.Controllers
             if (!CanUseJson()) return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشات الموظفين والرواتب" }, JsonRequestBehavior.AllowGet);
             try
             {
-                return Json(new { success = true, preview = _repository.PreviewSalaryRun(request) }, JsonRequestBehavior.AllowGet);
+                return LargeJson(new { success = true, preview = _repository.PreviewSalaryRun(request) }, JsonRequestBehavior.AllowGet);
             }
             catch (Exception ex)
             {
@@ -178,19 +149,9 @@ namespace MyERP.Areas.Pos.Controllers
         [HttpPost]
         public JsonResult SaveSalaryRun(SalaryRunRequest request)
         {
-            var context = GetContext();
-            if (context == null) return Json(new { success = false, message = "يجب تسجيل الدخول" });
-            if (!CanOpen(context)) return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشات الموظفين والرواتب" });
-            try
-            {
-                return Json(new { success = true, result = _repository.SaveSalaryRun(request, context.UserId) });
-            }
-            catch (Exception ex)
-            {
-                Response.StatusCode = 400;
-                return Json(new { success = false, message = ex.Message });
-            }
+            return PosOperationalOnly("Salary run saving");
         }
+
 
         [HttpGet]
         public JsonResult InsuranceSubscriptionReport(MedicalInsuranceReportFilter filter)
@@ -206,9 +167,53 @@ namespace MyERP.Areas.Pos.Controllers
             return Json(new { success = true, rows = _repository.GetMedicalInsuranceDeductions(filter) }, JsonRequestBehavior.AllowGet);
         }
 
+        [HttpGet]
+        public JsonResult MedicalInsuranceOperationalDashboard(MedicalInsuranceOperationalFilter filter)
+        {
+            var context = GetContext();
+            if (context == null)
+            {
+                Response.StatusCode = 401;
+                return Json(new { success = false, message = "ليست لديك صلاحية" }, JsonRequestBehavior.AllowGet);
+            }
+
+            if (!CanOpen(context))
+            {
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "ليست لديك صلاحية" }, JsonRequestBehavior.AllowGet);
+            }
+
+            return LargeJson(new
+            {
+                success = true,
+                dashboard = _repository.GetMedicalInsuranceOperationalDashboard(filter),
+                operationalContext = BuildOperationalContext(context)
+            }, JsonRequestBehavior.AllowGet);
+        }
+
         private bool CanOpen(Models.PosUserContext context)
         {
             return context != null && (context.IsFullAccess || context.UserType.GetValueOrDefault(-1) == 0 || _permissionService.CanView(context, "FrmEmployee") || _permissionService.CanView(context, "FrmEmpSalary5"));
+        }
+
+        private JsonResult LargeJson(object data, JsonRequestBehavior behavior)
+        {
+            return new JsonResult
+            {
+                Data = data,
+                JsonRequestBehavior = behavior,
+                MaxJsonLength = int.MaxValue
+            };
+        }
+
+        private JsonResult PosOperationalOnly(string workflow)
+        {
+            Response.StatusCode = 403;
+            return Json(new
+            {
+                success = false,
+                message = workflow + " is managed from MainErp. POS exposes operational read-only access only."
+            });
         }
 
         private Models.PosUserContext GetContext()
@@ -234,15 +239,84 @@ namespace MyERP.Areas.Pos.Controllers
             return true;
         }
 
-        private static string ResolveConnectionString(string name)
+        private void FillOperationalContext(Models.PosUserContext context)
         {
+            var operationalContext = BuildOperationalContext(context);
+            ViewBag.SharedHrArea = "Pos";
+            ViewBag.SharedHrReadOnly = true;
+            ViewBag.SharedHrDatabaseName = operationalContext.DatabaseName;
+            ViewBag.SharedHrDatabaseOverrideActive = operationalContext.DemoOverrideActive;
+            ViewBag.SharedHrEnvironmentLabel = operationalContext.EnvironmentLabel;
+            ViewBag.SharedHrBranchName = operationalContext.BranchName;
+            ViewBag.SharedHrStoreName = operationalContext.StoreName;
+            ViewBag.SharedHrUserName = operationalContext.UserName;
+            ViewBag.PosOperationalDatabase = operationalContext.DatabaseName;
+            ViewBag.PosDatabaseOverrideActive = operationalContext.DemoOverrideActive;
+            ViewBag.PosEnvironmentLabel = operationalContext.EnvironmentLabel;
+            ViewBag.PosBranchName = operationalContext.BranchName;
+            ViewBag.PosStoreName = operationalContext.StoreName;
+            ViewBag.PosUserName = operationalContext.UserName;
+        }
+
+        private PosOperationalDatabaseContext BuildOperationalContext(Models.PosUserContext context)
+        {
+            return new PosOperationalDatabaseContext
+            {
+                DatabaseName = GetDatabaseName(_employeePayrollConnectionString),
+                DemoOverrideActive = _databaseOverrideActive,
+                EnvironmentLabel = _databaseOverrideActive ? "Demo database" : "Kishny POS operational context",
+                BranchName = context == null ? string.Empty : context.BranchName,
+                StoreName = context == null ? string.Empty : context.StoreName,
+                UserName = context == null ? string.Empty : context.UserName
+            };
+        }
+
+        private static string ResolveConnectionString(string name, out bool databaseOverrideActive)
+        {
+            databaseOverrideActive = false;
             var setting = ConfigurationManager.ConnectionStrings[name];
             if (setting == null || string.IsNullOrWhiteSpace(setting.ConnectionString))
             {
                 throw new ConfigurationErrorsException("Missing connection string: " + name);
             }
 
-            return setting.ConnectionString;
+            var connectionString = setting.ConnectionString;
+            var overrideEnabled = IsTruthy(ConfigurationManager.AppSettings["PosEmployeePayrollDemoOverrideEnabled"]);
+            var databaseOverride = ConfigurationManager.AppSettings["PosEmployeePayrollDatabaseOverride"];
+            if (overrideEnabled && !string.IsNullOrWhiteSpace(databaseOverride))
+            {
+                var builder = new SqlConnectionStringBuilder(connectionString)
+                {
+                    InitialCatalog = databaseOverride.Trim()
+                };
+                connectionString = builder.ConnectionString;
+                databaseOverrideActive = true;
+            }
+
+            return connectionString;
+        }
+
+        private static string GetDatabaseName(string connectionString)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString)) return string.Empty;
+            return new SqlConnectionStringBuilder(connectionString).InitialCatalog;
+        }
+
+        private static bool IsTruthy(string value)
+        {
+            return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "1", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(value, "yes", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private class PosOperationalDatabaseContext
+        {
+            public string DatabaseName { get; set; }
+            public bool DemoOverrideActive { get; set; }
+            public string EnvironmentLabel { get; set; }
+            public string BranchName { get; set; }
+            public string StoreName { get; set; }
+            public string UserName { get; set; }
         }
     }
 }

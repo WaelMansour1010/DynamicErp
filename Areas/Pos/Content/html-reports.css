@@ -23,15 +23,295 @@ body {
 .html-report-page {
     direction: rtl;
     margin: 0 auto;
-    max-width: 1280px;
-    padding: 20px;
+    max-width: 1320px;
+    padding: 16px;
+}
+
+/* Accounting reports: dense, professional reporting surface inside the POS shell. */
+.accounting-reports-page {
+    --acct-blue: #1f5eff;
+    --acct-ink: #101828;
+    --acct-muted: #667085;
+    --acct-line: #dbe4f0;
+    --acct-soft: #f6f9fd;
+    --acct-card: #ffffff;
+    background:
+        radial-gradient(circle at 8% 0%, rgba(31, 94, 255, .08), transparent 26%),
+        linear-gradient(180deg, #f5f8fc 0%, #eef3f8 100%);
+    max-width: 1680px;
+    min-height: 100vh;
+    padding: 18px 22px 30px;
+}
+
+.accounting-reports-page .erp-hero-card,
+.accounting-reports-page .erp-card {
+    border: 1px solid rgba(160, 174, 195, .32);
+    border-radius: 8px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .06);
+    margin-bottom: 14px;
+    padding: 18px 22px;
+}
+
+.accounting-reports-page .erp-hero-card {
+    align-items: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 92px;
+}
+
+.accounting-reports-page .erp-hero-card h1 {
+    font-size: 30px;
+    margin-bottom: 4px;
+}
+
+.accounting-reports-page .erp-hero-card strong {
+    background: #f2f6fc;
+    border: 1px solid #dce6f3;
+    border-radius: 999px;
+    color: #344054;
+    padding: 8px 14px;
+}
+
+.accounting-reports-page .erp-card-head {
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+}
+
+.accounting-reports-page .erp-card-head h2 {
+    font-size: 22px;
+    margin-bottom: 3px;
+}
+
+.accounting-reports-page .erp-card-head p,
+.accounting-reports-page .erp-hero-card p {
+    color: var(--acct-muted);
+    font-size: 14px;
+}
+
+.accounting-reports-page .erp-report-grid {
+    display: grid !important;
+    gap: 12px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.accounting-reports-page .erp-report-tile {
+    align-content: start;
+    border-color: var(--acct-line);
+    border-radius: 8px;
+    box-shadow: none;
+    gap: 7px;
+    min-height: 116px;
+    overflow: hidden;
+    padding: 16px 18px 14px;
+}
+
+.accounting-reports-page .erp-report-tile strong,
+.accounting-reports-page .erp-report-tile small {
+    display: block;
+    max-width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    padding-left: 18px;
+    white-space: normal;
+}
+
+.accounting-reports-page .erp-report-tile strong {
+    color: var(--acct-ink);
+    font-size: 17px;
+    line-height: 1.35;
+}
+
+.accounting-reports-page .erp-report-tile small {
+    color: #667085;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.accounting-reports-page .erp-report-dot {
+    height: 10px;
+    left: 14px;
+    top: 16px;
+    width: 10px;
+}
+
+.accounting-reports-page .erp-report-tile:hover {
+    border-color: rgba(31, 94, 255, .45);
+    box-shadow: 0 10px 24px rgba(31, 94, 255, .10);
+}
+
+.accounting-reports-page .erp-report-tile.is-active {
+    background: linear-gradient(180deg, #eef4ff 0%, #ffffff 100%);
+    border-color: var(--acct-blue);
+    box-shadow: inset 0 0 0 1px rgba(31, 94, 255, .22), 0 12px 26px rgba(31, 94, 255, .12);
+}
+
+.accounting-reports-page .erp-filter-grid {
+    align-items: end;
+    display: grid !important;
+    gap: 12px;
+    grid-template-columns: repeat(4, minmax(190px, 1fr));
+}
+
+.accounting-reports-page .erp-field {
+    color: #344054;
+    font-size: 13px;
+    gap: 6px;
+}
+
+.accounting-reports-page .erp-field input,
+.accounting-reports-page .erp-field select,
+.accounting-reports-page .html-smart-select-input {
+    border-color: var(--acct-line);
+    border-radius: 8px;
+    min-height: 42px;
+}
+
+.accounting-reports-page .erp-account-picker {
+    background: var(--acct-soft);
+    border-color: var(--acct-line);
+    border-radius: 8px;
+    display: grid;
+    gap: 12px;
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 14px 16px;
+}
+
+.accounting-reports-page .erp-actions {
+    background: #fbfdff;
+    border: 1px solid #e4ebf5;
+    border-radius: 8px;
+    justify-content: flex-start;
+    margin-top: 14px;
+    padding: 12px;
+}
+
+.accounting-reports-page .erp-btn {
+    border-radius: 8px;
+    min-width: 120px;
+}
+
+.accounting-reports-page .erp-result-card {
+    padding-bottom: 20px;
+}
+
+.accounting-reports-page .erp-filter-summary {
+    gap: 8px;
+    justify-content: flex-start;
+}
+
+.accounting-reports-page .erp-filter-summary span,
+.accounting-reports-page .erp-badge {
+    background: #eef4fb;
+    border-color: #d8e4f2;
+    border-radius: 999px;
+    color: #475467;
+    font-size: 12px;
+    padding: 6px 11px;
+}
+
+.accounting-reports-page .html-report-table-wrap {
+    border: 1px solid #dce6f2;
+    border-radius: 8px;
+    max-height: 62vh;
+    overflow: auto;
+}
+
+.accounting-reports-page .erp-data-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 1040px;
+    width: 100%;
+}
+
+.accounting-reports-page .erp-data-table th {
+    background: #edf3fb;
+    border-bottom: 1px solid #d7e2ef;
+    color: #344054;
+    font-size: 13px;
+    line-height: 1.35;
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+    z-index: 3;
+}
+
+.accounting-reports-page .erp-data-table td {
+    background: #fff;
+    color: #1d2939;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.accounting-reports-page .erp-data-table td,
+.accounting-reports-page .erp-data-table th {
+    padding: 11px 12px;
+}
+
+.accounting-reports-page .erp-data-table tbody tr:hover td {
+    background: #f8fbff;
+}
+
+.accounting-reports-page .erp-data-table .numeric-cell {
+    direction: ltr;
+    font-variant-numeric: tabular-nums;
+    text-align: left;
+}
+
+.accounting-reports-page .erp-data-table tfoot td {
+    background: #eaf2ff;
+    border-top: 2px solid var(--acct-blue);
+    color: #101828;
+    font-weight: 900;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+}
+
+.accounting-reports-page .erp-empty-state {
+    border-style: dashed;
+    color: #667085;
+    padding: 28px;
+}
+
+@media (max-width: 1280px) {
+    .accounting-reports-page .erp-report-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .accounting-reports-page .erp-filter-grid {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .accounting-reports-page {
+        padding: 10px;
+    }
+
+    .accounting-reports-page .erp-hero-card,
+    .accounting-reports-page .erp-card,
+    .accounting-reports-page .erp-card-head,
+    .accounting-reports-page .erp-account-picker {
+        grid-template-columns: 1fr;
+    }
+
+    .accounting-reports-page .erp-report-grid,
+    .accounting-reports-page .erp-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .accounting-reports-page .erp-actions .erp-btn {
+        width: 100%;
+    }
 }
 
 .html-report-header,
 .html-report-card {
     background: var(--html-report-card);
     border: 1px solid var(--html-report-border);
-    border-radius: 12px;
+    border-radius: 8px;
     box-shadow: 0 2px 8px rgba(15, 23, 42, .05);
     margin-bottom: 14px;
     padding: 16px;
@@ -59,7 +339,7 @@ body {
     align-items: end;
     display: grid;
     gap: 12px;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
 }
 
 .html-report-picker {
@@ -89,20 +369,20 @@ body {
 .html-report-picker-grid {
     display: grid;
     gap: 10px;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .html-report-option {
     background: #fff;
     border: 1px solid var(--html-report-border);
-    border-radius: 12px;
+    border-radius: 8px;
     box-shadow: 0 1px 4px rgba(15, 23, 42, .04);
     color: #0f172a;
     cursor: pointer;
     display: grid;
     gap: 6px;
-    min-height: 110px;
-    padding: 14px;
+    min-height: 96px;
+    padding: 12px;
     position: relative;
     text-align: right;
     transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
@@ -122,6 +402,7 @@ body {
 .html-report-option strong {
     font-size: 15px;
     font-weight: 900;
+    line-height: 1.45;
     padding-left: 22px;
 }
 

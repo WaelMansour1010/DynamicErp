@@ -1,0 +1,188 @@
+﻿@{
+    var hrArea = (ViewBag.SharedHrArea as string) ?? (ViewContext.RouteData.DataTokens["area"] as string) ?? string.Empty;
+    Func<string, string> hrUrl = action => Url.Action(action, "EmployeePayroll", new { area = hrArea });
+    var posDatabaseName = Convert.ToString(ViewBag.SharedHrDatabaseName ?? ViewBag.PosOperationalDatabase ?? "HR");
+    var posBranchName = Convert.ToString(ViewBag.SharedHrBranchName ?? ViewBag.PosBranchName ?? "");
+    var posStoreName = Convert.ToString(ViewBag.SharedHrStoreName ?? ViewBag.PosStoreName ?? "");
+    var posUserName = Convert.ToString(ViewBag.SharedHrUserName ?? ViewBag.PosUserName ?? "");
+    var posEnvironmentLabel = Convert.ToString(ViewBag.SharedHrEnvironmentLabel ?? ViewBag.PosEnvironmentLabel ?? "Shared enterprise HR context");
+    var posDemoOverrideActive = (ViewBag.SharedHrDatabaseOverrideActive is bool && (bool)ViewBag.SharedHrDatabaseOverrideActive) || (ViewBag.PosDatabaseOverrideActive is bool && (bool)ViewBag.PosDatabaseOverrideActive);
+    var hrAreaLabel = string.Equals(hrArea, "Pos", StringComparison.OrdinalIgnoreCase) ? "KISHNY POS" : "MAINERP";
+    var posDemoFlag = posDemoOverrideActive ? "true" : "false";
+}
+
+<main class="ep-page ep-med-product" data-screen="insurance-operational"
+      data-lookups-url="@hrUrl("Lookups")"
+      data-dashboard-url="@hrUrl("MedicalInsuranceOperationalDashboard")"
+      data-search-url="@hrUrl("Search")"
+      data-reports-url="@hrUrl("MedicalInsuranceReports")"
+      data-pos-database="@posDatabaseName"
+      data-pos-branch="@posBranchName"
+      data-pos-store="@posStoreName"
+      data-pos-user="@posUserName"
+      data-pos-demo="@posDemoFlag">
+
+    <header class="ep-med-hero">
+        <div class="ep-med-hero-copy">
+            <div class="ep-med-context-strip @(posDemoOverrideActive ? "demo" : "live")">
+                <span class="ep-med-env-badge @(posDemoOverrideActive ? "demo" : "live")">
+                    @(posDemoOverrideActive ? "DEMO DATABASE" : hrAreaLabel)
+                </span>
+                <strong>@posEnvironmentLabel</strong>
+                <span>DB: @posDatabaseName</span>
+                @if (!string.IsNullOrWhiteSpace(posBranchName))
+                {
+                    <span>Branch: @posBranchName</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(posStoreName))
+                {
+                    <span>Store: @posStoreName</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(posUserName))
+                {
+                    <span>User: @posUserName</span>
+                }
+            </div>
+            <span class="ep-med-kicker">Medical Insurance Operating Platform</span>
+            <h1>منصة التأمين الطبي التشغيلية</h1>
+            <p>تجربة تشغيلية حديثة تعرض حالة التغطية، بطاقة العضوية، الأسرة، التجديدات، المتأخرات، خصم الموظف، تحمل الشركة، والتأثير المحاسبي بشكل واضح وآمن للفروع والإدارة.</p>
+            <div class="ep-med-hero-actions">
+                <button type="button" class="ep-primary" id="epMedRefresh"><i class="fas fa-sync-alt"></i> تحديث المتابعة</button>
+                <button type="button" class="ep-link" id="epMedPrintCard"><i class="fas fa-print"></i> طباعة البطاقة</button>
+                <a class="ep-link" href="@hrUrl("MedicalInsuranceReports")"><i class="fas fa-chart-line"></i> التقارير</a>
+                <a class="ep-link" href="@hrUrl("Employees")"><i class="fas fa-user-friends"></i> بحث الموظفين</a>
+            </div>
+        </div>
+        <aside class="ep-med-finance-card">
+            <span>Financial flow preview</span>
+            <strong id="epMedPayable">0.00</strong>
+            <small>Insurance payable this month</small>
+            <div>
+                <b>Dr</b> Employee deduction / Medical expense
+                <b>Cr</b> Insurance payable
+            </div>
+        </aside>
+    </header>
+
+    <section class="ep-med-kpis" aria-label="Medical insurance indicators">
+        <article class="active"><i class="fas fa-user-shield"></i><span>المؤمن عليهم</span><strong id="epMedActive">0</strong><small>Active + renewal due</small></article>
+        <article><i class="fas fa-user-times"></i><span>غير مؤمن</span><strong id="epMedUninsured">0</strong><small>Needs enrollment review</small></article>
+        <article class="money"><i class="fas fa-wallet"></i><span>خصم الموظفين</span><strong id="epMedEmployeeShare">0.00</strong><small>Monthly deductions</small></article>
+        <article class="money"><i class="fas fa-building"></i><span>تحمل الشركة</span><strong id="epMedCompanyShare">0.00</strong><small>Company contribution</small></article>
+        <article class="warning"><i class="fas fa-calendar-check"></i><span>تجديد قريب</span><strong id="epMedRenewals">0</strong><small>Next 45 days</small></article>
+        <article class="danger"><i class="fas fa-exclamation-circle"></i><span>أقساط متأخرة</span><strong id="epMedOverdue">0</strong><small>Needs follow-up</small></article>
+    </section>
+
+    <section class="ep-med-executive">
+        <article class="ep-med-membership-stage">
+            <div class="ep-med-stage-head">
+                <div>
+                    <span>Premium membership experience</span>
+                    <h2>Employee Medical Insurance Card</h2>
+                </div>
+                <div class="ep-med-card-toggle">
+                    <button type="button" class="active" data-card-mode="full">Full</button>
+                    <button type="button" data-card-mode="wallet">Wallet</button>
+                </div>
+            </div>
+            <div id="epMedMembershipCard" class="ep-med-membership-card">
+                <div class="ep-empty-card">سيظهر كارت التأمين الطبي بعد تحميل أول موظف مؤمن عليه.</div>
+            </div>
+            <div id="epMedDependents" class="ep-med-dependent-strip"></div>
+        </article>
+
+        <article class="ep-med-exec-dashboard">
+            <div class="ep-med-stage-head">
+                <div>
+                    <span>Executive dashboard</span>
+                    <h2>Insurance Portfolio Snapshot</h2>
+                </div>
+                <b class="ep-med-safe-mode">Protected financial preview</b>
+            </div>
+            <div class="ep-med-donut-wrap">
+                <div class="ep-med-donut" id="epMedDonut" style="--active:0;--renewal:0;--expired:0;--suspended:0;">
+                    <strong id="epMedCoveragePercent">0%</strong>
+                    <span>insured</span>
+                </div>
+                <div class="ep-med-donut-legend">
+                    <span><i class="active"></i> Active</span>
+                    <span><i class="renewal"></i> Renewal</span>
+                    <span><i class="expired"></i> Expired</span>
+                    <span><i class="suspended"></i> Suspended</span>
+                </div>
+            </div>
+            <div class="ep-med-bars">
+                <div>
+                    <h3>Top branches by cost</h3>
+                    <div id="epMedBranchCosts"></div>
+                </div>
+                <div>
+                    <h3>Top departments by cost</h3>
+                    <div id="epMedDepartmentCosts"></div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="ep-med-toolbar">
+        <label>بحث سريع<input id="epMedTerm" placeholder="اسم موظف / كود / شركة / خطة" /></label>
+        <label>الفرع<select id="epMedBranch"><option value="">كل الفروع</option></select></label>
+        <label>القسم<select id="epMedDepartment"><option value="">كل الأقسام</option></select></label>
+        <label>الحالة<select id="epMedStatus"><option value="">كل الحالات</option><option>Active</option><option>Renewal Due</option><option>Suspended</option><option>Expired</option></select></label>
+        <button type="button" id="epMedSearch"><i class="fas fa-search"></i> عرض</button>
+    </section>
+
+    <section class="ep-med-workspace">
+        <div class="ep-med-board">
+            <div class="ep-med-section-head">
+                <div>
+                    <span>Employee insurance cards</span>
+                    <h2>متابعة الموظفين والتغطية</h2>
+                </div>
+                <span class="ep-status-badge active">Operational read-only</span>
+            </div>
+            <div class="ep-med-employee-grid" id="epMedEmployees">
+                <div class="ep-empty-card">اضغط تحديث المتابعة لعرض اشتراكات التأمين.</div>
+            </div>
+        </div>
+
+        <aside class="ep-med-side">
+            <section class="ep-med-panel ep-med-alert-center">
+                <div class="ep-med-section-head">
+                    <div>
+                        <span>Alerts center</span>
+                        <h2>Renewals & Risk</h2>
+                    </div>
+                    <span class="ep-status-badge pending-approval">Needs follow-up</span>
+                </div>
+                <div id="epMedAlerts" class="ep-med-alert-list">
+                    <div class="ep-empty-card">ستظهر التنبيهات بعد تحميل بيانات التأمين.</div>
+                </div>
+            </section>
+            <section class="ep-med-panel">
+                <h2>التأثير المالي المبسط</h2>
+                <div id="epMedAccountingPreview" class="ep-med-journal">
+                    <div class="ep-empty-card">سيظهر نموذج القيد بعد تحميل البيانات.</div>
+                </div>
+            </section>
+            <section class="ep-med-panel">
+                <h2>تشغيل عملي للفرع</h2>
+                <ol class="ep-med-timeline">
+                    <li><strong>تحقق</strong><span>ابحث عن الموظف وتأكد من الحالة: نشط، موقوف، منتهي، أو تجديد قريب.</span></li>
+                    <li><strong>راجع الخصم</strong><span>اعرض نصيب الموظف ونصيب الشركة قبل المسير.</span></li>
+                    <li><strong>صعّد للإدارة</strong><span>أي تعديل خطة أو اعتماد يتم من MainErp وليس من POS.</span></li>
+                </ol>
+            </section>
+            <section class="ep-med-panel ep-med-protected">
+                <i class="fas fa-lock"></i>
+                <div>
+                    <strong>POS visibility only</strong>
+                    <span>إدارة الشركات والخطط والاعتمادات والتأثير المحاسبي النهائي تتم من MainErp. هذه الشاشة للتشغيل والمتابعة السريعة فقط.</span>
+                </div>
+            </section>
+        </aside>
+    </section>
+
+    <div class="ep-message" id="epMessage"></div>
+</main>
+

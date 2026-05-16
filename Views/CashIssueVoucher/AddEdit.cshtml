@@ -114,6 +114,7 @@
                                     @if (Model != null)
                                     {
                                         @Html.HiddenFor(model => model.Id)
+                                        @Html.HiddenFor(model => model.BranchId)
                                         @Html.HiddenFor(model => model.IsActive)
                                         @Html.HiddenFor(model => model.IsLinked)
                                         @Html.HiddenFor(model => model.IsPosted)
@@ -2830,6 +2831,7 @@
                             IsPosted: $('#IsPosted').prop('checked'),
                             IsActive: $('#IsActive').val(),
                             IsDeleted: $('#IsDeleted').val(),
+                            BranchId: $('#BranchId').val(),
                             Notes: $('#Notes').val(),
                             Image: $('#Image').val(),
                             CustomerId: $('#CustomerId').val(),
@@ -2906,7 +2908,7 @@
                                     $('#SaveAndPrint').prop('disabled', false);
                                     Swal.fire({
                                         title: '@MyERP.Properties.Resources.NotSaved !',
-                                        text: " ",
+                                        text: r && r.message ? r.message : " ",
                                         icon: 'error',
                                         showCancelButton: false,
                                         confirmButtonText: '@MyERP.Properties.Resources.Ok',
@@ -2915,13 +2917,19 @@
                                 }
                             },
                             error: function (r) {
+                                var errorText = '';
+                                if (r && r.responseJSON && r.responseJSON.message) {
+                                    errorText = r.responseJSON.message;
+                                } else if (r && r.responseText) {
+                                    errorText = r.responseText;
+                                }
                                 $('#preloader, #status').fadeOut();
                                 $('#SaveAndNew').prop('disabled', false);
                                 $('#Save').prop('disabled', false);
                                 $('#SaveAndPrint').prop('disabled', false);
                                 Swal.fire({
                                     title: '@MyERP.Properties.Resources.NotSaved !',
-                                    text: " ",
+                                    text: errorText || " ",
                                     icon: 'error',
                                     showCancelButton: false,
                                     confirmButtonText: '@MyERP.Properties.Resources.Ok',

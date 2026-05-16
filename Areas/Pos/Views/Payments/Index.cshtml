@@ -283,8 +283,36 @@
             var canExecutePayment = page.getAttribute("data-can-execute") === "true";
             var paymentPreviewTimer = null;
             var paymentPreviewValid = false;
+            var paymentSearchRunning = false;
             function byId(id) { return document.getElementById(id); }
             function setMessage(text, error) { message.innerText = text || ""; message.classList.toggle("error", !!error); }
+            function todayText(offsetDays) {
+                var date = new Date();
+                date.setDate(date.getDate() + (offsetDays || 0));
+                return date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2) + "-" + ("0" + date.getDate()).slice(-2);
+            }
+            function initPaymentSearchDefaults() {
+                if (byId("paymentSearchFrom") && !byId("paymentSearchFrom").value) { byId("paymentSearchFrom").value = todayText(0); }
+                if (byId("paymentSearchTo") && !byId("paymentSearchTo").value) { byId("paymentSearchTo").value = todayText(0); }
+            }
+            function validatePaymentSearch() {
+                var term = (byId("paymentSearchText").value || "").trim();
+                var from = byId("paymentSearchFrom").value || "";
+                var to = byId("paymentSearchTo").value || "";
+                if (term && term.length < 3 && !/^[0-9]{3,}$/.test(term)) {
+                    return "اكتب 3 أحرف على الأقل للبحث العام.";
+                }
+                if (!from || !to) {
+                    return term.length >= 3 ? "" : "حدد فترة البحث أو اكتب بحثاً محدداً من 3 أحرف على الأقل.";
+                }
+                return "";
+            }
+            function setSearchButtonBusy(value) {
+                var button = byId("searchPaymentBtn");
+                if (!button) { return; }
+                button.disabled = !!value;
+                button.innerText = value ? "جاري البحث..." : "بحث";
+            }
             function escapeHtml(value) {
                 return String(value || "").replace(/[&<>"']/g, function (ch) {
                     return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch];
@@ -449,7 +477,7 @@
                 var debit = 0, credit = 0;
                 lines.forEach(function (line) {
                     debit += parseFloat(line.Debit || 0); credit += parseFloat(line.Credit || 0);
-                    html += "<tr><td>" + (line.AccountCode || "") + "</td><td>" + (line.AccountName || "") + "</td><td>" + (line.Description || "") + "</td><td>" + (line.Debit || 0).toFixed(2) + "</td><td>" + (line.Credit || 0).toFixed(2) + "</td></tr>";
+                    html += "<tr><td>" + escapeHtml(line.AccountCode || "") + "</td><td>" + escapeHtml(line.AccountName || "") + "</td><td>" + escapeHtml(line.Description || "") + "</td><td>" + escapeHtml((line.Debit || 0).toFixed(2)) + "</td><td>" + escapeHtml((line.Credit || 0).toFixed(2)) + "</td></tr>";
                 });
                 html += "<tr class='journal-total-row'><td colspan='3'>الإجمالي</td><td>" + debit.toFixed(2) + "</td><td>" + credit.toFixed(2) + "</td></tr></tbody></table>";
                 target.innerHTML = html;
@@ -512,7 +540,8 @@
                     }
                 });
             }
-            function loadEmployeeCustody() {
+            function loadEmployeeCustody(options) {
+                options = options || {};
                 var warning = byId("paymentEmpWarning");
                 if (warning) { warning.innerText = ""; warning.classList.remove("error"); }
                 var employeeId = parseInt(byId("paymentEmpId").value, 10) || 0;
@@ -521,14 +550,23 @@
                     schedulePaymentPreview();
                     return;
                 }
+                if (options.useLoadedAccount && byId("paymentEmpAccountCode").value) {
+                    schedulePaymentPreview();
+                    return;
+                }
                 var url = page.getAttribute("data-employee-custody-url")
                     + "?branchId=" + encodeURIComponent(byId("paymentBranchId").value || "")
                     + "&employeeId=" + encodeURIComponent(employeeId);
                 getJson(url, function (status, data) {
                     var account = data && data.success ? data.account : null;
-                    byId("paymentEmpAccountCode").value = account && account.CustodyAccountCode ? account.CustodyAccountCode : "";
+                    if (account && account.CustodyAccountCode) {
+                        byId("paymentEmpAccountCode").value = account.CustodyAccountCode;
+                    }
                     if (warning && account && account.HasWarning) {
                         warning.innerText = account.WarningMessage || "لا يوجد حساب عهدة لهذا الموظف";
+                        warning.classList.add("error");
+                    } else if (warning && status >= 400) {
+                        warning.innerText = data && data.message ? data.message : "تعذر تحميل حساب عهدة الموظف";
                         warning.classList.add("error");
                     }
                     schedulePaymentPreview();
@@ -606,7 +644,7 @@
                 }
                 var html = "<table class='pos-table'><thead><tr><th>رقم الحركة</th><th>رقم السند</th><th>التاريخ</th><th>الفرع</th><th>النوع</th><th>الاسم</th><th>القيمة</th><th></th></tr></thead><tbody>";
                 rows.forEach(function (row) {
-                    html += "<tr><td>" + (row.NoteId || "") + "</td><td>" + (row.NoteSerial1 || row.NoteSerial || "") + "</td><td>" + displayDateText(row.NoteDate) + "</td><td>" + (row.BranchName || "") + "</td><td>" + (row.CashingTypeName || "") + "</td><td>" + (row.NameText || "") + "</td><td>" + (parseFloat(row.Value || 0)).toFixed(2) + "</td><td><button type='button' class='secondary-action load-payment-row' data-note-id='" + row.NoteId + "'>فتح</button></td></tr>";
+                    html += "<tr><td>" + escapeHtml(row.NoteId || "") + "</td><td>" + escapeHtml(row.NoteSerial1 || row.NoteSerial || "") + "</td><td>" + escapeHtml(displayDateText(row.NoteDate)) + "</td><td>" + escapeHtml(row.BranchName || "") + "</td><td>" + escapeHtml(row.CashingTypeName || "") + "</td><td>" + escapeHtml(row.NameText || "") + "</td><td>" + escapeHtml((parseFloat(row.Value || 0)).toFixed(2)) + "</td><td><button type='button' class='secondary-action load-payment-row' data-note-id='" + escapeHtml(row.NoteId || "") + "'>فتح</button></td></tr>";
                 });
                 html += "</tbody></table>";
                 target.innerHTML = html;
@@ -686,7 +724,7 @@
                 setMessage(canEdit ? "تم تحميل الحركة للتعديل" : (editMessage || "ليس لديك صلاحية تعديل هذه الحركة"), !canEdit);
                 applyPaymentMethodRules();
                 loadAccountBalance();
-                loadEmployeeCustody();
+                loadEmployeeCustody({ useLoadedAccount: true });
                 validateCurrentRelationships();
                 showEntry();
             }
@@ -714,8 +752,18 @@
                     });
                 }
                 if (event.target.id === "searchPaymentBtn") {
+                    var validationMessage = validatePaymentSearch();
+                    if (validationMessage) {
+                        setMessage(validationMessage, true);
+                        return;
+                    }
+                    if (paymentSearchRunning) { return; }
+                    paymentSearchRunning = true;
+                    setSearchButtonBusy(true);
                     setMessage("جاري البحث...");
                     post(page.getAttribute("data-search-url"), searchPayload(), function (status, data) {
+                        paymentSearchRunning = false;
+                        setSearchButtonBusy(false);
                         if (data && data.success) { renderSearch(data.rows || []); setMessage("تم البحث", false); }
                         else { setMessage((data && data.message) || "تعذر البحث", true); }
                     });
@@ -764,6 +812,7 @@
                 element.addEventListener("change", schedulePaymentPreview);
             });
             document.querySelectorAll(".smart-lookup").forEach(setupLookup);
+            initPaymentSearchDefaults();
             applyPaymentMethodRules();
             updateSaveButton();
         })();

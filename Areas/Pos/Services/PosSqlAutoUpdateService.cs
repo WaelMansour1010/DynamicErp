@@ -51,7 +51,7 @@ namespace MyERP.Areas.Pos.Services
             var status = GetStatus();
             return new PosSqlUpdateRunResult
             {
-                Success = status.HashMismatchCount == 0 && status.IsPosDatabase,
+                Success = status.HashMismatchCount == 0 && status.IsPosDatabase && status.CanApplyUpdates,
                 IsDryRun = true,
                 AppliedCount = 0,
                 SkippedCount = status.AppliedCount,
@@ -74,7 +74,24 @@ namespace MyERP.Areas.Pos.Services
             using (var connection = new SqlConnection(_connectionString))
             {
                 connection.Open();
-                EnsureHistoryTables(connection);
+                if (!CanPrepareHistoryTables(connection))
+                {
+                    return Fail(BuildDdlPermissionMessage(connection));
+                }
+
+                try
+                {
+                    EnsureHistoryTables(connection);
+                }
+                catch (SqlException ex)
+                {
+                    if (IsPermissionDenied(ex))
+                    {
+                        return Fail(BuildDdlPermissionMessage(connection));
+                    }
+
+                    throw;
+                }
 
                 var status = BuildStatus(connection, manifest, true);
                 if (!status.IsPosDatabase)
@@ -235,6 +252,7 @@ ORDER BY HistoryId;", connection))
                 ServerName = Convert.ToString(ExecuteScalar(connection, "SELECT CONVERT(NVARCHAR(128), @@SERVERNAME)"), CultureInfo.InvariantCulture),
                 IsPosDatabase = TestPosDatabase(connection, manifest)
             };
+            ApplyPermissionStatus(connection, result);
 
             var scriptRoot = ResolveScriptRoot(manifest);
             foreach (var entry in manifest.Scripts.Where(s => s.AutoApply).OrderBy(s => s.Order).ThenBy(s => s.File, StringComparer.OrdinalIgnoreCase))
@@ -300,6 +318,11 @@ ORDER BY HistoryId;", connection))
             if (!result.IsPosDatabase)
             {
                 result.StatusText = "قاعدة غير مخصصة لـ POS";
+                result.StatusCssClass = "blocked";
+            }
+            else if (!result.CanApplyUpdates)
+            {
+                result.StatusText = "تحتاج صلاحية تحديث قاعدة البيانات";
                 result.StatusCssClass = "blocked";
             }
             else if (result.HashMismatchCount > 0)
@@ -449,6 +472,74 @@ BEGIN
         ON dbo.POS_SqlUpdateHistory (ScriptName, ScriptHash, Success)
         WHERE Success = 1;
 END;");
+        }
+
+        private static void ApplyPermissionStatus(SqlConnection connection, PosSqlUpdateStatusResult result)
+        {
+            var historyRunExists = TableExists(connection, "dbo.POS_SqlUpdateRun");
+            var historyExists = TableExists(connection, "dbo.POS_SqlUpdateHistory");
+            var canCreateHistory = HasPermission(connection, null, "DATABASE", "CREATE TABLE")
+                && HasPermission(connection, "dbo", "SCHEMA", "ALTER");
+            var canRunSchemaScripts = canCreateHistory
+                && HasPermission(connection, null, "DATABASE", "CREATE PROCEDURE");
+
+            result.RequiresDdlPermission = !historyRunExists || !historyExists || !canRunSchemaScripts;
+            result.CanApplyUpdates = historyRunExists && historyExists && canRunSchemaScripts;
+
+            if (!result.CanApplyUpdates)
+            {
+                result.PermissionMessage = BuildDdlPermissionMessage(connection);
+            }
+        }
+
+        private static bool CanPrepareHistoryTables(SqlConnection connection)
+        {
+            var historyRunExists = TableExists(connection, "dbo.POS_SqlUpdateRun");
+            var historyExists = TableExists(connection, "dbo.POS_SqlUpdateHistory");
+            if (historyRunExists && historyExists)
+            {
+                return true;
+            }
+
+            return HasPermission(connection, null, "DATABASE", "CREATE TABLE")
+                && HasPermission(connection, "dbo", "SCHEMA", "ALTER");
+        }
+
+        private static bool HasPermission(SqlConnection connection, string securable, string securableClass, string permission)
+        {
+            using (var command = new SqlCommand("SELECT HAS_PERMS_BY_NAME(@Securable, @SecurableClass, @Permission)", connection))
+            {
+                command.Parameters.Add("@Securable", SqlDbType.NVarChar, 256).Value = string.IsNullOrWhiteSpace(securable) ? (object)DBNull.Value : securable;
+                command.Parameters.Add("@SecurableClass", SqlDbType.NVarChar, 60).Value = securableClass;
+                command.Parameters.Add("@Permission", SqlDbType.NVarChar, 128).Value = permission;
+                var value = command.ExecuteScalar();
+                return value != null && value != DBNull.Value && Convert.ToInt32(value, CultureInfo.InvariantCulture) == 1;
+            }
+        }
+
+        private static string BuildDdlPermissionMessage(SqlConnection connection)
+        {
+            return "لوجين التطبيق الحالي على قاعدة " + connection.Database + " لا يملك صلاحية تحديث هيكل قاعدة البيانات. "
+                + "شاشة التحديث تحتاج صلاحيات DDL مثل CREATE TABLE وALTER على dbo وCREATE PROCEDURE، أو تشغيل سكريبتات Areas/Pos/Sql يدوياً من SSMS بصلاحية db_owner. "
+                + "لا تمنح db_owner للوجين التشغيل الدائم إلا أثناء نافذة تحديث مراقبة ثم أعده للصلاحيات المحدودة.";
+        }
+
+        private static bool IsPermissionDenied(SqlException ex)
+        {
+            if (ex == null)
+            {
+                return false;
+            }
+
+            foreach (SqlError error in ex.Errors)
+            {
+                if (error.Number == 229 || error.Number == 230 || error.Number == 262 || error.Number == 2760 || error.Number == 15151)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private int CreateRun(SqlConnection connection, PosSqlUpdateRunRequest request, string mode, string status, int totalScripts, int skippedCount, int warningCount)
@@ -790,6 +881,11 @@ ORDER BY RunId DESC;";
             if (status.HashMismatchCount > 0)
             {
                 return "يوجد اختلاف Hash في سكريبتات مطبقة سابقاً. يجب المراجعة قبل التنفيذ.";
+            }
+
+            if (!status.CanApplyUpdates)
+            {
+                return status.PermissionMessage;
             }
 
             return status.PendingCount == 0

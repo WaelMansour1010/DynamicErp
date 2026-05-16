@@ -21,6 +21,14 @@
     var missingAccounts = 0;
     var marginRows = 0;
     var openingBalanceType = T("NoRows");
+    var daysToDue = 0;
+    var lcWorkflowStep = 1;
+    var executionPercent = 0m;
+    var expensePercent = 0m;
+    var paidPercent = 0m;
+    var localValue = 0m;
+    var localOpenExpense = 0m;
+    var voucherDifference = 0m;
 
     if (d != null)
     {
@@ -50,6 +58,24 @@
         openingBalanceType = !d.OpenBalanceType.HasValue
             ? T("NoRows")
             : d.OpenBalanceType.Value == 0 ? T("Debit") : d.OpenBalanceType.Value == 1 ? T("Credit") : T("NoRows");
+        daysToDue = d.ToDate.HasValue ? (int)(d.ToDate.Value.Date - DateTime.Today).TotalDays : 0;
+        lcWorkflowStep = d.Locked == true || d.CloseDate.HasValue ? 6
+            : d.LinkedNotes.Count > 2 ? 5
+            : marginRows > 0 ? 4
+            : d.NoteID.HasValue || d.NoteID2.HasValue ? 2
+            : 1;
+        executionPercent = d.Value.GetValueOrDefault() > 0
+            ? Math.Min(100m, Math.Round((Math.Abs(totalDebit) / d.Value.GetValueOrDefault()) * 100m, 1))
+            : 0m;
+        expensePercent = d.Value.GetValueOrDefault() > 0
+            ? Math.Round((d.OpenValue.GetValueOrDefault() / d.Value.GetValueOrDefault()) * 100m, 1)
+            : 0m;
+        paidPercent = d.Value.GetValueOrDefault() > 0
+            ? Math.Min(100m, Math.Round((Math.Abs(totalCredit) / d.Value.GetValueOrDefault()) * 100m, 1))
+            : 0m;
+        localValue = d.Value.GetValueOrDefault() * Convert.ToDecimal(d.CurrencyRate.GetValueOrDefault(1d));
+        localOpenExpense = d.OpenValue.GetValueOrDefault() * Convert.ToDecimal(d.CurrencyRate.GetValueOrDefault(1d));
+        voucherDifference = totalDebit - totalCredit;
     }
 }
 
@@ -77,6 +103,12 @@
             </label>
             <button type="submit">@T("Search")</button>
         }
+
+        <div class="main-erp-operator-hints">
+            <span><b>Ctrl + K</b>بحث الاعتماد</span>
+            <span><b>1-7</b>تنقل بين تبويبات الاعتماد</span>
+            <span><b>Confirm</b>أي ترحيل يتطلب صلاحية وتأكيد</span>
+        </div>
 
         <div class="main-erp-result-rail">
             @if (Model.Items.Count == 0)
@@ -149,8 +181,11 @@
                         <a href="@Url.Action("New", "LC", new { area = "MainErp" })">@T("New")</a>
                     }
                     <a href="@Url.Action("Open", "LC", new { area = "MainErp", id = d.TblLCID })">@T("Open")</a>
-                    <a href="@Url.Action("Edit", "LC", new { area = "MainErp", id = d.TblLCID })">تعديل / حفظ</a>
-                    @if (canPostLc)
+                    @if (canEditLc)
+                    {
+                        <a href="@Url.Action("Edit", "LC", new { area = "MainErp", id = d.TblLCID })">تعديل / حفظ</a>
+                    }
+                    @if (canPostHeaderLc)
                     {
                         using (Html.BeginForm("CreateVoucher", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { style = "display:inline" }))
                         {
@@ -172,18 +207,42 @@
                             @Html.AntiForgeryToken()
                             <button type="submit" class="lc-post-action" data-confirm="سيتم ترحيل الرصيد الافتتاحي على Notes1 و DOUBLE_ENTREY_VOUCHERS1. هل تريد المتابعة؟">ترحيل الرصيد الافتتاحي</button>
                         }
+                    }
+                    @if (canPostGridsLc)
+                    {
                         using (Html.BeginForm("CreateGridVouchers", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { style = "display:inline" }))
                         {
                             @Html.AntiForgeryToken()
                             <button type="submit" class="lc-post-action" data-confirm="سيتم إنشاء قيود جريدات الاعتماد الناقصة فقط بدون حذف أو إعادة بناء القيود الموجودة. هل تريد المتابعة؟">إنشاء قيود الجريدات</button>
                         }
                     }
-                    else
+                    @if (!canPostLc)
                     {
                         <button type="button" class="lc-disabled-action">قيود الاعتماد غير متاحة لصلاحيتك</button>
                     }
                 </div>
             </header>
+
+            <section class="erp-workflow-strip lc-workflow-strip" aria-label="LC workflow">
+                @{
+                    var workflow = new[] { "Draft", "Opened", "Documents Received", "Shipping", "Clearance", "Closed" };
+                    for (var i = 0; i < workflow.Length; i++)
+                    {
+                        var index = i + 1;
+                        <article class="@(index <= lcWorkflowStep ? "is-done" : "") @(index == lcWorkflowStep ? "is-current" : "")">
+                            <span>@index</span>
+                            <strong>@workflow[i]</strong>
+                        </article>
+                    }
+                }
+            </section>
+
+            <section class="main-erp-ops-strip" aria-label="LC operational status">
+                <article class="@(d.Locked == true || d.CloseDate.HasValue ? "is-safe" : "is-current")"><strong>@(d.Locked == true || d.CloseDate.HasValue ? T("Closed") : T("Active"))</strong><span>حالة الاعتماد واضحة قبل أي إجراء مالي.</span></article>
+                <article class="@(missingAccounts > 0 ? "is-warning" : "is-safe")"><strong>@missingAccounts @T("MissingAccounts")</strong><span>راجع الحسابات الناقصة قبل أي تشغيل ترحيل.</span></article>
+                <article><strong>@d.LinkedNotes.Count @T("Note")</strong><span>الأثر المحاسبي الحالي ظاهر للقراءة والمراجعة.</span></article>
+                <article class="is-protected"><strong>إجراءات محمية</strong><span>إعادة البناء أو الترحيل لا تتم إلا بصلاحية وتأكيد صريح.</span></article>
+            </section>
 
             <section class="main-erp-summary-grid main-erp-sticky-summary">
                 <article><span>@T("Value")</span><strong>@String.Format("{0:n2}", d.Value)</strong><small>@d.CurrencyName</small></article>
@@ -191,10 +250,50 @@
                 <article><span>@T("OpeningBalance")</span><strong>@String.Format("{0:n2}", d.OpenBalance)</strong><small>@openingBalanceType</small></article>
                 <article class="@(missingAccounts > 0 ? "is-warning" : "is-ok")"><span>@T("AccountHealth")</span><strong>@missingAccounts</strong><small>@T("MissingAccounts")</small></article>
                 <article><span>@T("AccountingImpact")</span><strong>@d.VoucherLines.Count</strong><small>@T("GeneratedAccountingRows")</small></article>
-                <article class="@((totalDebit - totalCredit) == 0 ? "is-ok" : "is-warning")"><span>@T("Difference")</span><strong>@String.Format("{0:n2}", totalDebit - totalCredit)</strong><small>@((totalDebit - totalCredit) == 0 ? T("Balanced") : T("Unbalanced"))</small></article>
+                <article class="@(Math.Abs(voucherDifference) < .01m ? "is-ok" : "is-warning")"><span>@T("Difference")</span><strong>@String.Format("{0:n2}", voucherDifference)</strong><small>@(Math.Abs(voucherDifference) < .01m ? T("Balanced") : T("Unbalanced"))</small></article>
             </section>
 
+            <section class="erp-insight-layout">
+                <div class="erp-insight-main">
+                    <article class="erp-finance-meter">
+                        <span>نسبة التنفيذ</span>
+                        <strong>@executionPercent.ToString("N1")%</strong>
+                        <div class="erp-meter"><i style="width:@((int)Math.Min(100m, executionPercent))%"></i></div>
+                        <small>مقارنة حركة القيود بقيمة الاعتماد بدون تغيير أي معادلة حفظ.</small>
+                    </article>
+                    <article class="erp-finance-meter">
+                        <span>نسبة المصاريف</span>
+                        <strong>@expensePercent.ToString("N1")%</strong>
+                        <div class="erp-meter @(expensePercent > 10m ? "is-warning" : "")"><i style="width:@((int)Math.Min(100m, expensePercent))%"></i></div>
+                        <small>@(expensePercent > 10m ? "تنبيه: المصروفات مرتفعة نسبيًا" : "ضمن النطاق الطبيعي")</small>
+                    </article>
+                    <article class="erp-finance-meter">
+                        <span>تغطية المدفوع / الدائن</span>
+                        <strong>@paidPercent.ToString("N1")%</strong>
+                        <div class="erp-meter is-success"><i style="width:@((int)Math.Min(100m, paidPercent))%"></i></div>
+                        <small>قراءة من القيود المرتبطة الحالية.</small>
+                    </article>
+                </div>
+                <aside class="erp-side-summary">
+                    <h4>Smart Financial Summary</h4>
+                    <dl>
+                        <dt>إجمالي قيمة الاعتماد</dt><dd>@String.Format("{0:n2}", d.Value)</dd>
+                        <dt>القيمة بالعملة المحلية</dt><dd>@localValue.ToString("N2")</dd>
+                        <dt>سعر الصرف</dt><dd>@String.Format("{0:n4}", d.CurrencyRate.GetValueOrDefault(1d))</dd>
+                        <dt>مصاريف الفتح</dt><dd>@String.Format("{0:n2}", d.OpenValue)</dd>
+                        <dt>مصاريف الفتح المحلية</dt><dd>@localOpenExpense.ToString("N2")</dd>
+                        <dt>إجمالي مدين</dt><dd>@totalDebit.ToString("N2")</dd>
+                        <dt>إجمالي دائن</dt><dd>@totalCredit.ToString("N2")</dd>
+                        <dt>الأيام حتى الاستحقاق</dt><dd class="@(daysToDue <= 7 && !d.CloseDate.HasValue ? "is-danger" : "")">@daysToDue</dd>
+                    </dl>
+                </aside>
+            </section>
+
+            if (canRebuildLc || canDeleteLc)
+            {
             <section class="lc-control-zone">
+                @if (canRebuildLc)
+                {
                 <article class="lc-control-card is-rebuild">
                     <div>
                         <span>إعادة بناء القيود</span>
@@ -208,6 +307,9 @@
                         <button type="submit" class="lc-danger-action" data-confirm="هذه العملية ستحذف وتعيد إنشاء قيود الاعتماد الأساسية. استخدمها فقط على قاعدة اختبار أو بعد مراجعة Audit.">إعادة بناء القيود</button>
                     }
                 </article>
+                }
+                @if (canRebuildLc)
+                {
                 <article class="lc-control-card is-rebuild">
                     <div>
                         <span>إعادة بناء قيود الجريدات</span>
@@ -221,6 +323,9 @@
                         <button type="submit" class="lc-danger-action" data-confirm="سيتم حذف وإعادة إنشاء قيود الجريدات فقط، بدون لمس قيود الهيدر الأساسية. هل تريد المتابعة؟">إعادة بناء قيود الجريدات</button>
                     }
                 </article>
+                }
+                @if (canDeleteLc)
+                {
                 <article class="lc-control-card is-delete">
                     <div>
                         <span>حذف الاعتماد</span>
@@ -234,7 +339,9 @@
                         <button type="submit" class="lc-danger-action" data-confirm="هذه العملية ستحذف الاعتماد والقيود والجريدات المرتبطة به نهائيًا من قاعدة الاختبار.">حذف الاعتماد</button>
                     }
                 </article>
+                }
             </section>
+            }
 
             <div class="main-erp-tab-shell" data-main-erp-tabs>
                 <nav class="main-erp-tab-rail">
@@ -242,6 +349,7 @@
                     <button type="button" data-tab-target="lc-accounts">@T("LcAccounts")</button>
                     <button type="button" data-tab-target="lc-accounting">@T("AccountingTimeline")</button>
                     <button type="button" data-tab-target="lc-margin">@T("MarginPayments")</button>
+                    <button type="button" data-tab-target="lc-shipping">الشحن والمستندات</button>
                     <button type="button" data-tab-target="lc-opening">@T("OpeningBalance")</button>
                     <button type="button" data-tab-target="lc-history">@T("OperationHistory")</button>
                     <button type="button" data-tab-target="lc-reports">@T("ReportsAndAttachments")</button>
@@ -321,7 +429,7 @@
                                     <summary>
                                         <span>@note.SourceTable</span>
                                         <strong>@note.NoteSerial</strong>
-                                        <b class="@((noteDebit - noteCredit) == 0 ? "is-ok" : "is-warning")">@((noteDebit - noteCredit) == 0 ? T("Balanced") : T("Unbalanced"))</b>
+                                        <b class="@(Math.Abs(noteDebit - noteCredit) < .01m ? "is-ok" : "is-warning")">@(Math.Abs(noteDebit - noteCredit) < .01m ? T("Balanced") : T("Unbalanced"))</b>
                                         <a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = note.NoteID })">@T("OpenVoucher")</a>
                                     </summary>
                                     <div class="main-erp-voucher-body">
@@ -432,6 +540,25 @@
                                 </div>
                             </article>
                         }
+                    </div>
+                </section>
+
+                <section id="lc-shipping" class="main-erp-tab-pane" hidden>
+                    <div class="main-erp-section-grid">
+                        <article class="main-erp-premium-card">
+                            <h4>الشحن والاستحقاق</h4>
+                            <dl class="main-erp-rich-details">
+                                <dt>@T("FromDate")</dt><dd>@String.Format("{0:yyyy-MM-dd}", d.FromDate)</dd>
+                                <dt>@T("ToDate")</dt><dd>@String.Format("{0:yyyy-MM-dd}", d.ToDate)</dd>
+                                <dt>آخر شحنة</dt><dd>@String.Format("{0:yyyy-MM-dd}", d.LastParcilDate)</dd>
+                                <dt>تاريخ الشيك</dt><dd>@String.Format("{0:yyyy-MM-dd}", d.ChequeDueDate)</dd>
+                                <dt>رقم الشيك</dt><dd>@d.ChequeNumber</dd>
+                            </dl>
+                        </article>
+                        <article class="main-erp-premium-card">
+                            <h4>المرفقات والمستندات</h4>
+                            <p class="main-erp-notes-box">تم تثبيت مكان واضح للمستندات التشغيلية. الرفع المباشر للاعتمادات يحتاج اعتماد سياسة المرفقات، لذلك تعرض الشاشة حاليًا التقارير والقيود وسجل العمليات بدون إنشاء مرفقات مالية ضمنية.</p>
+                        </article>
                     </div>
                 </section>
 
@@ -575,5 +702,24 @@
                 }
             });
         }
+
+        document.addEventListener("keydown", function (event) {
+            if ((event.ctrlKey || event.metaKey) && String(event.key).toLowerCase() === "k") {
+                var search = document.querySelector("#lcSearchForm input[name='searchText']");
+                if (search) {
+                    event.preventDefault();
+                    search.focus();
+                    search.select();
+                }
+            }
+            var index = parseInt(event.key, 10);
+            if (buttons && !event.ctrlKey && !event.altKey && !event.metaKey && index >= 1 && index <= buttons.length) {
+                if (/input|select|textarea/i.test((event.target || {}).tagName || "")) {
+                    return;
+                }
+                event.preventDefault();
+                buttons[index - 1].click();
+            }
+        });
     })();
 </script>

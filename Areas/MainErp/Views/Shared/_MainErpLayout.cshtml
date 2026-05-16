@@ -10,6 +10,7 @@
     var mainErpContext = Session["MainErp.UserContext"] as MyERP.Areas.MainErp.Models.Security.MainErpUserContext;
     var isAdmin = mainErpContext != null && mainErpContext.IsAdmin;
     var returnUrl = Request.RawUrl;
+    var isPosHosted = MyERP.Areas.MainErp.Infrastructure.MainErpHostContext.IsPosHosted(Request, Session);
 }
 <!DOCTYPE html>
 <html lang="@culture" dir="@direction">
@@ -22,6 +23,18 @@
     <link href="@Url.Content("~/Areas/MainErp/Content/enterprise-ui.css?v=20260509-enterprise-ui")" rel="stylesheet" />
     <script src="@Url.Content("~/assets/libs/chart-js/Chart.bundle.min.js")"></script>
 </head>
+@if (isPosHosted)
+{
+<body class="main-erp-body @directionClass main-erp-embedded-host pos-hosted-enterprise-content">
+    <main class="main-erp-page-host main-erp-embedded-page-host" dir="@direction" data-host="pos">
+        @RenderBody()
+    </main>
+    <script src="@Url.Content("~/Areas/MainErp/Scripts/enterprise-ui.js?v=20260509-enterprise-ui")"></script>
+    @RenderSection("scripts", required: false)
+</body>
+}
+else
+{
 <body class="main-erp-body @directionClass">
     <div class="pos-main-shell main-erp-app-shell" dir="@direction"
          data-is-admin="@(isAdmin ? "true" : "false")"
@@ -111,4 +124,5 @@
     <script src="@Url.Content("~/Areas/MainErp/Scripts/enterprise-ui.js?v=20260509-enterprise-ui")"></script>
     @RenderSection("scripts", required: false)
 </body>
+}
 </html>

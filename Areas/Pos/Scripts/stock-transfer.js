@@ -860,6 +860,31 @@
             searchBody.innerHTML = "<tr><td colspan=\"7\" class=\"empty-index-row\">" + escapeHtml(messageText) + "</td></tr>";
         }
 
+        var searchRunning = false;
+        function setSearchBusy(value) {
+            var button = byId("stockSearchBtn");
+            if (!button) { return; }
+            button.disabled = !!value;
+            button.innerText = value ? "جاري البحث..." : "بحث";
+        }
+
+        function validateSearch() {
+            var voucher = (byId("stockSearchVoucher").value || "").trim();
+            var itemTerm = (byId("stockSearchItem").value || "").trim();
+            var fromDate = byId("stockSearchFrom").value || "";
+            var toDate = byId("stockSearchTo").value || "";
+            if (voucher && voucher.length < 3 && !/^[0-9]{3,}$/.test(voucher)) {
+                return "اكتب 3 أحرف على الأقل في رقم السند.";
+            }
+            if (itemTerm && itemTerm.length < 3 && !/^[0-9]{3,}$/.test(itemTerm)) {
+                return "اكتب 3 أحرف على الأقل في بحث الصنف أو السيريال.";
+            }
+            if (!fromDate || !toDate) {
+                return (voucher.length >= 3 || itemTerm.length >= 3) ? "" : "حدد فترة البحث أو اكتب بحثاً محدداً من 3 أحرف على الأقل.";
+            }
+            return "";
+        }
+
         function renderSearchRows(items) {
             if (!items || !items.length) {
                 emptyRow("لا توجد سندات مطابقة للفلاتر.");
@@ -880,6 +905,14 @@
         }
 
         function search() {
+            var validationMessage = validateSearch();
+            if (validationMessage) {
+                emptyRow(validationMessage);
+                return;
+            }
+            if (searchRunning) { return; }
+            searchRunning = true;
+            setSearchBusy(true);
             emptyRow("جاري البحث...");
             fetch(getUrl("data-search-url"), {
                 method: "POST",
@@ -902,7 +935,11 @@
                     }
                     renderSearchRows(result.data.rows || []);
                 })
-                .catch(function (error) { emptyRow(error.message); });
+                .catch(function (error) { emptyRow(error.message); })
+                .then(function () {
+                    searchRunning = false;
+                    setSearchBusy(false);
+                });
         }
 
         function loadTransfer(sourceTransactionId) {

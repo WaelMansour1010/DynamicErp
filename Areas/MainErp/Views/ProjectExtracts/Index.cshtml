@@ -4,6 +4,8 @@
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
     Func<string, string> T = MainErpLocalizationService.T;
     ViewBag.Title = T("ProjectExtracts");
+    var canAddProjectExtracts = ViewBag.CanAddProjectExtracts == true;
+    var canPrintProjectExtracts = ViewBag.CanPrintProjectExtracts == true;
     var focus = Model.Items.Count > 0 ? Model.Items[0] : null;
     decimal totalExtracts = 0m;
     double totalVat = 0d;
@@ -36,6 +38,12 @@
             <label><span>@T("Branch")</span><input name="branchId" value="@Model.BranchId" placeholder="@T("Branch")" /></label>
             <button type="submit">@T("Search")</button>
         }
+
+        <div class="main-erp-operator-hints">
+            <span><b>Ctrl + K</b>بحث سريع</span>
+            <span><b>1-6</b>تنقل بين تبويبات المستخلص</span>
+            <span><b>قراءة آمنة</b>الترحيل محمي</span>
+        </div>
 
         <div class="main-erp-result-rail">
             @if (Model.Items.Count == 0)
@@ -81,9 +89,11 @@
                 </div>
                 <div class="main-erp-header-actions">
                     <span class="main-erp-status-pill is-active">@T("ReadOnly")</span>
-                    <button type="button" class="is-disabled-action">@T("Save")</button>
-                    <button type="button" class="is-disabled-action">@T("Voucher")</button>
-                    <button type="button" class="is-disabled-action">@T("Reports")</button>
+                    <a href="@Url.Action("Details", "ProjectExtracts", new { area = "MainErp", id = focus.Id })">@T("Details")</a>
+                    @if (canPrintProjectExtracts)
+                    {
+                        <a href="@Url.Action("Report", "ProjectExtracts", new { area = "MainErp", id = focus.Id })">@T("Reports")</a>
+                    }
                 </div>
             </header>
 
@@ -94,6 +104,13 @@
                 <article><span>@T("NetPayable")</span><strong>@String.Format("{0:n2}", focus.NetValue)</strong><small>@T("FinancialHealth")</small></article>
                 <article><span>@T("Totals")</span><strong>@Model.TotalCount</strong><small>@T("ProjectExtracts")</small></article>
                 <article class="is-ok"><span>@T("WorkflowReadOnly")</span><strong>@T("Balanced")</strong><small>@T("ActualPostingDisabled")</small></article>
+            </section>
+
+            <section class="main-erp-ops-strip" aria-label="Project extract operational status">
+                <article class="is-current"><strong>Draft / Review</strong><span>راجع بيانات المستخلص والمشروع قبل أي اعتماد.</span></article>
+                <article><strong>Financial review</strong><span>الضريبة، الخصومات، وصافي المستحق ظاهرة أعلى الشاشة.</span></article>
+                <article><strong>Approval clarity</strong><span>أي ترحيل فعلي يظل محميًا حتى اكتمال مراجعة الصلاحيات والقيد.</span></article>
+                <article class="is-safe"><strong>قراءة آمنة</strong><span>هذه الشاشة لا تعيد بناء قيود أو تعدل أثرًا محاسبيًا أثناء الاستعراض.</span></article>
             </section>
 
             <div class="main-erp-progress-band">
@@ -155,10 +172,10 @@
 
                 <section id="pe-deductions" class="main-erp-tab-pane" hidden>
                     <div class="main-erp-finance-stack">
-                        <article><span>@T("Retention")</span><strong>@String.Format("{0:n2}", focus.Total.GetValueOrDefault() * .05m)</strong></article>
-                        <article><span>@T("AdvanceDeduction")</span><strong>@String.Format("{0:n2}", focus.Total.GetValueOrDefault() * .10m)</strong></article>
+                        <article><span>@T("CurrentExtractValue")</span><strong>@String.Format("{0:n2}", focus.Total)</strong></article>
                         <article><span>@T("Vat")</span><strong>@String.Format("{0:n2}", focus.VatValue)</strong></article>
                         <article><span>@T("NetPayable")</span><strong>@String.Format("{0:n2}", focus.NetValue)</strong></article>
+                        <article><span>@T("DeductionsAndRetentions")</span><strong>@T("Details")</strong><a href="@Url.Action("Details", "ProjectExtracts", new { area = "MainErp", id = focus.Id })">@T("Open")</a></article>
                     </div>
                 </section>
 
@@ -237,5 +254,24 @@
                 alert("@T("DisabledReadOnlyMessage")");
             });
         }
+
+        document.addEventListener("keydown", function (event) {
+            if ((event.ctrlKey || event.metaKey) && String(event.key).toLowerCase() === "k") {
+                var search = document.querySelector("#projectExtractSearchForm input[name='searchText']");
+                if (search) {
+                    event.preventDefault();
+                    search.focus();
+                    search.select();
+                }
+            }
+            var index = parseInt(event.key, 10);
+            if (buttons && !event.ctrlKey && !event.altKey && !event.metaKey && index >= 1 && index <= buttons.length) {
+                if (/input|select|textarea/i.test((event.target || {}).tagName || "")) {
+                    return;
+                }
+                event.preventDefault();
+                buttons[index - 1].click();
+            }
+        });
     })();
 </script>

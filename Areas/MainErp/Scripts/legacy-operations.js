@@ -4,6 +4,71 @@
     var lookups = JSON.parse(document.getElementById("legacyLookups").textContent || "{}");
     var msg = document.getElementById("legacyMessage");
     var active = "boxes";
+    var itemTreeBuilt = false;
+
+    function miniQuery(input) {
+        var nodes = [];
+        if (typeof input === "string" && input.charAt(0) === "<") {
+            var template = document.createElement("template");
+            template.innerHTML = input.trim();
+            nodes = [template.content.firstElementChild];
+        } else if (typeof input === "string") {
+            nodes = Array.prototype.slice.call(document.querySelectorAll(input.replace(/:last\b/g, ":last-of-type")));
+        } else if (input && input.nodeType) {
+            nodes = [input];
+        } else if (input && input.nodes) {
+            nodes = input.nodes;
+        }
+        var api = {
+            nodes: nodes,
+            length: nodes.length,
+            empty: function () { nodes.forEach(function (n) { n.innerHTML = ""; }); return api; },
+            append: function (html) { nodes.forEach(function (n) { if (typeof html === "string") n.insertAdjacentHTML("beforeend", html); else if (html && html.nodeType) n.appendChild(html); }); return api; },
+            appendTo: function (target) { var targetNode = target && target.nodes ? target.nodes[0] : target; if (targetNode) nodes.forEach(function (n) { targetNode.appendChild(n); }); return api; },
+            on: function (eventName, selector, handler) {
+                if (typeof selector === "function") { handler = selector; selector = null; }
+                nodes.forEach(function (n) {
+                    n.addEventListener(eventName, function (event) {
+                        if (!selector) { handler.call(n, event); return; }
+                        var match = event.target.closest(selector);
+                        if (match && n.contains(match)) handler.call(match, event);
+                    });
+                });
+                return api;
+            },
+            each: function (handler) { nodes.forEach(function (n, i) { handler.call(n, i, n); }); return api; },
+            find: function (selector) { var found = []; nodes.forEach(function (n) { found = found.concat(Array.prototype.slice.call(n.querySelectorAll(selector))); }); return miniQuery({ nodes: found }); },
+            val: function (value) { if (value === undefined) return nodes[0] ? nodes[0].value : ""; nodes.forEach(function (n) { n.value = value; }); return api; },
+            html: function (value) { if (value === undefined) return nodes[0] ? nodes[0].innerHTML : ""; nodes.forEach(function (n) { n.innerHTML = value; }); return api; },
+            closest: function (selector) { return miniQuery(nodes[0] ? nodes[0].closest(selector) : null); },
+            map: function (handler) { var mapped = nodes.map(function (n, i) { return handler.call(n, i, n); }); return { get: function () { return mapped; } }; }
+        };
+        return api;
+    }
+
+    if (!window.$) {
+        window.$ = miniQuery;
+        window.$.ajax = function (options) {
+            var doneHandler = function () { };
+            var failHandler = function () { };
+            var fetchOptions = { method: options.method || "GET" };
+            if (options.data instanceof FormData) {
+                fetchOptions.body = options.data;
+            } else if (options.data !== undefined) {
+                fetchOptions.body = options.data;
+                if (options.contentType !== false) fetchOptions.headers = { "Content-Type": options.contentType || "application/json; charset=utf-8" };
+            }
+            fetch(options.url, fetchOptions).then(function (response) {
+                if (!response.ok) return response.text().then(function (text) { throw { responseText: text || response.statusText }; });
+                return response.json().catch(function () { return {}; });
+            }).then(function (data) { doneHandler(data); }).catch(function (error) { failHandler(error || {}); });
+            return { done: function (handler) { doneHandler = handler || doneHandler; return this; }, fail: function (handler) { failHandler = handler || failHandler; return this; } };
+        };
+        window.$.getJSON = function (target, data) {
+            var query = data ? "?" + new URLSearchParams(data).toString() : "";
+            return window.$.ajax({ url: target + query, method: "GET" });
+        };
+    }
 
     function show(text, ok) {
         msg.textContent = text || "";
@@ -44,7 +109,7 @@
         if (active === "cashing") loadCashing(search);
         if (active === "car") loadCar(search);
         if (active === "cars") loadCars(search);
-        if (active === "carAuth") loadCarAuth(search);
+        if (active === "carAuth") { buildItemTree(); loadCarAuth(search); }
     }
 
     function fillForm(form, data) {
@@ -182,6 +247,53 @@
         return html.replace('value="' + selected + '"', 'value="' + selected + '" selected');
     }
 
+    function itemName(id) {
+        var found = (lookups.ItemTreeItems || lookups.Items || []).filter(function (x) { return String(x.Id) === String(id); })[0];
+        return found ? (found.Code ? found.Code + " - " : "") + found.Text : "";
+    }
+
+    function addItemFromTree(item) {
+        addCarAuthItem({ ItemId: item.Id, ItemName: item.Text, Qty: 1, Price: item.Price || 0, TotalWithVat: item.Price || 0 });
+    }
+
+    function buildItemTree() {
+        if (itemTreeBuilt) return;
+        itemTreeBuilt = true;
+        renderItemTree("");
+        var search = document.getElementById("legacyItemTreeSearch");
+        if (search) search.addEventListener("input", function () { renderItemTree(this.value || ""); });
+    }
+
+    function renderItemTree(term) {
+        var rootEl = document.getElementById("legacyItemTree");
+        if (!rootEl) return;
+        term = (term || "").toLowerCase();
+        var groups = lookups.ItemGroups || [], items = lookups.ItemTreeItems || [];
+        var byParent = {}, itemsByGroup = {};
+        groups.forEach(function (g) { var p = g.ParentId == null ? 0 : g.ParentId; (byParent[p] = byParent[p] || []).push(g); });
+        items.forEach(function (i) { var g = i.GroupId == null ? 0 : i.GroupId; (itemsByGroup[g] = itemsByGroup[g] || []).push(i); });
+        function itemMatches(i) { return !term || ((i.Text || "") + " " + (i.Code || "")).toLowerCase().indexOf(term) >= 0; }
+        function groupHtml(parent, level) {
+            var html = "";
+            (byParent[parent] || []).forEach(function (g) {
+                var child = groupHtml(g.Id, level + 1);
+                var groupItems = (itemsByGroup[g.Id] || []).filter(itemMatches).slice(0, 120);
+                var matchGroup = !term || ((g.Text || "") + " " + (g.Code || "")).toLowerCase().indexOf(term) >= 0;
+                if (!matchGroup && !child && !groupItems.length) return;
+                html += '<details open><summary style="padding-right:' + (level * 12) + 'px"><span>' + (g.Text || "مجموعة") + '</span><b>' + (g.ItemsCount || groupItems.length || "") + '</b></summary>';
+                groupItems.forEach(function (i) {
+                    html += '<button type="button" class="legacy-tree-item" data-tree-item="' + i.Id + '" data-price="' + (i.Price || 0) + '" title="' + (i.Text || "") + '">' + (i.Code ? '<small>' + i.Code + '</small>' : '') + '<span>' + (i.Text || "") + '</span></button>';
+                });
+                html += child + '</details>';
+            });
+            return html;
+        }
+        var orphanItems = (itemsByGroup[0] || []).filter(itemMatches).slice(0, 120).map(function (i) {
+            return '<button type="button" class="legacy-tree-item" data-tree-item="' + i.Id + '" data-price="' + (i.Price || 0) + '">' + (i.Code ? '<small>' + i.Code + '</small>' : '') + '<span>' + (i.Text || "") + '</span></button>';
+        }).join("");
+        rootEl.innerHTML = groupHtml(0, 0) + orphanItems || '<div class="legacy-empty-media">لا توجد أصناف مطابقة</div>';
+    }
+
     function fixedAssetOptions(selected) {
         var html = '<option value="">اختر</option>';
         (lookups.FixedAssets || []).forEach(function (x) { html += '<option value="' + x.Id + '">' + (x.AccountCode ? x.AccountCode + " - " : "") + x.Text + "</option>"; });
@@ -202,7 +314,8 @@
 
     function addCarAuthItem(item) {
         item = item || {};
-        $("#carAuthItems").append('<tr><td><select class="item">' + itemOptions(item.ItemId || "") + '</select></td><td><input class="qty" type="number" step="0.01" value="' + (item.Qty || 1) + '"></td><td><input class="price" type="number" step="0.01" value="' + (item.Price || "") + '"></td><td><input class="vat" type="number" step="0.01" value="' + (item.VatValue || 0) + '"></td><td><input class="total" type="number" step="0.01" value="' + (item.TotalWithVat || "") + '"></td><td><input class="remark" value="' + (item.Remark || "") + '"></td><td><button type="button" class="remove">×</button></td></tr>');
+        var title = item.ItemName || itemName(item.ItemId) || "اختر من الشجرة";
+        $("#carAuthItems").append('<tr><td><input class="item-title" readonly value="' + title + '"><input type="hidden" class="item" value="' + (item.ItemId || "") + '"></td><td><input class="qty" type="number" step="0.01" value="' + (item.Qty || 1) + '"></td><td><input class="price" type="number" step="0.01" value="' + (item.Price || "") + '"></td><td><input class="vat" type="number" step="0.01" value="' + (item.VatValue || 0) + '"></td><td><input class="total" type="number" step="0.01" value="' + (item.TotalWithVat || "") + '"></td><td><input class="remark" value="' + (item.Remark || "") + '"></td><td><button type="button" class="remove">×</button></td></tr>');
     }
 
     function bindCar(r) {
@@ -360,6 +473,12 @@
         }
         if (e.target.getAttribute("data-primary-attachment")) {
             post(url("primary-attachment"), { id: intOrNull(e.target.getAttribute("data-primary-attachment")) }, function () { loadAttachments(active === "cars" ? "FrmCars" : "FrmCarAuthontication", intOrNull(val(document.getElementById(active === "cars" ? "carsForm" : "carAuthForm"), "Id")), active === "cars" ? "carsGallery" : "carAuthGallery"); });
+        }
+        var treeButton = e.target.closest && e.target.closest("[data-tree-item]");
+        if (treeButton) {
+            var id = intOrNull(treeButton.getAttribute("data-tree-item"));
+            var item = (lookups.ItemTreeItems || []).filter(function (x) { return x.Id === id; })[0];
+            if (item) addItemFromTree(item);
         }
     });
 

@@ -1,3 +1,35 @@
+IF OBJECT_ID(N'dbo.Transactions', N'U') IS NOT NULL
+   AND NOT EXISTS
+   (
+       SELECT 1
+       FROM sys.indexes
+       WHERE object_id = OBJECT_ID(N'dbo.Transactions', N'U')
+         AND name = N'IX_POS_Transactions_OperationalSales_Report'
+   )
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_POS_Transactions_OperationalSales_Report
+    ON dbo.Transactions (Transaction_Type, IsCancelled, Transaction_Date, Transaction_ID)
+    INCLUDE
+    (
+        BranchId,
+        StoreID,
+        UserID,
+        NoteSerial1,
+        CashCustomerName,
+        CashCustomerPhone,
+        VisaNumber,
+        RechargeValue,
+        NetValue,
+        Vat,
+        Transaction_NetValue,
+        PayedValue,
+        TrafficViolations,
+        IsPOS,
+        IsCashOut
+    );
+END;
+GO
+
 IF OBJECT_ID(N'dbo.usp_POS_Report_RunOperationalSales', N'P') IS NOT NULL
     DROP PROCEDURE dbo.usp_POS_Report_RunOperationalSales;
 GO
@@ -62,7 +94,7 @@ BEGIN
                 END AS ServiceType
             FROM dbo.Transactions t
             WHERE t.Transaction_Type = 21
-              AND ISNULL(t.IsCancelled, 0) = 0
+              AND (t.IsCancelled = 0 OR t.IsCancelled IS NULL)
               AND t.Transaction_Date >= @from
               AND t.Transaction_Date < @toExclusive
               AND (@branchId <= 0 OR t.BranchId = @branchId)
@@ -91,6 +123,58 @@ BEGIN
         LEFT JOIN dbo.TblUsers u ON u.UserID = bt.UserID
         WHERE (@operationType IS NULL OR bt.OperationType = @operationType)
         ORDER BY bt.Transaction_ID DESC;
+
+        RETURN;
+    END;
+
+    IF @reportKey = N'revenues'
+    BEGIN
+        ;WITH BaseTransactions AS
+        (
+            SELECT
+                t.BranchId,
+                t.UserID,
+                t.StoreID,
+                ISNULL(t.NetValue, 0) AS NetValue,
+                ISNULL(t.Vat, 0) AS Vat,
+                ISNULL(t.Transaction_NetValue, ISNULL(t.PayedValue, 0)) AS TotalValue,
+                CASE
+                    WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'violations'
+                    WHEN NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL OR ISNULL(t.IsPOS, 0) = 1 THEN N'card'
+                    WHEN ISNULL(t.IsCashOut, 0) = 1 THEN N'cash-out'
+                    ELSE N'cash-in'
+                END AS OperationType,
+                CASE
+                    WHEN ISNULL(t.IsCashOut, 0) = 1 THEN N'Cash Out'
+                    WHEN ISNULL(t.IsPOS, 0) = 1 THEN N'Keshni Card'
+                    WHEN ISNULL(t.TrafficViolations, 0) = 1 THEN N'Violations'
+                    ELSE N'Cash In'
+                END AS ReportType
+            FROM dbo.Transactions t
+            WHERE t.Transaction_Type = 21
+              AND (t.IsCancelled = 0 OR t.IsCancelled IS NULL)
+              AND t.Transaction_Date >= @from
+              AND t.Transaction_Date < @toExclusive
+              AND (@branchId <= 0 OR t.BranchId = @branchId)
+              AND (@canChangeDefaults = 1 OR t.UserId = @userId)
+              AND (@filterUserId IS NULL OR t.UserID = @filterUserId)
+              AND (@storeId IS NULL OR t.StoreID = @storeId)
+        )
+        SELECT TOP (1000)
+            COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), bt.BranchId)) AS BranchName,
+            bt.ReportType,
+            COUNT(1) AS TransactionCount,
+            SUM(bt.NetValue) AS FeesTotal,
+            SUM(bt.Vat) AS VatTotal,
+            SUM(bt.NetValue + bt.Vat) AS TotalValue,
+            SUM(bt.TotalValue) AS NetCollection
+        FROM BaseTransactions bt
+        LEFT JOIN dbo.TblBranchesData b ON b.branch_id = bt.BranchId
+        WHERE (@operationType IS NULL OR bt.OperationType = @operationType)
+        GROUP BY
+            COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), bt.BranchId)),
+            bt.ReportType
+        ORDER BY BranchName, bt.ReportType;
 
         RETURN;
     END;
@@ -130,7 +214,7 @@ BEGIN
                 END AS ReportType
             FROM dbo.Transactions t
             WHERE t.Transaction_Type = 21
-              AND ISNULL(t.IsCancelled, 0) = 0
+              AND (t.IsCancelled = 0 OR t.IsCancelled IS NULL)
               AND t.Transaction_Date >= @from
               AND t.Transaction_Date < @toExclusive
               AND (@branchId <= 0 OR t.BranchId = @branchId)

@@ -30,6 +30,8 @@ namespace MyERP.Areas.MainErp.ViewModels.LegacyOperations
             Items = new List<LegacyLookupItem>();
             Cars = new List<LegacyLookupItem>();
             FixedAssets = new List<LegacyLookupItem>();
+            ItemGroups = new List<LegacyItemGroupNode>();
+            ItemTreeItems = new List<LegacyItemTreeItem>();
         }
 
         public IList<LegacyLookupItem> Branches { get; set; }
@@ -48,6 +50,8 @@ namespace MyERP.Areas.MainErp.ViewModels.LegacyOperations
         public IList<LegacyLookupItem> Items { get; set; }
         public IList<LegacyLookupItem> Cars { get; set; }
         public IList<LegacyLookupItem> FixedAssets { get; set; }
+        public IList<LegacyItemGroupNode> ItemGroups { get; set; }
+        public IList<LegacyItemTreeItem> ItemTreeItems { get; set; }
     }
 
     public class LegacySaveResult
@@ -55,6 +59,24 @@ namespace MyERP.Areas.MainErp.ViewModels.LegacyOperations
         public bool Success { get; set; }
         public string Message { get; set; }
         public int? Id { get; set; }
+    }
+
+    public class LegacyItemGroupNode
+    {
+        public int Id { get; set; }
+        public int? ParentId { get; set; }
+        public string Text { get; set; }
+        public string Code { get; set; }
+        public int ItemsCount { get; set; }
+    }
+
+    public class LegacyItemTreeItem
+    {
+        public int Id { get; set; }
+        public int? GroupId { get; set; }
+        public string Code { get; set; }
+        public string Text { get; set; }
+        public decimal Price { get; set; }
     }
 
     public class CashBoxListItem

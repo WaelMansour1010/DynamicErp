@@ -100,6 +100,13 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "ليست لديك صلاحية عرض سندات تحويل المخزون" });
             }
 
+            var validationMessage = ValidateStockSearch(request);
+            if (!string.IsNullOrWhiteSpace(validationMessage))
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = validationMessage });
+            }
+
             var rows = _repository.SearchStockTransfers(request, context);
             return Json(new
             {
@@ -431,6 +438,30 @@ namespace MyERP.Areas.Pos.Controllers
         private PosUserContext GetPosContext()
         {
             return PosLoginController.RestorePosContext(Request, Session, _repository);
+        }
+
+        private static string ValidateStockSearch(PosStockTransferSearchRequestDto request)
+        {
+            request = request ?? new PosStockTransferSearchRequestDto();
+            var voucher = (request.VoucherNumber ?? string.Empty).Trim();
+            var itemTerm = (request.ItemOrSerialTerm ?? string.Empty).Trim();
+            var hasDateRange = request.FromDate.HasValue && request.ToDate.HasValue;
+            if (voucher.Length > 0 && voucher.Length < 3 && !voucher.All(char.IsDigit))
+            {
+                return "اكتب 3 أحرف على الأقل في رقم السند";
+            }
+
+            if (itemTerm.Length > 0 && itemTerm.Length < 3 && !itemTerm.All(char.IsDigit))
+            {
+                return "اكتب 3 أحرف على الأقل في بحث الصنف أو السيريال";
+            }
+
+            if (!hasDateRange && voucher.Length < 3 && itemTerm.Length < 3)
+            {
+                return "حدد فترة البحث أو اكتب بحثاً محدداً من 3 أحرف على الأقل";
+            }
+
+            return string.Empty;
         }
     }
 }

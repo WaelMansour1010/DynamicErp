@@ -212,11 +212,12 @@ namespace MyERP.Areas.Pos.Controllers
                 new PosReportDefinition("sales-sectors", "تقرير المبيعات الشامل بالقطاعات", "sales", admin || context.CanReportDailyTransactionsSectors, true, "تقرير مبيعات حسب القطاعات"),
                 new PosReportDefinition("sales-analytical", "تقرير المبيعات تحليلي", "sales", admin || context.CanReportSalesCompleteAnalytical, true, "تقرير تحليلي"),
                 new PosReportDefinition("general-sales", "تقرير المبيعات العام", "sales", admin || context.CanReportAllSales, true, "تقرير مبيعات عام"),
+                new PosReportDefinition("revenues", "تقرير الإيرادات التشغيلي", "sales", admin || context.CanViewReports, true, "إيرادات الرسوم والضريبة وصافي التحصيل"),
                 new PosReportDefinition("web-invoices", "تقرير فواتير الويب", "sales", admin || context.CanViewReports, true, "عدد فواتير الويب حسب المستخدم"),
                 new PosReportDefinition("non-web-login-users", "مستخدمين دخلوا من غير الويب", "sales", admin || context.CanViewReports, true, "Non-Web Login Users"),
                 new PosReportDefinition("salesmen", "تقرير المناديب", "closings", admin || context.CanReportSalesmen, false, "لم يتم تحديد مصدر التقرير بعد"),
-                new PosReportDefinition("finance-closing", "تقرير الإغلاقات", "closings", admin || context.CanReportClosings, true, "بيانات الإغلاقات من TBLClosePos و Notes"),
-                new PosReportDefinition("finance-closing-discounts", "تقرير الإغلاق المالي الشامل على مستوى الفروع", "closings", admin || context.CanReportFinanceClosing, true, "بيانات الإغلاقات والخصومات من TBLClosePos و Notes"),
+                new PosReportDefinition("finance-closing", "تقرير الإغلاقات", "closings", admin || context.CanReportClosings, true, "الإغلاقات المقفولة + متابعة اليوم المفتوح live"),
+                new PosReportDefinition("finance-closing-discounts", "تقرير الإغلاق المالي الشامل على مستوى الفروع", "closings", admin || context.CanReportFinanceClosing, true, "الإغلاقات والخصومات مع متابعة الفروع المفتوحة live"),
                 new PosReportDefinition("discounts", "تقرير الخصومات", "closings", admin || context.CanReportDiscounts, false, "لم يتم تحديد مصدر التقرير بعد"),
                 new PosReportDefinition("indicators", "تقرير المؤشرات العامة", "closings", admin || context.CanReportIndicators, false, "لم يتم تحديد مصدر التقرير بعد"),
                 new PosReportDefinition("store-serials", "تقرير سيريالات المخزن", "serials", admin || context.CanReportStoreSerials, true, "تقرير المخزون والسيريالات"),
@@ -242,6 +243,23 @@ namespace MyERP.Areas.Pos.Controllers
             if (report == null || !report.Allowed)
             {
                 return new ReportValidationResult { StatusCode = 403, Message = "ليست لديك صلاحية تشغيل هذا التقرير", TechnicalMessage = "Report permission denied." };
+            }
+
+            if (!request.FromDate.HasValue || !request.ToDate.HasValue)
+            {
+                return new ReportValidationResult { StatusCode = 400, Message = "من تاريخ وإلى تاريخ مطلوبان قبل تشغيل التقرير", TechnicalMessage = "Required date filters are missing." };
+            }
+
+            if (request.ToDate.Value.Date < request.FromDate.Value.Date)
+            {
+                return new ReportValidationResult { StatusCode = 400, Message = "إلى تاريخ يجب أن يكون أكبر من أو يساوي من تاريخ", TechnicalMessage = "Invalid date range." };
+            }
+
+            if (string.Equals(report.Key, "store-serials", StringComparison.OrdinalIgnoreCase)
+                && !request.StoreId.HasValue
+                && (string.IsNullOrWhiteSpace(request.SerialSearch) || request.SerialSearch.Trim().Length < 3))
+            {
+                return new ReportValidationResult { StatusCode = 400, Message = "اختر المخزن أو اكتب 3 أحرف على الأقل قبل تشغيل تقرير السيريالات", TechnicalMessage = "Store serials report requires StoreId or at least 3 SerialSearch characters." };
             }
 
             var branchId = ResolveBranchId(context, request.BranchId);
@@ -329,7 +347,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private IEnumerable<PosBranchDto> GetInitialBranches(PosUserContext context)
         {
-            return context != null && context.BranchId.HasValue
+            return context != null && !IsAdmin(context) && context.BranchId.HasValue
                 ? new[] { new PosBranchDto { BranchId = context.BranchId.Value, BranchName = context.BranchName } }
                 : new PosBranchDto[0];
         }
@@ -370,7 +388,8 @@ namespace MyERP.Areas.Pos.Controllers
                 || string.Equals(reportKey, "sales-departments", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(reportKey, "sales-sectors", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(reportKey, "sales-analytical", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(reportKey, "general-sales", StringComparison.OrdinalIgnoreCase);
+                || string.Equals(reportKey, "general-sales", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "revenues", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsImportantReport(string reportKey)

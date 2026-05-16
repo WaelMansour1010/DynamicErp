@@ -119,6 +119,13 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "ليست لديك صلاحية عرض فواتير المشتريات" });
             }
 
+            var validationMessage = ValidatePurchaseSearch(request);
+            if (!string.IsNullOrWhiteSpace(validationMessage))
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = validationMessage });
+            }
+
             var rows = _repository.SearchPurchaseInvoices(request, context);
             return Json(new
             {
@@ -312,6 +319,30 @@ namespace MyERP.Areas.Pos.Controllers
         private PosUserContext GetPosContext()
         {
             return PosLoginController.RestorePosContext(Request, Session, _repository);
+        }
+
+        private static string ValidatePurchaseSearch(PosPurchaseInvoiceSearchRequestDto request)
+        {
+            request = request ?? new PosPurchaseInvoiceSearchRequestDto();
+            var invoice = (request.InvoiceNumber ?? string.Empty).Trim();
+            var supplier = (request.SupplierTerm ?? string.Empty).Trim();
+            var hasDateRange = request.FromDate.HasValue && request.ToDate.HasValue;
+            if (invoice.Length > 0 && invoice.Length < 3 && !invoice.All(char.IsDigit))
+            {
+                return "اكتب 3 أحرف على الأقل في رقم الفاتورة/البحث";
+            }
+
+            if (supplier.Length > 0 && supplier.Length < 3 && !supplier.All(char.IsDigit))
+            {
+                return "اكتب 3 أحرف على الأقل في بحث المورد";
+            }
+
+            if (!hasDateRange && invoice.Length < 3 && supplier.Length < 3)
+            {
+                return "حدد فترة البحث أو اكتب بحثاً محدداً من 3 أحرف على الأقل";
+            }
+
+            return string.Empty;
         }
 
         private PosPurchaseImportResultDto ParsePurchaseImport(HttpPostedFileBase file)

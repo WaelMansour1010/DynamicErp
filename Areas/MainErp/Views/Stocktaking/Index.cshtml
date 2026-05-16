@@ -12,10 +12,11 @@
 <section class="main-erp-panel stocktaking-page" dir="rtl" id="stocktakingPage"
          data-save-url="@Url.Action("Save", "Stocktaking", new { area = "MainErp" })"
          data-details-url="@Url.Action("Details", "Stocktaking", new { area = "MainErp" })"
+         data-lookup-items-url="@Url.Action("LookupItems", "Stocktaking", new { area = "MainErp" })"
          data-delete-url="@Url.Action("Delete", "Stocktaking", new { area = "MainErp" })">
     <header class="main-erp-cockpit-header">
         <div>
-            <span class="main-erp-kicker">FrmNewGard / FrmNewGard1</span>
+            <span class="main-erp-kicker">دورة الجرد</span>
             <h2>شاشات الجرد</h2>
             <p>حفظ وعرض الجرد الفعلي بنفس نوع الحركة 30، مع أعمدة نتائج الجرد والتسويات الخاصة بالشاشة الثانية.</p>
         </div>
@@ -91,8 +92,8 @@
 
         <main class="stocktaking-editor">
             <nav class="stocktaking-tabs">
-                <button type="button" class="active" data-mode="FrmNewGard">FrmNewGard</button>
-                <button type="button" data-mode="FrmNewGard1">FrmNewGard1</button>
+                <button type="button" class="active" data-mode="FrmNewGard">الجرد الأساسي</button>
+                <button type="button" data-mode="FrmNewGard1">الجرد بالتسوية</button>
             </nav>
 
             <section class="main-erp-premium-card">
@@ -195,13 +196,8 @@
 <template id="gardLineTemplate">
     <tr>
         <td>
-            <select class="line-item">
-                <option value="">اختر الصنف</option>
-                @foreach (var item in Model.Items)
-                {
-                    <option value="@item.Id" data-code="@item.Code" data-price="@item.Price" data-unit="@item.DefaultUnitId" data-unit-name="@item.DefaultUnitName">@item.Code - @item.Text</option>
-                }
-            </select>
+            <input type="search" class="line-item-search" list="gardItemLookupList" placeholder="اكتب كود / اسم / باركود" autocomplete="off" />
+            <input type="hidden" class="line-item" />
         </td>
         <td>
             <select class="line-unit">
@@ -223,5 +219,12 @@
         <td><button type="button" class="main-erp-link-btn is-danger js-remove-line">حذف</button></td>
     </tr>
 </template>
+
+<datalist id="gardItemLookupList">
+    @foreach (var item in Model.Items)
+    {
+        <option value="@item.Code - @item.Text" data-id="@item.Id" data-price="@item.Price" data-unit="@item.DefaultUnitId" data-unit-name="@item.DefaultUnitName"></option>
+    }
+</datalist>
 
 <script src="~/Areas/MainErp/Scripts/stocktaking.js"></script>

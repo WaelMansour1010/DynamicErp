@@ -1,0 +1,160 @@
+@model MyERP.Areas.Pos.Models.PosLegacyUsersIndexModel
+@using System.Collections.Generic
+@{
+    Layout = null;
+    ViewBag.Title = "مستخدمو POS - FrmEditUsers";
+    var selected = Model.Selected ?? new MyERP.Areas.Pos.Models.PosLegacyUserEditModel();
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/Pos/Content/legacy-admin.css?v=20260514")" rel="stylesheet" />
+</head>
+<body>
+    <div class="pos-page legacy-admin-page" id="legacyUsersPage"
+         data-save-url="@Url.Action("SaveUser", "PosLegacyAdmin", new { area = "Pos" })"
+         data-delete-url="@Url.Action("DeleteUser", "PosLegacyAdmin", new { area = "Pos" })">
+        @Html.AntiForgeryToken()
+        <header class="legacy-admin-hero">
+            <div>
+                <span>FrmEditUsers - Kishny VB6</span>
+                <h1>إدارة مستخدمي POS</h1>
+                <p>نقل شاشة المستخدمين من كيشني مع بيانات الدخول، الافتراضيات، الفروع، المخازن، الخزن، الحسابات وخطوط الإنتاج.</p>
+            </div>
+            <div class="legacy-actions">
+                <a href="@Url.Action("Users", "PosLegacyAdmin", new { area = "Pos" })">جديد</a>
+                <button type="button" id="legacyUserSave">حفظ</button>
+                <button type="button" id="legacyUserDelete" class="danger" @(selected.UserID.HasValue ? "" : "disabled")>حذف</button>
+            </div>
+        </header>
+        <div id="legacyUsersStatus" class="legacy-status" hidden></div>
+
+        <div class="legacy-admin-shell">
+            <aside class="legacy-side">
+                <form method="get" action="@Url.Action("Users", "PosLegacyAdmin", new { area = "Pos" })" class="legacy-search">
+                    <input type="search" name="searchText" value="@Model.SearchText" placeholder="بحث بالكود / المستخدم / الموظف" />
+                    <button type="submit">بحث</button>
+                </form>
+                <div class="legacy-list">
+                    @foreach (var user in Model.Users)
+                    {
+                        <a class="legacy-row @(selected.UserID == user.UserId ? "active" : "")" href="@Url.Action("Users", "PosLegacyAdmin", new { area = "Pos", id = user.UserId, searchText = Model.SearchText })">
+                            <strong>@user.UserName</strong>
+                            <span>@user.UserId - @(String.IsNullOrWhiteSpace(user.EmployeeName) ? "بدون موظف" : user.EmployeeName)</span>
+                            <small>@user.BranchName @(user.IsDeactivated ? " - موقوف" : "")</small>
+                        </a>
+                    }
+                </div>
+            </aside>
+
+            <main class="legacy-workspace">
+                <form id="legacyUserForm">
+                    <input type="hidden" name="UserID" value="@selected.UserID" />
+                    <section class="legacy-card">
+                        <div class="legacy-card-head"><h2>بيانات المستخدم</h2><span>TblUsers</span></div>
+                        <div class="legacy-grid four">
+                            <label>كود المستخدم<input name="UserIDView" value="@selected.UserID" disabled /></label>
+                            <label>اسم المستخدم<input name="UserName" value="@selected.UserName" maxlength="50" required /></label>
+                            <label>كلمة السر<input name="PassWord" value="@selected.PassWord" maxlength="50" /></label>
+                            <label>تأكيد كلمة السر<input name="PassConfirm" value="@selected.PassConfirm" maxlength="255" /></label>
+                            <label>الصلاحية
+                                <select name="UserType">
+                                    <option value="0" @(selected.UserType == 0 ? "selected" : "")>مدير</option>
+                                    <option value="1" @(selected.UserType == 1 ? "selected" : "")>مشرف</option>
+                                    <option value="2" @(selected.UserType == 2 || !selected.UserType.HasValue ? "selected" : "")>مستخدم POS</option>
+                                </select>
+                            </label>
+                            <label>فئة المستخدم<input name="UserCategory" value="@selected.UserCategory" maxlength="50" placeholder="تلر / KYC / إدارة" /></label>
+                            <label>الموظف @Lookup("Empid", selected.Empid, Model.Employees, "اختر الموظف")</label>
+                            <label>الحد الائتماني للمندوب<input type="number" step="any" name="CreditLimitSalesMan" value="@selected.CreditLimitSalesMan" /></label>
+                        </div>
+                    </section>
+
+                    <section class="legacy-card">
+                        <div class="legacy-card-head"><h2>الافتراضيات</h2><span>فرع / مخزن / خزنة</span></div>
+                        <div class="legacy-grid four">
+                            <label>الفرع الافتراضي @Lookup("BranchId", selected.BranchId, Model.Branches, "اختر الفرع")</label>
+                            <label>مخزن البيع @Lookup("StoreID", selected.StoreID, Model.Stores, "اختر المخزن")</label>
+                            <label>مخزن الشراء @Lookup("StoreID1", selected.StoreID1, Model.Stores, "اختر المخزن")</label>
+                            <label>مخزن صرف خام @Lookup("StoreID2", selected.StoreID2, Model.Stores, "اختر المخزن")</label>
+                            <label>مخزن استلام خام @Lookup("StoreID3", selected.StoreID3, Model.Stores, "اختر المخزن")</label>
+                            <label>خزنة البيع @Lookup("BoxID", selected.BoxID, Model.Boxes, "اختر الخزنة")</label>
+                            <label>خزنة الشراء @Lookup("BoxID1", selected.BoxID1, Model.Boxes, "اختر الخزنة")</label>
+                            <label>العهدة @Lookup("BoxID2", selected.BoxID2, Model.Boxes, "اختر الخزنة")</label>
+                            <label>الحساب الوسيط<input name="Account_Code" value="@selected.Account_Code" list="accountsList" /></label>
+                            <label>تقرير البيع<input name="ReportName" value="@selected.ReportName" maxlength="255" /></label>
+                            <label>تقرير POS<input name="ReportName1" value="@selected.ReportName1" maxlength="255" /></label>
+                            <label>تقرير مردودات<input name="ReportName2" value="@selected.ReportName2" maxlength="255" /></label>
+                        </div>
+                    </section>
+
+                    <datalist id="accountsList">
+                        @foreach (var account in Model.Accounts) { <option value="@account.Code">@account.Display</option> }
+                    </datalist>
+
+                    <section class="legacy-card">
+                        <div class="legacy-card-head"><h2>خيارات POS</h2><span>flags</span></div>
+                        <div class="legacy-checks">
+                            @Check("ChangePW", selected.ChangePW, "تغيير كلمة المرور عند الدخول")
+                            @Check("CustomerService", selected.CustomerService, "خدمة عملاء")
+                            @Check("HidLowering", selected.HidLowering, "إظهار الأعمدة كاملة في تنبيهات الإنتاج")
+                            @Check("AllowSelectEmp", selected.AllowSelectEmp, "اختيار المندوب في القبض")
+                            @Check("IsDeactivated", selected.IsDeactivated, "إيقاف المستخدم")
+                            @Check("CanEditKYC", selected.CanEditKYC, "تعديل KYC")
+                            @Check("IsFullAccsesCustomerService", selected.IsFullAccsesCustomerService, "صلاحية كاملة لخدمة العملاء")
+                            @Check("IsReturnAllowed", selected.IsReturnAllowed, "السماح بالمردودات")
+                            @Check("CanEditSalesInvoice", selected.CanEditSalesInvoice, "تعديل فواتير البيع")
+                            @Check("CanEditSalesInvoicePos", selected.CanEditSalesInvoicePos, "تعديل فواتير POS")
+                            @Check("CanCancelClose", selected.CanCancelClose, "إلغاء التقفيل")
+                        </div>
+                    </section>
+
+                    <section class="legacy-card">
+                        <div class="legacy-card-head"><h2>الروابط</h2><span>Branches / Stores / Boxes / Accounts / Product lines</span></div>
+                        <div class="legacy-grid five">
+                            <label>الفروع المرتبطة @Multi("BranchIds", selected.BranchIds, Model.Branches)</label>
+                            <label>المخازن المرتبطة @Multi("StoreIds", selected.StoreIds, Model.Stores)</label>
+                            <label>الخزن المرتبطة @Multi("BoxIds", selected.BoxIds, Model.Boxes)</label>
+                            <label>الحسابات المرتبطة @Multi("AccountIds", selected.AccountIds, Model.Accounts)</label>
+                            <label>خطوط الإنتاج @Multi("ProductLineIds", selected.ProductLineIds, Model.ProductLines)</label>
+                        </div>
+                    </section>
+                </form>
+            </main>
+        </div>
+    </div>
+
+    <script src="@Url.Content("~/Areas/Pos/Scripts/legacy-admin.js?v=20260514")"></script>
+</body>
+</html>
+
+@helper Lookup(string name, int? value, IEnumerable<MyERP.Areas.Pos.Models.PosLegacyLookupDto> rows, string empty)
+{
+    <select name="@name">
+        <option value="">@empty</option>
+        @foreach (var row in rows)
+        {
+            <option value="@row.Id" @(value == row.Id ? "selected" : "")>@row.Display</option>
+        }
+    </select>
+}
+
+@helper Multi(string name, IEnumerable<int> selected, IEnumerable<MyERP.Areas.Pos.Models.PosLegacyLookupDto> rows)
+{
+    var set = new HashSet<int>(selected ?? new int[0]);
+    <select name="@name" multiple size="9">
+        @foreach (var row in rows)
+        {
+            <option value="@row.Id" @(set.Contains(row.Id) ? "selected" : "")>@row.Display</option>
+        }
+    </select>
+}
+
+@helper Check(string name, bool value, string text)
+{
+    <label class="legacy-check"><input type="checkbox" name="@name" value="true" @(value ? "checked" : "") /><span>@text</span></label>
+}

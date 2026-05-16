@@ -10,5 +10,6 @@ namespace MyERP.Areas.MainErp.Security
         public const string StoreId = "MainErp.StoreId";
         public const string BoxId = "MainErp.BoxId";
         public const string DebugDatabaseName = "MainErp.Debug.DatabaseName";
+        public const string DebugConnectionStringName = "MainErp.Debug.ConnectionStringName";
     }
 }

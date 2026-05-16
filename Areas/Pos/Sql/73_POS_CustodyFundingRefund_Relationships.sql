@@ -24,17 +24,17 @@ BEGIN
     END;
     DECLARE @MainBoxType INT = CASE WHEN @LegacyCashingType = 6 THEN 0 ELSE 1 END;
 
-    SELECT 5 AS OperationType, 1 AS BoxType, N'Bety Cash' AS OperationName, N'Custody funding/refund' AS OperationNameE
+    SELECT 5 AS OperationType, 1 AS BoxType, N'استعاضة عهدة' AS OperationName, N'Custody funding/refund' AS OperationNameE
     UNION ALL
-    SELECT 6 AS OperationType, 0 AS BoxType, N'Box Recharge' AS OperationName, N'Treasury funding' AS OperationNameE;
+    SELECT 6 AS OperationType, 0 AS BoxType, N'تمويل خزينة' AS OperationName, N'Treasury funding' AS OperationNameE;
 
-    SELECT 0 AS PaymentMethod, N'Cash' AS PaymentMethodName, CAST(1 AS BIT) AS RequiresBox, CAST(0 AS BIT) AS RequiresBank, CAST(0 AS BIT) AS RequiresNumber, CAST(0 AS BIT) AS RequiresDate
+    SELECT 0 AS PaymentMethod, N'نقدي' AS PaymentMethodName, CAST(1 AS BIT) AS RequiresBox, CAST(0 AS BIT) AS RequiresBank, CAST(0 AS BIT) AS RequiresNumber, CAST(0 AS BIT) AS RequiresDate
     UNION ALL
-    SELECT 1, N'Cheque', CAST(0 AS BIT), CAST(1 AS BIT), CAST(1 AS BIT), CAST(1 AS BIT)
+    SELECT 1, N'شيك', CAST(0 AS BIT), CAST(1 AS BIT), CAST(1 AS BIT), CAST(1 AS BIT)
     UNION ALL
-    SELECT 2, N'Transfer', CAST(0 AS BIT), CAST(1 AS BIT), CAST(1 AS BIT), CAST(1 AS BIT)
+    SELECT 2, N'حوالة', CAST(0 AS BIT), CAST(1 AS BIT), CAST(1 AS BIT), CAST(1 AS BIT)
     UNION ALL
-    SELECT 3, N'P Cheque', CAST(0 AS BIT), CAST(1 AS BIT), CAST(1 AS BIT), CAST(1 AS BIT);
+    SELECT 3, N'شيك مسدد', CAST(0 AS BIT), CAST(1 AS BIT), CAST(1 AS BIT), CAST(1 AS BIT);
 
     SELECT
         b.Account_Code AS AccountCode,
@@ -184,9 +184,9 @@ BEGIN
             ELSE 0
         END AS BIT) AS HasWarning,
         CASE
-            WHEN emp.Emp_ID IS NULL THEN N'Employee was not found.'
-            WHEN NOT (ISNULL(emp.BranchId, 0) = 0 OR emp.BranchId = @BranchId) THEN N'Employee is not related to the selected branch.'
-            WHEN ISNULL(emp.Account_Code, N'') = N'' THEN N'Employee has no configured custody account.'
+            WHEN emp.Emp_ID IS NULL THEN N'لم يتم العثور على الموظف.'
+            WHEN NOT (ISNULL(emp.BranchId, 0) = 0 OR emp.BranchId = @BranchId) THEN N'الموظف غير مرتبط بالفرع المحدد.'
+            WHEN ISNULL(emp.Account_Code, N'') = N'' THEN N'لا يوجد حساب عهدة مكوّن لهذا الموظف.'
             ELSE N''
         END AS WarningMessage,
         LTRIM(RTRIM(COALESCE(CONVERT(NVARCHAR(255), a.Account_Serial) + N' - ', N'') + COALESCE(a.Account_Name, emp.Emp_Name, N''))) AS DisplayName
@@ -238,16 +238,16 @@ BEGIN
     SET @EmployeeValue = ISNULL(@EmployeeValue, 0);
 
     IF @LegacyCashingType NOT IN (5, 6)
-        SET @ValidationMessage = @ValidationMessage + N'Invalid operation type. ';
+        SET @ValidationMessage = @ValidationMessage + N'نوع الحركة غير صحيح. ';
     IF ISNULL(@Amount, 0) <= 0
-        SET @ValidationMessage = @ValidationMessage + N'Amount must be greater than zero. ';
+        SET @ValidationMessage = @ValidationMessage + N'يجب إدخال قيمة أكبر من صفر. ';
     IF NOT EXISTS (
         SELECT 1 FROM dbo.TblBoxesData b
         WHERE b.Account_Code = @MainAccountCode
           AND b.Type = @MainBoxType
           AND (ISNULL(b.BranchId, 0) = 0 OR b.BranchId = @BranchId)
     )
-        SET @ValidationMessage = @ValidationMessage + N'Main custody/account is not related to the selected branch or operation. ';
+        SET @ValidationMessage = @ValidationMessage + N'حساب الحركة الرئيسي غير مرتبط بالفرع أو نوع الحركة المحدد. ';
 
     IF @PaymentMethod = 0
     BEGIN
@@ -257,7 +257,7 @@ BEGIN
           AND (ISNULL(b.BranchId, 0) = 0 OR b.BranchId = @BranchId);
 
         IF ISNULL(@CreditAccountCode, N'') = N''
-            SET @ValidationMessage = @ValidationMessage + N'Cash payment requires a treasury/cashbox related to the selected branch. ';
+            SET @ValidationMessage = @ValidationMessage + N'الدفع النقدي يتطلب خزنة مرتبطة بالفرع المحدد. ';
     END
     ELSE IF @PaymentMethod IN (1, 2, 3)
     BEGIN
@@ -267,14 +267,14 @@ BEGIN
           AND (ISNULL(bank.BranchId, 0) = 0 OR bank.BranchId = @BranchId);
 
         IF ISNULL(@CreditAccountCode, N'') = N''
-            SET @ValidationMessage = @ValidationMessage + N'Bank payment requires a bank related to the selected branch. ';
+            SET @ValidationMessage = @ValidationMessage + N'الدفع البنكي يتطلب بنكاً مرتبطاً بالفرع المحدد. ';
         IF ISNULL(LTRIM(RTRIM(@ChequeOrTransferNumber)), N'') = N''
-            SET @ValidationMessage = @ValidationMessage + N'Cheque/transfer number is required. ';
+            SET @ValidationMessage = @ValidationMessage + N'رقم الشيك أو الحوالة مطلوب. ';
         IF @ChequeOrTransferDate IS NULL
-            SET @ValidationMessage = @ValidationMessage + N'Cheque/transfer date is required. ';
+            SET @ValidationMessage = @ValidationMessage + N'تاريخ الشيك أو الحوالة مطلوب. ';
     END
     ELSE
-        SET @ValidationMessage = @ValidationMessage + N'Invalid payment method. ';
+        SET @ValidationMessage = @ValidationMessage + N'طريقة الدفع غير صحيحة. ';
 
     IF @EmployeeID IS NOT NULL
     BEGIN
@@ -284,15 +284,15 @@ BEGIN
           AND (ISNULL(emp.BranchId, 0) = 0 OR emp.BranchId = @BranchId);
 
         IF @EmployeeAccountCode IS NULL
-            SET @ValidationMessage = @ValidationMessage + N'Employee is not related to the selected branch. ';
+            SET @ValidationMessage = @ValidationMessage + N'الموظف غير مرتبط بالفرع المحدد. ';
         ELSE IF ISNULL(@EmployeeAccountCode, N'') = N''
-            SET @ValidationMessage = @ValidationMessage + N'Employee has no configured custody account. ';
+            SET @ValidationMessage = @ValidationMessage + N'لا يوجد حساب عهدة مكوّن لهذا الموظف. ';
     END
 
     IF (@BoxValue <> 0 OR @EmployeeValue <> 0) AND ROUND(@BoxValue + @EmployeeValue, 4) <> ROUND(@Amount, 4)
-        SET @ValidationMessage = @ValidationMessage + N'Box value plus employee value must equal amount. ';
+        SET @ValidationMessage = @ValidationMessage + N'مجموع قيمة الخزنة والعهدة يجب أن يساوي قيمة الحركة. ';
     IF @EmployeeValue <> 0 AND ISNULL(@EmployeeAccountCode, N'') = N''
-        SET @ValidationMessage = @ValidationMessage + N'Employee custody account is required for employee value. ';
+        SET @ValidationMessage = @ValidationMessage + N'حساب عهدة الموظف مطلوب عند إدخال قيمة عهدة. ';
 
     DECLARE @Rows TABLE (
         [LineNo] INT IDENTITY(1, 1),
@@ -351,7 +351,7 @@ BEGIN
 
     SELECT @DebitTotal = ISNULL(SUM(Debit), 0), @CreditTotal = ISNULL(SUM(Credit), 0) FROM @Rows;
     IF @ValidationMessage = N'' AND ROUND(@DebitTotal, 4) <> ROUND(@CreditTotal, 4)
-        SET @ValidationMessage = @ValidationMessage + N'Total debit must equal total credit. ';
+        SET @ValidationMessage = @ValidationMessage + N'إجمالي المدين يجب أن يساوي إجمالي الدائن. ';
 
     SELECT
         CAST(CASE WHEN @ValidationMessage = N'' THEN 1 ELSE 0 END AS BIT) AS CanSave,

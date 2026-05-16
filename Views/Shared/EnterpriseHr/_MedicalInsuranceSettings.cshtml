@@ -1,13 +1,18 @@
-<link href="@Url.Content("~/Areas/Pos/Content/employee-payroll.css")?v=20260512-master-detail-fix" rel="stylesheet" />
+﻿@{
+    var hrArea = (ViewBag.SharedHrArea as string) ?? (ViewContext.RouteData.DataTokens["area"] as string) ?? string.Empty;
+    var hrReadOnly = ViewBag.SharedHrReadOnly is bool && (bool)ViewBag.SharedHrReadOnly;
+    Func<string, string> hrUrl = action => Url.Action(action, "EmployeePayroll", new { area = hrArea });
+}
 <main class="ep-page ep-insurance-enterprise ep-ui-rescue ep-master-detail" data-screen="insurance-settings"
-      data-lookups-url="@Url.Action("Lookups", "EmployeePayroll")"
-      data-search-url="@Url.Action("Search", "EmployeePayroll")"
-      data-providers-url="@Url.Action("Providers", "EmployeePayroll")"
-      data-save-provider-url="@Url.Action("SaveProvider", "EmployeePayroll")"
-      data-plans-url="@Url.Action("Plans", "EmployeePayroll")"
-      data-save-plan-url="@Url.Action("SavePlan", "EmployeePayroll")"
-      data-subscriptions-url="@Url.Action("InsuranceSubscriptionReport", "EmployeePayroll")"
-      data-deductions-url="@Url.Action("InsuranceDeductionReport", "EmployeePayroll")">
+      data-read-only="@(hrReadOnly ? "true" : "false")"
+      data-lookups-url="@hrUrl("Lookups")"
+      data-search-url="@hrUrl("Search")"
+      data-providers-url="@hrUrl("Providers")"
+      data-save-provider-url="@(hrReadOnly ? string.Empty : hrUrl("SaveProvider"))"
+      data-plans-url="@hrUrl("Plans")"
+      data-save-plan-url="@(hrReadOnly ? string.Empty : hrUrl("SavePlan"))"
+      data-subscriptions-url="@hrUrl("InsuranceSubscriptionReport")"
+      data-deductions-url="@hrUrl("InsuranceDeductionReport")">
 
     <header class="ep-md-hero">
         <div class="ep-md-title">
@@ -16,10 +21,10 @@
             <p>Dashboard مختصر لإدارة شركات التأمين والخطط. افتح أي خطة لتعديل التفاصيل داخل لوحة جانبية مركزة.</p>
         </div>
         <div class="ep-md-actions">
-            <button type="button" class="ep-secondary" id="epOpenProviderDrawer"><i class="fas fa-plus"></i> شركة تأمين</button>
-            <button type="button" class="ep-primary" id="epOpenPlanDrawer"><i class="fas fa-plus"></i> خطة جديدة</button>
-            <a class="ep-link" href="@Url.Action("SalaryRun", "EmployeePayroll")"><i class="fas fa-file-invoice-dollar"></i> المسير</a>
-            <a class="ep-link" href="@Url.Action("MedicalInsuranceReports", "EmployeePayroll")"><i class="fas fa-chart-bar"></i> التقارير</a>
+            <button type="button" class="ep-secondary" id="epOpenProviderDrawer" @(hrReadOnly ? "hidden disabled" : "")><i class="fas fa-plus"></i> شركة تأمين</button>
+            <button type="button" class="ep-primary" id="epOpenPlanDrawer" @(hrReadOnly ? "hidden disabled" : "")><i class="fas fa-plus"></i> خطة جديدة</button>
+            <a class="ep-link" href="@hrUrl("SalaryRun")"><i class="fas fa-file-invoice-dollar"></i> المسير</a>
+            <a class="ep-link" href="@hrUrl("MedicalInsuranceReports")"><i class="fas fa-chart-bar"></i> التقارير</a>
         </div>
     </header>
 
@@ -54,7 +59,7 @@
                     <span>Insurance Companies</span>
                     <h2>شركات التأمين</h2>
                 </div>
-                <button type="button" class="ep-ghost" id="epOpenProviderDrawer2"><i class="fas fa-plus"></i></button>
+                <button type="button" class="ep-ghost" id="epOpenProviderDrawer2" @(hrReadOnly ? "hidden disabled" : "")><i class="fas fa-plus"></i></button>
             </div>
             <div class="ep-provider-card-list" id="epProvidersCards"></div>
             <div class="ep-table-shell ep-md-hidden-table" aria-hidden="true">
@@ -70,7 +75,7 @@
                     <span>Insurance Plans</span>
                     <h2>خطط التأمين</h2>
                 </div>
-                <button type="button" class="ep-ghost" id="epOpenPlanDrawer2"><i class="fas fa-plus"></i></button>
+                <button type="button" class="ep-ghost" id="epOpenPlanDrawer2" @(hrReadOnly ? "hidden disabled" : "")><i class="fas fa-plus"></i></button>
             </div>
             <div class="ep-plan-card-grid" id="epPlansCards"></div>
             <div class="ep-table-shell ep-md-hidden-table" aria-hidden="true">
@@ -288,3 +293,5 @@
 
     <div class="ep-message" id="epMessage"></div>
 </main>
+
+

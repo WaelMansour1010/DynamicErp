@@ -7,6 +7,7 @@
     }
 
     var lastValues = null;
+    var busy = false;
 
     function byId(id) {
         return document.getElementById(id);
@@ -55,6 +56,19 @@
         };
     }
 
+    function validateCurrentRequest() {
+        var request = currentRequest();
+        if (!request.ClosingDate) {
+            return 'تاريخ الإغلاق مطلوب';
+        }
+
+        if (!request.BranchId || request.BranchId <= 0) {
+            return 'الفرع مطلوب قبل تحديث بيانات الإغلاق';
+        }
+
+        return '';
+    }
+
     function showMessage(text, isError) {
         var message = byId('closingMessage');
         if (!message) {
@@ -62,6 +76,27 @@
         }
         message.textContent = text || '';
         message.classList.toggle('error-text', !!isError);
+    }
+
+    function setBusy(isBusy, actionText) {
+        busy = isBusy;
+        var loadButton = byId('loadClosingBtn');
+        var executeButton = byId('executeClosingBtn');
+        if (loadButton) {
+            if (!loadButton.getAttribute('data-original-text')) {
+                loadButton.setAttribute('data-original-text', loadButton.textContent);
+            }
+            loadButton.disabled = isBusy;
+            loadButton.textContent = isBusy && actionText ? actionText : loadButton.getAttribute('data-original-text');
+        }
+
+        if (executeButton) {
+            if (!executeButton.getAttribute('data-original-text')) {
+                executeButton.setAttribute('data-original-text', executeButton.textContent);
+            }
+            executeButton.disabled = isBusy;
+            executeButton.textContent = isBusy && actionText ? actionText : executeButton.getAttribute('data-original-text');
+        }
     }
 
     function fillValues(values) {
@@ -204,6 +239,17 @@
     }
 
     function loadValues() {
+        if (busy) {
+            return Promise.resolve();
+        }
+
+        var validation = validateCurrentRequest();
+        if (validation) {
+            showMessage(validation, true);
+            return Promise.resolve();
+        }
+
+        setBusy(true, 'جاري التحديث...');
         showMessage('جاري تحديث بيانات الإغلاق...', false);
         return postJson(page.getAttribute('data-load-url'), currentRequest())
             .then(function (payload) {
@@ -213,10 +259,23 @@
             .catch(function (error) {
                 var payload = error.payload || {};
                 showMessage((payload.message || error.message) + (payload.technicalMessage ? ' - التفاصيل: ' + payload.technicalMessage : ''), true);
+            })
+            .then(function () {
+                setBusy(false);
             });
     }
 
     function executeClosing() {
+        if (busy) {
+            return;
+        }
+
+        var validation = validateCurrentRequest();
+        if (validation) {
+            showMessage(validation, true);
+            return;
+        }
+
         if (!lastValues) {
             showMessage('اضغط تحديث البيانات قبل تنفيذ الإغلاق', true);
             return;
@@ -237,6 +296,7 @@
         request.ActualValue = Number(byId('actValue').value || 0);
 
         showMessage('جاري تنفيذ الإغلاق...', false);
+        setBusy(true, 'جاري التنفيذ...');
         postJson(page.getAttribute('data-execute-url'), request)
             .then(function (payload) {
                 var result = payload.result || {};
@@ -245,11 +305,15 @@
                 renderVoucherHeaders(result.Vouchers || []);
                 renderCreatedVouchers(result.VoucherLines || []);
                 showMessage('تم إنشاء قيد الإغلاق بنجاح. رقم القيد: ' + (result.NoteSerial || result.NoteId || ''), false);
+                setBusy(false);
                 return loadValues();
             })
             .catch(function (error) {
                 var payload = error.payload || {};
                 showMessage((payload.message || error.message) + (payload.technicalMessage ? ' - التفاصيل: ' + payload.technicalMessage : ''), true);
+            })
+            .then(function () {
+                setBusy(false);
             });
     }
 

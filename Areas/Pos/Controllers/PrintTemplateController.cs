@@ -225,7 +225,7 @@ namespace MyERP.Areas.Pos.Controllers
                 Nationality = 1,
                 BranchId = 1,
                 BranchName = "الفرع الرئيسي",
-                CardSource = "الفرع الرئيسي"
+                CardSource = string.Empty
             };
         }
     }

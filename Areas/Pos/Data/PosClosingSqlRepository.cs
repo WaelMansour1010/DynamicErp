@@ -966,7 +966,7 @@ VALUES
                 new SqlParameter("@RecordDate", recordDate.Date),
                 new SqlParameter("@NoteId", noteId),
                 new SqlParameter("@UserId", userId),
-                new SqlParameter("@DevSerial", GetDevSerial(connection, transaction, recordDate)),
+                new SqlParameter("@DevSerial", BuildDevSerial(recordDate, voucherId)),
                 new SqlParameter("@BranchId", branchId));
             return 1;
         }
@@ -1041,10 +1041,9 @@ WHERE u.UserId = @userId";
             throw new InvalidOperationException("لم يتم العثور على حساب الفرع رقم " + accountId);
         }
 
-        private string GetDevSerial(SqlConnection connection, SqlTransaction transaction, DateTime recordDate)
+        private static string BuildDevSerial(DateTime recordDate, int voucherId)
         {
-            var count = ExecuteScalarInt(connection, transaction, "SELECT COUNT(DISTINCT Double_Entry_Vouchers_ID) + 1 FROM dbo.DOUBLE_ENTREY_VOUCHERS WHERE RecordDate = @date", new SqlParameter("@date", recordDate.Date)).GetValueOrDefault(1);
-            return recordDate.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + "0" + count.ToString(CultureInfo.InvariantCulture);
+            return recordDate.ToString("yyyyMMdd", CultureInfo.InvariantCulture) + "-" + voucherId.ToString(CultureInfo.InvariantCulture);
         }
 
         private IList<PosClosingVoucherLineDto> GetVoucherLines(SqlConnection connection, SqlTransaction transaction, IList<int> noteIds)

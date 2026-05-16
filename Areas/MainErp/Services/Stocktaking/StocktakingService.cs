@@ -37,6 +37,11 @@ namespace MyERP.Areas.MainErp.Services.Stocktaking
             return _repository.GetDetails(id);
         }
 
+        public IList<StocktakingItemLookup> SearchItems(string term, int limit)
+        {
+            return _repository.SearchItems(term, limit);
+        }
+
         public StocktakingSaveResult Save(StocktakingSaveRequest request, MainErpUserContext user)
         {
             var validation = Validate(request);

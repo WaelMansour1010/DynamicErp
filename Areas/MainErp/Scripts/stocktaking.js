@@ -8,6 +8,10 @@
     function intOrNull(id) { var v = val(id); return v === '' ? null : parseInt(v, 10); }
     function dateOrNull(id) { var v = val(id); return v || null; }
     function checked(id) { var el = qs(id); return !!(el && el.checked); }
+    var itemLookupUrl = page.getAttribute('data-lookup-items-url');
+    var itemLookupTimer = null;
+    var itemLookupCache = {};
+    var itemLookupByValue = {};
 
     function show(message, success) {
         var status = qs('gardStatus');
@@ -45,6 +49,74 @@
         xhr.send();
     }
 
+    function itemDisplay(item) {
+        return [item.Code, item.Text].filter(Boolean).join(' - ');
+    }
+
+    function rememberItem(item) {
+        if (!item) return;
+        var display = itemDisplay(item);
+        itemLookupByValue[display] = item;
+    }
+
+    function seedItemLookupFromDatalist() {
+        var list = qs('gardItemLookupList');
+        if (!list) return;
+        Array.prototype.forEach.call(list.querySelectorAll('option'), function (option) {
+            var id = option.getAttribute('data-id');
+            if (!id) return;
+            itemLookupByValue[option.value] = {
+                Id: id,
+                Text: option.value,
+                Code: '',
+                Price: option.getAttribute('data-price') || 0,
+                DefaultUnitId: option.getAttribute('data-unit') || '',
+                DefaultUnitName: option.getAttribute('data-unit-name') || ''
+            };
+        });
+    }
+
+    function renderItemDatalist(items) {
+        var list = qs('gardItemLookupList');
+        if (!list) return;
+        list.innerHTML = '';
+        (items || []).forEach(function (item) {
+            rememberItem(item);
+            var option = document.createElement('option');
+            option.value = itemDisplay(item);
+            option.setAttribute('data-id', item.Id || '');
+            option.setAttribute('data-price', item.Price || 0);
+            option.setAttribute('data-unit', item.DefaultUnitId || '');
+            option.setAttribute('data-unit-name', item.DefaultUnitName || '');
+            list.appendChild(option);
+        });
+    }
+
+    function lookupItems(term) {
+        term = (term || '').trim();
+        if (!itemLookupUrl || term.length < 2) return;
+        if (itemLookupCache[term]) {
+            renderItemDatalist(itemLookupCache[term]);
+            return;
+        }
+
+        get(itemLookupUrl + '?term=' + encodeURIComponent(term), function (response) {
+            itemLookupCache[term] = response.items || [];
+            renderItemDatalist(itemLookupCache[term]);
+        });
+    }
+
+    function applySelectedItem(input) {
+        var row = input.closest('tr');
+        var item = itemLookupByValue[input.value];
+        if (!row || !item) return false;
+        row.querySelector('.line-item').value = item.Id || '';
+        row.querySelector('.line-price').value = item.Price || 0;
+        row.querySelector('.line-unit').value = item.DefaultUnitId || '';
+        updateTotals();
+        return true;
+    }
+
     function setMode(mode) {
         mode = mode === 'FrmNewGard1' ? 'FrmNewGard1' : 'FrmNewGard';
         qs('gardMode').value = mode;
@@ -60,6 +132,7 @@
         var row = body.querySelector('tr:last-child');
         data = data || {};
         row.querySelector('.line-item').value = data.ItemId || '';
+        row.querySelector('.line-item-search').value = data.ItemCode || data.ItemName ? ((data.ItemCode || '') + (data.ItemCode && data.ItemName ? ' - ' : '') + (data.ItemName || '')) : '';
         row.querySelector('.line-unit').value = data.UnitId || '';
         row.querySelector('.line-count').value = data.Count != null ? data.Count : 1;
         row.querySelector('.line-price').value = data.Price != null ? data.Price : 0;
@@ -225,20 +298,27 @@
     });
 
     document.addEventListener('change', function (event) {
-        var itemSelect = event.target.closest('.line-item');
-        if (itemSelect) {
-            var row = itemSelect.closest('tr');
-            var opt = itemSelect.options[itemSelect.selectedIndex];
-            row.querySelector('.line-price').value = opt.getAttribute('data-price') || 0;
-            row.querySelector('.line-unit').value = opt.getAttribute('data-unit') || '';
-            updateTotals();
+        var itemInput = event.target.closest('.line-item-search');
+        if (itemInput) {
+            applySelectedItem(itemInput);
         }
     });
 
     document.addEventListener('input', function (event) {
         if (event.target.closest('.line-count') || event.target.closest('.line-price')) updateTotals();
+        var itemInput = event.target.closest('.line-item-search');
+        if (itemInput) {
+            if (applySelectedItem(itemInput)) return;
+            var row = itemInput.closest('tr');
+            if (row) {
+                row.querySelector('.line-item').value = '';
+            }
+            clearTimeout(itemLookupTimer);
+            itemLookupTimer = setTimeout(function () { lookupItems(itemInput.value); }, 250);
+        }
     });
 
+    seedItemLookupFromDatalist();
     setMode(val('gardMode'));
     addLine();
 })();

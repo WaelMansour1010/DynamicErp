@@ -192,14 +192,16 @@ ORDER BY d.ID;";
             return LoadLookup("SELECT UnitID, UnitName FROM dbo.TblUnites ORDER BY UnitName", "UnitID", "UnitName");
         }
 
-        public IList<StocktakingItemLookup> LoadItems()
+        public IList<StocktakingItemLookup> SearchItems(string term, int limit)
         {
             var rows = new List<StocktakingItemLookup>();
+            limit = limit <= 0 ? 40 : Math.Min(limit, 80);
+            term = string.IsNullOrWhiteSpace(term) ? null : term.Trim();
             using (var connection = _connectionFactory.CreateOpenConnection())
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = @"
-SELECT TOP 500 i.ItemID, i.ItemCode, i.ItemName, i.HaveSerial, ISNULL(i.CostPrice, ISNULL(i.PurchasePrice, 0)) AS Price,
+SELECT TOP (@Limit) i.ItemID, i.ItemCode, i.ItemName, i.HaveSerial, ISNULL(i.CostPrice, ISNULL(i.PurchasePrice, 0)) AS Price,
        u.UnitID, un.UnitName
 FROM dbo.TblItems i
 OUTER APPLY (
@@ -210,7 +212,11 @@ OUTER APPLY (
 ) u
 LEFT JOIN dbo.TblUnites un ON un.UnitID = u.UnitID
 WHERE ISNULL(i.IsArchive, 0) = 0 AND ISNULL(i.ItemType, 0) = 0
+  AND (@Term IS NULL OR i.ItemCode LIKE @LikeTerm OR i.ItemName LIKE @LikeTerm OR i.barCodeNO LIKE @LikeTerm)
 ORDER BY i.ItemCode, i.ItemName;";
+                command.Parameters.Add("@Limit", SqlDbType.Int).Value = limit;
+                AddNullable(command, "@Term", SqlDbType.NVarChar, term, 100);
+                AddNullable(command, "@LikeTerm", SqlDbType.NVarChar, term == null ? null : "%" + term + "%", 120);
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
@@ -232,13 +238,31 @@ ORDER BY i.ItemCode, i.ItemName;";
             return rows;
         }
 
+        public IList<StocktakingItemLookup> LoadItems()
+        {
+            return SearchItems(null, 25);
+        }
+
         public StocktakingSaveResult Save(StocktakingSaveRequest request, MainErpUserContext user)
         {
+            var validation = ValidateRequest(request);
+            if (!string.IsNullOrWhiteSpace(validation))
+            {
+                return new StocktakingSaveResult { Success = false, Message = validation };
+            }
+
             using (var connection = _connectionFactory.CreateOpenConnection())
             using (var transaction = connection.BeginTransaction())
             {
                 try
                 {
+                    validation = ValidateReferences(connection, transaction, request);
+                    if (!string.IsNullOrWhiteSpace(validation))
+                    {
+                        transaction.Rollback();
+                        return new StocktakingSaveResult { Success = false, Message = validation };
+                    }
+
                     var isNew = !request.Id.HasValue || request.Id.Value <= 0;
                     var id = isNew ? NextManualId(connection, transaction, "Transactions", "Transaction_ID", null) : request.Id.Value;
                     var serial = string.IsNullOrWhiteSpace(request.Serial)
@@ -283,6 +307,12 @@ ORDER BY i.ItemCode, i.ItemName;";
             {
                 try
                 {
+                    if (IsProtectedStocktaking(connection, transaction, id))
+                    {
+                        transaction.Rollback();
+                        return new StocktakingSaveResult { Success = false, Message = "لا يمكن حذف مستند الجرد لأنه مغلق أو مرتبط بتسوية/حركات لاحقة." };
+                    }
+
                     DeleteDetails(connection, transaction, id);
                     using (var command = connection.CreateCommand())
                     {
@@ -301,6 +331,130 @@ ORDER BY i.ItemCode, i.ItemName;";
                     transaction.Rollback();
                     return new StocktakingSaveResult { Success = false, Message = "تعذر حذف الجرد: " + ex.Message };
                 }
+            }
+        }
+
+        private static string ValidateRequest(StocktakingSaveRequest request)
+        {
+            if (request == null)
+            {
+                return "لا يمكن حفظ الجرد: بيانات المستند غير موجودة.";
+            }
+
+            request.Lines = request.Lines ?? new List<StocktakingLineViewModel>();
+
+            if (!request.Date.HasValue)
+            {
+                return "تاريخ الجرد مطلوب.";
+            }
+
+            if (!request.StoreId.HasValue || request.StoreId.Value <= 0)
+            {
+                return "يجب اختيار المخزن قبل حفظ الجرد.";
+            }
+
+            if (!request.BranchId.HasValue || request.BranchId.Value <= 0)
+            {
+                return "يجب اختيار الفرع قبل حفظ الجرد.";
+            }
+
+            if (request.FromDate.HasValue && request.ToDate.HasValue && request.FromDate.Value.Date > request.ToDate.Value.Date)
+            {
+                return "فترة الجرد غير صحيحة: تاريخ البداية بعد تاريخ النهاية.";
+            }
+
+            var validLines = 0;
+            foreach (var line in request.Lines)
+            {
+                if (line == null || !line.ItemId.HasValue || line.ItemId.Value <= 0)
+                {
+                    continue;
+                }
+
+                validLines++;
+                if (line.Count < 0)
+                {
+                    return "كمية الجرد لا يجوز أن تكون سالبة.";
+                }
+
+                if (line.Price < 0)
+                {
+                    return "سعر الجرد لا يجوز أن يكون سالبًا.";
+                }
+
+                if (line.GardQty.HasValue && line.GardQty.Value < 0)
+                {
+                    return "كمية الرصيد الدفتري لا يجوز أن تكون سالبة.";
+                }
+
+                if (line.ExpiryDate.HasValue && line.ProductionDate.HasValue && line.ExpiryDate.Value.Date < line.ProductionDate.Value.Date)
+                {
+                    return "تاريخ انتهاء التشغيلة لا يمكن أن يسبق تاريخ الإنتاج.";
+                }
+            }
+
+            return validLines == 0 ? "يجب إضافة صنف واحد على الأقل قبل حفظ الجرد." : null;
+        }
+
+        private static string ValidateReferences(SqlConnection connection, SqlTransaction transaction, StocktakingSaveRequest request)
+        {
+            if (!Exists(connection, transaction, "TblBranchesData", "branch_id", request.BranchId.Value))
+            {
+                return "الفرع المحدد غير موجود.";
+            }
+
+            if (!Exists(connection, transaction, "TblStore", "StoreID", request.StoreId.Value))
+            {
+                return "المخزن المحدد غير موجود.";
+            }
+
+            var storeBranchId = ScalarInt(connection, transaction, "SELECT BranchId FROM dbo.TblStore WHERE StoreID = @Id", request.StoreId.Value);
+            if (storeBranchId.HasValue && storeBranchId.Value > 0 && storeBranchId.Value != request.BranchId.Value)
+            {
+                return "فرع المستند لا يطابق فرع المخزن المحدد.";
+            }
+
+            foreach (var line in request.Lines)
+            {
+                if (line == null || !line.ItemId.HasValue || line.ItemId.Value <= 0)
+                {
+                    continue;
+                }
+
+                if (!Exists(connection, transaction, "TblItems", "ItemID", line.ItemId.Value))
+                {
+                    return "يوجد صنف غير موجود في قاعدة البيانات.";
+                }
+
+                if (line.UnitId.HasValue && line.UnitId.Value > 0 && !UnitBelongsToItem(connection, transaction, line.ItemId.Value, line.UnitId.Value))
+                {
+                    return "وحدة القياس المختارة غير مرتبطة بالصنف في أحد بنود الجرد.";
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsProtectedStocktaking(SqlConnection connection, SqlTransaction transaction, int id)
+        {
+            using (var command = connection.CreateCommand())
+            {
+                command.Transaction = transaction;
+                command.CommandText = @"
+SELECT COUNT(1)
+FROM dbo.Transactions
+WHERE Transaction_ID = @Id
+  AND Transaction_Type = @Type
+  AND (
+        ISNULL(Closed, 0) <> 0
+     OR ISNULL(IsPosted, 0) <> 0
+     OR ISNULL(StartSetelment, 0) <> 0
+     OR NULLIF(LTRIM(RTRIM(ISNULL(Nots, N''))), N'') IS NOT NULL
+     OR NULLIF(LTRIM(RTRIM(ISNULL(Nots2, N''))), N'') IS NOT NULL
+  );";
+                command.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+                command.Parameters.Add("@Type", SqlDbType.Int).Value = StocktakingTransactionType;
+                return Convert.ToInt32(command.ExecuteScalar()) > 0;
             }
         }
 
@@ -493,6 +647,45 @@ VALUES
                 command.Transaction = transaction;
                 command.CommandText = "SELECT ISNULL(MAX(CASE WHEN ISNUMERIC(" + columnName + ") = 1 THEN CONVERT(int, " + columnName + ") ELSE 0 END), 0) + 1 FROM dbo." + tableName + " WITH (UPDLOCK, HOLDLOCK)" + (string.IsNullOrWhiteSpace(whereClause) ? "" : " WHERE " + whereClause);
                 return Convert.ToInt32(command.ExecuteScalar());
+            }
+        }
+
+        private static bool Exists(SqlConnection connection, SqlTransaction transaction, string tableName, string columnName, int id)
+        {
+            using (var command = connection.CreateCommand())
+            {
+                command.Transaction = transaction;
+                command.CommandText = "SELECT COUNT(1) FROM dbo." + tableName + " WHERE " + columnName + " = @Id";
+                command.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+                return Convert.ToInt32(command.ExecuteScalar()) > 0;
+            }
+        }
+
+        private static int? ScalarInt(SqlConnection connection, SqlTransaction transaction, string sql, int id)
+        {
+            using (var command = connection.CreateCommand())
+            {
+                command.Transaction = transaction;
+                command.CommandText = sql;
+                command.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+                var value = command.ExecuteScalar();
+                return value == null || value == DBNull.Value ? (int?)null : Convert.ToInt32(value);
+            }
+        }
+
+        private static bool UnitBelongsToItem(SqlConnection connection, SqlTransaction transaction, int itemId, int unitId)
+        {
+            using (var command = connection.CreateCommand())
+            {
+                command.Transaction = transaction;
+                command.CommandText = @"
+IF EXISTS (SELECT 1 FROM sys.tables WHERE name = N'TblItemsUnits')
+    SELECT COUNT(1) FROM dbo.TblItemsUnits WHERE ItemID = @ItemId AND UnitID = @UnitId
+ELSE
+    SELECT COUNT(1) FROM dbo.TblUnites WHERE UnitID = @UnitId;";
+                command.Parameters.Add("@ItemId", SqlDbType.Int).Value = itemId;
+                command.Parameters.Add("@UnitId", SqlDbType.Int).Value = unitId;
+                return Convert.ToInt32(command.ExecuteScalar()) > 0;
             }
         }
 

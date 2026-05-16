@@ -1,0 +1,154 @@
+@model MyERP.Areas.MainErp.ViewModels.Branches.BranchesIndexViewModel
+@using System.Linq
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    ViewBag.Title = "الفروع وربط الحسابات";
+    var selected = Model.Selected ?? new MyERP.Areas.MainErp.ViewModels.Branches.BranchEditViewModel();
+    var canAdd = Model.Permissions != null && Model.Permissions.CanAdd;
+    var canEdit = Model.Permissions != null && Model.Permissions.CanEdit;
+    var canDelete = Model.Permissions != null && Model.Permissions.CanDelete;
+}
+
+<link href="@Url.Content("~/Areas/MainErp/Content/branches.css?v=20260514")" rel="stylesheet" />
+
+<section class="main-erp-panel branches-page" dir="rtl" id="branchesPage"
+         data-new-url="@Url.Action("New", "Branches", new { area = "MainErp" })"
+         data-details-url="@Url.Action("Details", "Branches", new { area = "MainErp" })"
+         data-save-url="@Url.Action("Save", "Branches", new { area = "MainErp" })"
+         data-delete-url="@Url.Action("Delete", "Branches", new { area = "MainErp" })">
+    <header class="branches-hero">
+        <div>
+            <span>إعدادات الفروع والحسابات</span>
+            <h2>الفروع وربط الحسابات</h2>
+            <p>إدارة حديثة لإعدادات الربط مع الحسابات، مع الحفاظ على جدول <b>branches</b> وأعمدته لأنها مستخدمة في النظام بالكامل.</p>
+        </div>
+        <div class="branches-actions">
+            <button type="button" id="branchNewBtn" @(canAdd ? "" : "disabled")><i class="fas fa-plus"></i> جديد</button>
+            <button type="button" id="branchSaveBtn" @((canAdd || canEdit) ? "" : "disabled")><i class="fas fa-save"></i> حفظ</button>
+            <button type="button" class="danger" id="branchDeleteBtn" @(canDelete && selected.BranchId.HasValue ? "" : "disabled")><i class="fas fa-trash"></i> حذف</button>
+        </div>
+    </header>
+
+    @Html.AntiForgeryToken()
+    <div id="branchStatus" class="branches-status" hidden></div>
+
+    <datalist id="branchAccountsList">
+        @foreach (var account in Model.Accounts)
+        {
+            <option value="@account.Code">@account.Display</option>
+        }
+    </datalist>
+
+    <div class="branches-layout">
+        <aside class="branches-sidebar">
+            <div class="branches-card">
+                <h3>بحث الفروع</h3>
+                <form method="get" action="@Url.Action("Index", "Branches", new { area = "MainErp" })" class="branches-search-form">
+                    <input type="search" name="searchText" value="@Model.SearchText" placeholder="رقم / اسم / هاتف الفرع" />
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </form>
+                <div class="branches-list">
+                    @foreach (var branch in Model.Results)
+                    {
+                        <button type="button" class="branch-row @(selected.BranchId == branch.Id ? "active" : "")" data-id="@branch.Id">
+                            <strong>@branch.NameAr</strong>
+                            <span>@branch.Id - @(String.IsNullOrWhiteSpace(branch.ActivityName) ? "بدون نشاط" : branch.ActivityName)</span>
+                            <small>@(String.IsNullOrWhiteSpace(branch.ManagerName) ? branch.Phone : branch.ManagerName)</small>
+                        </button>
+                    }
+                    @if (Model.Results.Count == 0)
+                    {
+                        <div class="branches-empty">لا توجد فروع مطابقة.</div>
+                    }
+                </div>
+            </div>
+        </aside>
+
+        <main class="branches-workspace">
+            <section class="branches-card branches-identity">
+                <div class="branches-section-head">
+                    <div>
+                        <span>بيانات الفرع الأساسية</span>
+                        <h3 id="branchTitle">@(selected.BranchId.HasValue ? "تعديل فرع" : "فرع جديد")</h3>
+                    </div>
+                    <strong id="branchBadge">@(selected.BranchId.HasValue ? selected.BranchId.Value.ToString() : "جديد")</strong>
+                </div>
+
+                <div class="branches-form-grid">
+                    <label>رقم الفرع
+                        <input type="number" id="BranchId" value="@selected.BranchId" min="1" required />
+                    </label>
+                    <label>اسم الفرع
+                        <input type="text" id="NameAr" maxlength="50" value="@selected.NameAr" required />
+                    </label>
+                    <label>English Name
+                        <input type="text" id="NameEn" maxlength="50" value="@selected.NameEn" />
+                    </label>
+                    <label>تليفون الفرع
+                        <input type="text" id="Phone" maxlength="50" value="@selected.Phone" />
+                    </label>
+                    <label>مدير الفرع
+                        <select id="ManagerId">
+                            <option value="">بدون</option>
+                            @foreach (var employee in Model.Employees)
+                            {
+                                <option value="@employee.Id" @(selected.ManagerId.HasValue && selected.ManagerId.Value.ToString() == employee.Id ? "selected" : "")>@employee.Text</option>
+                            }
+                        </select>
+                    </label>
+                    <label>النشاط
+                        <select id="ActivityTypeId">
+                            <option value="">بدون</option>
+                            @foreach (var activity in Model.ActivityTypes)
+                            {
+                                <option value="@activity.Id" @(selected.ActivityTypeId.HasValue && selected.ActivityTypeId.Value.ToString() == activity.Id ? "selected" : "")>@activity.Text</option>
+                            }
+                        </select>
+                    </label>
+                    <label class="branches-span-all">عنوان الفرع
+                        <textarea id="Address" maxlength="50">@selected.Address</textarea>
+                    </label>
+                </div>
+            </section>
+
+            <section class="branches-card">
+                <div class="branches-section-head">
+                    <div>
+                        <span>ربط الحسابات</span>
+                        <h3>أعمدة جدول branches المعتمدة</h3>
+                    </div>
+                    <input type="search" id="branchAccountSearch" placeholder="ابحث داخل الحسابات..." />
+                </div>
+
+                <nav class="branches-tabs">
+                    @{ var categories = Model.AccountDefinitions.Select(x => x.Category).Distinct().ToList(); }
+                    @for (var i = 0; i < categories.Count; i++)
+                    {
+                        <button type="button" class="@(i == 0 ? "active" : "")" data-category="@categories[i]">@categories[i]</button>
+                    }
+                </nav>
+
+                @for (var i = 0; i < categories.Count; i++)
+                {
+                    var category = categories[i];
+                    <div class="branches-account-panel @(i == 0 ? "active" : "")" data-panel="@category">
+                        <div class="branches-account-grid">
+                            @foreach (var definition in Model.AccountDefinitions.Where(x => x.Category == category))
+                            {
+                                var value = selected.Accounts != null && selected.Accounts.ContainsKey(definition.FieldName) ? selected.Accounts[definition.FieldName] : "";
+                                <label data-account-field>
+                                    <span>@definition.Label <small>@definition.FieldName</small></span>
+                                    <input type="text" class="account-field" data-field="@definition.FieldName" list="branchAccountsList" value="@value" placeholder="كود الحساب" />
+                                </label>
+                            }
+                        </div>
+                    </div>
+                }
+            </section>
+        </main>
+    </div>
+</section>
+
+@section scripts {
+    <script src="@Url.Content("~/Areas/MainErp/Scripts/branches.js?v=20260514")"></script>
+}

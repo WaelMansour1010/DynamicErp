@@ -20,7 +20,7 @@
     <div class="main-erp-title-row">
         <div>
             <h3>@Model.ArabicTitle</h3>
-            <p>Workspace تشغيلي من `Transactions` و `Transaction_Details` مع Trace للمدفوعات والقيود وتأثير المخزون. كل العمليات الخطرة معطلة.</p>
+            <p>مساحة تشغيلية تعرض الفاتورة والبنود والمدفوعات والقيود وأثر المخزون، مع إبقاء إجراءات الترحيل والحذف تحت صلاحيات واعتماد واضح.</p>
         </div>
         <div class="main-erp-actions">
             <a class="main-erp-button" href="@Url.Action("Index", controllerName, new { area = "MainErp" })">رجوع</a>
@@ -64,17 +64,17 @@
             else
             {
                 <a class="main-erp-button" href="@Url.Action("Report", "WorkshopSales", new { area = "MainErp", id = Model.TransactionId })">تقرير الورشة</a>
-                <button type="button" class="main-erp-button" disabled title="Not migrated yet">حفظ</button>
+                <button type="button" class="main-erp-button" disabled title="الحفظ غير متاح لهذه الفاتورة في وضع المراجعة">حفظ تحت المراجعة</button>
             }
             @if (!isPump)
             {
-                <button type="button" class="main-erp-button" disabled title="Read Only Mode">ترحيل</button>
+                <button type="button" class="main-erp-button" disabled title="الترحيل يحتاج صلاحية واعتماد الدورة">ترحيل تحت الاعتماد</button>
             }
             @if (!isPump)
             {
-                <button type="button" class="main-erp-button" disabled title="Read Only Mode">حذف</button>
+                <button type="button" class="main-erp-button" disabled title="الحذف غير متاح لهذه الفاتورة في وضع المراجعة">حذف تحت المراجعة</button>
             }
-            <button type="button" class="main-erp-button" disabled title="Preview only - no write">معاينة تأثير الحفظ</button>
+            <button type="button" class="main-erp-button" disabled title="معاينة فقط دون كتابة">معاينة الأثر</button>
         </div>
     </div>
 
@@ -85,12 +85,12 @@
 
     <div class="main-erp-cockpit-header">
         <div>
-            <span class="main-erp-eyebrow">FrmSaleBill6 / Transaction_Type @Model.TransactionType / TypeInvoice @Model.TypeInvoice</span>
+            <span class="main-erp-eyebrow">نوع الحركة @Model.TransactionType / نوع الفاتورة @Model.TypeInvoice</span>
             <h2>@(String.IsNullOrWhiteSpace(Model.CustomerName) ? Model.CashCustomerName : Model.CustomerName)</h2>
             <p>@Model.NoteSerial1 - @String.Format("{0:yyyy-MM-dd}", Model.TransactionDate)</p>
         </div>
         <div class="main-erp-status-stack">
-            <span class="main-erp-badge">Read-only</span>
+            <span class="main-erp-badge">مراجعة آمنة</span>
             @if (Model.IsPosted == true)
             {
                 <span class="main-erp-badge is-success">مرحل</span>
@@ -120,11 +120,11 @@
         <section>
             <h4>ملخص الفاتورة</h4>
             <div class="main-erp-grid-toolbar">
-                <span>مرحلة VB6: <strong>قراءة من FrmSaleBill6</strong></span>
-                <span>SaveData: <strong>معطل</strong></span>
-                <span>CreateIssueVoucher2: <strong>Trace فقط</strong></span>
-                <span>CreateRecieveVoucher: <strong>Trace فقط</strong></span>
-                <span>CREATE_VOUCHER_GE/createVoucher2: <strong>عرض قيود فقط</strong></span>
+                <span>المصدر: <strong>بيانات الفاتورة الأصلية</strong></span>
+                <span>الحفظ: <strong>تحت المراجعة</strong></span>
+                <span>صرف المخزون: <strong>عرض أثر</strong></span>
+                <span>استلام المخزون: <strong>عرض أثر</strong></span>
+                <span>القيود: <strong>عرض ومراجعة</strong></span>
             </div>
             <div class="main-erp-two-column">
                 <dl class="main-erp-details">
@@ -136,7 +136,7 @@
                     <dt>الخزينة</dt><dd>@Model.BoxId</dd>
                     <dt>Prefix / FullCode</dt><dd>@Model.Prefix @Model.FullCode</dd>
                     <dt>CBoBasedON</dt><dd>@Model.CboBasedOn</dd>
-                    <dt>POSBillType</dt><dd>@Model.PosBillType</dd>
+                    <dt>نوع الفاتورة التشغيلي</dt><dd>@Model.PosBillType</dd>
                 </dl>
                 <dl class="main-erp-details">
                     <dt>طريقة الدفع</dt><dd>@Model.PaymentTypeLabel</dd>
@@ -323,11 +323,11 @@
                 <div class="main-erp-kpi-card"><span>عدد البنود</span><strong>@Model.Lines.Count</strong></div>
                 <div class="main-erp-kpi-card"><span>إجمالي الكمية</span><strong>@moneyValue(Model.InventoryQuantityTotal)</strong></div>
                 <div class="main-erp-kpi-card"><span>تكلفة البنود</span><strong>@moneyValue(Model.LinesCost)</strong></div>
-                <div class="main-erp-kpi-card"><span>المخزن</span><strong>@Model.StoreId</strong><small>الأثر النهائي يحتاج مراجعة VB6</small></div>
+                <div class="main-erp-kpi-card"><span>المخزن</span><strong>@Model.StoreId</strong><small>الأثر النهائي تحت المراجعة</small></div>
                 <div class="main-erp-kpi-card"><span>فواتير الصرف</span><strong>@Model.RelatedInventoryIssueCount</strong><small>Transaction_Type = 19</small></div>
                 <div class="main-erp-kpi-card"><span>فواتير الاستلام</span><strong>@Model.RelatedInventoryReceiptCount</strong><small>Transaction_Type = 20</small></div>
             </div>
-            <div class="main-erp-warning">المعروض هنا قراءة فقط. VB6 ينشئ مستندات صرف/استلام مرتبطة من CreateIssueVoucher2 و CreateRecieveVoucher عبر Transactions.nots و Transactions.nots2، ولا يتم هنا تنفيذ أي إنشاء أو تعديل.</div>
+            <div class="main-erp-warning">المعروض هنا قراءة فقط. دورة المخزون تنشئ مستندات صرف/استلام مرتبطة عبر Transactions.nots و Transactions.nots2، ولا يتم هنا تنفيذ أي إنشاء أو تعديل.</div>
             @if (Model.RelatedInventoryTransactions.Count == 0)
             {
                 <div class="main-erp-empty">لا توجد مستندات صرف أو استلام مرتبطة بهذه الفاتورة عبر nots/nots2.</div>
@@ -483,13 +483,13 @@
 
         <section>
             <h4>الطباعة والمرفقات</h4>
-            <div class="main-erp-warning">الطباعة وتقارير FrmSaleBill6 قراءة خريطة فقط الآن. هذه الشاشة لا تستدعي Crystal Reports ولا تنفذ أي تحديث.</div>
+            <div class="main-erp-warning">الطباعة والتقارير معروضة كخريطة تشغيلية فقط الآن. هذه الشاشة لا تستدعي Crystal Reports ولا تنفذ أي تحديث.</div>
             <div class="main-erp-table-wrap">
                 <table class="main-erp-table">
-                    <thead><tr><th>المسار في VB6</th><th>الاستخدام</th><th>حالة الويب</th></tr></thead>
+                    <thead><tr><th>التقرير</th><th>الاستخدام</th><th>حالة الويب</th></tr></thead>
                     <tbody>
-                        <tr><td>PrintReport / cmdPrint*</td><td>طباعة فاتورة المبيعات حسب وضع الشاشة</td><td>غير منفذ - Read-only placeholder</td></tr>
-                        <tr><td>PrintCash</td><td>طباعة كاش/إيصال عند مسارات دفع معينة</td><td>غير منفذ</td></tr>
+                        <tr><td>تقارير الفاتورة</td><td>طباعة فاتورة المبيعات حسب وضع الشاشة</td><td>تحتاج اعتماد قالب التقرير</td></tr>
+                        <tr><td>إيصال الدفع</td><td>طباعة كاش/إيصال عند مسارات دفع معينة</td><td>تحتاج اعتماد قالب التقرير</td></tr>
                         <tr><td>DailyPumpR.Rpt</td><td>تقرير المضخات مع TypeInvoice = 2 و tblPumpType</td><td>موثق فقط، لا يتم تشغيل Crystal</td></tr>
                     </tbody>
                 </table>

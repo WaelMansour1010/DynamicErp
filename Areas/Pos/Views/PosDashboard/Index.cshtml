@@ -8,6 +8,12 @@
     if (string.IsNullOrWhiteSpace(initialScreenUrl)) { initialScreenUrl = "about:blank"; }
     var canViewReports = posContext != null && posContext.CanViewReports;
     var isAdmin = posContext != null && (posContext.UserType.GetValueOrDefault(-1) == 0 || posContext.IsFullAccess);
+    var isTellerOnly = posContext != null
+        && !isAdmin
+        && (posContext.UserType.GetValueOrDefault(-1) == 2
+            || posContext.CanTeller
+            || string.Equals((posContext.UserCategory ?? string.Empty).Trim(), "تلر", StringComparison.OrdinalIgnoreCase)
+            || string.Equals((posContext.UserCategory ?? string.Empty).Trim(), "Teller", StringComparison.OrdinalIgnoreCase));
     var currentBranchName = posContext != null && !string.IsNullOrWhiteSpace(posContext.BranchName) ? posContext.BranchName : "غير محدد";
     var currentBoxName = posContext != null && !string.IsNullOrWhiteSpace(posContext.BoxName) ? posContext.BoxName : "غير محدد";
     var logoPath = "~/Areas/Pos/assets/images/company-logo.png";
@@ -63,15 +69,19 @@
     <script src="@Url.Content("~/assets/libs/chart-js/Chart.bundle.min.js")"></script>
 </head>
 <body>
-    <div class="pos-main-shell" dir="rtl"
+    <div class="pos-main-shell @(isTellerOnly ? "is-teller-only-shell" : "")" dir="rtl"
          data-dashboard-summary-url="@Url.Action("Summary", "PosDashboard", new { area = "Pos" })"
          data-sales-url="@Url.Content("~/Pos/PosTransaction/Index")"
+         data-is-teller-only="@(isTellerOnly ? "true" : "false")"
          data-is-admin="@(isAdmin ? "true" : "false")">
-        @Html.Partial("_Sidebar")
-        <button type="button" class="pos-mobile-nav-toggle" id="posMobileNavToggle" aria-label="فتح القائمة" title="فتح القائمة">
-            @ShellIcon("menu")
-        </button>
-        <div class="pos-sidebar-backdrop" id="posSidebarBackdrop"></div>
+        @if (!isTellerOnly)
+        {
+            @Html.Partial("_Sidebar")
+            <button type="button" class="pos-mobile-nav-toggle" id="posMobileNavToggle" aria-label="فتح القائمة" title="فتح القائمة">
+                @ShellIcon("menu")
+            </button>
+            <div class="pos-sidebar-backdrop" id="posSidebarBackdrop"></div>
+        }
 
         <main class="pos-main-content">
             <header class="pos-main-topbar">
@@ -228,6 +238,7 @@
             var navLoadingOverlay = document.getElementById("posMainLoadingOverlay");
             var navLoadingText = document.getElementById("posMainLoadingText");
             var navigationLoading = false;
+            var dashboardLoading = false;
             var navigationTimer = null;
             var frameReadyTimer = null;
             var charts = {};
@@ -698,7 +709,11 @@
 
             function loadAdminDashboard(loadAdvanced) {
                 if (!shell || shell.getAttribute("data-is-admin") !== "true") { return; }
+                if (dashboardLoading) { return; }
+                dashboardLoading = true;
                 loadAdvanced = loadAdvanced === true;
+                var reloadButton = document.getElementById("reloadAdminDashboardBtn");
+                if (reloadButton) { reloadButton.disabled = true; reloadButton.innerText = "جاري التحميل..."; }
                 var message = document.getElementById("adminDashboardMessage");
                 if (message) { message.innerText = loadAdvanced ? "جاري تحميل مؤشرات الأداء..." : "جاري تحميل المؤشرات الأساسية..."; }
                 applyPeriodDates();
@@ -718,6 +733,8 @@
                     try { response = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
                     if (xhr.status < 200 || xhr.status >= 300 || !response || !response.success) {
                         if (message) { message.innerText = (response && response.message) || "تعذر تحميل لوحة التحكم"; }
+                        dashboardLoading = false;
+                        if (reloadButton) { reloadButton.disabled = false; reloadButton.innerText = "تحميل مؤشرات الأداء"; }
                         hideNavigationLoading();
                         return;
                     }
@@ -746,6 +763,8 @@
                         for (var chartName in charts) {
                             if (charts.hasOwnProperty(chartName) && charts[chartName]) { charts[chartName].destroy(); charts[chartName] = null; }
                         }
+                        dashboardLoading = false;
+                        if (reloadButton) { reloadButton.disabled = false; reloadButton.innerText = "تحميل مؤشرات الأداء"; }
                         hideNavigationLoading();
                         return;
                     }
@@ -819,11 +838,15 @@
                         "صافي التحصيل",
                         (data.OperationTypeSummary || []).map(function (x) { return parseFloat(x.FeesTotal || 0); }),
                         "الرسوم");
+                    dashboardLoading = false;
+                    if (reloadButton) { reloadButton.disabled = false; reloadButton.innerText = "تحميل مؤشرات الأداء"; }
                     hideNavigationLoading();
                 };
                 xhr.onerror = function () {
                     if (message) { message.innerText = "تعذر تحميل لوحة التحكم"; }
                     if (navLoadingText) { navLoadingText.innerText = "تعذر تحميل الشاشة. برجاء المحاولة مرة أخرى."; }
+                    dashboardLoading = false;
+                    if (reloadButton) { reloadButton.disabled = false; reloadButton.innerText = "تحميل مؤشرات الأداء"; }
                     window.setTimeout(hideNavigationLoading, 1200);
                 };
                 xhr.send();

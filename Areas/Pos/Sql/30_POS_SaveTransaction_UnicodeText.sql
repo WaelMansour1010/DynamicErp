@@ -26,15 +26,35 @@ AND EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID(N'dbo.Transact
     ALTER TABLE dbo.Transactions ALTER COLUMN ManualNo2 NVARCHAR(255) NULL;
 GO
 
-IF OBJECT_ID(N'dbo.POS_DEVSerialAllocator', N'U') IS NULL
+IF OBJECT_ID(N'dbo.POS_SaveAllocationStageLog', N'U') IS NULL
 BEGIN
-    CREATE TABLE dbo.POS_DEVSerialAllocator
+    CREATE TABLE dbo.POS_SaveAllocationStageLog
     (
-        SerialDate DATE NOT NULL CONSTRAINT PK_POS_DEVSerialAllocator PRIMARY KEY,
-        LastSerialNo INT NOT NULL,
-        UpdatedAt DATETIME NOT NULL CONSTRAINT DF_POS_DEVSerialAllocator_UpdatedAt DEFAULT(GETDATE())
+        Id BIGINT IDENTITY(1,1) NOT NULL CONSTRAINT PK_POS_SaveAllocationStageLog PRIMARY KEY,
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_POS_SaveAllocationStageLog_CreatedAt DEFAULT(GETDATE()),
+        Transaction_ID INT NULL,
+        ClientRequestId UNIQUEIDENTIFIER NULL,
+        BranchId INT NULL,
+        StoreID INT NULL,
+        UserID INT NULL,
+        ServiceType NVARCHAR(30) NULL,
+        StageName NVARCHAR(100) NOT NULL,
+        StageOrder INT NOT NULL,
+        DurationMs INT NOT NULL,
+        Detail NVARCHAR(400) NULL,
+        Success BIT NOT NULL,
+        ErrorNumber INT NULL,
+        ErrorMessage NVARCHAR(1000) NULL
     );
 END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_SaveAllocationStageLog_CreatedAt' AND object_id = OBJECT_ID(N'dbo.POS_SaveAllocationStageLog'))
+    CREATE INDEX IX_POS_SaveAllocationStageLog_CreatedAt ON dbo.POS_SaveAllocationStageLog(CreatedAt DESC);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_SaveAllocationStageLog_Stage_CreatedAt' AND object_id = OBJECT_ID(N'dbo.POS_SaveAllocationStageLog'))
+    CREATE INDEX IX_POS_SaveAllocationStageLog_Stage_CreatedAt ON dbo.POS_SaveAllocationStageLog(StageName, CreatedAt DESC);
 GO
 
 SET ANSI_NULLS ON;
@@ -153,10 +173,6 @@ BEGIN
     DECLARE @ErrorState INT;
     DECLARE @OldIssueTransactionID INT;
     DECLARE @AllocationError NVARCHAR(4000);
-    DECLARE @DevSerialDate DATE;
-    DECLARE @DevSerialNo INT;
-    DECLARE @ExistingDevSerialMax INT;
-    DECLARE @ExistingDevVoucherCount INT;
     DECLARE @CardToken NVARCHAR(510);
     DECLARE @CardTokenLockResult INT;
     DECLARE @CardTokenLockResource NVARCHAR(255);
@@ -165,6 +181,10 @@ BEGIN
     DECLARE @ExistingCardSaleTransactionID INT;
     DECLARE @ExistingCardSaleNoteSerial NVARCHAR(100);
     DECLARE @ExistingCardSaleDate DATETIME;
+    DECLARE @StageStart DATETIME;
+    DECLARE @ServiceTypeForLog NVARCHAR(30);
+    DECLARE @ClientRequestGuid UNIQUEIDENTIFIER;
+    DECLARE @ErrorNumberForLog INT;
 
     DECLARE @IssueVouchers TABLE
     (
@@ -174,16 +194,144 @@ BEGIN
         NoteSerial VARCHAR(50) NULL,
         NoteSerial1 VARCHAR(50) NULL
     );
+    DECLARE @AllocationStages TABLE
+    (
+        StageOrder INT IDENTITY(1,1) NOT NULL,
+        StageName NVARCHAR(100) NOT NULL,
+        DurationMs INT NOT NULL,
+        Detail NVARCHAR(400) NULL
+    );
 
     BEGIN TRY
         IF @TransactionDate IS NULL
             RAISERROR('TransactionDate is required.', 16, 1);
+
+        SET @ServiceTypeForLog =
+            CASE
+                WHEN ISNULL(@IsPOS, 0) = 1 THEN N'card'
+                WHEN ISNULL(@TrafficViolations, 0) = 1 THEN N'violations'
+                WHEN ISNULL(@IsCashOut, 0) = 1 THEN N'cash-out'
+                ELSE N'cash-in'
+            END;
+
+        SET @ClientRequestGuid = NULL;
+        IF NULLIF(LTRIM(RTRIM(ISNULL(@NoID, N''))), N'') IS NOT NULL
+           AND LTRIM(RTRIM(@NoID)) LIKE N'[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]'
+            SET @ClientRequestGuid = CONVERT(UNIQUEIDENTIFIER, LTRIM(RTRIM(@NoID)));
 
         IF @BranchId IS NULL
             RAISERROR('BranchId is required.', 16, 1);
 
         IF NOT EXISTS (SELECT 1 FROM @Items)
             RAISERROR('At least one sales detail row is required.', 16, 1);
+
+        /*
+            Phase 1 deadlock mitigation:
+            Resolve stable branch/account/settings lookups before the write
+            transaction. These reads depend only on request inputs and reference
+            setup data, so they do not need to extend the voucher-coding and
+            accounting lock window.
+        */
+        SELECT
+            @RechargeAmount = ISNULL(@RechargeValue, 0),
+            @LineNetAmount = ISNULL(SUM(CONVERT(MONEY, ISNULL(Price, 0)) * CONVERT(MONEY, ISNULL(Quantity, 0))), 0),
+            @VatAmount = ISNULL(SUM(CONVERT(MONEY, ISNULL(Vat, 0))), 0)
+        FROM @Items;
+
+        SET @LineGrossAmount = ISNULL(@LineNetAmount, 0) + ISNULL(@VatAmount, 0);
+
+        SELECT
+            @BranchName = NULLIF(LTRIM(RTRIM(branch_name)), N'')
+        FROM dbo.TblBranchesData
+        WHERE branch_id = @BranchId;
+
+        SET @BranchCustodyParent = NULL;
+        SET @CashParentAccount = NULL;
+        SET @CustomerAccount = NULLIF(dbo.GetMyAccountCode(N'TblCustemers', N'CusID', ISNULL(@CustomerID, 0), N'Account_Code'), N'');
+        SET @CashAccount = NULLIF(dbo.GetMyAccountCode(N'BanksData', N'BankID', ISNULL(@PaymentNetid, 0), N'Account_Code'), N'');
+        SET @UserBox2Account = NULL;
+
+        SELECT TOP (1)
+            @UserBox2Account = NULLIF(box2.Account_Code, N'')
+        FROM dbo.TblUsers AS u
+        INNER JOIN dbo.TblBoxesData AS box2 ON box2.BoxID = u.BoxID2
+        WHERE u.UserID = @UserID;
+
+        IF @CashAccount IS NULL
+        BEGIN
+            SELECT TOP (1)
+                @CashAccount = Account_Code
+            FROM dbo.ACCOUNTS
+            WHERE Parent_Account_Code = @CashParentAccount
+              AND account_name LIKE N'%الشحن%'
+            ORDER BY Account_Code;
+        END;
+
+        SET @WalletAccount = NULL;
+
+        SELECT TOP (1)
+            @WalletAccount = NULLIF(Account_Code, N'')
+        FROM dbo.TblBoxesData
+        WHERE ISNULL(IsWallet, 0) = 1
+          AND BranchId = @BranchId
+        ORDER BY BoxID;
+
+        SET @CardAccount = NULLIF(dbo.GetMyAccountCode(N'TblBoxesData', N'BoxID', ISNULL(@BoxID, 0), N'Account_Code'), N'');
+        SET @SalesAccount = dbo.get_account_code_branch(2, CONVERT(VARCHAR(50), @BranchId));
+        SET @VatAccount = NULL;
+
+        SELECT TOP (1)
+            @VatAccount = NULLIF(AccCir, N'')
+        FROM dbo.TblSettsReqLimK
+        WHERE @TransactionDate BETWEEN RecordDate AND RecordDateTo
+          AND (AccOrTran = 1 OR AccOrTran IS NULL)
+          AND TransType = 21
+        ORDER BY RecordDate DESC, ID DESC;
+
+        -- VB6 PG() uses TblUsers.BankID for the recharge bank account, not PaymentNetid.
+        SELECT TOP (1)
+            @BankAccount = NULLIF(bank.Account_Code, N'')
+        FROM dbo.TblUsers AS u
+        LEFT JOIN dbo.BanksData AS bank ON bank.BankID = u.BankID
+        WHERE u.UserID = @UserID;
+
+        SELECT TOP (1)
+            @BranchBoxAccount = NULLIF(Account_Code, N'')
+        FROM dbo.TblBoxesData
+        WHERE BranchId = @BranchId
+        ORDER BY BoxID;
+
+        SELECT TOP (1)
+            @TerminalBoxAccount = NULLIF(Account_Code, N'')
+        FROM dbo.TblBoxesData
+        WHERE ISNULL(IsTerminalPOS, 0) = 1
+        ORDER BY BoxID;
+
+        SELECT TOP (1)
+            @ItemSupplierAccount = NULLIF(c.Account_Code, N''),
+            @ItemAccount = NULLIF(i.Account_Code, N''),
+            @ItemRevenueAccount = NULLIF(i.Account_Code3, N''),
+            @PricePercent = ISNULL(i.PricePercent, 0)
+        FROM dbo.TblItems AS i
+        LEFT JOIN dbo.TblCustemers AS c ON c.CusID = i.DefaultSupplier
+        WHERE i.ItemID = @ItemIDService;
+
+        SET @BankCommissionAmount = 0;
+
+        SELECT TOP (1)
+            @BankCommissionAmount =
+                CASE
+                    WHEN @RechargeAmount * ISNULL(PercentVisaPur, 0) / 100 < ISNULL(MinVisaPur, 0)
+                        THEN ISNULL(MinVisaPur, 0)
+                    WHEN @RechargeAmount * ISNULL(PercentVisaPur, 0) / 100 > ISNULL(MaxVisaPur, 0)
+                         AND ISNULL(MaxVisaPur, 0) > 0
+                        THEN ISNULL(MaxVisaPur, 0)
+                    ELSE @RechargeAmount * ISNULL(PercentVisaPur, 0) / 100
+                END
+        FROM dbo.TblOptions;
+
+        IF @RechargeAmount = 0
+            SET @BankCommissionAmount = 0;
 
         BEGIN TRANSACTION;
 
@@ -247,12 +395,16 @@ BEGIN
                 the primary SQL Server sequence path only.
             */
             SET @NextIDError = NULL;
+            SET @StageStart = GETDATE();
 
             EXEC dbo.GetNextID_FromSequence
                 @TableName = N'Transactions',
                 @FieldName = N'Transaction_ID',
                 @NextValue = @NextTransactionID OUTPUT,
                 @ErrorMsg = @NextIDError OUTPUT;
+
+            INSERT INTO @AllocationStages(StageName, DurationMs, Detail)
+            VALUES (N'Transaction_ID allocation', DATEDIFF(MILLISECOND, @StageStart, GETDATE()), N'dbo.GetNextID_FromSequence:Transactions.Transaction_ID');
 
             IF @NextIDError IS NOT NULL OR @NextTransactionID IS NULL
             BEGIN
@@ -272,6 +424,7 @@ BEGIN
                 as @Prefix, because CASH numbering settings use NULL prefix with
                 YearDigit=2.
             */
+            SET @StageStart = GETDATE();
             EXEC @VoucherReturnCode = dbo.usp_Voucher_coding_V2
                 @my_branch = @BranchId,
                 @date1 = @TransactionDate,
@@ -287,6 +440,9 @@ BEGIN
                 @mUserID = @UserID,
                 @Result = @NoteSerial1 OUTPUT,
                 @mSerInv = @mSerInv OUTPUT;
+
+            INSERT INTO @AllocationStages(StageName, DurationMs, Detail)
+            VALUES (N'Invoice voucher coding allocation', DATEDIFF(MILLISECOND, @StageStart, GETDATE()), N'dbo.usp_Voucher_coding_V2:Transaction_Type=21;Sanad_No=7');
 
             IF @VoucherReturnCode <> 0 OR @NoteSerial1 IS NULL OR @NoteSerial1 = 'error'
                 RAISERROR('Unable to generate NoteSerial1 using dbo.usp_Voucher_coding_V2.', 16, 1);
@@ -347,7 +503,7 @@ BEGIN
                 IF NOT EXISTS
                 (
                     SELECT 1
-                    FROM dbo.TblCusCsh WITH (UPDLOCK, HOLDLOCK)
+                    FROM dbo.TblCusCsh WITH (NOLOCK)
                     WHERE ISNULL(EasyCashType, 0) = 0
                       AND LTRIM(RTRIM(ISNULL(CardNo, N''))) = @CardToken
                 )
@@ -358,10 +514,10 @@ BEGIN
 
                 SELECT
                     @CardStockQty = ISNULL(SUM(ISNULL(td.Quantity, 0) * ISNULL(tt.StockEffect, 0)), 0)
-                FROM dbo.Transaction_Details td WITH (UPDLOCK, HOLDLOCK)
-                INNER JOIN dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
+                FROM dbo.Transaction_Details td WITH (NOLOCK)
+                INNER JOIN dbo.Transactions t WITH (NOLOCK)
                     ON t.Transaction_ID = td.Transaction_ID
-                INNER JOIN dbo.TransactionTypes tt
+                INNER JOIN dbo.TransactionTypes tt WITH (NOLOCK)
                     ON tt.Transaction_Type = t.Transaction_Type
                 WHERE t.StoreID = @StoreID
                   AND ISNULL(tt.StockEffect, 0) <> 0
@@ -370,8 +526,8 @@ BEGIN
                 IF ISNULL(@CardStockQty, 0) <= 0
                 BEGIN
                     SELECT TOP (1) @ExistingCardIssueTransactionID = t.Transaction_ID
-                    FROM dbo.Transaction_Details td WITH (UPDLOCK, HOLDLOCK)
-                    INNER JOIN dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
+                    FROM dbo.Transaction_Details td WITH (NOLOCK)
+                    INNER JOIN dbo.Transactions t WITH (NOLOCK)
                         ON t.Transaction_ID = td.Transaction_ID
                     WHERE t.Transaction_Type = 19
                       AND LTRIM(RTRIM(ISNULL(td.ItemSerial, N''))) = @CardToken
@@ -401,7 +557,7 @@ BEGIN
                     @ExistingCardSaleTransactionID = t.Transaction_ID,
                     @ExistingCardSaleNoteSerial = t.NoteSerial1,
                     @ExistingCardSaleDate = t.Transaction_Date
-                FROM dbo.Transactions t WITH (UPDLOCK, HOLDLOCK)
+                FROM dbo.Transactions t WITH (NOLOCK)
                 WHERE t.Transaction_Type = 21
                   AND ISNULL(t.IsCancelled, 0) = 0
                   AND NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') = @CardToken
@@ -707,12 +863,16 @@ BEGIN
         SET @AccountingDescription = N'فاتورة بيع رقم ' + CONVERT(NVARCHAR(50), @NoteSerial1);
 
         SET @NextIDError = NULL;
+        SET @StageStart = GETDATE();
 
         EXEC dbo.GetNextID_FromSequence
             @TableName = N'Notes',
             @FieldName = N'NoteID',
             @NextValue = @InvoiceNextNoteID OUTPUT,
             @ErrorMsg = @NextIDError OUTPUT;
+
+        INSERT INTO @AllocationStages(StageName, DurationMs, Detail)
+        VALUES (N'Invoice NoteID allocation', DATEDIFF(MILLISECOND, @StageStart, GETDATE()), N'dbo.GetNextID_FromSequence:Notes.NoteID');
 
         IF @NextIDError IS NOT NULL OR @InvoiceNextNoteID IS NULL
         BEGIN
@@ -725,28 +885,39 @@ BEGIN
 
         SET @InvoiceNoteID = CONVERT(INT, @InvoiceNextNoteID);
 
+        SET @StageStart = GETDATE();
         EXEC @InvoiceNoteReturnCode = dbo.usp_Notes_coding_V2
             @my_branch = @BranchId,
             @date1 = @TransactionDate,
             @departement_name = 1,
             @Result = @InvoiceNoteSerial OUTPUT;
 
+        INSERT INTO @AllocationStages(StageName, DurationMs, Detail)
+        VALUES (N'Invoice NoteSerial allocation', DATEDIFF(MILLISECOND, @StageStart, GETDATE()), N'dbo.usp_Notes_coding_V2');
+
         IF @InvoiceNoteReturnCode <> 0 OR @InvoiceNoteSerial IS NULL OR @InvoiceNoteSerial = 'error'
             RAISERROR('Unable to generate invoice accounting NoteSerial using dbo.usp_Notes_coding_V2.', 16, 1);
 
         /*
-            Allocate the accounting voucher header ID from the actual table under
-            an exclusive table lock. Production showed stale sequence values can
-            return an already-used Double_Entry_Vouchers_ID, which then fails the
-            PK on line 1. This keeps POS save correct even if the shared sequence
-            drifts behind the table.
+            Allocate the accounting voucher header ID through the hardened shared
+            allocator. This avoids a TABLOCKX scan on DOUBLE_ENTREY_VOUCHERS while
+            still repairing stale sequence values before returning a candidate.
         */
-        SELECT @NextDevID = ISNULL(MAX(CONVERT(BIGINT, Double_Entry_Vouchers_ID)), 0) + 1
-        FROM dbo.DOUBLE_ENTREY_VOUCHERS WITH (TABLOCKX, HOLDLOCK);
+        SET @NextIDError = NULL;
+        SET @StageStart = GETDATE();
 
-        IF @NextDevID IS NULL
+        EXEC dbo.GetNextID_FromSequence
+            @TableName = N'DOUBLE_ENTREY_VOUCHERS',
+            @FieldName = N'Double_Entry_Vouchers_ID',
+            @NextValue = @NextDevID OUTPUT,
+            @ErrorMsg = @NextIDError OUTPUT;
+
+        INSERT INTO @AllocationStages(StageName, DurationMs, Detail)
+        VALUES (N'Double entry voucher ID allocation', DATEDIFF(MILLISECOND, @StageStart, GETDATE()), N'dbo.GetNextID_FromSequence:DOUBLE_ENTREY_VOUCHERS.Double_Entry_Vouchers_ID');
+
+        IF @NextIDError IS NOT NULL OR @NextDevID IS NULL
         BEGIN
-            SET @AllocationError = N'Unable to allocate invoice accounting Double_Entry_Vouchers_ID. Source=dbo.DOUBLE_ENTREY_VOUCHERS MAX+1; NextValue=<null>';
+            SET @AllocationError = N'Unable to allocate invoice accounting Double_Entry_Vouchers_ID. Source=dbo.GetNextID_FromSequence; Table=dbo.DOUBLE_ENTREY_VOUCHERS; Field=Double_Entry_Vouchers_ID; Error=' + ISNULL(@NextIDError, N'<null>') + N'; NextValue=' + ISNULL(CONVERT(NVARCHAR(50), @NextDevID), N'<null>');
             RAISERROR(@AllocationError, 16, 1);
         END;
 
@@ -756,68 +927,13 @@ BEGIN
         SET @DevID = CONVERT(INT, @NextDevID);
 
         /*
-            DEV_Serial used to be generated by COUNT(DISTINCT Double_Entry_Vouchers_ID)
-            on the accounting table plus a day-level applock. Under high POS traffic that
-            scan/lock participated in deadlock cycles. Keep allocation in a tiny per-day
-            row instead, and seed it from existing accounting rows the first time a date
-            is used.
+            DEV_Serial is a legacy text/display field only. It is not a
+            business key, not unique, not gap-free, and must not serialize POS
+            save. Keep a cheap readable value without touching allocator tables.
         */
-        SET @DevSerialDate = CONVERT(DATE, @TransactionDate);
-        SET @DevSerialNo = NULL;
-
-        UPDATE dbo.POS_DEVSerialAllocator WITH (UPDLOCK, HOLDLOCK)
-        SET
-            @DevSerialNo = LastSerialNo + 1,
-            LastSerialNo = LastSerialNo + 1,
-            UpdatedAt = GETDATE()
-        WHERE SerialDate = @DevSerialDate;
-
-        IF @@ROWCOUNT = 0
-        BEGIN
-            SET @ExistingDevSerialMax = 0;
-            SET @ExistingDevVoucherCount = 0;
-
-            SELECT
-                @ExistingDevSerialMax = ISNULL(MAX(CONVERT(INT, SUBSTRING(DevSerialText, 10, 50))), 0)
-            FROM
-            (
-                SELECT DevSerialText = LTRIM(RTRIM(CONVERT(NVARCHAR(100), DEV_Serial)))
-                FROM dbo.DOUBLE_ENTREY_VOUCHERS WITH (READCOMMITTEDLOCK)
-                WHERE RecordDate >= @DevSerialDate
-                  AND RecordDate < DATEADD(DAY, 1, @DevSerialDate)
-                  AND DEV_Serial IS NOT NULL
-            ) AS serials
-            WHERE DevSerialText LIKE CONVERT(CHAR(8), @TransactionDate, 112) + N'0%'
-              AND LEN(DevSerialText) > 9
-              AND ISNUMERIC(SUBSTRING(DevSerialText, 10, 50)) = 1;
-
-            SELECT @ExistingDevVoucherCount = COUNT(DISTINCT Double_Entry_Vouchers_ID)
-            FROM dbo.DOUBLE_ENTREY_VOUCHERS WITH (READCOMMITTEDLOCK)
-            WHERE RecordDate >= @DevSerialDate
-              AND RecordDate < DATEADD(DAY, 1, @DevSerialDate);
-
-            IF ISNULL(@ExistingDevVoucherCount, 0) > ISNULL(@ExistingDevSerialMax, 0)
-                SET @ExistingDevSerialMax = @ExistingDevVoucherCount;
-
-            SET @DevSerialNo = ISNULL(@ExistingDevSerialMax, 0) + 1;
-
-            INSERT INTO dbo.POS_DEVSerialAllocator(SerialDate, LastSerialNo, UpdatedAt)
-            VALUES (@DevSerialDate, @DevSerialNo, GETDATE());
-        END;
-
         SET @DevSerial =
-            CONVERT(CHAR(8), @TransactionDate, 112) + N'0' +
-            CONVERT(NVARCHAR(20), @DevSerialNo);
-
-        SELECT
-            @BranchName = NULLIF(LTRIM(RTRIM(branch_name)), N'')
-        FROM dbo.TblBranchesData
-        WHERE branch_id = @BranchId;
-
-        SET @BranchCustodyParent = NULL;
-        SET @CashParentAccount = NULL;
-
-        SET @CustomerAccount = NULLIF(dbo.GetMyAccountCode(N'TblCustemers', N'CusID', ISNULL(@CustomerID, 0), N'Account_Code'), N'');
+            CONVERT(CHAR(8), @TransactionDate, 112) + N'-' +
+            CONVERT(NVARCHAR(20), @DevID);
 
         IF @CustomerAccount IS NULL
         BEGIN
@@ -838,37 +954,9 @@ BEGIN
                 @CustomerAccount = Account_Code
             FROM dbo.ACCOUNTS
             WHERE Parent_Account_Code = @BranchCustodyParent
-              AND (@BranchName IS NULL OR account_name LIKE N'%' + LEFT(@BranchName, 12) + N'%')
+                AND (@BranchName IS NULL OR account_name LIKE N'%' + LEFT(@BranchName, 12) + N'%')
             ORDER BY Account_Code;
         END;
-
-        SET @CashAccount = NULLIF(dbo.GetMyAccountCode(N'BanksData', N'BankID', ISNULL(@PaymentNetid, 0), N'Account_Code'), N'');
-        SET @UserBox2Account = NULL;
-
-        SELECT TOP (1)
-            @UserBox2Account = NULLIF(box2.Account_Code, N'')
-        FROM dbo.TblUsers AS u
-        INNER JOIN dbo.TblBoxesData AS box2 ON box2.BoxID = u.BoxID2
-        WHERE u.UserID = @UserID;
-
-        IF @CashAccount IS NULL
-        BEGIN
-            SELECT TOP (1)
-                @CashAccount = Account_Code
-            FROM dbo.ACCOUNTS
-            WHERE Parent_Account_Code = @CashParentAccount
-              AND account_name LIKE N'%الشحن%'
-            ORDER BY Account_Code;
-        END;
-
-        SET @WalletAccount = NULL;
-
-        SELECT TOP (1)
-            @WalletAccount = NULLIF(Account_Code, N'')
-        FROM dbo.TblBoxesData
-        WHERE ISNULL(IsWallet, 0) = 1
-          AND BranchId = @BranchId
-        ORDER BY BoxID;
 
         SELECT TOP (1)
             @WalletAccount = dev.Account_Code
@@ -891,63 +979,6 @@ BEGIN
               AND (@BranchName IS NULL OR account_name LIKE N'%' + LEFT(@BranchName, 12) + N'%')
             ORDER BY Account_Code;
         END;
-
-        SET @CardAccount = NULLIF(dbo.GetMyAccountCode(N'TblBoxesData', N'BoxID', ISNULL(@BoxID, 0), N'Account_Code'), N'');
-        SET @SalesAccount = dbo.get_account_code_branch(2, CONVERT(VARCHAR(50), @BranchId));
-        SET @VatAccount = NULL;
-
-        SELECT TOP (1)
-            @VatAccount = NULLIF(AccCir, N'')
-        FROM dbo.TblSettsReqLimK
-        WHERE @TransactionDate BETWEEN RecordDate AND RecordDateTo
-          AND (AccOrTran = 1 OR AccOrTran IS NULL)
-          AND TransType = 21
-        ORDER BY RecordDate DESC, ID DESC;
-
-        -- VB6 PG() uses TblUsers.BankID for the recharge bank account, not PaymentNetid.
-        SELECT TOP (1)
-            @BankAccount = NULLIF(bank.Account_Code, N'')
-        FROM dbo.TblUsers AS u
-        LEFT JOIN dbo.BanksData AS bank ON bank.BankID = u.BankID
-        WHERE u.UserID = @UserID;
-
-        SELECT TOP (1)
-            @BranchBoxAccount = NULLIF(Account_Code, N'')
-        FROM dbo.TblBoxesData
-        WHERE BranchId = @BranchId
-        ORDER BY BoxID;
-
-        SELECT TOP (1)
-            @TerminalBoxAccount = NULLIF(Account_Code, N'')
-        FROM dbo.TblBoxesData
-        WHERE ISNULL(IsTerminalPOS, 0) = 1
-        ORDER BY BoxID;
-
-        SELECT TOP (1)
-            @ItemSupplierAccount = NULLIF(c.Account_Code, N''),
-            @ItemAccount = NULLIF(i.Account_Code, N''),
-            @ItemRevenueAccount = NULLIF(i.Account_Code3, N''),
-            @PricePercent = ISNULL(i.PricePercent, 0)
-        FROM dbo.TblItems AS i
-        LEFT JOIN dbo.TblCustemers AS c ON c.CusID = i.DefaultSupplier
-        WHERE i.ItemID = @ItemIDService;
-
-        SET @BankCommissionAmount = 0;
-
-        SELECT TOP (1)
-            @BankCommissionAmount =
-                CASE
-                    WHEN @RechargeAmount * ISNULL(PercentVisaPur, 0) / 100 < ISNULL(MinVisaPur, 0)
-                        THEN ISNULL(MinVisaPur, 0)
-                    WHEN @RechargeAmount * ISNULL(PercentVisaPur, 0) / 100 > ISNULL(MaxVisaPur, 0)
-                         AND ISNULL(MaxVisaPur, 0) > 0
-                        THEN ISNULL(MaxVisaPur, 0)
-                    ELSE @RechargeAmount * ISNULL(PercentVisaPur, 0) / 100
-                END
-        FROM dbo.TblOptions;
-
-        IF @RechargeAmount = 0
-            SET @BankCommissionAmount = 0;
 
         SET @WalletCostAmount = 0;
 
@@ -1110,6 +1141,8 @@ BEGIN
             NoteSerial = CONVERT(NVARCHAR(50), CAST(@InvoiceNoteSerial AS DECIMAL(38, 0)))
         WHERE Transaction_ID = @TransactionID;
 
+        SET @StageStart = GETDATE();
+
         INSERT INTO dbo.DOUBLE_ENTREY_VOUCHERS
         (
             Double_Entry_Vouchers_ID,
@@ -1146,6 +1179,9 @@ BEGIN
             @TransactionDate
         FROM @AccountingLines
         WHERE EntryValue > 0;
+
+        INSERT INTO @AllocationStages(StageName, DurationMs, Detail)
+        VALUES (N'Accounting insert', DATEDIFF(MILLISECOND, @StageStart, GETDATE()), N'dbo.DOUBLE_ENTREY_VOUCHERS insert from @AccountingLines');
 
         /*
             Issue Voucher / stock:
@@ -1189,11 +1225,16 @@ BEGIN
             SET @IssueTotalCost = 0;
             SET @NextIDError = NULL;
 
+            SET @StageStart = GETDATE();
+
             EXEC dbo.GetNextID_FromSequence
                 @TableName = N'Transactions',
                 @FieldName = N'Transaction_ID',
                 @NextValue = @IssueNextTransactionID OUTPUT,
                 @ErrorMsg = @NextIDError OUTPUT;
+
+            INSERT INTO @AllocationStages(StageName, DurationMs, Detail)
+            VALUES (N'Issue voucher Transaction_ID allocation', DATEDIFF(MILLISECOND, @StageStart, GETDATE()), N'dbo.GetNextID_FromSequence:Transactions.Transaction_ID;StoreID=' + ISNULL(CONVERT(NVARCHAR(20), @IssueStoreID), N'<null>'));
 
             IF @NextIDError IS NOT NULL OR @IssueNextTransactionID IS NULL
             BEGIN
@@ -1207,11 +1248,16 @@ BEGIN
             SET @IssueTransactionID = CONVERT(INT, @IssueNextTransactionID);
             SET @NextIDError = NULL;
 
+            SET @StageStart = GETDATE();
+
             EXEC dbo.GetNextID_FromSequence
                 @TableName = N'Notes',
                 @FieldName = N'NoteID',
                 @NextValue = @IssueNextNoteID OUTPUT,
                 @ErrorMsg = @NextIDError OUTPUT;
+
+            INSERT INTO @AllocationStages(StageName, DurationMs, Detail)
+            VALUES (N'Issue voucher NoteID allocation', DATEDIFF(MILLISECOND, @StageStart, GETDATE()), N'dbo.GetNextID_FromSequence:Notes.NoteID;StoreID=' + ISNULL(CONVERT(NVARCHAR(20), @IssueStoreID), N'<null>'));
 
             IF @NextIDError IS NOT NULL OR @IssueNextNoteID IS NULL
             BEGIN
@@ -1224,14 +1270,21 @@ BEGIN
 
             SET @IssueNoteID = CONVERT(INT, @IssueNextNoteID);
 
+            SET @StageStart = GETDATE();
+
             EXEC @IssueNoteReturnCode = dbo.usp_Notes_coding_V2
                 @my_branch = @BranchId,
                 @date1 = @TransactionDate,
                 @departement_name = 1,
                 @Result = @IssueNoteSerial OUTPUT;
 
+            INSERT INTO @AllocationStages(StageName, DurationMs, Detail)
+            VALUES (N'Issue voucher NoteSerial allocation', DATEDIFF(MILLISECOND, @StageStart, GETDATE()), N'dbo.usp_Notes_coding_V2;StoreID=' + ISNULL(CONVERT(NVARCHAR(20), @IssueStoreID), N'<null>'));
+
             IF @IssueNoteReturnCode <> 0 OR @IssueNoteSerial IS NULL OR @IssueNoteSerial = 'error'
                 RAISERROR('Unable to generate Issue Voucher NoteSerial using dbo.usp_Notes_coding_V2.', 16, 1);
+
+            SET @StageStart = GETDATE();
 
             EXEC @VoucherReturnCode = dbo.usp_Voucher_coding_V2
                 @my_branch = @BranchId,
@@ -1248,6 +1301,9 @@ BEGIN
                 @mUserID = @UserID,
                 @Result = @IssueNoteSerial1 OUTPUT,
                 @mSerInv = @IssueMSerOut OUTPUT;
+
+            INSERT INTO @AllocationStages(StageName, DurationMs, Detail)
+            VALUES (N'Issue voucher coding allocation', DATEDIFF(MILLISECOND, @StageStart, GETDATE()), N'dbo.usp_Voucher_coding_V2:Transaction_Type=19;Sanad_No=10;StoreID=' + ISNULL(CONVERT(NVARCHAR(20), @IssueStoreID), N'<null>'));
 
             IF @VoucherReturnCode <> 0 OR @IssueNoteSerial1 IS NULL OR @IssueNoteSerial1 = 'error'
                 RAISERROR('Unable to generate Issue Voucher NoteSerial1 using dbo.usp_Voucher_coding_V2.', 16, 1);
@@ -1414,6 +1470,38 @@ BEGIN
 
         COMMIT TRANSACTION;
 
+        BEGIN TRY
+            INSERT INTO dbo.POS_SaveAllocationStageLog
+            (
+                Transaction_ID,
+                ClientRequestId,
+                BranchId,
+                StoreID,
+                UserID,
+                ServiceType,
+                StageName,
+                StageOrder,
+                DurationMs,
+                Detail,
+                Success
+            )
+            SELECT
+                @TransactionID,
+                @ClientRequestGuid,
+                @BranchId,
+                @StoreID,
+                @UserID,
+                @ServiceTypeForLog,
+                StageName,
+                StageOrder,
+                DurationMs,
+                Detail,
+                1
+            FROM @AllocationStages;
+        END TRY
+        BEGIN CATCH
+        END CATCH;
+
         SELECT
             @TransactionID AS Transaction_ID,
             @NoteSerial1 AS NoteSerial1,
@@ -1426,15 +1514,52 @@ BEGIN
         SELECT
             @ErrorMessage = ERROR_MESSAGE(),
             @ErrorSeverity = ERROR_SEVERITY(),
-            @ErrorState = ERROR_STATE();
+            @ErrorState = ERROR_STATE(),
+            @ErrorNumberForLog = ERROR_NUMBER();
 
-        IF ERROR_NUMBER() = 1205
+        BEGIN TRY
+            INSERT INTO dbo.POS_SaveAllocationStageLog
+            (
+                Transaction_ID,
+                ClientRequestId,
+                BranchId,
+                StoreID,
+                UserID,
+                ServiceType,
+                StageName,
+                StageOrder,
+                DurationMs,
+                Detail,
+                Success,
+                ErrorNumber,
+                ErrorMessage
+            )
+            SELECT
+                ISNULL(@TransactionID, @ExistingTransactionID),
+                @ClientRequestGuid,
+                @BranchId,
+                @StoreID,
+                @UserID,
+                @ServiceTypeForLog,
+                StageName,
+                StageOrder,
+                DurationMs,
+                Detail,
+                0,
+                @ErrorNumberForLog,
+                LEFT(@ErrorMessage, 1000)
+            FROM @AllocationStages;
+        END TRY
+        BEGIN CATCH
+        END CATCH;
+
+        IF @ErrorNumberForLog = 1205
         BEGIN
             THROW;
             RETURN;
         END;
 
-        IF ERROR_NUMBER() IN (8152, 2628)
+        IF @ErrorNumberForLog IN (8152, 2628)
         BEGIN
             SET @ErrorMessage = N'تم رفض الحفظ لأن بعض بيانات الفاتورة أطول من أعمدة قاعدة البيانات. '
                 + N'CashCustomerNameLen=' + CONVERT(NVARCHAR(20), LEN(ISNULL(@CashCustomerName, N'')))

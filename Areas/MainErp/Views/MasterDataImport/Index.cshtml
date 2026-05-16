@@ -1,7 +1,7 @@
-@model MyERP.Areas.MainErp.ViewModels.MasterDataImport.MasterDataImportIndexViewModel
+﻿@model MyERP.Areas.MainErp.ViewModels.MasterDataImport.MasterDataImportIndexViewModel
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "Master Data Import / استيراد الملفات الأساسية";
+    ViewBag.Title = "استيراد الملفات الأساسية";
 }
 
 <link href="@Url.Content("~/Areas/MainErp/Content/master-data-import.css?v=20260513-master-import")" rel="stylesheet" />
@@ -15,12 +15,16 @@
     {
         <div class="alert success">@TempData["ImportMessage"]</div>
     }
+    @if (ViewBag.CurrentDatabase != null)
+    {
+        <div class="alert info">&#1602;&#1575;&#1593;&#1583;&#1577; &#1575;&#1604;&#1576;&#1610;&#1575;&#1606;&#1575;&#1578;: @ViewBag.CurrentDatabase</div>
+    }
 
-    @using (Html.BeginForm("Preview", "MasterDataImport", new { area = "MainErp" }, FormMethod.Post, new { enctype = "multipart/form-data", @class = "import-form" }))
+    @using (Html.BeginForm("Preview", "MasterDataImport", new { area = "MainErp" }, FormMethod.Post, new { enctype = "multipart/form-data", @class = "import-form", data_progress_message = "Reading Excel file and validating rows..." }))
     {
         @Html.AntiForgeryToken()
         <label>
-            Entity type
+            &#1606;&#1608;&#1593; &#1575;&#1604;&#1605;&#1604;&#1601;
             <select name="entityType">
                 @foreach (var item in Model.EntityTypes)
                 {
@@ -29,58 +33,196 @@
             </select>
         </label>
         <label>
-            Excel file
-            <input type="file" name="excelFile" accept=".xls,.xlsx" />
+            &#1605;&#1604;&#1601; Excel
+            <input type="file" name="excelFile" accept=".xls,.xlsx" multiple="multiple" />
+            <span class="field-hint">&#1604;&#1575;&#1587;&#1578;&#1610;&#1585;&#1575;&#1583; &#1575;&#1604;&#1602;&#1610;&#1608;&#1583; &#1610;&#1605;&#1603;&#1606; &#1575;&#1582;&#1578;&#1610;&#1575;&#1585; &#1571;&#1603;&#1579;&#1585; &#1605;&#1606; &#1605;&#1604;&#1601; &#1605;&#1585;&#1577; &#1608;&#1575;&#1581;&#1583;&#1577; &#1576;&#1575;&#1587;&#1578;&#1582;&#1583;&#1575;&#1605; Ctrl &#1571;&#1608; Shift.</span>
         </label>
         <label class="check">
             <input type="checkbox" name="stopOnAnyError" value="true" @(Model.StopOnAnyError ? "checked" : "") />
-            Stop whole import if any error exists
+            &#1573;&#1610;&#1602;&#1575;&#1601; &#1575;&#1604;&#1575;&#1587;&#1578;&#1610;&#1585;&#1575;&#1583; &#1576;&#1575;&#1604;&#1603;&#1575;&#1605;&#1604; &#1593;&#1606;&#1583; &#1608;&#1580;&#1608;&#1583; &#1571;&#1610; &#1582;&#1591;&#1571;
+        </label>
+        <div class="mode-choice" data-chart-mode>
+            <label class="mode-option">
+                <input type="radio" name="importMode" value="Merge" @(Model.ImportMode == "Replace" ? "" : "checked") />
+                <span>
+                    <strong>&#1578;&#1581;&#1583;&#1610;&#1579; &#1608;&#1583;&#1605;&#1580;</strong>
+                    <small>&#1610;&#1581;&#1575;&#1601;&#1592; &#1593;&#1604;&#1609; &#1575;&#1604;&#1583;&#1604;&#1610;&#1604; &#1575;&#1604;&#1605;&#1608;&#1580;&#1608;&#1583; &#1608;&#1610;&#1581;&#1583;&#1579; &#1575;&#1604;&#1605;&#1578;&#1588;&#1575;&#1576;&#1607; &#1608;&#1610;&#1590;&#1610;&#1601; &#1575;&#1604;&#1580;&#1583;&#1610;&#1583;.</small>
+                </span>
+            </label>
+            <label class="mode-option danger-mode">
+                <input type="radio" name="importMode" value="Replace" @(Model.ImportMode == "Replace" ? "checked" : "") />
+                <span>
+                    <strong>&#1578;&#1601;&#1585;&#1610;&#1594; &#1579;&#1605; &#1575;&#1587;&#1578;&#1610;&#1585;&#1575;&#1583;</strong>
+                    <small>&#1610;&#1581;&#1584;&#1601; &#1583;&#1604;&#1610;&#1604; &#1575;&#1604;&#1581;&#1587;&#1575;&#1576;&#1575;&#1578; &#1575;&#1604;&#1581;&#1575;&#1604;&#1610; &#1579;&#1605; &#1610;&#1576;&#1606;&#1610; &#1575;&#1604;&#1583;&#1604;&#1610;&#1604; &#1605;&#1606; &#1575;&#1604;&#1605;&#1604;&#1601; &#1583;&#1575;&#1582;&#1604; Transaction.</small>
+                </span>
+            </label>
+        </div>
+        <label class="check" data-opening-balance-option>
+            <input type="checkbox" name="autoBalanceOpening" value="true" @(Model.AutoBalanceOpening ? "checked" : "") />
+            &#1573;&#1602;&#1601;&#1575;&#1604; &#1575;&#1604;&#1601;&#1585;&#1602; &#1601;&#1610; &#1581;&#1587;&#1575;&#1576; &#1608;&#1587;&#1610;&#1591; &#1575;&#1601;&#1578;&#1578;&#1575;&#1581;&#1610;
         </label>
         <div class="actions">
-            <button type="submit">Preview / معاينة</button>
-            @Html.ActionLink("Download template / تحميل النموذج", "DownloadTemplate", new { entityType = Model.EntityType }, new { @class = "button secondary" })
+            <button type="submit">&#1605;&#1593;&#1575;&#1610;&#1606;&#1577;</button>
+            @Html.ActionLink("تحميل النموذج", "DownloadTemplate", new { entityType = Model.EntityType }, new { @class = "button secondary" })
             @if (Model.HasPreview)
             {
-                @Html.ActionLink("Download error file / ملف الأخطاء", "DownloadErrors", null, new { @class = "button secondary" })
+                @Html.ActionLink("تحميل ملف الأخطاء", "DownloadErrors", null, new { @class = "button secondary" })
             }
         </div>
     }
 </section>
 
+@if (Model.ImportBatches != null && Model.ImportBatches.Count > 0)
+{
+    <section class="import-panel rollback-panel">
+        <div class="rollback-header">
+            <strong>&#1587;&#1580;&#1604; &#1575;&#1604;&#1575;&#1587;&#1578;&#1610;&#1585;&#1575;&#1583;</strong>
+            <span>&#1575;&#1604;&#1578;&#1585;&#1575;&#1580;&#1593; &#1610;&#1581;&#1584;&#1601; &#1601;&#1602;&#1591; &#1575;&#1604;&#1581;&#1587;&#1575;&#1576;&#1575;&#1578; &#1575;&#1604;&#1578;&#1610; &#1571;&#1606;&#1588;&#1571;&#1607;&#1575; &#1575;&#1604;&#1575;&#1587;&#1578;&#1610;&#1585;&#1575;&#1583; &#1608;&#1587;&#1580;&#1604;&#1607;&#1575; &#1601;&#1610; &#1578;&#1601;&#1575;&#1589;&#1610;&#1604; &#1575;&#1604;&#1600; batch.</span>
+        </div>
+        <table class="batch-grid">
+            <thead>
+                <tr>
+                    <th>&#1575;&#1604;&#1583;&#1601;&#1593;&#1577;</th>
+                    <th>&#1575;&#1604;&#1605;&#1604;&#1601;</th>
+                    <th>&#1575;&#1604;&#1578;&#1575;&#1585;&#1610;&#1582;</th>
+                    <th>&#1575;&#1604;&#1606;&#1575;&#1580;&#1581;</th>
+                    <th>&#1575;&#1604;&#1581;&#1587;&#1575;&#1576;&#1575;&#1578; &#1575;&#1604;&#1605;&#1606;&#1588;&#1571;&#1577;</th>
+                    <th>&#1575;&#1604;&#1581;&#1575;&#1604;&#1577;</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var batch in Model.ImportBatches)
+                {
+                    <tr>
+                        <td>@batch.BatchId</td>
+                        <td>@batch.FileName</td>
+                        <td>@batch.ImportStartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@batch.SuccessRows</td>
+                        <td>@batch.CreatedAccounts</td>
+                        <td>@batch.Status</td>
+                        <td>
+                            @if (batch.Status == "Completed")
+                            {
+                                using (Html.BeginForm("RollbackBatch", "MasterDataImport", new { area = "MainErp" }, FormMethod.Post, new { @class = "rollback-form", data_progress_message = "Rolling back imported accounts..." }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="batchId" value="@batch.BatchId" />
+                                    <button type="submit" data-confirm="سيتم حذف الحسابات التي أنشأها هذا النقل فقط. هل تريد التراجع؟">&#1578;&#1585;&#1575;&#1580;&#1593;</button>
+                                }
+                            }
+                            else
+                            {
+                                <span class="muted">&#1604;&#1575; &#1578;&#1608;&#1580;&#1583; &#1578;&#1601;&#1575;&#1589;&#1610;&#1604; &#1578;&#1585;&#1575;&#1580;&#1593;</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </section>
+}
+
 @if (Model.HasPreview)
 {
     <section class="summary-strip">
-        <div><strong>@Model.TotalRows</strong><span>Total rows</span></div>
-        <div><strong>@Model.ValidRows</strong><span>Valid</span></div>
-        <div><strong>@Model.ErrorRows</strong><span>Errors</span></div>
-        <div><strong>@Model.FileName</strong><span>File</span></div>
+        <div><strong>@Model.TotalRows</strong><span>&#1573;&#1580;&#1605;&#1575;&#1604;&#1610; &#1575;&#1604;&#1589;&#1601;&#1608;&#1601;</span></div>
+        <div><strong>@Model.ValidRows</strong><span>&#1589;&#1581;&#1610;&#1581;</span></div>
+        <div><strong>@Model.ErrorRows</strong><span>&#1571;&#1582;&#1591;&#1575;&#1569;</span></div>
+        @if (Model.UsesJournalGrid)
+        {
+            <div><strong>@Model.JournalCount</strong><span>Journal groups</span></div>
+            <div><strong>@Model.TotalDebit.ToString("0.00")</strong><span>Total debit</span></div>
+            <div><strong>@Model.TotalCredit.ToString("0.00")</strong><span>Total credit</span></div>
+            <div><strong>@Model.Difference.ToString("0.00")</strong><span>Difference</span></div>
+        }
+        <div><strong>@Model.FileName</strong><span>&#1575;&#1604;&#1605;&#1604;&#1601;</span></div>
+        <div><strong>@Model.ImportMode</strong><span>&#1575;&#1604;&#1608;&#1590;&#1593;</span></div>
     </section>
 
     <section class="grid-wrap">
         <div class="preview-toolbar">
             <div class="preview-tabs" role="tablist">
-                <button type="button" class="preview-filter is-active" data-filter="all">All <span>@Model.TotalRows</span></button>
-                <button type="button" class="preview-filter" data-filter="bad">Errors <span>@Model.ErrorRows</span></button>
-                <button type="button" class="preview-filter" data-filter="ok">Valid <span>@Model.ValidRows</span></button>
+                <button type="button" class="preview-filter is-active" data-filter="all">&#1575;&#1604;&#1603;&#1604; <span>@Model.TotalRows</span></button>
+                <button type="button" class="preview-filter" data-filter="bad">&#1575;&#1604;&#1571;&#1582;&#1591;&#1575;&#1569; <span>@Model.ErrorRows</span></button>
+                <button type="button" class="preview-filter" data-filter="ok">&#1575;&#1604;&#1589;&#1581;&#1610;&#1581; <span>@Model.ValidRows</span></button>
             </div>
             <label class="preview-search">
-                <span>Search</span>
-                <input type="search" id="importPreviewSearch" placeholder="Account, name, error..." />
+                <span>&#1576;&#1581;&#1579;</span>
+                <input type="search" id="importPreviewSearch" placeholder="الحساب، الاسم، الخطأ..." />
             </label>
         </div>
-        <div class="preview-hint">Scroll horizontally to review all columns. Error rows stay highlighted.</div>
+        <div class="preview-hint">&#1605;&#1585;&#1585; &#1571;&#1601;&#1602;&#1610;&#1575; &#1604;&#1605;&#1585;&#1575;&#1580;&#1593;&#1577; &#1603;&#1604; &#1575;&#1604;&#1571;&#1593;&#1605;&#1583;&#1577;. &#1589;&#1601;&#1608;&#1601; &#1575;&#1604;&#1571;&#1582;&#1591;&#1575;&#1569; &#1587;&#1578;&#1592;&#1604; &#1605;&#1605;&#1610;&#1586;&#1577;.</div>
+        @if (Model.UsesJournalGrid)
+        {
         <table class="preview-grid">
             <thead>
                 <tr>
+                    <th>File</th>
+                    <th>Sheet</th>
                     <th>Row</th>
                     <th>Status</th>
                     <th>Errors</th>
+                    <th>Group</th>
+                    <th>Date</th>
                     <th>Account Serial</th>
-                    <th>Code</th>
-                    <th>Name</th>
-                    <th>Arabic Name</th>
-                    <th>English Name</th>
-                    <th>Parent Serial</th>
+                    <th>Account Name</th>
+                    <th>Debit</th>
+                    <th>Credit</th>
+                    <th>Description</th>
+                    <th>Branch</th>
+                    <th>Account action</th>
+                    @if (Model.IsOpeningBalanceImport)
+                    {
+                        <th>Opening balance</th>
+                        <th>Balance type</th>
+                        <th>Intermediate account</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.JournalRows)
+                {
+                    <tr class="@(row.IsValid ? "ok" : "bad")" data-status="@(row.IsValid ? "ok" : "bad")">
+                        <td>@row.FileName</td>
+                        <td>@row.SheetName</td>
+                        <td class="col-row">@row.RowNumber</td>
+                        <td class="col-status"><span class="status-pill @(row.IsValid ? "status-ok" : "status-bad")">@(row.IsValid ? "صحيح" : "خطأ")</span></td>
+                        <td class="col-errors">@row.ErrorDetails</td>
+                        <td>@row.GroupKey</td>
+                        <td>@(row.EntryDate.HasValue ? row.EntryDate.Value.ToString("yyyy-MM-dd") : row.EntryDateText)</td>
+                        <td>@row.AccountSerial</td>
+                        <td class="arabic-cell">@row.AccountName</td>
+                        <td>@row.Debit</td>
+                        <td>@row.Credit</td>
+                        <td class="arabic-cell">@row.Description</td>
+                        <td>@row.Branch</td>
+                        <td>@(row.AccountWillBeCreated ? "Create account" : "Use existing")</td>
+                        @if (Model.IsOpeningBalanceImport)
+                        {
+                            <td>@row.OpeningBalanceText</td>
+                            <td>@row.BalanceType</td>
+                            <td>@row.IntermediateAccountName @row.IntermediateAccountCode</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+        }
+        else
+        {
+        <table class="preview-grid">
+            <thead>
+                <tr>
+                    <th>&#1575;&#1604;&#1589;&#1601;</th>
+                    <th>&#1575;&#1604;&#1581;&#1575;&#1604;&#1577;</th>
+                    <th>&#1575;&#1604;&#1571;&#1582;&#1591;&#1575;&#1569;</th>
+                    <th>&#1605;&#1587;&#1604;&#1587;&#1604; &#1575;&#1604;&#1581;&#1587;&#1575;&#1576;</th>
+                    <th>&#1575;&#1604;&#1603;&#1608;&#1583;</th>
+                    <th>&#1575;&#1604;&#1575;&#1587;&#1605;</th>
+                    <th>&#1575;&#1604;&#1575;&#1587;&#1605; &#1575;&#1604;&#1593;&#1585;&#1576;&#1610;</th>
+                    <th>&#1575;&#1604;&#1575;&#1587;&#1605; &#1575;&#1604;&#1573;&#1606;&#1580;&#1604;&#1610;&#1586;&#1610;</th>
+                    <th>&#1605;&#1587;&#1604;&#1587;&#1604; &#1575;&#1604;&#1571;&#1576;</th>
                     <th>Account Code</th>
                     <th>Parent Code</th>
                     <th>Final</th>
@@ -92,7 +234,7 @@
                 {
                     <tr class="@(row.IsValid ? "ok" : "bad")" data-status="@(row.IsValid ? "ok" : "bad")">
                         <td class="col-row">@row.RowNumber</td>
-                        <td class="col-status"><span class="status-pill @(row.IsValid ? "status-ok" : "status-bad")">@(row.IsValid ? "Valid" : "Error")</span></td>
+                        <td class="col-status"><span class="status-pill @(row.IsValid ? "status-ok" : "status-bad")">@(row.IsValid ? "صحيح" : "خطأ")</span></td>
                         <td class="col-errors">@row.ErrorDetails</td>
                         <td>@row.AccountSerial</td>
                         <td>@row.EntityCode</td>
@@ -108,26 +250,87 @@
                 }
             </tbody>
         </table>
+        }
     </section>
 
-    using (Html.BeginForm("Import", "MasterDataImport", new { area = "MainErp" }, FormMethod.Post, new { @class = "import-submit" }))
+    using (Html.BeginForm("Import", "MasterDataImport", new { area = "MainErp" }, FormMethod.Post, new { @class = "import-submit", data_progress_message = "Importing rows into MainERP. Keep this page open..." }))
     {
         @Html.AntiForgeryToken()
+        <input type="hidden" name="importMode" value="@Model.ImportMode" />
         <label class="check">
             <input type="checkbox" name="stopOnAnyError" value="true" checked />
             Stop whole import if any error exists
         </label>
-        <button type="submit" @(Model.ErrorRows > 0 ? "disabled" : "")>Import valid rows / استيراد</button>
+        if (Model.IsOpeningBalanceImport)
+        {
+            <label class="check">
+                <input type="checkbox" name="autoBalanceOpening" value="true" @(Model.AutoBalanceOpening ? "checked" : "") />
+                إقفال الفرق في حساب وسيط افتتاحي
+            </label>
+        }
+        <button type="submit" @(Model.ErrorRows > 0 ? "disabled" : "")>Import valid rows / &#1575;&#1587;&#1578;&#1610;&#1585;&#1575;&#1583;</button>
+        if (Model.EntityType == MyERP.Areas.MainErp.ViewModels.MasterDataImport.MasterDataImportEntityType.ChartOfAccounts && Model.ImportMode == "Replace")
+        {
+            <div class="replace-warning">&#1578;&#1606;&#1576;&#1610;&#1607;: &#1608;&#1590;&#1593; &#1575;&#1604;&#1578;&#1601;&#1585;&#1610;&#1594; &#1587;&#1610;&#1581;&#1584;&#1601; &#1583;&#1604;&#1610;&#1604; &#1575;&#1604;&#1581;&#1587;&#1575;&#1576;&#1575;&#1578; &#1575;&#1604;&#1581;&#1575;&#1604;&#1610; &#1579;&#1605; &#1610;&#1587;&#1578;&#1608;&#1585;&#1583; &#1575;&#1604;&#1605;&#1604;&#1601;. &#1604;&#1608; &#1601;&#1610;&#1607; &#1581;&#1585;&#1603;&#1575;&#1578; &#1571;&#1608; &#1602;&#1610;&#1608;&#1583; &#1605;&#1585;&#1578;&#1576;&#1591;&#1577; &#1576;&#1575;&#1604;&#1581;&#1587;&#1575;&#1576;&#1575;&#1578; &#1602;&#1583; &#1610;&#1601;&#1588;&#1604; &#1575;&#1604;&#1581;&#1584;&#1601; &#1608;&#1610;&#1578;&#1605; &#1575;&#1604;&#1578;&#1585;&#1575;&#1580;&#1593;.</div>
+        }
         if (Model.ErrorRows > 0)
         {
-            <button type="submit" name="stopOnAnyError" value="false">Import valid rows only / استيراد السليم فقط</button>
+            <button type="submit" name="stopOnAnyError" value="false">Import valid rows only / &#1575;&#1587;&#1578;&#1610;&#1585;&#1575;&#1583; &#1575;&#1604;&#1587;&#1604;&#1610;&#1605; &#1601;&#1602;&#1591;</button>
         }
     }
 }
 
+<div class="import-progress-overlay" id="importProgressOverlay" hidden>
+    <div class="import-progress-card" role="status" aria-live="polite">
+        <strong id="importProgressTitle">Working...</strong>
+        <span id="importProgressText">Please wait.</span>
+        <div class="import-progress-track">
+            <div class="import-progress-bar"></div>
+        </div>
+        <small id="importProgressElapsed">Elapsed: 0s</small>
+    </div>
+</div>
+
 @section scripts {
     <script>
         (function () {
+            var progressOverlay = document.getElementById("importProgressOverlay");
+            var progressTitle = document.getElementById("importProgressTitle");
+            var progressText = document.getElementById("importProgressText");
+            var progressElapsed = document.getElementById("importProgressElapsed");
+            var startedAt = 0;
+            var timer = null;
+
+            function showProgress(form) {
+                if (!progressOverlay) { return; }
+                startedAt = new Date().getTime();
+                progressTitle.innerText = form.classList.contains("import-submit") ? "جاري الاستيراد" : "جاري إعداد المعاينة";
+                progressText.innerText = form.getAttribute("data-progress-message") || "Working...";
+                progressOverlay.hidden = false;
+                Array.prototype.slice.call(form.querySelectorAll("button")).forEach(function (button) {
+                    if (!button.disabled) {
+                        button.setAttribute("data-was-enabled", "true");
+                        button.disabled = true;
+                    }
+                });
+                timer = window.setInterval(function () {
+                    var seconds = Math.max(0, Math.floor((new Date().getTime() - startedAt) / 1000));
+                    progressElapsed.innerText = "Elapsed: " + seconds + "s";
+                }, 1000);
+            }
+
+            Array.prototype.slice.call(document.querySelectorAll(".import-form, .import-submit, .rollback-form")).forEach(function (form) {
+                form.addEventListener("submit", function (event) {
+                    var confirmButton = form.querySelector("[data-confirm]");
+                    if (confirmButton && !window.confirm(confirmButton.getAttribute("data-confirm"))) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    showProgress(form);
+                });
+            });
+
             var table = document.querySelector(".preview-grid");
             if (!table) { return; }
 
@@ -156,6 +359,23 @@
 
             if (search) {
                 search.addEventListener("input", applyPreviewFilters);
+            }
+
+            var entitySelect = document.querySelector("select[name='entityType']");
+            var modeChoice = document.querySelector("[data-chart-mode]");
+            var openingOption = document.querySelector("[data-opening-balance-option]");
+            function toggleModeChoice() {
+                if (!entitySelect) { return; }
+                if (modeChoice) {
+                    modeChoice.style.display = entitySelect.value === "ChartOfAccounts" ? "" : "none";
+                }
+                if (openingOption) {
+                    openingOption.style.display = entitySelect.value === "OpeningBalances" ? "" : "none";
+                }
+            }
+            toggleModeChoice();
+            if (entitySelect) {
+                entitySelect.addEventListener("change", toggleModeChoice);
             }
         })();
     </script>

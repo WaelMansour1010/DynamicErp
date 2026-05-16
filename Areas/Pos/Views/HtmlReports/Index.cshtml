@@ -27,6 +27,11 @@
             @Html.Partial("~/Areas/Pos/Views/HtmlReports/Shared/_FilterToolbar.cshtml", Model)
         </section>
 
+        @if (!string.IsNullOrWhiteSpace(Model.Message))
+        {
+            <section class="html-report-card empty-state">@Model.Message</section>
+        }
+
         @if (Model.Result != null)
         {
             <section class="html-report-card" id="htmlReportResultCard" data-report-key="@Model.Filter.ReportKey">
@@ -103,7 +108,7 @@
                 </div>
             </section>
         }
-        else
+        else if (string.IsNullOrWhiteSpace(Model.Message))
         {
             <section class="html-report-card empty-state">
                 &#1575;&#1582;&#1578;&#1585; &#1575;&#1604;&#1578;&#1602;&#1585;&#1610;&#1585; &#1608;&#1575;&#1604;&#1601;&#1578;&#1585;&#1577; &#1579;&#1605; &#1575;&#1590;&#1594;&#1591; &#1576;&#1581;&#1579;.
@@ -240,12 +245,35 @@
                 });
             }
 
+            function validateHtmlReportForm(form) {
+                var reportKey = form ? form.querySelector("[name='ReportKey']") : null;
+                var fromDate = form ? form.querySelector("[name='FromDate']") : null;
+                var toDate = form ? form.querySelector("[name='ToDate']") : null;
+                if (!reportKey || !reportKey.value) { return "اختر التقرير أولاً"; }
+                if (!fromDate || !fromDate.value || !toDate || !toDate.value) { return "من تاريخ وإلى تاريخ مطلوبان قبل تشغيل التقرير"; }
+                if (toDate.value < fromDate.value) { return "إلى تاريخ يجب أن يكون أكبر من أو يساوي من تاريخ"; }
+                if (reportKey.value === "store-serials") {
+                    var storeSelect = form.querySelector("[name='StoreId']");
+                    var serialSearch = form.querySelector("[name='SerialSearch']");
+                    var hasStore = storeSelect && storeSelect.value;
+                    var searchText = serialSearch && serialSearch.value ? serialSearch.value.trim() : "";
+                    if (!hasStore && searchText.length < 3) { return "اختر المخزن أو اكتب 3 أحرف على الأقل للبحث"; }
+                }
+                return "";
+            }
+
             var filterForm = document.getElementById("htmlReportFilterForm");
             if (filterForm) {
                 filterForm.addEventListener("submit", function (event) {
                     var reportKey = document.getElementById("ReportKey");
                     var searchButton = document.getElementById("htmlReportSearchBtn");
                     var progress = document.getElementById("htmlReportProgress");
+                    var validation = validateHtmlReportForm(filterForm);
+                    if (validation) {
+                        event.preventDefault();
+                        if (progress) { progress.textContent = validation; }
+                        return;
+                    }
 
                     if (!reportKey || !reportKey.value) {
                         event.preventDefault();
@@ -253,6 +281,20 @@
                             progress.textContent = "اختر التقرير أولا";
                         }
                         return;
+                    }
+
+                    if (reportKey.value === "store-serials") {
+                        var storeSelect = document.querySelector("select[name='StoreId']");
+                        var serialSearch = document.querySelector("input[name='SerialSearch']");
+                        var hasStore = storeSelect && storeSelect.value;
+                        var searchText = serialSearch && serialSearch.value ? serialSearch.value.trim() : "";
+                        if (!hasStore && searchText.length < 3) {
+                            event.preventDefault();
+                            if (progress) {
+                                progress.textContent = "اختر المخزن أو اكتب 3 أحرف على الأقل للبحث";
+                            }
+                            return;
+                        }
                     }
 
                     if (searchButton && searchButton.disabled) {
@@ -267,6 +309,30 @@
 
                     if (progress) {
                         progress.textContent = "جاري تجهيز التقرير...";
+                    }
+                });
+            }
+
+            var exportForm = document.querySelector(".html-report-actions");
+            if (exportForm) {
+                exportForm.addEventListener("submit", function (event) {
+                    var exportButton = exportForm.querySelector("button[type='submit']");
+                    var progress = document.getElementById("htmlReportProgress");
+                    var validation = validateHtmlReportForm(exportForm);
+                    if (validation) {
+                        event.preventDefault();
+                        if (progress) { progress.textContent = validation; }
+                        return;
+                    }
+
+                    if (exportButton && exportButton.disabled) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    if (exportButton) {
+                        exportButton.disabled = true;
+                        exportButton.textContent = "جاري تجهيز Excel...";
                     }
                 });
             }

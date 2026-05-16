@@ -1,0 +1,497 @@
+@{
+    Layout = null;
+    ViewBag.Title = "بحث وتتبع التوكينات";
+    var branches = (ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>) ?? Enumerable.Empty<MyERP.Areas.Pos.Models.PosBranchDto>();
+}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+    <style>
+        .token-lookup-page { background: #f5f7fb; min-height: 100vh; padding: 16px; }
+        .lookup-shell { display: grid; gap: 14px; }
+        .lookup-title { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
+        .lookup-title h1 { color: #24364f; font-size: 22px; font-weight: 800; margin: 0; }
+        .lookup-title span { color: #64748b; font-weight: 700; }
+        .lookup-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+        .lookup-tab-btn { border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #334155; cursor: pointer; font-weight: 800; padding: 9px 12px; }
+        .lookup-tab-btn.active { background: #2457d6; border-color: #2457d6; color: #fff; }
+        .lookup-tab-panel { display: none; }
+        .lookup-tab-panel.active { display: block; }
+        .lookup-actions { align-items: end; display: grid; gap: 10px; grid-template-columns: minmax(260px, 1fr) repeat(2, 160px); }
+        .story-actions { align-items: end; display: grid; gap: 10px; grid-template-columns: minmax(260px, 1fr) 180px; }
+        .summary-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+        .summary-card { background: #fff; border: 1px solid #d9e1ee; border-radius: 8px; padding: 12px; }
+        .summary-card small { color: #64748b; display: block; font-weight: 700; margin-bottom: 6px; }
+        .summary-card strong { color: #14213d; font-size: 22px; font-weight: 900; }
+        .filter-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+        .lookup-message { color: #b42318; font-weight: 800; min-height: 22px; }
+        .lookup-note { background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; color: #9a3412; font-weight: 800; padding: 10px 12px; }
+        .lookup-table-wrap { max-height: 62vh; overflow: auto; }
+        .lookup-table { border-collapse: collapse; min-width: 1680px; width: 100%; }
+        .lookup-table th, .lookup-table td { border: 1px solid #d9e1ee; padding: 8px; text-align: center; vertical-align: middle; white-space: nowrap; }
+        .lookup-table th { background: #eef3f8; color: #24364f; font-weight: 800; position: sticky; top: 0; z-index: 1; }
+        .lookup-table td.notes-cell { max-width: 320px; text-align: right; white-space: normal; }
+        .status-chip { border-radius: 999px; display: inline-block; font-size: 12px; font-weight: 900; padding: 4px 9px; }
+        .status-found { background: #dcfce7; color: #166534; }
+        .status-notfound { background: #fee2e2; color: #991b1b; }
+        .status-uploaddup { background: #fef3c7; color: #92400e; }
+        .status-dbdup { background: #ede9fe; color: #5b21b6; }
+        .story-grid { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+        .story-card { background: #fff; border: 1px solid #d9e1ee; border-radius: 8px; padding: 12px; }
+        .story-card h3 { color: #24364f; font-size: 17px; margin: 0 0 10px; }
+        .story-line { border-right: 3px solid #2457d6; display: grid; gap: 10px; padding-right: 12px; }
+        .story-event { background: #fff; border: 1px solid #d9e1ee; border-radius: 8px; padding: 10px; }
+        .story-event strong { color: #14213d; display: block; margin-bottom: 5px; }
+        .story-event small { color: #64748b; display: block; font-weight: 800; }
+        @@media (max-width: 900px) {
+            .token-lookup-page { padding: 10px; }
+            .lookup-actions, .story-actions, .story-grid { grid-template-columns: 1fr; }
+            .lookup-title h1 { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="token-lookup-page"
+         data-analyze-url="@Url.Action("Analyze", "TokenInvoiceLookup", new { area = "Pos" })"
+         data-batch-url="@Url.Action("AnalyzeBatch", "TokenInvoiceLookup", new { area = "Pos" })"
+         data-story-url="@Url.Action("TokenStory", "TokenInvoiceLookup", new { area = "Pos" })"
+         data-export-url="@Url.Action("Export", "TokenInvoiceLookup", new { area = "Pos" })">
+        <div class="lookup-shell">
+            <section class="pos-panel pos-card">
+                <div class="lookup-title">
+                    <h1>بحث وتتبع التوكينات</h1>
+                    <span>قراءة فقط - لا يتم تعديل بيانات البيع أو المخزون</span>
+                </div>
+                <div class="lookup-tabs" style="margin-top:14px;">
+                    <button type="button" class="lookup-tab-btn active" data-tab-target="tab-file">بحث ملف توكنات</button>
+                    <button type="button" class="lookup-tab-btn" data-tab-target="tab-story">تتبع حركة توكن</button>
+                </div>
+            </section>
+
+            <section class="lookup-tab-panel active" id="tab-file">
+                <div class="lookup-shell">
+                    <section class="pos-panel pos-card">
+                        <div class="lookup-actions">
+                            <label class="pos-field">
+                                ملف التوكنات
+                                <input id="tokenExcelFile" type="file" accept=".xlsx,.xls,.csv,.txt" />
+                            </label>
+                            <button id="analyzeBtn" type="button" class="erp-btn erp-btn-primary">تحليل / بحث</button>
+                            <button id="exportBtn" type="button" class="erp-btn erp-btn-secondary" disabled>تصدير Excel</button>
+                        </div>
+                        <div class="lookup-note" style="margin-top:10px;">يمكن رفع ملف يحتوي على عمود واحد للتوكنات، سواء كان العمود بعنوان أو بدون عنوان.</div>
+                        <div id="lookupMessage" class="lookup-message" style="margin-top:10px;"></div>
+                    </section>
+
+                    <section class="summary-grid">
+                        <div class="summary-card"><small>إجمالي التوكنات في الملف</small><strong id="sumUploaded">0</strong></div>
+                        <div class="summary-card"><small>توكنات بدون تكرار</small><strong id="sumUnique">0</strong></div>
+                        <div class="summary-card"><small>موجودة في النظام</small><strong id="sumFound">0</strong></div>
+                        <div class="summary-card"><small>غير موجودة</small><strong id="sumNotFound">0</strong></div>
+                        <div class="summary-card"><small>مكررة داخل الملف</small><strong id="sumUploadDup">0</strong></div>
+                        <div class="summary-card"><small>مكررة في قاعدة البيانات</small><strong id="sumDbDup">0</strong></div>
+                    </section>
+
+                    <section class="pos-panel pos-card">
+                        <div class="filter-grid">
+                            <label class="pos-field">
+                                حالة البحث
+                                <select id="statusFilter">
+                                    <option value="">كل الحالات</option>
+                                    <option value="Found">موجود</option>
+                                    <option value="Not Found">غير موجود</option>
+                                    <option value="Duplicate in uploaded sheet">مكرر داخل الملف</option>
+                                    <option value="Duplicate in database">مكرر في قاعدة البيانات</option>
+                                </select>
+                            </label>
+                            <label class="pos-field">من تاريخ<input type="date" id="fromDateFilter" /></label>
+                            <label class="pos-field">إلى تاريخ<input type="date" id="toDateFilter" /></label>
+                            <label class="pos-field">
+                                الفرع
+                                <select id="branchFilter">
+                                    <option value="">كل الفروع</option>
+                                    @foreach (var branch in branches)
+                                    {
+                                        <option value="@branch.BranchName">@branch.BranchName</option>
+                                    }
+                                </select>
+                            </label>
+                            <label class="pos-field">هاتف العميل<input type="search" id="phoneFilter" placeholder="بحث بالهاتف" /></label>
+                        </div>
+                        <div class="lookup-actions" style="grid-template-columns: 130px minmax(220px, 1fr) 130px; margin-top:12px;">
+                            <button id="prevPageBtn" type="button" class="erp-btn erp-btn-secondary" disabled>السابق</button>
+                            <div>
+                                <strong id="pageInfo">صفحة 1</strong>
+                                <div id="loadStatus" style="color:#64748b;font-weight:800;margin-top:4px;">لم يتم تحميل ملف بعد.</div>
+                            </div>
+                            <button id="nextPageBtn" type="button" class="erp-btn erp-btn-secondary" disabled>التالي</button>
+                        </div>
+                    </section>
+
+                    <section class="pos-panel pos-card">
+                        <div class="lookup-table-wrap">
+                            <table class="lookup-table">
+                                <thead>
+                                    <tr>
+                                        <th>Token</th>
+                                        <th>حالة البحث</th>
+                                        <th>Transaction_ID</th>
+                                        <th>تاريخ الفاتورة</th>
+                                        <th>رقم الفاتورة</th>
+                                        <th>اسم العميل</th>
+                                        <th>هاتف العميل</th>
+                                        <th>ID / IPN</th>
+                                        <th>ManualNO</th>
+                                        <th>الرقم القومي</th>
+                                        <th>الفرع</th>
+                                        <th>المخزن</th>
+                                        <th>المستخدم / الكاشير</th>
+                                        <th>نوع الخدمة</th>
+                                        <th>تكرار الملف</th>
+                                        <th>تكرار قاعدة البيانات</th>
+                                        <th>ملاحظات</th>
+                                        <th>إجراء</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resultBody">
+                                    <tr><td colspan="18">ارفع ملف التوكنات ثم اضغط تحليل / بحث</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </section>
+
+            <section class="lookup-tab-panel" id="tab-story">
+                <div class="lookup-shell">
+                    <section class="pos-panel pos-card">
+                        <div class="story-actions">
+                            <label class="pos-field">
+                                رقم التوكن
+                                <input id="singleTokenInput" type="search" placeholder="اكتب التوكن هنا" />
+                            </label>
+                            <button id="storyBtn" type="button" class="erp-btn erp-btn-primary">تتبع حركة التوكن</button>
+                        </div>
+                        <div id="storyMessage" class="lookup-message" style="margin-top:10px;"></div>
+                    </section>
+
+                    <section id="storyResult" class="lookup-shell" style="display:none;">
+                        <section class="summary-grid">
+                            <div class="summary-card"><small>التوكن</small><strong id="storyToken">-</strong></div>
+                            <div class="summary-card"><small>الحالة الحالية</small><strong id="storyStatus">-</strong></div>
+                            <div class="summary-card"><small>حركات المخزون</small><strong id="storyMoveCount">0</strong></div>
+                            <div class="summary-card"><small>فواتير مرتبطة</small><strong id="storySaleCount">0</strong></div>
+                        </section>
+
+                        <section class="lookup-note" id="storySummary"></section>
+
+                        <section class="story-grid">
+                            <div class="story-card">
+                                <h3>بيانات العميل / الكارت</h3>
+                                <div id="storyCustomers">لا توجد بيانات عميل مرتبطة.</div>
+                            </div>
+                            <div class="story-card">
+                                <h3>الرصيد الحالي بالمخازن</h3>
+                                <div id="storyStock">لا يوجد رصيد حالي ظاهر.</div>
+                            </div>
+                        </section>
+
+                        <section class="story-card">
+                            <h3>خط سير التوكن</h3>
+                            <div id="storyTimeline" class="story-line"></div>
+                        </section>
+                    </section>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var rows = [];
+            var paging = { totalTokens: 0, loadedTokens: 0, batchSize: 50, nextSkip: 0, hasMore: false };
+            var currentPage = 0;
+            var pageSize = 50;
+            var backgroundLoading = false;
+            var page = document.querySelector(".token-lookup-page");
+            function byId(id) { return document.getElementById(id); }
+            function message(id, text) { byId(id).textContent = text || ""; }
+            function escapeHtml(value) {
+                return String(value === null || value === undefined ? "" : value)
+                    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+            }
+            function postForm(url, form, done) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", url, true);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) return;
+                    var data = null;
+                    try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
+                    done(xhr.status, data);
+                };
+                xhr.onerror = function () { done(0, null); };
+                xhr.send(form);
+            }
+            function postUrlEncoded(url, data, done) {
+                var body = Object.keys(data).map(function (k) { return encodeURIComponent(k) + "=" + encodeURIComponent(data[k] || ""); }).join("&");
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", url, true);
+                xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== 4) return;
+                    var json = null;
+                    try { json = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
+                    done(xhr.status, json);
+                };
+                xhr.onerror = function () { done(0, null); };
+                xhr.send(body);
+            }
+            function setBusy(buttonId, text, busy) {
+                byId(buttonId).disabled = busy;
+                byId(buttonId).textContent = busy ? text : (buttonId === "storyBtn" ? "تتبع حركة التوكن" : "تحليل / بحث");
+            }
+            function renderSummary(summary) {
+                summary = summary || {};
+                byId("sumUploaded").textContent = summary.UploadedTokensCount || summary.uploadedTokensCount || 0;
+                byId("sumUnique").textContent = summary.UniqueTokensCount || summary.uniqueTokensCount || 0;
+                byId("sumFound").textContent = summary.FoundCount || summary.foundCount || 0;
+                byId("sumNotFound").textContent = summary.NotFoundCount || summary.notFoundCount || 0;
+                byId("sumUploadDup").textContent = summary.DuplicatedInUploadedFileCount || summary.duplicatedInUploadedFileCount || 0;
+                byId("sumDbDup").textContent = summary.DuplicatedInDatabaseCount || summary.duplicatedInDatabaseCount || 0;
+            }
+            function updatePager(filteredCount) {
+                var totalPages = Math.max(1, Math.ceil(filteredCount / pageSize));
+                if (currentPage >= totalPages) currentPage = totalPages - 1;
+                byId("pageInfo").textContent = "صفحة " + (currentPage + 1) + " من " + totalPages + " - المعروض " + Math.min(pageSize, Math.max(0, filteredCount - currentPage * pageSize)) + " صف";
+                byId("prevPageBtn").disabled = currentPage <= 0;
+                byId("nextPageBtn").disabled = currentPage >= totalPages - 1 && !paging.hasMore;
+                byId("loadStatus").textContent = paging.totalTokens
+                    ? "تم تحميل " + paging.loadedTokens + " من " + paging.totalTokens + " توكن. " + (paging.hasMore ? "يتم تحميل باقي النتائج تدريجيا." : "اكتمل تحميل الدفعات.")
+                    : "لم يتم تحميل ملف بعد.";
+            }
+            function arStatus(status) {
+                if (status === "Found") return "موجود";
+                if (status === "Not Found") return "غير موجود";
+                if (status === "Duplicate in uploaded sheet") return "مكرر داخل الملف";
+                if (status === "Duplicate in database") return "مكرر في قاعدة البيانات";
+                return status || "";
+            }
+            function statusClass(status) {
+                if (status === "Found") return "status-found";
+                if (status === "Not Found") return "status-notfound";
+                if (status === "Duplicate in uploaded sheet") return "status-uploaddup";
+                if (status === "Duplicate in database") return "status-dbdup";
+                return "";
+            }
+            function applyFilters() {
+                var status = byId("statusFilter").value;
+                var from = byId("fromDateFilter").value;
+                var to = byId("toDateFilter").value;
+                var branch = byId("branchFilter").value;
+                var phone = byId("phoneFilter").value.trim();
+                return rows.filter(function (row) {
+                    if (status && row.searchStatus !== status) return false;
+                    if (from && row.invoiceDate && row.invoiceDate < from) return false;
+                    if (to && row.invoiceDate && row.invoiceDate > to) return false;
+                    if (branch && row.branch !== branch) return false;
+                    if (phone && String(row.customerPhone || "").indexOf(phone) < 0) return false;
+                    return true;
+                });
+            }
+            function renderRows() {
+                var body = byId("resultBody");
+                var filtered = applyFilters();
+                if (!filtered.length) {
+                    body.innerHTML = '<tr><td colspan="18">لا توجد نتائج مطابقة للفلاتر</td></tr>';
+                    updatePager(0);
+                    return;
+                }
+                var visible = filtered.slice(currentPage * pageSize, currentPage * pageSize + pageSize);
+                body.innerHTML = visible.map(function (row) {
+                    return '<tr>'
+                        + '<td>' + escapeHtml(row.token) + '</td>'
+                        + '<td><span class="status-chip ' + statusClass(row.searchStatus) + '">' + escapeHtml(arStatus(row.searchStatus)) + '</span></td>'
+                        + '<td>' + escapeHtml(row.transactionId) + '</td>'
+                        + '<td>' + escapeHtml(row.invoiceDate) + '</td>'
+                        + '<td>' + escapeHtml(row.invoiceNumber) + '</td>'
+                        + '<td>' + escapeHtml(row.customerName) + '</td>'
+                        + '<td>' + escapeHtml(row.customerPhone) + '</td>'
+                        + '<td>' + escapeHtml(row.idIpn) + '</td>'
+                        + '<td>' + escapeHtml(row.manualNo) + '</td>'
+                        + '<td>' + escapeHtml(row.nationalId) + '</td>'
+                        + '<td>' + escapeHtml(row.branch) + '</td>'
+                        + '<td>' + escapeHtml(row.store) + '</td>'
+                        + '<td>' + escapeHtml(row.cashier) + '</td>'
+                        + '<td>' + escapeHtml(row.serviceType) + '</td>'
+                        + '<td>' + escapeHtml(row.uploadedDuplicateCount) + '</td>'
+                        + '<td>' + escapeHtml(row.databaseMatchCount) + '</td>'
+                        + '<td class="notes-cell">' + escapeHtml(row.notes) + '</td>'
+                        + '<td><button type="button" class="erp-btn erp-btn-secondary track-token-btn" data-token="' + escapeHtml(row.token) + '">تتبع الحركة</button></td>'
+                        + '</tr>';
+                }).join("");
+                updatePager(filtered.length);
+            }
+            function mergeRows(newRows) {
+                Array.prototype.push.apply(rows, newRows || []);
+            }
+            function applyPaging(newPaging) {
+                if (!newPaging) return;
+                paging = {
+                    totalTokens: newPaging.totalTokens || newPaging.TotalTokens || 0,
+                    loadedTokens: newPaging.loadedTokens || newPaging.LoadedTokens || 0,
+                    batchSize: newPaging.batchSize || newPaging.BatchSize || 50,
+                    nextSkip: newPaging.nextSkip || newPaging.NextSkip || 0,
+                    hasMore: !!(newPaging.hasMore || newPaging.HasMore)
+                };
+            }
+            function loadNextBatch(background) {
+                if (!paging.hasMore || backgroundLoading) return;
+                backgroundLoading = true;
+                if (!background) message("lookupMessage", "جاري تحميل الدفعة التالية...");
+                postUrlEncoded(page.getAttribute("data-batch-url"), { skip: paging.nextSkip, take: paging.batchSize }, function (status, data) {
+                    backgroundLoading = false;
+                    if (status >= 200 && status < 300 && data && data.success) {
+                        mergeRows(data.rows || []);
+                        applyPaging(data.paging);
+                        renderSummary(data.summary);
+                        renderRows();
+                        if (!background) message("lookupMessage", "تم تحميل الدفعة التالية.");
+                        if (paging.hasMore) {
+                            window.setTimeout(function () { loadNextBatch(true); }, 250);
+                        }
+                        return;
+                    }
+                    message("lookupMessage", (data && data.message) || "تعذر تحميل دفعة إضافية من النتائج");
+                });
+            }
+            function analyze() {
+                var file = byId("tokenExcelFile").files[0];
+                if (!file) { message("lookupMessage", "اختر ملف Excel أو CSV أولا"); return; }
+                var form = new FormData();
+                form.append("file", file);
+                setBusy("analyzeBtn", "جاري البحث...", true);
+                message("lookupMessage", "جاري قراءة الملف والبحث في قاعدة البيانات...");
+                postForm(page.getAttribute("data-analyze-url"), form, function (status, data) {
+                    setBusy("analyzeBtn", "", false);
+                    if (status >= 200 && status < 300 && data && data.success) {
+                        rows = data.rows || [];
+                        currentPage = 0;
+                        applyPaging(data.paging);
+                        renderSummary(data.summary);
+                        renderRows();
+                        byId("exportBtn").disabled = rows.length === 0;
+                        message("lookupMessage", "تم عرض أول دفعة. يمكنك التنقل بين الصفحات وسيستمر تحميل باقي النتائج تدريجيا.");
+                        if (paging.hasMore) {
+                            window.setTimeout(function () { loadNextBatch(true); }, 250);
+                        }
+                        return;
+                    }
+                    message("lookupMessage", (data && data.message) || "تعذر إكمال البحث في التوكنات");
+                });
+            }
+            function htmlList(items, renderer, empty) {
+                if (!items || !items.length) return escapeHtml(empty);
+                return items.map(renderer).join("");
+            }
+            function renderStory(story) {
+                story = story || {};
+                byId("storyResult").style.display = "";
+                byId("storyToken").textContent = story.token || "-";
+                byId("storyStatus").textContent = story.currentStatus || "-";
+                byId("storyMoveCount").textContent = (story.movements || []).length;
+                byId("storySaleCount").textContent = (story.salesReferences || []).length;
+                byId("storySummary").textContent = (story.summaryText || "") + (story.isRestrictedByBranch ? " النتائج مقيدة بفرعك الحالي حسب الصلاحية." : "");
+                byId("storyCustomers").innerHTML = htmlList(story.customers, function (x) {
+                    return "<div class='story-event'><strong>" + escapeHtml(x.customerName || "عميل بدون اسم") + "</strong>"
+                        + "<small>هاتف: " + escapeHtml(x.customerPhone) + " | رقم قومي: " + escapeHtml(x.nationalId) + "</small>"
+                        + "<small>فرع: " + escapeHtml(x.branchName) + " | تاريخ الحفظ: " + escapeHtml(x.saveDate) + "</small></div>";
+                }, "لا توجد بيانات عميل مرتبطة.");
+                byId("storyStock").innerHTML = htmlList(story.currentStock, function (x) {
+                    return "<div class='story-event'><strong>" + escapeHtml(x.storeName || "مخزن غير محدد") + "</strong>"
+                        + "<small>الصنف: " + escapeHtml(x.itemName) + " | الكمية الحالية: " + escapeHtml(x.currentQty) + "</small>"
+                        + "<small>آخر حركة: " + escapeHtml(x.lastTransactionId) + " - " + escapeHtml(x.lastTransactionDate) + "</small></div>";
+                }, "لا يوجد رصيد حالي ظاهر.");
+                var timeline = (story.movements || []).concat(story.salesReferences || []);
+                timeline.sort(function (a, b) { return String(a.transactionDate || "").localeCompare(String(b.transactionDate || "")); });
+                byId("storyTimeline").innerHTML = htmlList(timeline, function (x) {
+                    return "<div class='story-event'><strong>" + escapeHtml(x.movementKind) + " - حركة " + escapeHtml(x.transactionId) + "</strong>"
+                        + "<small>" + escapeHtml(x.transactionDate) + " | " + escapeHtml(x.branchName) + " | " + escapeHtml(x.storeName) + "</small>"
+                        + "<small>الصنف: " + escapeHtml(x.itemName) + " | الكمية: " + escapeHtml(x.quantity) + " | الأثر: " + escapeHtml(x.signedQuantity) + "</small>"
+                        + "<small>فاتورة/سيريال: " + escapeHtml(x.invoiceNumber) + " | المستخدم: " + escapeHtml(x.userName) + "</small>"
+                        + "<small>عميل: " + escapeHtml(x.customerName) + " | هاتف: " + escapeHtml(x.customerPhone) + "</small></div>";
+                }, "لا توجد حركات لهذا التوكن.");
+            }
+            function activateStoryTab() {
+                var storyButton = document.querySelector('[data-tab-target="tab-story"]');
+                Array.prototype.forEach.call(document.querySelectorAll(".lookup-tab-btn"), function (b) { b.classList.toggle("active", b === storyButton); });
+                Array.prototype.forEach.call(document.querySelectorAll(".lookup-tab-panel"), function (p) { p.classList.toggle("active", p.id === "tab-story"); });
+            }
+            function loadStory(tokenValue) {
+                var token = tokenValue || byId("singleTokenInput").value;
+                if (!token || !token.trim()) { message("storyMessage", "اكتب رقم التوكن أولا"); return; }
+                byId("singleTokenInput").value = token;
+                activateStoryTab();
+                setBusy("storyBtn", "جاري التحميل...", true);
+                message("storyMessage", "جاري تتبع التوكن في الفواتير والمخازن...");
+                postUrlEncoded(page.getAttribute("data-story-url"), { token: token }, function (status, data) {
+                    setBusy("storyBtn", "", false);
+                    if (status >= 200 && status < 300 && data && data.success) {
+                        renderStory(data.story);
+                        message("storyMessage", "");
+                        return;
+                    }
+                    message("storyMessage", (data && data.message) || "تعذر تحميل حركة التوكن");
+                });
+            }
+            Array.prototype.forEach.call(document.querySelectorAll("[data-tab-target]"), function (button) {
+                button.addEventListener("click", function () {
+                    var id = button.getAttribute("data-tab-target");
+                    Array.prototype.forEach.call(document.querySelectorAll(".lookup-tab-btn"), function (b) { b.classList.toggle("active", b === button); });
+                    Array.prototype.forEach.call(document.querySelectorAll(".lookup-tab-panel"), function (p) { p.classList.toggle("active", p.id === id); });
+                });
+            });
+            byId("analyzeBtn").addEventListener("click", analyze);
+            document.addEventListener("click", function (e) {
+                var target = e.target;
+                while (target && target !== document && !(target.className || "").toString().match(/\btrack-token-btn\b/)) {
+                    target = target.parentNode;
+                }
+                if (target && target.getAttribute) {
+                    var token = target.getAttribute("data-token");
+                    if (token) loadStory(token);
+                }
+            });
+            byId("prevPageBtn").addEventListener("click", function () {
+                if (currentPage > 0) {
+                    currentPage--;
+                    renderRows();
+                }
+            });
+            byId("nextPageBtn").addEventListener("click", function () {
+                var filteredCount = applyFilters().length;
+                if ((currentPage + 1) * pageSize < filteredCount) {
+                    currentPage++;
+                    renderRows();
+                    return;
+                }
+
+                if (paging.hasMore) {
+                    loadNextBatch(false);
+                }
+            });
+            byId("storyBtn").addEventListener("click", loadStory);
+            byId("singleTokenInput").addEventListener("keydown", function (e) { if (e.keyCode === 13) loadStory(); });
+            byId("exportBtn").addEventListener("click", function () { window.location.href = page.getAttribute("data-export-url"); });
+            ["statusFilter", "fromDateFilter", "toDateFilter", "branchFilter", "phoneFilter"].forEach(function (id) {
+                byId(id).addEventListener("input", function () { currentPage = 0; renderRows(); });
+                byId(id).addEventListener("change", function () { currentPage = 0; renderRows(); });
+            });
+        })();
+    </script>
+</body>
+</html>

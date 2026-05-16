@@ -175,18 +175,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
 
         private static string GetMainErpConnectionString()
         {
-            var setting = ConfigurationManager.ConnectionStrings["MainErp_ConnectionString"];
-            if (setting == null || string.IsNullOrWhiteSpace(setting.ConnectionString))
-            {
-                setting = ConfigurationManager.ConnectionStrings["MyERP_ConnectionString"];
-            }
-
-            if (setting == null || string.IsNullOrWhiteSpace(setting.ConnectionString))
-            {
-                throw new ConfigurationErrorsException("Missing MainERP connection string.");
-            }
-
-            return MainErpDebugDatabaseOverride.Apply(setting.ConnectionString);
+            return MainErpDbConnectionFactory.ResolveActiveConnectionString();
         }
 
         private static string LookupAccountCode(SqlConnection connection, string serial)

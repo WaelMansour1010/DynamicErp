@@ -49,9 +49,17 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             var model = BuildPageModel(context, filter);
-            if (!string.IsNullOrWhiteSpace(model.Filter.ReportKey))
+            try
             {
-                model.Result = RunReport(context, model.Filter, model.ActiveReport);
+                if (!string.IsNullOrWhiteSpace(model.Filter.ReportKey))
+                {
+                    model.Result = RunReport(context, model.Filter, model.ActiveReport);
+                }
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("HtmlReports.Search failed: " + ex);
+                model.Message = "تعذر تشغيل التقرير. برجاء المحاولة مرة أخرى أو التواصل مع الدعم.";
             }
 
             return View("Index", model);
@@ -63,7 +71,7 @@ namespace MyERP.Areas.Pos.Controllers
             var context = GetPosContext();
             if (context == null)
             {
-                return new HttpStatusCodeResult(401, "يجب تسجيل دخول نقطة البيع أولاً");
+                return new HttpStatusCodeResult(401, "يجب تسجيل دخول نقطة البيع أولا");
             }
 
             if (!CanOpenReports(context))
@@ -74,13 +82,21 @@ namespace MyERP.Areas.Pos.Controllers
             var model = BuildPageModel(context, filter);
             if (model.ActiveReport == null || string.IsNullOrWhiteSpace(model.Filter.ReportKey))
             {
-                return new HttpStatusCodeResult(400, "اختر التقرير أولاً");
+                return new HttpStatusCodeResult(400, "اختر التقرير أولا");
             }
-            model.Result = RunReport(context, model.Filter, model.ActiveReport);
-            var bytes = BuildExcel(model);
-            var from = model.Filter.FromDate.GetValueOrDefault(DateTime.Today).ToString("yyyyMMdd");
-            var to = model.Filter.ToDate.GetValueOrDefault(DateTime.Today).ToString("yyyyMMdd");
-            return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", SafeFileName(model.ActiveReport.Title) + "_" + from + "_" + to + ".xlsx");
+            try
+            {
+                model.Result = RunReport(context, model.Filter, model.ActiveReport);
+                var bytes = BuildExcel(model);
+                var from = model.Filter.FromDate.GetValueOrDefault(DateTime.Today).ToString("yyyyMMdd");
+                var to = model.Filter.ToDate.GetValueOrDefault(DateTime.Today).ToString("yyyyMMdd");
+                return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", SafeFileName(model.ActiveReport.Title) + "_" + from + "_" + to + ".xlsx");
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError("HtmlReports.Export failed: " + ex);
+                return new HttpStatusCodeResult(500, "تعذر تصدير التقرير");
+            }
         }
 
         [HttpGet]
@@ -96,7 +112,7 @@ namespace MyERP.Areas.Pos.Controllers
                 if (context == null)
                 {
                     Response.StatusCode = 401;
-                    return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولًا" }, JsonRequestBehavior.AllowGet);
+                    return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولا" }, JsonRequestBehavior.AllowGet);
                 }
 
                 if (!CanOpenReports(context))
@@ -170,6 +186,10 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 table = _repository.RunPosClosingReport(report.Key, from, to, branchId, context.UserId, canSeeBranchReports);
             }
+            else if (IsOperationalSalesReport(report.Key))
+            {
+                table = _repository.RunPosOperationalSalesReport(report.Key, from, to, branchId, context.UserId, canSeeBranchReports);
+            }
             else
             {
                 table = _repository.RunPosReport(report.Key, from, to, branchId, context.UserId, canSeeBranchReports);
@@ -184,6 +204,20 @@ namespace MyERP.Areas.Pos.Controllers
                 || string.Equals(reportKey, "finance-closing-discounts", StringComparison.OrdinalIgnoreCase);
         }
 
+        private static bool IsOperationalSalesReport(string reportKey)
+        {
+            return string.Equals(reportKey, "daily-trans", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "daily-trans-2", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "sales-complete", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "sales-complete-2", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "sales-governorates", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "sales-departments", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "sales-sectors", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "sales-analytical", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "general-sales", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "revenues", StringComparison.OrdinalIgnoreCase);
+        }
+
         private static IList<HtmlReportDefinition> BuildReportDefinitions()
         {
             return new List<HtmlReportDefinition>
@@ -192,6 +226,10 @@ namespace MyERP.Areas.Pos.Controllers
                 Report("daily-trans-2", "تقرير يومي بالحركات 2", "نسخة تفصيلية ثانية لحركات نقطة البيع اليومية.", "مصدر بيانات تقارير نقطة البيع"),
                 Report("sales-complete", "تقرير المبيعات الشامل 1", "ملخص مبيعات حسب الفرع ونوع العملية.", "مصدر بيانات تقارير نقطة البيع"),
                 Report("sales-complete-2", "تقرير المبيعات الشامل 2", "ملخص مبيعات شامل قابل للطباعة والتصدير.", "مصدر بيانات تقارير نقطة البيع"),
+                Report("sales-governorates", "تقرير المبيعات الشامل بالمحافظات", "ملخص تشغيلي حسب المحافظات عند توفر بياناتها.", "مصدر بيانات تقارير نقطة البيع"),
+                Report("sales-departments", "تقرير المبيعات الشامل بالإدارات", "ملخص تشغيلي حسب الإدارات عند توفر بياناتها.", "مصدر بيانات تقارير نقطة البيع"),
+                Report("sales-sectors", "تقرير المبيعات الشامل بالقطاعات", "ملخص تشغيلي حسب القطاعات عند توفر بياناتها.", "مصدر بيانات تقارير نقطة البيع"),
+                Report("sales-analytical", "تقرير المبيعات تحليلي", "تحليل تشغيلي لحركات نقطة البيع حسب الفرع ونوع العملية.", "مصدر بيانات تقارير نقطة البيع"),
                 Report("general-sales", "تقرير المبيعات العام", "تقرير المبيعات العام من بيانات كيشني.", "مصدر بيانات تقارير نقطة البيع"),
                 Report("finance-closing", "تقرير الإغلاق المالي", "حركات إغلاق نقطة البيع.", "مصدر بيانات تقارير نقطة البيع"),
                 Report("finance-closing-discounts", "تقرير الإغلاق المالي الشامل على مستوى الفروع", "قيود الإغلاق والخصومات المرتبطة بها.", "مصدر بيانات تقارير نقطة البيع"),
@@ -199,7 +237,6 @@ namespace MyERP.Areas.Pos.Controllers
                 Report("store-serials", "تقرير سيريالات المخزن", "السيريالات المتاحة داخل المخزن مع بحث اختياري.", "مصدر بيانات السيريالات", true)
             };
         }
-
         private static HtmlReportDefinition Report(string key, string title, string description, string source, bool store = false)
         {
             return new HtmlReportDefinition { Key = key, Title = title, Description = description, SourceName = source, SupportsStoreFilter = store };
@@ -276,7 +313,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private IEnumerable<HtmlReportLookupItem> GetInitialBranches(PosUserContext context)
         {
-            return context != null && context.BranchId.HasValue
+            return context != null && !IsAdmin(context) && context.BranchId.HasValue
                 ? new[] { new HtmlReportLookupItem { Id = context.BranchId.Value, Name = context.BranchName } }
                 : new HtmlReportLookupItem[0];
         }
@@ -323,51 +360,64 @@ namespace MyERP.Areas.Pos.Controllers
 
         private static string MapColumnTitle(string name)
         {
-            var crystalMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 { "RowNo", "م" },
                 { "BranchName", "بيان الفروع" },
-                { "TotalSupply", "إجمالي التوريد" },
+                { "BranchCode", "كود الفرع" },
+                { "Branch", "الفرع" },
+                { "Store", "المخزن" },
+                { "StoreName", "المخزن" },
+                { "Cashier", "المستخدم" },
+                { "UserName", "المستخدم" },
+                { "InvoiceNumber", "رقم الفاتورة" },
+                { "NoteSerial1", "رقم الفاتورة" },
+                { "CustomerName", "اسم العميل" },
+                { "CashCustomerName", "اسم العميل" },
+                { "CustomerPhone", "هاتف العميل" },
+                { "CashCustomerPhone", "هاتف العميل" },
+                { "InvoiceDate", "التاريخ" },
+                { "Transaction_Date", "التاريخ" },
+                { "Transaction_ID", "رقم الحركة" },
+                { "ReportType", "نوع العملية" },
+                { "ServiceType", "نوع الخدمة" },
+                { "TransactionCount", "عدد الحركات" },
+                { "CountTransaction", "عدد عمليات الشحن" },
+                { "CardNumber", "رقم الكارت" },
                 { "CountCards", "كارت كيشني - عدد" },
                 { "CardValue", "كارت كيشني - قيمة" },
-                { "CountTransaction", "عدد عمليات الشحن" },
-                { "WalletBalance", "رصيد Wallet" },
-                { "WalletSupply", "توريد Wallet" },
-                { "BankBalanceCharge", "تكلفة رسوم" },
+                { "RechargeAmount", "قيمة الشحن" },
+                { "RechargeValue", "قيمة الشحن" },
+                { "RechargeTotal", "إجمالي الشحن" },
                 { "TotalRechargeValue", "أصل مبلغ الشحن" },
+                { "NetValue", "الرسوم" },
+                { "NetValueTotal", "إجمالي الرسوم" },
+                { "FeesTotal", "إجمالي الرسوم" },
+                { "TotalRev", "مبلغ الرسوم" },
                 { "TotalRev2", "الخصم" },
                 { "TotalRevvat", "ضريبة رسوم الشحن" },
                 { "TotalRevWithVat", "رسوم الشحن شامل الضريبة" },
+                { "Vat", "الضريبة" },
+                { "VatTotal", "إجمالي الضريبة" },
+                { "TotalVat", "الضريبة" },
+                { "TotalValue", "الإجمالي" },
+                { "TotalSupply", "إجمالي التوريد" },
+                { "NetCollection", "صافي التحصيل" },
+                { "WalletBalance", "رصيد Wallet" },
+                { "WalletSupply", "توريد Wallet" },
+                { "BankBalanceCharge", "تكلفة رسوم" },
                 { "ReturnsCount", "المرتجعات - عدد" },
                 { "TotalReturns", "المرتجعات - قيمة" },
+                { "CashOut", "Cash Out" },
+                { "CashOutTotal", "إجمالي Cash Out" },
+                { "CashOutDisc", "خصم Cash Out" },
                 { "NetCashOut", "صافي كاش أوت" },
                 { "BoxValue", "العهدة" },
-                { "ClosingStatus", "حالة الإغلاق" }
-            };
-            string crystalTitle;
-            if (crystalMap.TryGetValue(name, out crystalTitle)) { return crystalTitle; }
-
-            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-            {
-                { "BranchName", "الفرع" },
-                { "BranchCode", "كود الفرع" },
-                { "Transaction_ID", "رقم الحركة" },
-                { "NoteSerial1", "رقم الفاتورة" },
-                { "Transaction_Date", "التاريخ" },
-                { "ReportType", "نوع العملية" },
-                { "CashCustomerName", "اسم العميل" },
-                { "CashCustomerPhone", "هاتف العميل" },
-                { "TransactionCount", "عدد الحركات" },
-                { "RechargeValue", "قيمة الشحن" },
-                { "RechargeTotal", "إجمالي الشحن" },
-                { "NetValue", "الرسوم" },
-                { "NetValueTotal", "إجمالي الرسوم" },
-                { "Vat", "الضريبة" },
-                { "VatTotal", "إجمالي الضريبة" },
-                { "TotalValue", "الإجمالي" },
-                { "FeesTotal", "إجمالي الرسوم" },
-                { "NetCollection", "صافي التحصيل" },
-                { "StoreName", "المخزن" },
+                { "BoxBalance", "رصيد العهدة أول اليوم" },
+                { "ClosingStatus", "حالة الإغلاق" },
+                { "ClosingDate", "تاريخ الإغلاق" },
+                { "OpenBalance", "رصيد أول اليوم" },
+                { "LastBalance", "رصيد نهاية اليوم" },
                 { "ItemCode", "كود الصنف" },
                 { "ItemName", "اسم الصنف" },
                 { "ItemSerial", "السيريال" },
@@ -379,73 +429,12 @@ namespace MyERP.Areas.Pos.Controllers
                 { "NoteSerial", "سيريال القيد" },
                 { "NoteDate", "تاريخ القيد" },
                 { "VoucherType", "نوع القيد" },
-                { "NoteValue", "قيمة القيد" },
-                { "UserName", "المستخدم" },
-                { "ClosingDate", "تاريخ الإغلاق" },
-                { "OpenBalance", "رصيد أول اليوم" },
-                { "LastBalance", "رصيد نهاية اليوم" },
-                { "TotalRechargeValue", "مبلغ الشحن" },
-                { "TotalRev", "مبلغ الرسوم" },
-                { "TotalVat", "الضريبة" },
-                { "TotalSupply", "إجمالي التوريد" },
-                { "CashOut", "Cash Out" },
-                { "CashOutTotal", "إجمالي Cash Out" },
-                { "CashOutDisc", "خصم Cash Out" },
-                { "BoxBalance", "رصيد العهدة أول اليوم" }
-            };
-
-            var cleanMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-            {
-                { "BranchName", "الفرع" },
-                { "BranchCode", "كود الفرع" },
-                { "Transaction_ID", "رقم الحركة" },
-                { "NoteSerial1", "رقم الفاتورة" },
-                { "Transaction_Date", "التاريخ" },
-                { "ReportType", "نوع العملية" },
-                { "CashCustomerName", "اسم العميل" },
-                { "CashCustomerPhone", "هاتف العميل" },
-                { "TransactionCount", "عدد الحركات" },
-                { "RechargeValue", "قيمة الشحن" },
-                { "RechargeTotal", "إجمالي الشحن" },
-                { "NetValue", "الرسوم" },
-                { "NetValueTotal", "إجمالي الرسوم" },
-                { "Vat", "الضريبة" },
-                { "VatTotal", "إجمالي الضريبة" },
-                { "TotalValue", "الإجمالي" },
-                { "FeesTotal", "إجمالي الرسوم" },
-                { "NetCollection", "صافي التحصيل" },
-                { "StoreName", "المخزن" },
-                { "ItemCode", "كود الصنف" },
-                { "ItemName", "اسم الصنف" },
-                { "ItemSerial", "السيريال" },
-                { "StockBalance", "رصيد السيريال" },
-                { "LastTransactionId", "آخر حركة" },
-                { "LastTransactionDate", "تاريخ الدخول/آخر حركة" },
-                { "SerialStatus", "حالة السيريال" },
-                { "NoteID", "رقم القيد" },
-                { "NoteSerial", "سيريال القيد" },
-                { "NoteDate", "تاريخ القيد" },
-                { "VoucherType", "نوع القيد" },
-                { "NoteValue", "قيمة القيد" },
-                { "UserName", "المستخدم" },
-                { "ClosingDate", "تاريخ الإغلاق" },
-                { "OpenBalance", "رصيد أول اليوم" },
-                { "LastBalance", "رصيد نهاية اليوم" },
-                { "TotalRechargeValue", "مبلغ الشحن" },
-                { "TotalRev", "مبلغ الرسوم" },
-                { "TotalVat", "الضريبة" },
-                { "TotalSupply", "إجمالي التوريد" },
-                { "CashOut", "Cash Out" },
-                { "CashOutTotal", "إجمالي Cash Out" },
-                { "CashOutDisc", "خصم Cash Out" },
-                { "BoxBalance", "رصيد العهدة أول اليوم" }
+                { "NoteValue", "قيمة القيد" }
             };
 
             string title;
-            if (cleanMap.TryGetValue(name, out title)) { return title; }
-            return map.TryGetValue(name, out title) ? title : name;
+            return map.TryGetValue(name ?? string.Empty, out title) ? title : name;
         }
-
         private static byte[] BuildExcel(HtmlReportPageViewModel model)
         {
             using (var stream = new MemoryStream())

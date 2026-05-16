@@ -1,0 +1,459 @@
+.fa-admin-page {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    color: var(--main-erp-text, #172033);
+}
+
+.fa-admin-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(320px, .8fr);
+    gap: 18px;
+    align-items: end;
+    padding: 22px;
+    background: linear-gradient(135deg, rgba(20, 89, 109, .96), rgba(35, 50, 66, .96));
+    color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 14px 32px rgba(17, 24, 39, .16);
+}
+
+.fa-admin-eyebrow,
+.fa-admin-panel header span {
+    display: block;
+    font-size: 12px;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.72);
+}
+
+.fa-admin-hero h2,
+.fa-admin-panel h3 {
+    margin: 4px 0;
+    font-weight: 800;
+}
+
+.fa-admin-hero h2 {
+    font-size: 28px;
+}
+
+.fa-admin-hero p {
+    max-width: 760px;
+    margin: 0;
+    color: rgba(255,255,255,.82);
+    line-height: 1.75;
+}
+
+.fa-admin-search {
+    display: grid;
+    grid-template-columns: 1fr 150px auto;
+    gap: 10px;
+    align-items: end;
+}
+
+.fa-admin-search label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    color: rgba(255,255,255,.78);
+    font-size: 12px;
+}
+
+.fa-admin-search input,
+.fa-admin-search select {
+    height: 40px;
+    border: 1px solid rgba(255,255,255,.28);
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    border-radius: 8px;
+    padding: 0 12px;
+}
+
+.fa-admin-search select option {
+    color: #172033;
+}
+
+.fa-admin-search button,
+.fa-admin-actions button {
+    height: 40px;
+    border: 0;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.fa-admin-search button {
+    padding: 0 16px;
+    background: #f4c95d;
+    color: #182233;
+    font-weight: 800;
+}
+
+.fa-admin-stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.fa-admin-stats article,
+.fa-admin-panel {
+    background: var(--main-erp-surface, #fff);
+    border: 1px solid rgba(126, 143, 166, .22);
+    border-radius: 8px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+}
+
+.fa-admin-stats article {
+    padding: 16px;
+}
+
+.fa-admin-stats span,
+.fa-admin-stats small,
+.fa-admin-table small,
+.fa-admin-metrics small {
+    color: #64748b;
+}
+
+.fa-admin-stats strong {
+    display: block;
+    margin: 8px 0 2px;
+    font-size: 24px;
+    color: #12344d;
+}
+
+.fa-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.fa-admin-panel-wide {
+    grid-column: 1 / -1;
+}
+
+.fa-admin-panel header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba(126, 143, 166, .18);
+}
+
+.fa-admin-panel header span {
+    color: #6b7280;
+}
+
+.fa-admin-panel h3 {
+    font-size: 18px;
+    color: #172033;
+}
+
+.fa-admin-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.fa-admin-actions button {
+    width: 40px;
+    background: #eef6f8;
+    color: #175268;
+}
+
+.fa-admin-actions button:disabled {
+    opacity: .42;
+    cursor: not-allowed;
+}
+
+.fa-admin-table-wrap {
+    overflow: auto;
+}
+
+.fa-admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 980px;
+}
+
+.fa-admin-table th,
+.fa-admin-table td {
+    padding: 13px 14px;
+    border-bottom: 1px solid rgba(126, 143, 166, .14);
+    text-align: start;
+    vertical-align: top;
+}
+
+.fa-admin-table th {
+    background: #f7fafc;
+    color: #475569;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.fa-admin-table strong,
+.fa-admin-table code,
+.fa-admin-table span {
+    display: block;
+}
+
+.fa-admin-table code {
+    color: #155e75;
+    background: #ecfeff;
+    border-radius: 6px;
+    padding: 2px 6px;
+    width: max-content;
+    max-width: 220px;
+    white-space: normal;
+}
+
+.fa-admin-ltr {
+    direction: ltr;
+    text-align: right;
+}
+
+.fa-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 3px 8px;
+    margin: 2px 0;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.fa-badge.info {
+    background: #e0f2fe;
+    color: #075985;
+}
+
+.fa-badge.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.fa-badge.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.fa-admin-metrics {
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+}
+
+.fa-admin-metrics div {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid rgba(126, 143, 166, .16);
+    border-radius: 8px;
+    background: #fbfdff;
+}
+
+.fa-empty {
+    padding: 18px;
+    color: #64748b;
+    text-align: center;
+}
+
+.fa-admin-table tbody tr[data-edit-bank],
+.fa-admin-table tbody tr[data-edit-box] {
+    cursor: pointer;
+}
+
+.fa-admin-table tbody tr[data-edit-bank]:hover,
+.fa-admin-table tbody tr[data-edit-box]:hover {
+    background: #f8fbfd;
+}
+
+.fa-editor {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    padding: 22px;
+    background: rgba(15, 23, 42, .42);
+}
+
+.fa-editor[hidden] {
+    display: none;
+}
+
+.fa-editor-card {
+    width: min(980px, 100%);
+    max-height: min(760px, calc(100vh - 44px));
+    overflow: auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 24px 80px rgba(15, 23, 42, .28);
+}
+
+.fa-editor-card header,
+.fa-editor-card footer {
+    position: sticky;
+    background: #fff;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px;
+}
+
+.fa-editor-card header {
+    top: 0;
+    border-bottom: 1px solid rgba(126, 143, 166, .18);
+}
+
+.fa-editor-card footer {
+    bottom: 0;
+    border-top: 1px solid rgba(126, 143, 166, .18);
+}
+
+.fa-icon-button {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 8px;
+    background: #f1f5f9;
+}
+
+.fa-editor-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    padding: 18px;
+}
+
+.fa-editor-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.fa-editor-grid input,
+.fa-editor-grid select {
+    height: 39px;
+    border: 1px solid rgba(126, 143, 166, .34);
+    border-radius: 8px;
+    padding: 0 10px;
+    color: #172033;
+}
+
+.fa-wide {
+    grid-column: span 2;
+}
+
+.fa-check {
+    flex-direction: row !important;
+    align-items: center;
+    min-height: 39px;
+}
+
+.fa-check input {
+    width: 18px;
+    height: 18px;
+}
+
+.fa-editor-save {
+    min-height: 40px;
+    border: 0;
+    border-radius: 8px;
+    padding: 0 16px;
+    background: #155e75;
+    color: #fff;
+    font-weight: 800;
+}
+
+.fa-editor-message {
+    color: #b45309;
+}
+
+.fa-account-results {
+    position: fixed;
+    z-index: 1100;
+    max-height: 260px;
+    overflow: auto;
+    padding: 6px;
+    background: #fff;
+    border: 1px solid rgba(126, 143, 166, .34);
+    border-radius: 8px;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, .18);
+}
+
+.fa-account-result {
+    width: 100%;
+    min-height: 42px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #172033;
+    display: grid;
+    grid-template-columns: minmax(90px, auto) 1fr;
+    gap: 10px;
+    align-items: center;
+    padding: 7px 9px;
+    text-align: start;
+    cursor: pointer;
+}
+
+.fa-account-result:hover,
+.fa-account-result.is-active {
+    background: #eef6f8;
+}
+
+.fa-account-result strong {
+    direction: ltr;
+    color: #155e75;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px;
+}
+
+.fa-account-result span {
+    color: #475569;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+    .fa-admin-hero,
+    .fa-admin-stats,
+    .fa-admin-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .fa-admin-search {
+        grid-template-columns: 1fr;
+    }
+
+    .fa-admin-hero {
+        padding: 16px;
+    }
+
+    .fa-admin-hero h2 {
+        font-size: 22px;
+    }
+
+    .fa-editor-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .fa-wide {
+        grid-column: auto;
+    }
+}

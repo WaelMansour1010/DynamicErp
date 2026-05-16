@@ -12,7 +12,7 @@
     <link href="@Url.Content("~/Areas/Pos/Content/employee-payroll.css")" rel="stylesheet" />
 </head>
 <body class="ep-body" data-base="@Url.Action("MedicalInsurance", "EmployeePayroll", new { area = "Pos" })">
-    @Html.Partial("_MedicalInsuranceSettings")
+    @Html.Partial("~/Views/Shared/EnterpriseHr/_MedicalInsuranceOperational.cshtml")
     <script src="@Url.Content("~/Areas/Pos/Scripts/employee-payroll.js")"></script>
 </body>
 </html>

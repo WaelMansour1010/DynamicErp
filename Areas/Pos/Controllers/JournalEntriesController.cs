@@ -1,7 +1,9 @@
-﻿using MyERP.Areas.Pos.Data;
+using MyERP.Areas.Pos.Data;
 using MyERP.Areas.Pos.Models;
+using MyERP.Common.JournalEntries;
 using System;
 using System.Configuration;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Web.Mvc;
 
@@ -9,7 +11,29 @@ namespace MyERP.Areas.Pos.Controllers
 {
     public class JournalEntriesController : Controller
     {
-        private readonly PosSqlRepository _repository = new PosSqlRepository();
+        private readonly PosSqlRepository _repository;
+        private readonly SharedJournalService _journalService;
+
+        public JournalEntriesController()
+            : this(new PosSqlRepository(), CreateJournalService())
+        {
+        }
+
+        internal JournalEntriesController(PosSqlRepository repository, SharedJournalService journalService)
+        {
+            if (repository == null)
+            {
+                throw new ArgumentNullException("repository");
+            }
+
+            if (journalService == null)
+            {
+                throw new ArgumentNullException("journalService");
+            }
+
+            _repository = repository;
+            _journalService = journalService;
+        }
 
         public ActionResult Index()
         {
@@ -24,9 +48,31 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية استعراض القيود");
             }
 
-            ViewBag.PosContext = context;
-            ViewBag.Branches = IsAdmin(context) ? _repository.GetBranches() : _repository.GetBranches().Where(x => context.BranchId.HasValue && x.BranchId == context.BranchId.Value).ToList();
-            return View();
+            var branches = _journalService.GetBranches();
+            if (!IsAdmin(context))
+            {
+                branches = branches.Where(x => context.BranchId.HasValue && x.BranchId == context.BranchId.Value).ToList();
+            }
+
+            var model = new SharedJournalWorkspaceViewModel
+            {
+                Title = "إدخال واستعراض القيود",
+                Intro = "إدخال القيود اليدوية واستعراض القيود السابقة مع حماية تعديل القيود الآلية.",
+                CommandTitle = "إدارة القيود",
+                CommandIntro = "أنشئ قيدا جديدا أو افتح شاشة البحث لاختيار قيد سابق للعرض.",
+                SearchUrl = Url.Action("Search", "JournalEntries", new { area = "Pos" }),
+                GetUrl = Url.Action("Get", "JournalEntries", new { area = "Pos" }),
+                SaveUrl = Url.Action("Save", "JournalEntries", new { area = "Pos" }),
+                AccountLookupUrl = Url.Action("Accounts", "JournalEntries", new { area = "Pos" }),
+                AccountTreeUrl = Url.Action("AccountTree", "JournalEntries", new { area = "Pos" }),
+                CanCreate = IsAdmin(context) || context.CanCreateJournalEntry,
+                CanEdit = IsAdmin(context) || context.CanEditJournalEntry,
+                IsAdmin = IsAdmin(context),
+                SelectedBranchId = context.BranchId,
+                Branches = branches
+            };
+
+            return View(model);
         }
 
         [HttpPost]
@@ -49,7 +95,7 @@ namespace MyERP.Areas.Pos.Controllers
                 request.BranchId = context.BranchId.Value;
             }
 
-            var rows = _repository.SearchJournalEntries(request, context.UserId, IsAdmin(context));
+            var rows = _journalService.Search(SharedJournalEntryMode.Normal, ToSharedSearch(request), context.UserId, IsAdmin(context));
             return Json(new { success = true, rows = rows });
         }
 
@@ -67,7 +113,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "ليست لديك صلاحية استعراض القيود" }, JsonRequestBehavior.AllowGet);
             }
 
-            var entry = _repository.GetJournalEntryByNoteId(id, context.UserId, IsAdmin(context));
+            var entry = _journalService.Get(SharedJournalEntryMode.Normal, id, context.UserId, IsAdmin(context));
             if (entry == null)
             {
                 return Json(new { success = false, message = "القيد غير موجود أو غير مسموح بعرضه" }, JsonRequestBehavior.AllowGet);
@@ -85,19 +131,19 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "يجب تسجيل الدخول أولا" });
             }
 
-            var validation = ValidateSave(request, context);
-            if (!string.IsNullOrWhiteSpace(validation))
+            if (!IsAdmin(context) && context.BranchId.HasValue && request != null)
             {
-                return Json(new { success = false, message = validation });
+                request.BranchId = context.BranchId.Value;
             }
 
-            var existing = request.NoteId.HasValue && request.NoteId.Value > 0
-                ? _repository.GetJournalEntryByNoteId(request.NoteId.Value, context.UserId, IsAdmin(context))
+            var sharedRequest = ToSharedSave(request);
+            var existing = sharedRequest.NoteId.HasValue && sharedRequest.NoteId.Value > 0
+                ? _journalService.Get(SharedJournalEntryMode.Normal, sharedRequest.NoteId.Value, context.UserId, IsAdmin(context))
                 : null;
 
             if (existing != null && !existing.IsManual)
             {
-                if (!context.CanEditJournalEntry || !IsGeneralAdminPassword(request.AdminPassword))
+                if (!context.CanEditJournalEntry || !IsGeneralAdminPassword(sharedRequest.AdminPassword))
                 {
                     return Json(new { success = false, message = "لا يمكن تعديل قيد آلي بدون كلمة مرور المدير العام" });
                 }
@@ -111,20 +157,19 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "ليست لديك صلاحية إدخال قيد يومية" });
             }
 
-            try
-            {
-                if (!IsAdmin(context) && context.BranchId.HasValue)
-                {
-                    request.BranchId = context.BranchId.Value;
-                }
+            var result = _journalService.Save(
+                SharedJournalEntryMode.Normal,
+                sharedRequest,
+                context.UserId,
+                IsAdmin(context),
+                existing != null && !existing.IsManual,
+                "تم حفظ القيد بنجاح",
+                "لا يمكن تعديل قيد آلي بدون كلمة مرور المدير العام",
+                validateAccountsExist: false,
+                validateBranchExists: false,
+                rejectZeroValueLines: false);
 
-                var result = _repository.SaveManualJournalEntry(request, context.UserId, IsAdmin(context), existing != null && !existing.IsManual);
-                return Json(new { success = true, message = "تم حفظ القيد بنجاح", entry = result });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = "تعذر حفظ القيد", details = ex.Message });
-            }
+            return Json(new { success = result.Success, message = result.Message, details = result.Details, entry = result.Entry });
         }
 
         [HttpGet]
@@ -136,7 +181,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403);
             }
 
-            return Json(_repository.SearchAccounts(term).Select(x => new { id = x.Id, text = x.Name, serial = x.Extra }), JsonRequestBehavior.AllowGet);
+            return Json(_journalService.SearchAccounts(term).Select(x => new { id = x.Id, text = x.Name, serial = x.Extra }), JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
@@ -148,61 +193,47 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403);
             }
 
-            return Json(_repository.GetChartOfAccountsChildren(parentCode, term), JsonRequestBehavior.AllowGet);
+            return Json(_journalService.GetChartOfAccountsChildren(parentCode, term), JsonRequestBehavior.AllowGet);
         }
 
-        private static string ValidateSave(PosManualJournalSaveRequest request, PosUserContext context)
+        private static SharedJournalSearchRequest ToSharedSearch(PosJournalSearchRequest request)
         {
-            if (request == null)
+            request = request ?? new PosJournalSearchRequest();
+            return new SharedJournalSearchRequest
             {
-                return "بيانات القيد غير مكتملة";
-            }
+                VoucherNo = request.VoucherNo,
+                FromDate = request.FromDate,
+                ToDate = request.ToDate,
+                AccountCode = request.AccountCode,
+                AccountCodes = request.AccountCodes,
+                Description = request.Description,
+                BranchId = request.BranchId
+            };
+        }
 
-            if (request.NoteDate < new DateTime(1900, 1, 1))
+        private static SharedManualJournalSaveRequest ToSharedSave(PosManualJournalSaveRequest request)
+        {
+            request = request ?? new PosManualJournalSaveRequest();
+            return new SharedManualJournalSaveRequest
             {
-                return "تاريخ القيد غير صحيح";
-            }
-
-            if (!request.BranchId.HasValue && !context.BranchId.HasValue)
-            {
-                return "الفرع مطلوب";
-            }
-
-            var lines = (request.Lines ?? new System.Collections.Generic.List<PosManualJournalLineDto>())
-                .Where(x => x != null && (!string.IsNullOrWhiteSpace(x.AccountCode) || x.Debit != 0 || x.Credit != 0))
-                .ToList();
-            request.Lines = lines;
-            if (lines.Count < 2)
-            {
-                return "يجب إدخال سطرين على الأقل";
-            }
-
-            foreach (var line in lines)
-            {
-                if (string.IsNullOrWhiteSpace(line.AccountCode))
-                {
-                    return "لا يوجد حساب في أحد سطور القيد";
-                }
-
-                if (line.Debit < 0 || line.Credit < 0)
-                {
-                    return "لا يسمح بقيم سالبة في القيد";
-                }
-
-                if (line.Debit > 0 && line.Credit > 0)
-                {
-                    return "السطر لا يمكن أن يكون مدين ودائن في نفس الوقت";
-                }
-            }
-
-            var debit = lines.Sum(x => x.Debit);
-            var credit = lines.Sum(x => x.Credit);
-            if (debit <= 0 || credit <= 0 || Math.Abs(debit - credit) > 0.01m)
-            {
-                return "إجمالي المدين يجب أن يساوي إجمالي الدائن";
-            }
-
-            return null;
+                NoteId = request.NoteId,
+                NoteDate = request.NoteDate,
+                BranchId = request.BranchId,
+                Description = request.Description,
+                AdminPassword = request.AdminPassword,
+                Lines = (request.Lines ?? new System.Collections.Generic.List<PosManualJournalLineDto>())
+                    .Where(x => x != null)
+                    .Select(x => new SharedManualJournalLineDto
+                    {
+                        AccountCode = x.AccountCode,
+                        AccountSerial = x.AccountSerial,
+                        AccountName = x.AccountName,
+                        Description = x.Description,
+                        Debit = x.Debit,
+                        Credit = x.Credit
+                    })
+                    .ToList()
+            };
         }
 
         private static bool IsGeneralAdminPassword(string password)
@@ -234,6 +265,22 @@ namespace MyERP.Areas.Pos.Controllers
         private PosUserContext GetPosContext()
         {
             return PosLoginController.RestorePosContext(Request, Session, _repository);
+        }
+
+        private static SharedJournalService CreateJournalService()
+        {
+            var connectionString = ConfigurationManager.ConnectionStrings["KishnyCashConnection"];
+            if (connectionString == null || string.IsNullOrWhiteSpace(connectionString.ConnectionString))
+            {
+                throw new ConfigurationErrorsException("Missing connection string: KishnyCashConnection");
+            }
+
+            return new SharedJournalService(new SharedJournalSqlRepository(() =>
+            {
+                var connection = new SqlConnection(connectionString.ConnectionString);
+                connection.Open();
+                return connection;
+            }));
         }
     }
 }
