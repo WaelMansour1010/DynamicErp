@@ -41,6 +41,7 @@ namespace MyERP.Common.EnterpriseHr
         public string SaveAdvanceUrl { get; set; }
         public string DeleteAdvanceUrl { get; set; }
         public string DisburseAdvanceUrl { get; set; }
+        public string SendAdvanceForApprovalUrl { get; set; }
         public string ApproveAdvanceUrl { get; set; }
         public string CancelAdvanceUrl { get; set; }
         public string AdvanceAccountingBoundaryUrl { get; set; }
@@ -53,6 +54,8 @@ namespace MyERP.Common.EnterpriseHr
         public string CancelVacationUrl { get; set; }
         public string CreateVacationEntitlementUrl { get; set; }
         public string DeleteVacationEntitlementUrl { get; set; }
+        public string SaveVacationReturnToWorkUrl { get; set; }
+        public string DeleteVacationReturnToWorkUrl { get; set; }
         public string EmployeeLookupUrl { get; set; }
         public string PayrollRunUrl { get; set; }
         public int? EmployeeId { get; set; }
@@ -258,9 +261,11 @@ namespace MyERP.Common.EnterpriseHr
         public string FirstDate { get; set; }
         public bool AutoDiscount { get; set; }
         public bool Approved { get; set; }
+        public bool Submitted { get; set; }
         public bool Posted { get; set; }
         public bool AccountingApproved { get; set; }
         public bool Rejected { get; set; }
+        public string StatusText { get; set; }
         public string Reason { get; set; }
         public decimal BasicSalary { get; set; }
         public decimal OldAdvance { get; set; }
@@ -269,11 +274,16 @@ namespace MyERP.Common.EnterpriseHr
         public int PartsCount { get; set; }
         public decimal PaidAmount { get; set; }
         public decimal RemainingAmount { get; set; }
+        public decimal InstallmentsTotal { get; set; }
+        public decimal MonthlyDueAmount { get; set; }
+        public bool InstallmentsValid { get; set; }
+        public string InstallmentValidationMessage { get; set; }
         public int? ActualAdvanceId { get; set; }
         public bool IsDisbursed { get; set; }
         public bool CanEdit { get; set; }
         public bool CanDelete { get; set; }
         public bool CanDisburse { get; set; }
+        public bool CanSendApproval { get; set; }
         public bool CanApprove { get; set; }
         public bool CanCancel { get; set; }
         public string LockReason { get; set; }
@@ -289,10 +299,20 @@ namespace MyERP.Common.EnterpriseHr
 
     public class EmployeeAdvancePartViewModel
     {
+        public int? TableId { get; set; }
         public int PartNo { get; set; }
         public decimal PartValue { get; set; }
         public string PartDate { get; set; }
         public bool Payed { get; set; }
+        public string PaidDate { get; set; }
+        public string StatusText { get; set; }
+        public decimal RemainingValue { get; set; }
+        public int? PayrollRunId { get; set; }
+        public int? PayrollDeductionId { get; set; }
+        public bool PayrollLinked { get; set; }
+        public bool PayrollPosted { get; set; }
+        public string PayrollPostedAt { get; set; }
+        public bool Locked { get; set; }
         public string Remark { get; set; }
     }
 
@@ -332,6 +352,42 @@ namespace MyERP.Common.EnterpriseHr
         public bool HasAnyAccountingTrace { get; set; }
         public bool HasUnsupportedAccountingTrace { get; set; }
         public string UnsupportedReason { get; set; }
+        public IList<AdvancePayrollDeductionTraceViewModel> PayrollDeductionLinks { get; set; }
+        public IList<AdvanceJournalTraceViewModel> DirectJournalTraces { get; set; }
+        public IList<AdvanceJournalTraceViewModel> OpeningBalanceTraces { get; set; }
+
+        public AdvanceAccountingBoundaryViewModel()
+        {
+            PayrollDeductionLinks = new List<AdvancePayrollDeductionTraceViewModel>();
+            DirectJournalTraces = new List<AdvanceJournalTraceViewModel>();
+            OpeningBalanceTraces = new List<AdvanceJournalTraceViewModel>();
+        }
+    }
+
+    public class AdvancePayrollDeductionTraceViewModel
+    {
+        public int PayrollRunId { get; set; }
+        public string RunName { get; set; }
+        public int? PeriodYear { get; set; }
+        public int? PeriodMonth { get; set; }
+        public int PartNo { get; set; }
+        public string PartDate { get; set; }
+        public decimal PartValue { get; set; }
+        public bool IsPosted { get; set; }
+        public string PostedAt { get; set; }
+        public int? NoteId { get; set; }
+        public string StatusText { get; set; }
+    }
+
+    public class AdvanceJournalTraceViewModel
+    {
+        public int? NoteId { get; set; }
+        public string NoteSerial { get; set; }
+        public string AccountSerial { get; set; }
+        public string AccountName { get; set; }
+        public decimal Debit { get; set; }
+        public decimal Credit { get; set; }
+        public string Description { get; set; }
     }
 
     public class EmployeeVacationRequestViewModel
@@ -369,10 +425,16 @@ namespace MyERP.Common.EnterpriseHr
         public bool PaidOrSettled { get; set; }
         public bool LinkedToEntitlement { get; set; }
         public int? EntitlementId { get; set; }
+        public int? EmbarkationId { get; set; }
+        public string ActualReturnDate { get; set; }
+        public decimal ActualVacationDays { get; set; }
+        public decimal DelayDays { get; set; }
         public bool CanEdit { get; set; }
         public bool CanDelete { get; set; }
         public bool CanCreateEntitlement { get; set; }
         public bool CanDeleteEntitlement { get; set; }
+        public bool CanRecordReturnToWork { get; set; }
+        public bool CanDeleteReturnToWork { get; set; }
         public bool CanManagerApprove { get; set; }
         public bool CanHrApprove { get; set; }
         public bool CanReject { get; set; }
@@ -380,6 +442,16 @@ namespace MyERP.Common.EnterpriseHr
         public string StatusText { get; set; }
         public string LockReason { get; set; }
         public IList<EmployeeAdvanceApprovalHistoryViewModel> ApprovalHistory { get; set; }
+    }
+
+    public class VacationReturnToWorkViewModel
+    {
+        public int? EntitlementId { get; set; }
+        public string ActualReturnDate { get; set; }
+        public decimal? ActualVacationDays { get; set; }
+        public decimal? DelayDays { get; set; }
+        public string DelayTreatment { get; set; }
+        public string Remarks { get; set; }
     }
 
     public class VacationBalanceRequestViewModel

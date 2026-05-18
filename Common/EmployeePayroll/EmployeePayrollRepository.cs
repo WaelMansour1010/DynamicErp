@@ -1861,15 +1861,35 @@ WHERE sgn = @Sgn
             }
 
             using (var command = CreateCommand(connection, transaction, @"
+IF EXISTS (
+    SELECT 1
+    FROM dbo.PayrollRunAdvanceDeductions l WITH (UPDLOCK, HOLDLOCK)
+    INNER JOIN dbo.TblEmpAdvanceDetails d WITH (UPDLOCK, HOLDLOCK) ON l.AdvanceDetailTableId = d.TableID
+    WHERE l.PayrollRunId = @PayrollRunId
+      AND ISNULL(l.IsPosted, 0) = 0
+      AND (
+          ISNULL(d.Payed, 0) = 1
+          OR d.Payed1 IS NOT NULL
+          OR (d.StutsID IS NOT NULL AND d.StutsID NOT IN (21, 22, 23, 666))
+      )
+)
+BEGIN
+    RAISERROR(N'يوجد قسط سلفة في هذا المسير تم استهلاكه أو تغيير حالته خارج المسير. أعد احتساب المسير قبل الترحيل.', 16, 1);
+    RETURN;
+END;
+
 UPDATE d
 SET Payed = 1,
+    StutsID = 555,
     Remark = LEFT(LTRIM(RTRIM(ISNULL(d.Remark, N'') + N' ' + N'خصم من مسير الرواتب رقم ' + CONVERT(nvarchar(20), @PayrollRunId))), 4000)
 FROM dbo.TblEmpAdvanceDetails d
 INNER JOIN dbo.PayrollRunAdvanceDeductions l WITH (UPDLOCK, HOLDLOCK)
     ON l.AdvanceDetailTableId = d.TableID
 WHERE l.PayrollRunId = @PayrollRunId
   AND ISNULL(l.IsPosted, 0) = 0
-  AND (d.Payed IS NULL OR d.Payed <> 1);
+  AND (d.Payed IS NULL OR d.Payed <> 1)
+  AND d.Payed1 IS NULL
+  AND (d.StutsID IS NULL OR d.StutsID IN (21, 22, 23, 666));
 
 DECLARE @Rows int;
 SET @Rows = @@ROWCOUNT;
@@ -4457,9 +4477,20 @@ WHERE a.Emp_ID IN (" + employeeCsv + @")
   AND ((MONTH(d.PartDate) = @Month AND YEAR(d.PartDate) = @Year)
        OR (d.MothID2 = @Month AND d.YearID2 = @Year))
   AND (d.Payed IS NULL OR d.Payed <> 1)
+  AND d.Payed1 IS NULL
+  AND (d.StutsID IS NULL OR d.StutsID IN (21, 22, 23, 666))
+  AND NOT EXISTS (
+      SELECT 1
+      FROM dbo.PayrollRunAdvanceDeductions existing WITH (NOLOCK)
+      LEFT JOIN dbo.PayrollRunHeader h WITH (NOLOCK) ON h.PayrollRunId = existing.PayrollRunId
+      WHERE existing.AdvanceDetailTableId = d.TableID
+        AND (@PayrollRunId IS NULL OR existing.PayrollRunId <> @PayrollRunId)
+        AND (h.PayrollRunId IS NULL OR ISNULL(h.IsCancelled, 0) = 0)
+  )
 ORDER BY a.Emp_ID, d.PartDate, d.TableID;";
                 command.Parameters.Add("@Year", SqlDbType.Int).Value = request.Year;
                 command.Parameters.Add("@Month", SqlDbType.Int).Value = request.Month;
+                AddNullable(command, "@PayrollRunId", SqlDbType.Int, request.PayrollRunId);
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
@@ -5773,6 +5804,14 @@ IF NOT EXISTS (
     FROM dbo.PayrollRunAdvanceDeductions
     WHERE PayrollRunId = @PayrollRunId
       AND AdvanceDetailTableId = @AdvanceDetailTableId
+)
+AND NOT EXISTS (
+    SELECT 1
+    FROM dbo.PayrollRunAdvanceDeductions existing
+    LEFT JOIN dbo.PayrollRunHeader h ON h.PayrollRunId = existing.PayrollRunId
+    WHERE existing.AdvanceDetailTableId = @AdvanceDetailTableId
+      AND existing.PayrollRunId <> @PayrollRunId
+      AND (h.PayrollRunId IS NULL OR ISNULL(h.IsCancelled, 0) = 0)
 )
 BEGIN
     INSERT INTO dbo.PayrollRunAdvanceDeductions

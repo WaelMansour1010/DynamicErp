@@ -793,6 +793,7 @@ namespace MyERP.Areas.Pos.Models
         public int? CancelledBy { get; set; }
         public DateTime? CancelledDate { get; set; }
         public string CancelReason { get; set; }
+        public bool BranchDayIsClosed { get; set; }
         public bool IsExcelImported { get; set; }
         public bool HasExcelImportWarning { get; set; }
         public string ExcelImportWarningMessage { get; set; }

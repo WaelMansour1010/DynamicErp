@@ -55,6 +55,7 @@ BEGIN
         CanPrint BIT NOT NULL CONSTRAINT DF_WebScreenPermissions_CanPrint DEFAULT(0),
         CanExport BIT NOT NULL CONSTRAINT DF_WebScreenPermissions_CanExport DEFAULT(0),
         CanApprove BIT NOT NULL CONSTRAINT DF_WebScreenPermissions_CanApprove DEFAULT(0),
+        SeedSource NVARCHAR(80) NULL,
         CreatedAt DATETIME NOT NULL CONSTRAINT DF_WebScreenPermissions_CreatedAt DEFAULT(GETDATE()),
         UpdatedAt DATETIME NULL,
         CONSTRAINT FK_WebScreenPermissions_WebScreens FOREIGN KEY (WebScreenId) REFERENCES dbo.WebScreens(WebScreenId)
@@ -102,6 +103,9 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_WebScreens_ScreenKey'
 
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'UX_WebScreenPermissions_User_Screen' AND object_id = OBJECT_ID(N'dbo.WebScreenPermissions', N'U'))
     CREATE UNIQUE INDEX UX_WebScreenPermissions_User_Screen ON dbo.WebScreenPermissions(UserId, WebScreenId);
+
+IF COL_LENGTH(N'dbo.WebScreenPermissions', N'SeedSource') IS NULL
+    ALTER TABLE dbo.WebScreenPermissions ADD SeedSource NVARCHAR(80) NULL;
 
 DECLARE @ModuleId INT;
 
@@ -177,8 +181,8 @@ SELECT @ModuleId, src.ScreenKey, src.ArabicCaption, src.EnglishCaption, src.Rout
 FROM @Screens src
 WHERE NOT EXISTS (SELECT 1 FROM dbo.WebScreens s WHERE s.ScreenKey = src.ScreenKey);
 
-INSERT INTO dbo.WebScreenPermissions(UserId, WebScreenId, CanView, CanAdd, CanEdit, CanDelete, CanPrint, CanExport, CanApprove, CreatedAt, UpdatedAt)
-SELECT u.UserID, ws.WebScreenId, 1, src.CanAdd, src.CanEdit, src.CanDelete, src.CanPrint, src.CanExport, 0, GETDATE(), GETDATE()
+INSERT INTO dbo.WebScreenPermissions(UserId, WebScreenId, CanView, CanAdd, CanEdit, CanDelete, CanPrint, CanExport, CanApprove, SeedSource, CreatedAt, UpdatedAt)
+SELECT u.UserID, ws.WebScreenId, 1, src.CanAdd, src.CanEdit, src.CanDelete, src.CanPrint, src.CanExport, 0, N'SharedHrSeed', GETDATE(), GETDATE()
 FROM dbo.TblUsers u
 INNER JOIN dbo.WebScreens ws ON ws.ScreenKey IN (SELECT ScreenKey FROM @Screens)
 INNER JOIN @Screens src ON src.ScreenKey = ws.ScreenKey

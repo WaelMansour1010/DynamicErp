@@ -1582,16 +1582,16 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             var isCard = IsKeshniCardTransaction(invoice.TransactionType);
-            if (context.CanEditSalesInvoice)
-            {
-                return new PosSalesInvoiceEditPermission(true, isCard, "مسموح بتعديل محدود للقيمة" + (isCard ? " وبيانات KYC" : ""));
-            }
-
-            if (context.CanEditSalesInvoicePos)
+            if (context.CanEditSalesInvoice || context.CanEditSalesInvoicePos)
             {
                 if (!invoice.TransactionDate.HasValue || invoice.TransactionDate.Value.Date != DateTime.Today)
                 {
-                    return new PosSalesInvoiceEditPermission(false, false, "صلاحية POS تسمح بتعديل فواتير اليوم فقط");
+                    return new PosSalesInvoiceEditPermission(false, false, "صلاحية التعديل المحدود تسمح بتعديل فواتير اليوم فقط");
+                }
+
+                if (invoice.BranchDayIsClosed)
+                {
+                    return new PosSalesInvoiceEditPermission(false, false, "لا يمكن تعديل الفاتورة بعد إغلاق يوم الفرع.");
                 }
 
                 return new PosSalesInvoiceEditPermission(true, isCard, "مسموح بتعديل محدود لفاتورة اليوم" + (isCard ? " وبيانات KYC" : ""));

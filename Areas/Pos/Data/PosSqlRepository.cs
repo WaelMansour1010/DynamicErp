@@ -7422,6 +7422,15 @@ SELECT TOP (1)
     t.CancelledBy,
     t.CancelledDate,
     t.CancelReason,
+    CAST(CASE WHEN EXISTS
+    (
+        SELECT 1
+        FROM dbo.TBLClosePos c WITH (NOLOCK)
+        WHERE c.BranchID = t.BranchId
+          AND c.OrderDate >= CONVERT(DATE, t.Transaction_Date)
+          AND c.OrderDate < DATEADD(DAY, 1, CONVERT(DATE, t.Transaction_Date))
+          AND ISNULL(c.IsClosed, 0) = 1
+    ) THEN 1 ELSE 0 END AS BIT) AS BranchDayIsClosed,
     CASE WHEN excelRow.RowId IS NULL THEN CAST(0 AS BIT) ELSE CAST(1 AS BIT) END AS IsExcelImported,
     CAST(CASE WHEN CHARINDEX(N'[ExcelImportWarning]', ISNULL(excelRow.Message, N'')) > 0 THEN 1 ELSE 0 END AS BIT) AS HasExcelImportWarning,
     REPLACE(ISNULL(excelRow.Message, N''), N'[ExcelImportWarning] ', N'') AS ExcelImportWarningMessage,
@@ -7547,6 +7556,7 @@ ORDER BY d.Item_ID;";
                             CancelledBy = ReadInt(reader, "CancelledBy"),
                             CancelledDate = ReadDateTime(reader, "CancelledDate"),
                             CancelReason = ReadString(reader, "CancelReason"),
+                            BranchDayIsClosed = ReadBoolean(reader, "BranchDayIsClosed"),
                             IsExcelImported = ReadBoolean(reader, "IsExcelImported"),
                             HasExcelImportWarning = ReadBoolean(reader, "HasExcelImportWarning"),
                             ExcelImportWarningMessage = ReadString(reader, "ExcelImportWarningMessage")

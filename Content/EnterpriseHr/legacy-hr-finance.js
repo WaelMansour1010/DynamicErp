@@ -68,6 +68,39 @@
     }
     function success(res) { return !!(res && (res.Success || res.success)); }
     function message(res, fallback) { return (res && (res.Message || res.message)) || fallback; }
+    function normalize(value) {
+        return String(value == null ? "" : value).toLowerCase()
+            .replace(/[أإآ]/g, "ا")
+            .replace(/ى/g, "ي")
+            .replace(/ة/g, "ه");
+    }
+    function filterSelect(selectId, term) {
+        var select = byId(selectId);
+        if (!select) { return; }
+        var needle = normalize(term);
+        Array.prototype.forEach.call(select.options, function (option, index) {
+            if (index === 0 || !needle) {
+                option.hidden = false;
+                return;
+            }
+            option.hidden = normalize(option.textContent || option.innerText).indexOf(needle) === -1;
+        });
+    }
+    function selectedOption(selectId) {
+        var select = byId(selectId);
+        return select && select.selectedIndex >= 0 ? select.options[select.selectedIndex] : null;
+    }
+    function debounce(fn, delay) {
+        var timer = null;
+        return function () {
+            var args = arguments;
+            clearTimeout(timer);
+            timer = setTimeout(function () { fn.apply(null, args); }, delay || 180);
+        };
+    }
+    function setPageLoading(isLoading) {
+        root.classList.toggle("is-loading", !!isLoading);
+    }
 
     function show(data) {
         data = data || {};
@@ -162,6 +195,85 @@
             grid.appendChild(tr);
         });
     }
+    function renderAdvanceParts(parts) {
+        var grid = byId("lhfAdvancePartsGrid");
+        if (!grid) { return; }
+        grid.innerHTML = "";
+        if (!parts || !parts.length) {
+            var amount = parseFloat(val("lhfAdvanceValue") || "0");
+            var count = parseInt(val("lhfPaymentCounts") || "0", 10);
+            var firstMonth = parseInt(val("lhfFirstMonthPayment") || "0", 10);
+            var firstYear = parseInt(val("lhfFirstYearPayment") || "0", 10);
+            if (!(amount > 0 && count > 0 && firstMonth > 0 && firstYear > 0)) {
+                grid.innerHTML = "<tr><td colspan='7'>سيظهر جدول الأقساط بعد إدخال القيمة وعدد الأقساط.</td></tr>";
+                return;
+            }
+            var partValue = amount / count;
+            parts = [];
+            for (var i = 0; i < count; i += 1) {
+                parts.push({ PartNo: i + 1, PartValue: partValue, PartDate: formatDueDate(advanceDueDate(firstYear, firstMonth, i)), Payed: false, RemainingValue: partValue });
+            }
+        }
+
+        var now = new Date();
+        var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        var total = 0;
+        var remaining = 0;
+        var duplicateMap = {};
+        parts.forEach(function (part) {
+            var due = part.PartDate || "-";
+            var dueDate = null;
+            var match = String(due).match(/(\d{1,2})[\/\-](\d{4})/);
+            if (match) { dueDate = new Date(Number(match[2]), Number(match[1]) - 1, 1); }
+            var isPaid = !!(part.Payed || part.PayrollPosted);
+            var payrollLinked = !!(part.PayrollLinked || part.PayrollRunId);
+            var overdue = !isPaid && dueDate && dueDate < monthStart;
+            var partValue = Number(part.PartValue || 0);
+            total += partValue;
+            remaining += isPaid ? 0 : Number(part.RemainingValue == null ? partValue : part.RemainingValue);
+            duplicateMap[part.PartNo] = (duplicateMap[part.PartNo] || 0) + 1;
+
+            var tr = document.createElement("tr");
+            if (overdue) { tr.className = "is-overdue"; }
+            if (duplicateMap[part.PartNo] > 1) { tr.className = (tr.className ? tr.className + " " : "") + "lhf-row-error"; }
+            var status = part.PayrollPosted ? "<span class='lhf-badge success'>مرحل بالمسير</span>"
+                : payrollLinked ? "<span class='lhf-badge warning'>مرتبط بمسير</span>"
+                    : isPaid ? "<span class='lhf-badge success'>مسدد</span>"
+                        : overdue ? "<span class='lhf-badge danger'>متأخر</span>"
+                            : "<span class='lhf-badge info'>مفتوح</span>";
+            tr.innerHTML = "<td>" + (part.PartNo || "-") + "</td>" +
+                "<td>" + due + "</td>" +
+                "<td class='lhf-num'>" + money(part.PartValue) + "</td>" +
+                "<td class='lhf-num'>" + money(part.RemainingValue == null ? (isPaid ? 0 : partValue) : part.RemainingValue) + "</td>" +
+                "<td>" + status + "</td>" +
+                "<td>" + (part.PayrollRunId ? ("مسير #" + text(part.PayrollRunId)) : "-") + "</td>" +
+                "<td>" + (part.PayrollPostedAt || part.PaidDate || "-") + "</td>";
+            grid.appendChild(tr);
+        });
+
+        var duplicate = Object.keys(duplicateMap).some(function (key) { return duplicateMap[key] > 1; });
+        var footer = document.createElement("tr");
+        footer.className = duplicate ? "lhf-row-error lhf-total-row" : "lhf-total-row";
+        footer.innerHTML = "<td colspan='2'><strong>" + (duplicate ? "يوجد تكرار في أرقام الأقساط" : "إجمالي الأقساط") + "</strong></td>" +
+            "<td class='lhf-num'><strong>" + money(total) + "</strong></td>" +
+            "<td class='lhf-num'><strong>" + money(Math.max(0, remaining)) + "</strong></td>" +
+            "<td colspan='3'></td>";
+        grid.appendChild(footer);
+    }
+
+    function setAdvanceInstallmentValidation(data) {
+        var el = byId("lhfAdvanceInstallmentValidation");
+        if (!el) { return; }
+        if (!data || !data.Id) {
+            el.textContent = "سيتم التحقق من إجمالي الأقساط وحالتها عند تحميل الطلب.";
+            el.className = "lhf-installment-validation";
+            return;
+        }
+        var valid = data.InstallmentsValid !== false;
+        el.textContent = data.InstallmentValidationMessage || (valid ? "الأقساط متوازنة مع قيمة السلفة." : "يوجد خطأ في بيانات الأقساط.");
+        el.className = "lhf-installment-validation " + (valid ? "success" : "danger");
+    }
+
     function updateAdvancePreview(parts) {
         var employee = byId("lhfAdvanceEmployeeId");
         var amount = parseFloat(val("lhfAdvanceValue") || "0");
@@ -221,6 +333,49 @@
             "<span>قيود افتتاحية: <strong>" + (boundary.OpeningJournalLineCount || 0) + "</strong></span>" +
             "<span>أقساط مرتبطة بالمسير: <strong>" + (boundary.PayrollDeductionLineCount || 0) + "</strong></span></div>";
     }
+    function setAdvanceBoundary(boundary) {
+        var el = byId("lhfAdvanceAccountingBoundary");
+        if (!el) { return; }
+        if (!boundary) {
+            el.className = "lhf-accounting-boundary";
+            el.innerHTML = "<strong>حدود المحاسبة والسداد للسلفة</strong><span>سيتم عرض الأثر المحاسبي وروابط المسير بعد حفظ أو تحميل طلب السلفة.</span>";
+            return;
+        }
+
+        var level = boundary.HasUnsupportedAccountingTrace ? " danger" : (boundary.HasAnyAccountingTrace ? " warning" : " safe");
+        var payrollLinks = boundary.PayrollDeductionLinks || [];
+        var directLines = boundary.DirectJournalTraces || [];
+        var openingLines = boundary.OpeningBalanceTraces || [];
+        function traceLine(line) {
+            return "<li><strong>" + text(line.AccountSerial || "-") + " - " + text(line.AccountName || "حساب غير معروف") + "</strong>" +
+                "<span>" + text(line.Description || "") + "</span>" +
+                "<b>مدين " + money(line.Debit) + " / دائن " + money(line.Credit) + "</b>" +
+                (line.NoteId ? "<small>قيد رقم " + text(line.NoteId) + "</small>" : "") + "</li>";
+        }
+        function payrollLine(line) {
+            var period = line.PeriodMonth && line.PeriodYear ? (line.PeriodMonth + "/" + line.PeriodYear) : "-";
+            return "<li><strong>مسير #" + text(line.PayrollRunId) + " - " + text(line.RunName || period) + "</strong>" +
+                "<span>القسط " + text(line.PartNo || "-") + " | الاستحقاق " + text(line.PartDate || "-") + " | القيمة " + money(line.PartValue) + "</span>" +
+                "<b class='" + (line.IsPosted ? "is-posted" : "is-draft") + "'>" + text(line.StatusText || (line.IsPosted ? "مرحل" : "غير مرحل")) + "</b>" +
+                (line.NoteId ? "<small>قيد المسير رقم " + text(line.NoteId) + "</small>" : "") +
+                (line.PostedAt ? "<small>تاريخ الترحيل " + text(line.PostedAt) + "</small>" : "") + "</li>";
+        }
+        el.className = "lhf-accounting-boundary" + level;
+        el.innerHTML = "<strong>حدود المحاسبة والسداد للسلفة</strong>" +
+            "<span>" + text(boundary.BoundaryMessage || "لا توجد بيانات أثر محاسبي مؤكدة.") + "</span>" +
+            (boundary.HasUnsupportedAccountingTrace ? "<em>تحذير: يوجد أثر محاسبي تاريخي مباشر غير مدعوم للإنشاء من شاشة السلف. لا يتم إنشاء قيود مباشرة من هنا.</em>" : "") +
+            "<div class='lhf-boundary-metrics'><span>السلفة الفعلية: <strong>" + text(boundary.ActualAdvanceId || "-") + "</strong></span>" +
+            "<span>أقساط مرتبطة بالمسير: <strong>" + text(boundary.PayrollDeductionLineCount || 0) + "</strong></span>" +
+            "<span>أقساط مرحلة: <strong>" + text(boundary.PostedPayrollDeductionLineCount || 0) + "</strong></span>" +
+            "<span>إجمالي خصم المسير: <strong>" + money(boundary.PayrollDeductionTotal) + "</strong></span>" +
+            "<span>قيود مباشرة تاريخية: <strong>" + text(boundary.NormalJournalLineCount || 0) + "</strong></span>" +
+            "<span>قيود افتتاحية: <strong>" + text(boundary.OpeningJournalLineCount || 0) + "</strong></span></div>" +
+            (payrollLinks.length ? "<section><h4>روابط خصم مسير الرواتب</h4><ul>" + payrollLinks.map(payrollLine).join("") + "</ul></section>" : "<section><h4>روابط خصم مسير الرواتب</h4><p>لا توجد أقساط مرتبطة بمسير رواتب حتى الآن.</p></section>") +
+            (directLines.length ? "<section><h4>قيود مباشرة تاريخية</h4><ul>" + directLines.map(traceLine).join("") + "</ul></section>" : "") +
+            (openingLines.length ? "<section><h4>قيود افتتاحية</h4><ul>" + openingLines.map(traceLine).join("") + "</ul></section>" : "") +
+            "<footer>شاشة السلف تعرض الأثر فقط ولا تنشئ سند صرف أو قيد يومية مباشر.</footer>";
+    }
+
     function loadAdvanceBoundary(id) {
         var url = root.getAttribute("data-advance-accounting-boundary-url");
         if (!url || !id) { setAdvanceBoundary(null); return; }
@@ -248,6 +403,7 @@
         filterAdvanceEmployees("");
         setAdvanceMessage("");
         setAdvanceLocked(data.CanEdit === false, data.LockReason);
+        setAdvanceInstallmentValidation(data);
         updateAdvancePreview(data.Parts || null);
         loadAdvanceBoundary(data.Id || "");
         byId("lhfAdvanceEditor").hidden = false;
@@ -283,6 +439,10 @@
     function showChangedComponent(data) {
         data = data || {};
         val("lhfChangedDetailId", data.Id || "");
+        val("lhfChangedEmployeeSearch", "");
+        val("lhfChangedComponentSearch", "");
+        filterSelect("lhfChangedEmployeeId", "");
+        filterSelect("lhfChangedComponentId", "");
         val("lhfChangedEmployeeId", data.EmployeeId || "");
         val("lhfChangedComponentId", data.ComponentId || "");
         if (data.RecordDate) { val("lhfChangedRecordDate", String(data.RecordDate).replace(/\//g, "-")); } else { setCurrentPeriod("lhfChanged"); }
@@ -296,8 +456,15 @@
         val("lhfChangedSalary", data.Salary || "");
         val("lhfChangedRemarks", data.Remarks || "");
         setChangedMessage("");
+        updateChangedEntryPreview();
         var editor = byId("lhfChangedComponentEditor");
-        if (editor) { editor.hidden = false; }
+        if (editor) {
+            editor.hidden = false;
+            setTimeout(function () {
+                var first = byId("lhfChangedEmployeeSearch") || byId("lhfChangedEmployeeId");
+                if (first) { first.focus(); }
+            }, 30);
+        }
     }
     function closeChangedComponent() {
         var editor = byId("lhfChangedComponentEditor");
@@ -437,6 +604,56 @@
             Remarks: val("lhfChangedRemarks"),
             __RequestVerificationToken: token()
         };
+    }
+    function updateChangedEntryPreview() {
+        var target = byId("lhfChangedEntryPreview");
+        if (!target) { return; }
+        var employee = selectedOption("lhfChangedEmployeeId");
+        var component = selectedOption("lhfChangedComponentId");
+        var amount = Number(val("lhfChangedValue") || 0);
+        var salary = Number((employee && employee.getAttribute("data-salary")) || val("lhfChangedSalary") || 0);
+        if (employee && employee.value && !val("lhfChangedSalary") && salary > 0) {
+            val("lhfChangedSalary", salary);
+        }
+        if (!employee || !employee.value || !component || !component.value) {
+            target.textContent = "اختر الموظف والمفردة لمراجعة اتجاه التأثير قبل الحفظ.";
+            target.className = "lhf-changed-entry-preview";
+            return;
+        }
+        var isAddition = component.getAttribute("data-add") === "true";
+        var unit = parseInt(component.getAttribute("data-unit") || "0", 10);
+        var unitText = unit === 1 ? "أيام" : unit === 2 ? "ساعات" : "قيمة مباشرة";
+        target.innerHTML = "<strong>" + text(isAddition ? "إضافة" : "خصم") + "</strong>"
+            + "<span>" + text(component.textContent || "") + "</span>"
+            + "<small>" + text(employee.textContent || "") + " - " + unitText + " - " + money(amount) + "</small>";
+        target.className = "lhf-changed-entry-preview " + (isAddition ? "addition" : "deduction");
+    }
+    function loadChangedEmployees(term) {
+        var select = byId("lhfChangedEmployeeId");
+        var url = root.getAttribute("data-employee-lookup-url");
+        if (!select || !url || !term || term.trim().length < 2) {
+            filterSelect("lhfChangedEmployeeId", term || "");
+            return;
+        }
+        fetch(url + "?term=" + encodeURIComponent(term.trim()) + "&employeeStatus=active", { credentials: "same-origin" })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                var rows = (res && (res.data || res.Data)) || [];
+                if (!rows.length) { filterSelect("lhfChangedEmployeeId", term); return; }
+                var current = select.value;
+                select.innerHTML = '<option value="">اختر الموظف</option>';
+                rows.forEach(function (employee) {
+                    var option = document.createElement("option");
+                    option.value = employee.Id || employee.id;
+                    option.textContent = (employee.Code || employee.code || "") + " - " + (employee.Name || employee.name || "");
+                    option.setAttribute("data-salary", employee.BasicSalary || employee.basicSalary || 0);
+                    select.appendChild(option);
+                });
+                if (current) { select.value = current; }
+                updateChangedEntryPreview();
+            }).catch(function () {
+                filterSelect("lhfChangedEmployeeId", term);
+            });
     }
     function validateChangedComponentClient() {
         var employeeId = val("lhfChangedEmployeeId");
@@ -590,10 +807,33 @@
         if (isNaN(from.getTime()) || isNaN(to.getTime()) || to < from) { return 0; }
         return Math.round((to - from) / 86400000) + 1;
     }
+    function parseUiDate(value) {
+        if (!value) { return null; }
+        var normalized = String(value).replace(/\//g, "-").substring(0, 10);
+        var d = new Date(normalized + "T00:00:00");
+        return isNaN(d.getTime()) ? null : d;
+    }
+    function detectVacationConflict(employeeId, fromValue, toValue, currentId) {
+        var from = parseUiDate(fromValue);
+        var to = parseUiDate(toValue);
+        if (!employeeId || !from || !to) { return []; }
+        var hits = [];
+        root.querySelectorAll(".lhf-vacation-table tbody tr[data-vacation-employee]").forEach(function (row) {
+            if (String(row.getAttribute("data-vacation-id") || "") === String(currentId || "")) { return; }
+            if (String(row.getAttribute("data-vacation-employee") || "") !== String(employeeId)) { return; }
+            var rowFrom = parseUiDate(row.getAttribute("data-vacation-from"));
+            var rowTo = parseUiDate(row.getAttribute("data-vacation-to"));
+            if (rowFrom && rowTo && from <= rowTo && to >= rowFrom) {
+                hits.push({ id: row.getAttribute("data-vacation-id"), from: row.getAttribute("data-vacation-from"), to: row.getAttribute("data-vacation-to") });
+            }
+        });
+        return hits;
+    }
     function updateVacationPreview() {
         var employee = byId("lhfVacationRequestEmployeeId");
         var meta = byId("lhfVacationEmployeeMeta");
         var summary = byId("lhfVacationDateSummary");
+        var conflict = byId("lhfVacationConflict");
         var selected = employee && employee.options[employee.selectedIndex];
         if (meta) {
             meta.innerHTML = selected && selected.value
@@ -608,6 +848,13 @@
             summary.innerHTML = count > 0
                 ? "الفترة المختارة: <strong>" + days(count) + "</strong>" + (resume ? " | عودة العمل: <strong>" + text(resume) + "</strong>" : "")
                 : "حدد فترة الإجازة لحساب الأيام وموعد العودة.";
+        }
+        if (conflict) {
+            var conflicts = detectVacationConflict(val("lhfVacationRequestEmployeeId"), val("lhfVacationRequestFromDate"), val("lhfVacationRequestToDate"), val("lhfVacationId"));
+            conflict.hidden = conflicts.length === 0;
+            conflict.innerHTML = conflicts.length
+                ? "<strong>تنبيه تعارض محتمل</strong><span>يوجد طلب إجازة لنفس الموظف داخل نفس الفترة: " + conflicts.map(function (x) { return "#" + text(x.id) + " (" + text(x.from) + " - " + text(x.to) + ")"; }).join("، ") + "</span>"
+                : "";
         }
     }
     function filterVacationEmployees(search) {
@@ -723,6 +970,50 @@
         if (event.target.closest("[data-new-component]")) { show({ AddOrDiscount: true, ViewComponent: true, Salary: true }); return; }
         if (event.target.closest("[data-close-changed-component]")) { closeChangedComponent(); return; }
         if (event.target.closest("[data-new-changed-component]")) { showChangedComponent({}); return; }
+        if (event.target.closest("[data-close-changed-bulk]")) { closeChangedBulk(); return; }
+        var openChangedBulkButton = event.target.closest("[data-open-changed-bulk]");
+        if (openChangedBulkButton) { openChangedBulk(openChangedBulkButton.getAttribute("data-open-changed-bulk")); return; }
+        var previewChangedBulk = event.target.closest("[data-preview-changed-bulk]");
+        if (previewChangedBulk) {
+            var bulkError = validateChangedBulkClient();
+            if (bulkError) { setChangedBulkMessage(bulkError, true); return; }
+            if (!setButtonBusy(previewChangedBulk, true, "معاينة...")) { return; }
+            setChangedBulkMessage("جاري التحقق من السطور...");
+            postForm(root.getAttribute("data-preview-changed-component-bulk-url"), collectChangedBulk()).then(function (res) {
+                setButtonBusy(previewChangedBulk, false);
+                if (!success(res)) {
+                    setChangedBulkMessage(message(res, "تعذر إنشاء المعاينة."), true);
+                    renderChangedBulkPreview(null);
+                    return;
+                }
+                renderChangedBulkPreview(res.data || res.Data);
+                setChangedBulkMessage(message(res, "تمت المعاينة."));
+            }).catch(function () {
+                setButtonBusy(previewChangedBulk, false);
+                setChangedBulkMessage("تعذر الاتصال بالخادم.", true);
+                renderChangedBulkPreview(null);
+            });
+            return;
+        }
+        var saveChangedBulk = event.target.closest("[data-save-changed-bulk]");
+        if (saveChangedBulk) {
+            if (saveChangedBulk.disabled) { return; }
+            if (!confirm("سيتم حفظ السطور الصالحة فقط بعد إعادة التحقق على الخادم. متابعة؟")) { return; }
+            if (!setButtonBusy(saveChangedBulk, true, "حفظ...")) { return; }
+            setChangedBulkMessage("جاري الحفظ...");
+            postForm(root.getAttribute("data-save-changed-component-bulk-url"), collectChangedBulk()).then(function (res) {
+                if (!success(res)) {
+                    setChangedBulkMessage(message(res, "تعذر حفظ الدفعة."), true);
+                    setButtonBusy(saveChangedBulk, false);
+                    return;
+                }
+                window.location.reload();
+            }).catch(function () {
+                setChangedBulkMessage("تعذر الاتصال بالخادم.", true);
+                setButtonBusy(saveChangedBulk, false);
+            });
+            return;
+        }
         if (event.target.closest("[data-close-advance]")) { closeAdvance(); return; }
         if (event.target.closest("[data-new-advance]")) { showAdvance({ AutoDiscount: true, PaymentCounts: 1, CanEdit: true }); return; }
         if (event.target.closest("[data-close-vacation]")) { closeVacation(); return; }
@@ -772,6 +1063,54 @@
             runVacationAction(deleteVacationEntitlement, root.getAttribute("data-delete-vacation-entitlement-url"), deleteVacationEntitlement.getAttribute("data-delete-vacation-entitlement"), "", "حذف...", "تم حذف مستند مستحقات الإجازة.");
             return;
         }
+        var saveVacationReturn = event.target.closest("[data-save-vacation-return]");
+        if (saveVacationReturn) {
+            var entitlementId = saveVacationReturn.getAttribute("data-save-vacation-return");
+            var startDate = saveVacationReturn.getAttribute("data-vacation-start") || "";
+            var endDate = saveVacationReturn.getAttribute("data-vacation-end") || "";
+            var actualReturnDate = prompt("تاريخ المباشرة الفعلي بصيغة yyyy-mm-dd", endDate);
+            if (actualReturnDate === null) { return; }
+            var actualDays = prompt("عدد أيام الإجازة الفعلية", "");
+            if (actualDays === null) { return; }
+            var delayDays = prompt("عدد أيام التأخير", "0");
+            if (delayDays === null) { return; }
+            var treatment = "none";
+            if (Number(delayDays || 0) > 0) {
+                treatment = prompt("طريقة معالجة التأخير: unpaid = بدون راتب، balance = خصم من الرصيد", "unpaid");
+                if (treatment === null) { return; }
+            }
+            var remarks = prompt("ملاحظات المباشرة", "مباشرة عمل من الويب");
+            if (remarks === null) { return; }
+            if (!setButtonBusy(saveVacationReturn, true, "حفظ...")) { return; }
+            postForm(root.getAttribute("data-save-vacation-return-url"), {
+                EntitlementId: entitlementId,
+                ActualReturnDate: actualReturnDate,
+                ActualVacationDays: actualDays,
+                DelayDays: delayDays,
+                DelayTreatment: treatment,
+                Remarks: remarks,
+                __RequestVerificationToken: token()
+            }).then(function (res) {
+                if (!success(res)) {
+                    alert(message(res, "تعذر تسجيل مباشرة العمل."));
+                    setButtonBusy(saveVacationReturn, false);
+                    return;
+                }
+                alert(message(res, "تم تسجيل مباشرة العمل."));
+                window.location.reload();
+            }).catch(function () {
+                alert("تعذر الاتصال بالخادم.");
+                setButtonBusy(saveVacationReturn, false);
+            });
+            return;
+        }
+        var deleteVacationReturn = event.target.closest("[data-delete-vacation-return]");
+        if (deleteVacationReturn) {
+            var confirmDeleteReturn = prompt("لحذف مباشرة العمل وعكس أثرها على مستحقات الإجازة اكتب حذف");
+            if (confirmDeleteReturn !== "حذف") { return; }
+            runVacationAction(deleteVacationReturn, root.getAttribute("data-delete-vacation-return-url"), deleteVacationReturn.getAttribute("data-delete-vacation-return"), "", "حذف...", "تم حذف مباشرة العمل.");
+            return;
+        }
         var cancelVacation = event.target.closest("[data-cancel-vacation]");
         if (cancelVacation) {
             runVacationAction(cancelVacation, root.getAttribute("data-cancel-vacation-url"), cancelVacation.getAttribute("data-cancel-vacation"), "سبب إلغاء طلب الإجازة", "إلغاء...", "تم إلغاء طلب الإجازة بأمان.");
@@ -816,6 +1155,19 @@
                 busyText: "صرف...",
                 errorText: "تعذر صرف السلفة",
                 successText: "تم صرف السلفة"
+            });
+            return;
+        }
+
+        var sendAdvanceApproval = event.target.closest("[data-send-advance-approval]");
+        if (sendAdvanceApproval) {
+            if (!confirm("إرسال طلب السلفة للاعتماد؟ بعد الإرسال سيتم قفل التعديل حتى انتهاء دورة الاعتماد.")) { return; }
+            runAdvanceAction(sendAdvanceApproval, {
+                url: root.getAttribute("data-send-advance-approval-url"),
+                body: { id: sendAdvanceApproval.getAttribute("data-send-advance-approval"), remarks: "إرسال للاعتماد من شاشة السلف", __RequestVerificationToken: token() },
+                busyText: "إرسال...",
+                errorText: "تعذر إرسال طلب السلفة للاعتماد",
+                successText: "تم إرسال طلب السلفة للاعتماد"
             });
             return;
         }
@@ -942,6 +1294,44 @@
         });
     }
 
+    Array.prototype.forEach.call(document.querySelectorAll(".lhf-select-search[data-filter-select]"), function (input) {
+        input.addEventListener("input", function () {
+            if (input.id === "lhfChangedEmployeeSearch") { return; }
+            filterSelect(input.getAttribute("data-filter-select"), input.value);
+        });
+        input.addEventListener("keydown", function (event) {
+            if (event.key === "ArrowDown") {
+                var select = byId(input.getAttribute("data-filter-select"));
+                if (select) { select.focus(); event.preventDefault(); }
+            }
+        });
+    });
+    var changedEmployeeSearch = byId("lhfChangedEmployeeSearch");
+    if (changedEmployeeSearch) {
+        changedEmployeeSearch.addEventListener("input", debounce(function () {
+            loadChangedEmployees(changedEmployeeSearch.value);
+        }, 180));
+    }
+    ["lhfChangedEmployeeId", "lhfChangedComponentId", "lhfChangedValue", "lhfChangedDays", "lhfChangedHours", "lhfChangedMinutes", "lhfChangedHourRate"].forEach(function (id) {
+        var el = byId(id);
+        if (el) {
+            el.addEventListener("input", updateChangedEntryPreview);
+            el.addEventListener("change", updateChangedEntryPreview);
+        }
+    });
+    if (changedForm) {
+        changedForm.addEventListener("keydown", function (event) {
+            if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                event.preventDefault();
+                var submit = changedForm.querySelector("button[type='submit']");
+                if (submit) { submit.click(); }
+            }
+        });
+    }
+    Array.prototype.forEach.call(root.querySelectorAll("form.lhf-search"), function (formElement) {
+        formElement.addEventListener("submit", function () { setPageLoading(true); });
+    });
+
     ["lhfAdvanceEmployeeId", "lhfAdvanceValue", "lhfPaymentCounts", "lhfFirstMonthPayment", "lhfFirstYearPayment"].forEach(function (id) {
         var el = byId(id);
         if (el) { el.addEventListener("input", function () { updateAdvancePreview(); }); el.addEventListener("change", function () { updateAdvancePreview(); }); }
@@ -990,6 +1380,19 @@
     if (vacationEmployeeSearch) {
         vacationEmployeeSearch.addEventListener("input", function () { filterVacationEmployees(vacationEmployeeSearch.value); });
     }
+    var vacationBalanceEmployee = byId("lhfVacationEmployeeId");
+    if (vacationBalanceEmployee) {
+        vacationBalanceEmployee.addEventListener("change", function () {
+            var button = root.querySelector("[data-calc-vacation-balance]");
+            if (vacationBalanceEmployee.value && button) { calculateVacationBalance(button); }
+        });
+        if (vacationBalanceEmployee.value) {
+            setTimeout(function () {
+                var button = root.querySelector("[data-calc-vacation-balance]");
+                if (button) { calculateVacationBalance(button); }
+            }, 100);
+        }
+    }
     var vacationTableSearch = byId("lhfVacationTableSearch");
     if (vacationTableSearch) {
         vacationTableSearch.addEventListener("input", function () {
@@ -997,6 +1400,14 @@
             root.querySelectorAll(".lhf-vacation-table tbody tr[data-vacation-search]").forEach(function (row) {
                 row.hidden = !!(search && (row.getAttribute("data-vacation-search") || "").indexOf(search) === -1);
             });
+        });
+    }
+    var searchForm = root.querySelector(".lhf-search");
+    if (searchForm) {
+        searchForm.addEventListener("submit", function () {
+            var submit = searchForm.querySelector("button[type='submit']");
+            setPageLoading(true);
+            setButtonBusy(submit, true, "بحث...");
         });
     }
     var vacationForm = byId("lhfVacationForm");

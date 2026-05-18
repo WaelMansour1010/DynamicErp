@@ -26,9 +26,9 @@ namespace MyERP.Areas.MainErp.Controllers
             return RedirectToAction("Employees", "EmployeePayroll", new { area = "MainErp", host = Request["host"] });
         }
 
-        public ActionResult Advances(string searchText, string employeeStatus = "active", int? employeeId = null, DateTime? dateFrom = null, DateTime? dateTo = null, string advanceStatus = "all", int page = 1, int pageSize = 40)
+        public ActionResult Advances(string searchText, string employeeStatus = "active", int? employeeId = null, int? branchId = null, int? departmentId = null, DateTime? dateFrom = null, DateTime? dateTo = null, string advanceStatus = "all", int page = 1, int pageSize = 40)
         {
-            return Page("advances", "HR.Advances", "hr-advances", searchText, employeeStatus, page, pageSize, employeeId, dateFrom, dateTo, advanceStatus);
+            return Page("advances", "HR.Advances", "hr-advances", searchText, employeeStatus, page, pageSize, employeeId, dateFrom, dateTo, advanceStatus, null, null, null, branchId, departmentId);
         }
 
         public ActionResult PayrollItems(string searchText, string employeeStatus = "active", int page = 1, int pageSize = 40)
@@ -46,9 +46,9 @@ namespace MyERP.Areas.MainErp.Controllers
             return Page("absences", "HR.Absences", "hr-absences", searchText, employeeStatus, page, pageSize);
         }
 
-        public ActionResult Vacations(string searchText, string employeeStatus = "active", int? employeeId = null, DateTime? dateFrom = null, DateTime? dateTo = null, string status = "all", string vacationType = null, int page = 1, int pageSize = 40)
+        public ActionResult Vacations(string searchText, string employeeStatus = "active", int? employeeId = null, int? branchId = null, int? departmentId = null, DateTime? dateFrom = null, DateTime? dateTo = null, string status = "all", string vacationType = null, int page = 1, int pageSize = 40)
         {
-            return Page("vacations", "HR.Vacations", "hr-vacations", searchText, employeeStatus, page, pageSize, employeeId, dateFrom, dateTo, null, status, vacationType);
+            return Page("vacations", "HR.Vacations", "hr-vacations", searchText, employeeStatus, page, pageSize, employeeId, dateFrom, dateTo, null, status, vacationType, null, branchId, departmentId);
         }
 
         public ActionResult VacationEntitlements(string searchText, string employeeStatus = "active", int page = 1, int pageSize = 40)
@@ -336,6 +336,36 @@ namespace MyERP.Areas.MainErp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public JsonResult SaveVacationReturnToWork(VacationReturnToWorkViewModel request)
+        {
+            if (!Can("HR.Vacations", "Edit"))
+            {
+                Response.StatusCode = 403;
+                return Json(new LegacyHrFinanceSaveResult { Success = false, Message = "ليست لديك صلاحية تسجيل مباشرة العمل للإجازات." });
+            }
+
+            var result = _service.SaveVacationReturnToWork(request, MainErpUserContext == null ? (int?)null : MainErpUserContext.UserId);
+            if (!result.Success) { Response.StatusCode = 400; }
+            return Json(result);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult DeleteVacationReturnToWork(int id)
+        {
+            if (!Can("HR.Vacations", "Delete"))
+            {
+                Response.StatusCode = 403;
+                return Json(new LegacyHrFinanceSaveResult { Success = false, Message = "ليست لديك صلاحية حذف مباشرة العمل للإجازات." });
+            }
+
+            var result = _service.DeleteVacationReturnToWork(id);
+            if (!result.Success) { Response.StatusCode = 400; }
+            return Json(result);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult SaveAdvance(EmployeeAdvanceViewModel request)
         {
             var isEdit = request != null && request.Id.GetValueOrDefault() > 0;
@@ -376,6 +406,21 @@ namespace MyERP.Areas.MainErp.Controllers
             }
 
             var result = _service.DisburseAdvanceRequest(id, MainErpUserContext == null ? (int?)null : MainErpUserContext.UserId);
+            if (!result.Success) { Response.StatusCode = 400; }
+            return Json(result);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult SendAdvanceForApproval(int id, string remarks)
+        {
+            if (!Can("HR.Advances", "Edit"))
+            {
+                Response.StatusCode = 403;
+                return Json(new LegacyHrFinanceSaveResult { Success = false, Message = "ليست لديك صلاحية إرسال طلبات السلف للاعتماد." });
+            }
+
+            var result = _service.SendAdvanceForApproval(id, MainErpUserContext == null ? (int?)null : MainErpUserContext.UserId, MainErpUserContext == null ? null : MainErpUserContext.UserName, remarks);
             if (!result.Success) { Response.StatusCode = 400; }
             return Json(result);
         }
@@ -444,6 +489,7 @@ namespace MyERP.Areas.MainErp.Controllers
             model.SaveAdvanceUrl = Url.Action("SaveAdvance", "Hr", new { area = "MainErp" });
             model.DeleteAdvanceUrl = Url.Action("DeleteAdvance", "Hr", new { area = "MainErp" });
             model.DisburseAdvanceUrl = Url.Action("DisburseAdvance", "Hr", new { area = "MainErp" });
+            model.SendAdvanceForApprovalUrl = Url.Action("SendAdvanceForApproval", "Hr", new { area = "MainErp" });
             model.ApproveAdvanceUrl = Url.Action("ApproveAdvance", "Hr", new { area = "MainErp" });
             model.CancelAdvanceUrl = Url.Action("CancelAdvance", "Hr", new { area = "MainErp" });
             model.AdvanceAccountingBoundaryUrl = Url.Action("AdvanceAccountingBoundary", "Hr", new { area = "MainErp" });
@@ -456,6 +502,8 @@ namespace MyERP.Areas.MainErp.Controllers
             model.CancelVacationUrl = Url.Action("CancelVacation", "Hr", new { area = "MainErp" });
             model.CreateVacationEntitlementUrl = Url.Action("CreateVacationEntitlement", "Hr", new { area = "MainErp" });
             model.DeleteVacationEntitlementUrl = Url.Action("DeleteVacationEntitlement", "Hr", new { area = "MainErp" });
+            model.SaveVacationReturnToWorkUrl = Url.Action("SaveVacationReturnToWork", "Hr", new { area = "MainErp" });
+            model.DeleteVacationReturnToWorkUrl = Url.Action("DeleteVacationReturnToWork", "Hr", new { area = "MainErp" });
             model.EmployeeLookupUrl = Url.Action("EmployeesLookup", "Hr", new { area = "MainErp" });
             model.PayrollRunUrl = Url.Action("SalaryRun", "EmployeePayroll", new { area = "MainErp" });
             model.Permissions = new LegacyHrFinancePermissionsViewModel

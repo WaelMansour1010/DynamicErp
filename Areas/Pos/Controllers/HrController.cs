@@ -40,9 +40,9 @@ namespace MyERP.Areas.Pos.Controllers
             _webPermissionService = webPermissionService;
         }
 
-        public ActionResult Advances(string searchText, string employeeStatus = "active", int? employeeId = null, DateTime? dateFrom = null, DateTime? dateTo = null, string advanceStatus = "all", int page = 1, int pageSize = 40)
+        public ActionResult Advances(string searchText, string employeeStatus = "active", int? employeeId = null, int? branchId = null, int? departmentId = null, DateTime? dateFrom = null, DateTime? dateTo = null, string advanceStatus = "all", int page = 1, int pageSize = 40)
         {
-            return Page("advances", "HR.Advances", "hr-advances", searchText, employeeStatus, page, pageSize, employeeId, dateFrom, dateTo, advanceStatus);
+            return Page("advances", "HR.Advances", "hr-advances", searchText, employeeStatus, page, pageSize, employeeId, dateFrom, dateTo, advanceStatus, null, null, null, branchId, departmentId);
         }
 
         public ActionResult PayrollItems(string searchText, string employeeStatus = "active", int page = 1, int pageSize = 40)
@@ -60,9 +60,9 @@ namespace MyERP.Areas.Pos.Controllers
             return Page("absences", "HR.Absences", "hr-absences", searchText, employeeStatus, page, pageSize);
         }
 
-        public ActionResult Vacations(string searchText, string employeeStatus = "active", int? employeeId = null, DateTime? dateFrom = null, DateTime? dateTo = null, string status = "all", string vacationType = null, int page = 1, int pageSize = 40)
+        public ActionResult Vacations(string searchText, string employeeStatus = "active", int? employeeId = null, int? branchId = null, int? departmentId = null, DateTime? dateFrom = null, DateTime? dateTo = null, string status = "all", string vacationType = null, int page = 1, int pageSize = 40)
         {
-            return Page("vacations", "HR.Vacations", "hr-vacations", searchText, employeeStatus, page, pageSize, employeeId, dateFrom, dateTo, null, status, vacationType);
+            return Page("vacations", "HR.Vacations", "hr-vacations", searchText, employeeStatus, page, pageSize, employeeId, dateFrom, dateTo, null, status, vacationType, null, branchId, departmentId);
         }
 
         public ActionResult VacationEntitlements(string searchText, string employeeStatus = "active", int page = 1, int pageSize = 40)
@@ -381,6 +381,40 @@ namespace MyERP.Areas.Pos.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public JsonResult SaveVacationReturnToWork(VacationReturnToWorkViewModel request)
+        {
+            var context = GetContext();
+            if (!Can(context, "HR.Vacations", "Edit"))
+            {
+                Trace.TraceWarning("POS HR permission denied: SaveVacationReturnToWork user={0}", context == null ? 0 : context.UserId);
+                Response.StatusCode = context == null ? 401 : 403;
+                return Json(new LegacyHrFinanceSaveResult { Success = false, Message = "ليست لديك صلاحية تسجيل مباشرة العمل للإجازات." });
+            }
+
+            var result = _service.SaveVacationReturnToWork(request, context == null ? (int?)null : context.UserId);
+            if (!result.Success) { Response.StatusCode = 400; }
+            return Json(result);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult DeleteVacationReturnToWork(int id)
+        {
+            var context = GetContext();
+            if (!Can(context, "HR.Vacations", "Delete"))
+            {
+                Trace.TraceWarning("POS HR permission denied: DeleteVacationReturnToWork user={0}", context == null ? 0 : context.UserId);
+                Response.StatusCode = context == null ? 401 : 403;
+                return Json(new LegacyHrFinanceSaveResult { Success = false, Message = "ليست لديك صلاحية حذف مباشرة العمل للإجازات." });
+            }
+
+            var result = _service.DeleteVacationReturnToWork(id);
+            if (!result.Success) { Response.StatusCode = 400; }
+            return Json(result);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult SaveAdvance(EmployeeAdvanceViewModel request)
         {
             var context = GetContext();
@@ -427,6 +461,23 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             var result = _service.DisburseAdvanceRequest(id, context == null ? (int?)null : context.UserId);
+            if (!result.Success) { Response.StatusCode = 400; }
+            return Json(result);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult SendAdvanceForApproval(int id, string remarks)
+        {
+            var context = GetContext();
+            if (!Can(context, "HR.Advances", "Edit"))
+            {
+                Trace.TraceWarning("POS HR permission denied: SendAdvanceForApproval user={0}", context == null ? 0 : context.UserId);
+                Response.StatusCode = context == null ? 401 : 403;
+                return Json(new LegacyHrFinanceSaveResult { Success = false, Message = "ليست لديك صلاحية إرسال طلبات السلف للاعتماد." });
+            }
+
+            var result = _service.SendAdvanceForApproval(id, context == null ? (int?)null : context.UserId, context == null ? null : context.UserName, remarks);
             if (!result.Success) { Response.StatusCode = 400; }
             return Json(result);
         }
@@ -508,6 +559,7 @@ namespace MyERP.Areas.Pos.Controllers
             model.SaveAdvanceUrl = Url.Action("SaveAdvance", "Hr", new { area = "Pos" });
             model.DeleteAdvanceUrl = Url.Action("DeleteAdvance", "Hr", new { area = "Pos" });
             model.DisburseAdvanceUrl = Url.Action("DisburseAdvance", "Hr", new { area = "Pos" });
+            model.SendAdvanceForApprovalUrl = Url.Action("SendAdvanceForApproval", "Hr", new { area = "Pos" });
             model.ApproveAdvanceUrl = Url.Action("ApproveAdvance", "Hr", new { area = "Pos" });
             model.CancelAdvanceUrl = Url.Action("CancelAdvance", "Hr", new { area = "Pos" });
             model.AdvanceAccountingBoundaryUrl = Url.Action("AdvanceAccountingBoundary", "Hr", new { area = "Pos" });
@@ -520,6 +572,8 @@ namespace MyERP.Areas.Pos.Controllers
             model.CancelVacationUrl = Url.Action("CancelVacation", "Hr", new { area = "Pos" });
             model.CreateVacationEntitlementUrl = Url.Action("CreateVacationEntitlement", "Hr", new { area = "Pos" });
             model.DeleteVacationEntitlementUrl = Url.Action("DeleteVacationEntitlement", "Hr", new { area = "Pos" });
+            model.SaveVacationReturnToWorkUrl = Url.Action("SaveVacationReturnToWork", "Hr", new { area = "Pos" });
+            model.DeleteVacationReturnToWorkUrl = Url.Action("DeleteVacationReturnToWork", "Hr", new { area = "Pos" });
             model.EmployeeLookupUrl = Url.Action("EmployeesLookup", "Hr", new { area = "Pos" });
             model.PayrollRunUrl = Url.Action("SalaryRun", "EmployeePayroll", new { area = "Pos" });
             model.Permissions = new LegacyHrFinancePermissionsViewModel
@@ -541,6 +595,7 @@ namespace MyERP.Areas.Pos.Controllers
             if (context == null) return false;
             if (context.IsFullAccess || context.UserType.GetValueOrDefault(-1) == 0) return true;
             if (_webPermissionService.Can(context, screenKey, actionKey)) return true;
+            if (screenKey == "HR.ChangedComponentData" && _webPermissionService.Can(context, "FrmChangedComponentData", actionKey)) return true;
             return CanLegacyFallback(context, screenKey, actionKey);
         }
 

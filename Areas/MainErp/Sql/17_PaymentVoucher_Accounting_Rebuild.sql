@@ -95,6 +95,114 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID(N'dbo.SerialCounters_V2', N'U') IS NOT NULL
+BEGIN
+    DECLARE @ReceiptCounters TABLE
+    (
+        SourceTable varchar(50) NOT NULL,
+        BranchID int NOT NULL,
+        TypeCode int NOT NULL,
+        Prefix varchar(10) NULL,
+        StoreID int NULL,
+        NumberingType tinyint NOT NULL,
+        YearNum int NOT NULL,
+        MonthNum int NOT NULL,
+        CurrentTail bigint NOT NULL,
+        NoOfDigits tinyint NOT NULL,
+        YearDigits tinyint NOT NULL,
+        StartAt int NOT NULL,
+        EndAt int NULL
+    );
+
+    ;WITH ReceiptConfiguredScopes AS
+    (
+        SELECT
+            SourceTable = 'Notes.NoteSerial1',
+            BranchID = sn.branch_no,
+            TypeCode = 4,
+            Prefix = CONVERT(varchar(10), sn.Prefix),
+            StoreID = CAST(NULL AS int),
+            NumberingType = CONVERT(tinyint, ISNULL(sn.numbering_id, 0)),
+            NoOfDigits = CONVERT(tinyint, CASE WHEN ISNULL(sn.no_of_digit, 0) <= 0 THEN 3 ELSE sn.no_of_digit END),
+            YearDigits = CONVERT(tinyint, CASE WHEN ISNULL(sn.YearDigit, 0) <= 0 THEN 4 ELSE sn.YearDigit END),
+            StartAt = CASE WHEN ISNULL(sn.start_at, 0) <= 0 THEN 1 ELSE CONVERT(int, sn.start_at) END,
+            EndAt = NULLIF(CONVERT(int, ISNULL(sn.end_at, 0)), 0)
+        FROM dbo.sanad_numbering sn WITH (NOLOCK)
+        WHERE sn.sanad_no = 2
+          AND ISNULL(sn.numbering_id, 0) IN (1, 2, 3)
+    )
+    INSERT INTO @ReceiptCounters
+        (SourceTable, BranchID, TypeCode, Prefix, StoreID, NumberingType, YearNum, MonthNum, CurrentTail, NoOfDigits, YearDigits, StartAt, EndAt)
+    SELECT
+        s.SourceTable,
+        s.BranchID,
+        s.TypeCode,
+        s.Prefix,
+        s.StoreID,
+        s.NumberingType,
+        YearNum = CASE WHEN s.NumberingType IN (2, 3) THEN YEAR(n.NoteDate) ELSE 0 END,
+        MonthNum = CASE WHEN s.NumberingType = 2 THEN MONTH(n.NoteDate) ELSE 0 END,
+        CurrentTail = MAX
+        (
+            CASE
+                WHEN s.NumberingType = 1 THEN CONVERT(bigint, CONVERT(decimal(38,0), n.NoteSerial1))
+                ELSE CONVERT(bigint, RIGHT(CONVERT(varchar(50), CONVERT(decimal(38,0), n.NoteSerial1)), s.NoOfDigits))
+            END
+        ),
+        s.NoOfDigits,
+        s.YearDigits,
+        s.StartAt,
+        s.EndAt
+    FROM ReceiptConfiguredScopes s
+    INNER JOIN dbo.Notes n WITH (NOLOCK)
+        ON n.NoteSerial1 IS NOT NULL
+       AND n.NoteType = 4
+       AND n.branch_no = s.BranchID
+       AND (n.Prefix = s.Prefix OR (n.Prefix IS NULL AND s.Prefix IS NULL))
+    WHERE ISNUMERIC(n.NoteSerial1) = 1
+    GROUP BY s.SourceTable, s.BranchID, s.TypeCode, s.Prefix, s.StoreID, s.NumberingType,
+             CASE WHEN s.NumberingType IN (2, 3) THEN YEAR(n.NoteDate) ELSE 0 END,
+             CASE WHEN s.NumberingType = 2 THEN MONTH(n.NoteDate) ELSE 0 END,
+             s.NoOfDigits, s.YearDigits, s.StartAt, s.EndAt;
+
+    UPDATE c
+    SET CurrentTail = CASE WHEN c.CurrentTail < r.CurrentTail THEN r.CurrentTail ELSE c.CurrentTail END,
+        NoOfDigits = r.NoOfDigits,
+        YearDigits = r.YearDigits,
+        StartAt = r.StartAt,
+        EndAt = r.EndAt,
+        LastUpdated = GETDATE(),
+        UpdatedByUser = '17_ReceiptVoucher seed',
+        UpdateCount = c.UpdateCount + 1
+    FROM dbo.SerialCounters_V2 c WITH (UPDLOCK, HOLDLOCK)
+    INNER JOIN @ReceiptCounters r
+        ON r.SourceTable = c.SourceTable
+       AND r.BranchID = c.BranchID
+       AND r.TypeCode = c.TypeCode
+       AND (r.Prefix = c.Prefix OR (r.Prefix IS NULL AND c.Prefix IS NULL))
+       AND (r.StoreID = c.StoreID OR (r.StoreID IS NULL AND c.StoreID IS NULL))
+       AND r.YearNum = c.YearNum
+       AND r.MonthNum = c.MonthNum;
+
+    INSERT INTO dbo.SerialCounters_V2
+        (SourceTable, BranchID, TypeCode, Prefix, StoreID, NumberingType, YearNum, MonthNum, CurrentTail, NoOfDigits, YearDigits, StartAt, EndAt, UpdatedByUser, UpdateCount)
+    SELECT r.SourceTable, r.BranchID, r.TypeCode, r.Prefix, r.StoreID, r.NumberingType, r.YearNum, r.MonthNum, r.CurrentTail, r.NoOfDigits, r.YearDigits, r.StartAt, r.EndAt, '17_ReceiptVoucher seed', 1
+    FROM @ReceiptCounters r
+    WHERE NOT EXISTS
+    (
+        SELECT 1
+        FROM dbo.SerialCounters_V2 c WITH (UPDLOCK, HOLDLOCK)
+        WHERE c.SourceTable = r.SourceTable
+          AND c.BranchID = r.BranchID
+          AND c.TypeCode = r.TypeCode
+          AND (c.Prefix = r.Prefix OR (c.Prefix IS NULL AND r.Prefix IS NULL))
+          AND (c.StoreID = r.StoreID OR (c.StoreID IS NULL AND r.StoreID IS NULL))
+          AND c.YearNum = r.YearNum
+          AND c.MonthNum = r.MonthNum
+    );
+END
+GO
+
 IF OBJECT_ID(N'dbo.usp_DynamicErp_AllocateIntId', N'P') IS NOT NULL
     DROP PROCEDURE dbo.usp_DynamicErp_AllocateIntId;
 GO

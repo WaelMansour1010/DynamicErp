@@ -106,6 +106,16 @@ namespace MyERP.Common.EnterpriseHr
             return _repository.DeleteVacationEntitlement(entitlementId, userId);
         }
 
+        public LegacyHrFinanceSaveResult SaveVacationReturnToWork(VacationReturnToWorkViewModel request, int? userId)
+        {
+            return _repository.SaveVacationReturnToWork(request, userId);
+        }
+
+        public LegacyHrFinanceSaveResult DeleteVacationReturnToWork(int entitlementId)
+        {
+            return _repository.DeleteVacationReturnToWork(entitlementId);
+        }
+
         public LegacyHrFinanceSaveResult SaveAdvance(EmployeeAdvanceViewModel request, int? userId)
         {
             return _repository.SaveAdvance(request, userId);
@@ -119,6 +129,11 @@ namespace MyERP.Common.EnterpriseHr
         public LegacyHrFinanceSaveResult DisburseAdvanceRequest(int requestId, int? userId)
         {
             return _repository.DisburseAdvanceRequest(requestId, userId);
+        }
+
+        public LegacyHrFinanceSaveResult SendAdvanceForApproval(int requestId, int? userId, string userName, string remarks)
+        {
+            return _repository.SendAdvanceForApproval(requestId, userId, userName, remarks);
         }
 
         public LegacyHrFinanceSaveResult ApproveAdvanceRequest(int requestId, int? userId, string userName, string remarks)
