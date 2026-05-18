@@ -157,10 +157,15 @@
                 xhr.onreadystatechange = function () {
                     if (xhr.readyState !== 4) return;
                     var response = null;
-                    try { response = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (e) { response = { success:false, message:"تعذر قراءة رد السيرفر" }; }
+                    try { response = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (e) { response = { success:false, message:formatServerError(xhr) }; }
                     cb(xhr.status, response);
                 };
                 xhr.send(JSON.stringify(data));
+            }
+            function formatServerError(xhr) {
+                var text = (xhr && xhr.responseText ? String(xhr.responseText) : "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+                if (text) return "تعذر قراءة رد السيرفر: " + text.substring(0, 220);
+                return "تعذر قراءة رد السيرفر. راجع تطبيق SQL الخاص بتقارير KYC على السيرفر.";
             }
             function reportPayload() {
                 return { fromDate: byId("reportFromDate").value, toDate: byId("reportToDate").value, fromDateText: byId("reportFromDate").value, toDateText: byId("reportToDate").value, branchId: parseInt(byId("reportBranchId").value,10)||null, invoiceStatus: byId("reportInvoiceStatus").value, searchTerm: byId("reportSearchTerm").value, smartFilter: byId("reportSmartFilter").value, page: pageNo, pageSize: pageSize };

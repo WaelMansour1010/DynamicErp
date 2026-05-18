@@ -58,7 +58,8 @@
     { "order": 107, "file": "107_POS_CriticalInvoiceRecoveryCenter.sql", "autoApply": true, "purpose": "Critical invoice recovery center archive, audit, workflow, restore, and POS menu registration." },
     { "order": 108, "file": "108_POS_PayrollRunSnapshot.sql", "autoApply": true, "purpose": "Payroll run snapshot headers, employees, and journal links for shared POS/MainERP salary runs." },
     { "order": 109, "file": "109_POS_WebPermissions_TellerInvoiceSafety.sql", "autoApply": true, "purpose": "Safety seed that carries legacy POS teller and invoice permissions into POS.Sales.Index web permissions without revoking existing grants." },
-    { "order": 110, "file": "110_POS_EmployeePhoto_PrintCards.sql", "autoApply": true, "purpose": "Employee photo data column used by shared HR printable employee and medical insurance cards." }
+    { "order": 110, "file": "110_POS_EmployeePhoto_PrintCards.sql", "autoApply": true, "purpose": "Employee photo data column used by shared HR printable employee and medical insurance cards." },
+    { "order": 111, "file": "111_POS_KycFollowUp_ReportProcedure_2012.sql", "autoApply": true, "purpose": "SQL Server 2012 compatible KYC follow-up report procedure hotfix with collation-safe joins." }
   ],
   "manualScripts": [
     { "file": "35_POS_SystemHealthPermissions.sql", "reason": "Requires sysadmin/master login and replacing the app SQL login placeholder." },

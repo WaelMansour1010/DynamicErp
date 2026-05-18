@@ -51,14 +51,12 @@ namespace MyERP.Areas.Pos.Controllers
                 var context = GetPosContext();
                 if (context == null)
                 {
-                    Response.StatusCode = 401;
-                    return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً"));
+                    return JsonFail("يجب تسجيل دخول نقطة البيع أولاً", string.Empty, 401);
                 }
 
                 if (!CanOpen(context))
                 {
-                    Response.StatusCode = 403;
-                    return Json(Fail("ليست لديك صلاحية متابعة KYC والبنك"));
+                    return JsonFail("ليست لديك صلاحية متابعة KYC والبنك", string.Empty, 403);
                 }
 
                 var table = LoadExportTable(request, context);
@@ -72,8 +70,7 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (Exception ex)
             {
-                Response.StatusCode = 500;
-                return Json(Fail("تعذر تحميل بيانات متابعة KYC والبنك", ex.Message));
+                return JsonFail("تعذر تحميل بيانات متابعة KYC والبنك", ex.Message, 500);
             }
         }
 
@@ -85,22 +82,19 @@ namespace MyERP.Areas.Pos.Controllers
                 var context = GetPosContext();
                 if (context == null)
                 {
-                    Response.StatusCode = 401;
-                    return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً"));
+                    return JsonFail("يجب تسجيل دخول نقطة البيع أولاً", string.Empty, 401);
                 }
 
                 if (!CanOpen(context))
                 {
-                    Response.StatusCode = 403;
-                    return Json(Fail("ليست لديك صلاحية متابعة KYC"));
+                    return JsonFail("ليست لديك صلاحية متابعة KYC", string.Empty, 403);
                 }
 
                 return Json(new { success = true, data = _repository.GetKycReport(request, context) });
             }
             catch (Exception ex)
             {
-                Response.StatusCode = 500;
-                return Json(Fail("تعذر تحميل تقرير KYC", ex.Message));
+                return JsonFail("تعذر تحميل تقرير KYC", ex.Message, 500);
             }
         }
 
@@ -352,6 +346,13 @@ namespace MyERP.Areas.Pos.Controllers
         private static object Fail(string message, string technicalMessage = "")
         {
             return new { success = false, message = message, technicalMessage = technicalMessage };
+        }
+
+        private JsonResult JsonFail(string message, string technicalMessage, int statusCode)
+        {
+            Response.StatusCode = statusCode;
+            Response.TrySkipIisCustomErrors = true;
+            return Json(Fail(message, technicalMessage));
         }
 
         private static IEnumerable<object> ToColumns(DataTable table)

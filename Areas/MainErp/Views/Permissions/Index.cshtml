@@ -1,8 +1,8 @@
-@model MyERP.Areas.MainErp.ViewModels.Security.MainErpPermissionsIndexViewModel
 @using System.Web
 @{
+    var vm = (MyERP.Areas.MainErp.ViewModels.Security.MainErpPermissionsIndexViewModel)Model;
     ViewBag.Title = "الصلاحيات على الشاشات";
-    var host = (Model.Host ?? "").Trim();
+    var host = (vm.Host ?? "").Trim();
     var isPosHost = string.Equals(host, "pos", System.StringComparison.OrdinalIgnoreCase);
     Layout = isPosHost ? null : "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
     var endpointArea = isPosHost ? "Pos" : "MainErp";
@@ -15,7 +15,7 @@
     <link href="@Url.Content("~/assets/css/Courses/css/fontawesome-all.min.css")" rel="stylesheet" />
 }
 
-<section class="web-permissions-page" dir="rtl" data-host="@host" data-area="@Model.DefaultAreaFilter">
+<section class="web-permissions-page" dir="rtl" data-host="@host" data-area="@vm.DefaultAreaFilter">
     <header class="web-perm-header">
         <div>
             <span class="web-perm-eyebrow">WebScreenPermissions</span>
@@ -46,14 +46,14 @@
         <label>
             <span>النطاق</span>
             <select id="areaFilter">
-                <option value="@Model.DefaultAreaFilter">@Model.DefaultAreaFilter فقط</option>
+                <option value="@vm.DefaultAreaFilter">@vm.DefaultAreaFilter فقط</option>
             </select>
         </label>
         <label>
             <span>المستخدم الحالي</span>
             <select id="userFilter">
                 <option value="">اختر مستخدم</option>
-                @foreach (var user in Model.Users)
+                @foreach (var user in vm.Users)
                 {
                     <option value="@user.Id">@user.Name</option>
                 }
@@ -62,7 +62,7 @@
         <label>
             <span>مستخدمون للتطبيق الجماعي</span>
             <select id="bulkUsers" multiple size="1">
-                @foreach (var user in Model.Users)
+                @foreach (var user in vm.Users)
                 {
                     <option value="@user.Id">@user.Name</option>
                 }
@@ -72,7 +72,7 @@
             <span>المجموعة</span>
             <select id="moduleFilter">
                 <option value="">كل المجموعات</option>
-                @foreach (var module in Model.Modules)
+                @foreach (var module in vm.Modules)
                 {
                     <option value="@module.Key">@module.Name (@module.GroupName)</option>
                 }
@@ -170,7 +170,7 @@
                 <span>القالب</span>
                 <select id="templateSelect">
                     <option value="">اختر قالب</option>
-                    @foreach (var template in Model.Templates)
+                    @foreach (var template in vm.Templates)
                     {
                         <option value="@template.Id">@template.Name (@template.GroupName)</option>
                     }
@@ -183,8 +183,8 @@
     <section class="web-perm-panel" data-panel="copy">
         <div class="web-perm-form-card">
             <h2>نسخ الصلاحيات من مستخدم إلى مستخدم</h2>
-            <label><span>من المستخدم</span><select id="copySourceUser"><option value="">اختر المصدر</option>@foreach (var user in Model.Users){<option value="@user.Id">@user.Name</option>}</select></label>
-            <label><span>إلى المستخدم</span><select id="copyTargetUser"><option value="">اختر الهدف</option>@foreach (var user in Model.Users){<option value="@user.Id">@user.Name</option>}</select></label>
+            <label><span>من المستخدم</span><select id="copySourceUser"><option value="">اختر المصدر</option>@foreach (var user in vm.Users){<option value="@user.Id">@user.Name</option>}</select></label>
+            <label><span>إلى المستخدم</span><select id="copyTargetUser"><option value="">اختر الهدف</option>@foreach (var user in vm.Users){<option value="@user.Id">@user.Name</option>}</select></label>
             <button type="button" class="web-perm-btn web-perm-btn-primary" id="copyPermissionsBtn"><i class="fas fa-copy"></i><span>نسخ الصلاحيات</span></button>
         </div>
     </section>

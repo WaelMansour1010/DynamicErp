@@ -40,6 +40,18 @@
         button.secondary { background:#333945; }
         button.warning { background:#d94c1a; }
         button.safe { background:#28634c; }
+        button[disabled] { opacity:.65; cursor:not-allowed; }
+        .critical-submit-overlay[hidden] { display:none; }
+        .critical-submit-overlay { position:fixed; inset:0; z-index:9999; background:rgba(10,12,18,.84); display:flex; align-items:center; justify-content:center; padding:20px; }
+        .critical-submit-box { width:min(520px,100%); border:1px solid #8d2a2a; background:#1d2028; border-radius:8px; padding:20px; box-shadow:0 18px 50px rgba(0,0,0,.45); }
+        .critical-submit-title { font-size:18px; font-weight:bold; margin-bottom:8px; color:#fff; }
+        .critical-submit-text { color:#f7caca; line-height:1.7; margin-bottom:14px; }
+        .critical-progress-track { height:10px; background:#101217; border:1px solid #3a2022; border-radius:999px; overflow:hidden; }
+        .critical-progress-bar { height:100%; width:35%; background:linear-gradient(90deg,#d94c1a,#ffb36b,#a5282f); animation:critical-progress 1.15s ease-in-out infinite; }
+        @@keyframes critical-progress {
+            0% { transform:translateX(140%); }
+            100% { transform:translateX(-320%); }
+        }
         .counters { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
         .counter { background:#101217; border:1px solid #343844; padding:14px; border-radius:8px; }
         .counter strong { display:block; font-size:24px; color:#fff; }
@@ -113,8 +125,8 @@
                         <label class="check">@Html.CheckBoxFor(m => m.Filter.HasGeneratedVoucher) Has generated voucher</label>
                     </div>
                     <div class="actions">
-                        <button type="submit" class="safe">Preview / Dry-run</button>
-                        <button type="submit" formaction="@Url.Action("Export", "CriticalRecovery", new { area = areaName })" class="secondary">Export affected rows to Excel</button>
+                        <button type="submit" class="safe" data-progress-text="Preparing preview. Please wait...">Preview / Dry-run</button>
+                        <button type="submit" formaction="@Url.Action("Export", "CriticalRecovery", new { area = areaName })" class="secondary" data-no-progress="1">Export affected rows to Excel</button>
                     </div>
                 </section>
             }
@@ -208,8 +220,8 @@
                     </div>
                     <p class="danger-note">Orphan KYC cleanup is off by default and remains blocked unless the database validates no other invoice, card/token, audit, history, closure, report, or compliance references exist.</p>
                     <div class="actions">
-                        <button type="submit" class="warning">Initiate request + snapshot</button>
-                        <button type="submit" formaction="@Url.Action("ApproveAndExecute", "CriticalRecovery", new { area = areaName })">Second admin approve + execute</button>
+                        <button type="submit" class="warning" data-progress-text="Creating snapshot request. Please wait...">Initiate request + snapshot</button>
+                        <button type="submit" formaction="@Url.Action("ApproveAndExecute", "CriticalRecovery", new { area = areaName })" data-progress-text="Executing recovery operation: snapshot is created first, then invoices and effects are removed. Do not click again or close the page.">Second admin approve + execute</button>
                     </div>
                 </section>
             }
@@ -228,7 +240,7 @@
                     <label>Restore reason</label>
                     @Html.TextAreaFor(m => m.Restore.Reason)
                     <div class="actions">
-                        <button type="submit" class="safe">Restore archived transactions</button>
+                        <button type="submit" class="safe" data-progress-text="Restoring archived transactions. Please wait...">Restore archived transactions</button>
                     </div>
                 </section>
             }
@@ -284,5 +296,77 @@
             </section>
         </main>
     </div>
+    <div id="criticalSubmitOverlay" class="critical-submit-overlay" hidden>
+        <div class="critical-submit-box">
+            <div class="critical-submit-title">Operation in progress</div>
+            <div id="criticalSubmitText" class="critical-submit-text">Please wait and do not click again.</div>
+            <div class="critical-progress-track"><div class="critical-progress-bar"></div></div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var activeSubmitter = null;
+            var overlay = document.getElementById('criticalSubmitOverlay');
+            var message = document.getElementById('criticalSubmitText');
+
+            document.addEventListener('click', function (event) {
+                var target = event.target;
+                if (target && target.tagName === 'BUTTON' && target.type === 'submit') {
+                    activeSubmitter = target;
+                }
+            }, true);
+
+            function showProgress(text) {
+                if (message) {
+                    message.textContent = text || 'Request is being executed. Please wait and do not click again.';
+                }
+                if (overlay) {
+                    overlay.hidden = false;
+                }
+            }
+
+            function bindForm(form) {
+                form.addEventListener('submit', function (event) {
+                    if (form.getAttribute('data-submitting') === '1') {
+                        event.preventDefault();
+                        return false;
+                    }
+
+                    var submitter = event.submitter || activeSubmitter;
+                    if (submitter) {
+                        var action = submitter.getAttribute('formaction');
+                        var method = submitter.getAttribute('formmethod');
+                        if (action) {
+                            form.setAttribute('action', action);
+                        }
+                        if (method) {
+                            form.setAttribute('method', method);
+                        }
+                    }
+                    if (submitter && submitter.getAttribute('data-no-progress') === '1') {
+                        return true;
+                    }
+
+                    form.setAttribute('data-submitting', '1');
+                    showProgress(submitter ? submitter.getAttribute('data-progress-text') : '');
+
+                    var buttons = form.querySelectorAll('button[type="submit"]');
+                    for (var i = 0; i < buttons.length; i++) {
+                        buttons[i].disabled = true;
+                    }
+                    if (submitter) {
+                        submitter.textContent = 'Working...';
+                    }
+
+                    return true;
+                });
+            }
+
+            var forms = document.querySelectorAll('form');
+            for (var i = 0; i < forms.length; i++) {
+                bindForm(forms[i]);
+            }
+        }());
+    </script>
 </body>
 </html>

@@ -88,6 +88,18 @@
         button.secondary { background:#333945; }
         button.warning { background:#d94c1a; }
         button.safe { background:#28634c; }
+        button[disabled] { opacity:.65; cursor:not-allowed; }
+        .critical-submit-overlay[hidden] { display:none; }
+        .critical-submit-overlay { position:fixed; inset:0; z-index:9999; background:rgba(10,12,18,.84); display:flex; align-items:center; justify-content:center; padding:20px; }
+        .critical-submit-box { width:min(520px,100%); border:1px solid #8d2a2a; background:#1d2028; border-radius:8px; padding:20px; box-shadow:0 18px 50px rgba(0,0,0,.45); }
+        .critical-submit-title { font-size:18px; font-weight:bold; margin-bottom:8px; color:#fff; }
+        .critical-submit-text { color:#f7caca; line-height:1.7; margin-bottom:14px; }
+        .critical-progress-track { height:10px; background:#101217; border:1px solid #3a2022; border-radius:999px; overflow:hidden; }
+        .critical-progress-bar { height:100%; width:35%; background:linear-gradient(90deg,#d94c1a,#ffb36b,#a5282f); animation:critical-progress 1.15s ease-in-out infinite; }
+        @@keyframes critical-progress {
+            0% { transform:translateX(140%); }
+            100% { transform:translateX(-320%); }
+        }
         .counters { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
         .counter { background:#101217; border:1px solid #343844; padding:14px; border-radius:8px; }
         .counter strong { display:block; font-size:24px; color:#fff; }
@@ -163,8 +175,8 @@
                         <label class="check">@Html.CheckBoxFor(m => m.Filter.HasGeneratedVoucher) لها سند مولد</label>
                     </div>
                     <div class="actions">
-                        <button type="submit" class="safe">معاينة فقط</button>
-                        <button type="submit" formaction="@Url.Action("Export", "CriticalRecovery", new { area = areaName })" class="secondary">تصدير الصفوف المتأثرة إلى Excel</button>
+                        <button type="submit" class="safe" data-progress-text="جاري المعاينة، برجاء الانتظار...">معاينة فقط</button>
+                        <button type="submit" formaction="@Url.Action("Export", "CriticalRecovery", new { area = areaName })" class="secondary" data-no-progress="1">تصدير الصفوف المتأثرة إلى Excel</button>
                     </div>
                 </section>
             }
@@ -262,8 +274,8 @@
                     </div>
                     <p class="danger-note">زر تنفيذ بالباسورد يقوم تلقائيًا بعمل Snapshot ثم حذف فعلي للتأثيرات المرتبطة. بيانات KYC الأساسية لا يتم حذفها.</p>
                     <div class="actions">
-                        <button type="submit" class="warning">تجهيز Snapshot فقط</button>
-                        <button type="submit" formaction="@Url.Action("ApproveAndExecute", "CriticalRecovery", new { area = areaName })">تنفيذ بالباسورد</button>
+                        <button type="submit" class="warning" data-progress-text="جاري تجهيز Snapshot فقط، برجاء الانتظار...">تجهيز Snapshot فقط</button>
+                        <button type="submit" formaction="@Url.Action("ApproveAndExecute", "CriticalRecovery", new { area = areaName })" data-progress-text="جاري التنفيذ: يتم أخذ Snapshot ثم حذف الفواتير وتأثيراتها. لا تضغط مرة أخرى ولا تغلق الصفحة.">تنفيذ بالباسورد</button>
                     </div>
                 </section>
             }
@@ -281,7 +293,7 @@
                     </div>
                     @Html.HiddenFor(m => m.Restore.Reason)
                     <div class="actions">
-                        <button type="submit" class="safe">استرجاع العمليات المؤرشفة</button>
+                        <button type="submit" class="safe" data-progress-text="جاري الاسترجاع من الأرشيف، برجاء الانتظار...">استرجاع العمليات المؤرشفة</button>
                     </div>
                 </section>
             }
@@ -337,5 +349,77 @@
             </section>
         </main>
     </div>
+    <div id="criticalSubmitOverlay" class="critical-submit-overlay" hidden>
+        <div class="critical-submit-box">
+            <div class="critical-submit-title">جاري تنفيذ العملية</div>
+            <div id="criticalSubmitText" class="critical-submit-text">برجاء الانتظار وعدم الضغط مرة أخرى.</div>
+            <div class="critical-progress-track"><div class="critical-progress-bar"></div></div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var activeSubmitter = null;
+            var overlay = document.getElementById('criticalSubmitOverlay');
+            var message = document.getElementById('criticalSubmitText');
+
+            document.addEventListener('click', function (event) {
+                var target = event.target;
+                if (target && target.tagName === 'BUTTON' && target.type === 'submit') {
+                    activeSubmitter = target;
+                }
+            }, true);
+
+            function showProgress(text) {
+                if (message) {
+                    message.textContent = text || 'جاري تنفيذ الطلب، برجاء الانتظار وعدم الضغط مرة أخرى.';
+                }
+                if (overlay) {
+                    overlay.hidden = false;
+                }
+            }
+
+            function bindForm(form) {
+                form.addEventListener('submit', function (event) {
+                    if (form.getAttribute('data-submitting') === '1') {
+                        event.preventDefault();
+                        return false;
+                    }
+
+                    var submitter = event.submitter || activeSubmitter;
+                    if (submitter) {
+                        var action = submitter.getAttribute('formaction');
+                        var method = submitter.getAttribute('formmethod');
+                        if (action) {
+                            form.setAttribute('action', action);
+                        }
+                        if (method) {
+                            form.setAttribute('method', method);
+                        }
+                    }
+                    if (submitter && submitter.getAttribute('data-no-progress') === '1') {
+                        return true;
+                    }
+
+                    form.setAttribute('data-submitting', '1');
+                    showProgress(submitter ? submitter.getAttribute('data-progress-text') : '');
+
+                    var buttons = form.querySelectorAll('button[type="submit"]');
+                    for (var i = 0; i < buttons.length; i++) {
+                        buttons[i].disabled = true;
+                    }
+                    if (submitter) {
+                        submitter.textContent = 'جاري التنفيذ...';
+                    }
+
+                    return true;
+                });
+            }
+
+            var forms = document.querySelectorAll('form');
+            for (var i = 0; i < forms.length; i++) {
+                bindForm(forms[i]);
+            }
+        }());
+    </script>
 </body>
 </html>
