@@ -7,6 +7,17 @@
     function number(id) { var raw = value(id); return raw === '' ? 0 : Number(raw); }
     function intOrNull(id) { var raw = value(id); return raw === '' ? null : parseInt(raw, 10); }
     function checked(id) { var el = qs(id); return !!(el && el.checked); }
+    function isPosHosted() { return page.getAttribute('data-pos-hosted') === '1'; }
+    function withPosRoute(url) {
+        if (!isPosHosted() || !url) return url;
+        var glue = url.indexOf('?') >= 0 ? '&' : '?';
+        if (url.indexOf('fromPos=1') >= 0 || url.indexOf('host=pos') >= 0) return url;
+        return url + glue + 'fromPos=1&host=pos';
+    }
+    function addQuery(url, key, val) {
+        var glue = url.indexOf('?') >= 0 ? '&' : '?';
+        return url + glue + encodeURIComponent(key) + '=' + encodeURIComponent(val);
+    }
 
     function showStatus(message, success) {
         var status = qs('itemStatus');
@@ -34,6 +45,12 @@
         qs('guaranteeType').value = '';
         qs('haveSerial').checked = false;
         qs('haveGuarantee').checked = false;
+        setChecked('posCommissionEnabled', false);
+        setChecked('posExcludeCommission', false);
+        ['defaultSupplierId', 'posDefaultSalesEmployeeId', 'posDefaultCommissionCustomerId', 'posCommissionType', 'posCommissionPercent', 'posCommissionValue', 'posCommissionNetValue'].forEach(function (id) {
+            var el = qs(id);
+            if (el) el.value = '';
+        });
         qs('itemUnitsBody').innerHTML = '';
         addUnitRow(true);
         showStatus('جاهز لإدخال صنف جديد.', true);
@@ -92,6 +109,15 @@
             ShortName: value('shortName'),
             BinLocation: value('binLocation'),
             Notes: value('itemNotes'),
+            DefaultSupplierId: intOrNull('defaultSupplierId'),
+            PosDefaultSalesEmployeeId: intOrNull('posDefaultSalesEmployeeId'),
+            PosDefaultCommissionCustomerId: intOrNull('posDefaultCommissionCustomerId'),
+            PosCommissionEnabled: checked('posCommissionEnabled'),
+            PosCommissionType: value('posCommissionType'),
+            PosCommissionPercent: number('posCommissionPercent'),
+            PosCommissionValue: number('posCommissionValue'),
+            PosCommissionNetValue: number('posCommissionNetValue'),
+            PosExcludeCommission: checked('posExcludeCommission'),
             Units: collectUnits()
         };
     }
@@ -122,6 +148,15 @@
         qs('shortName').value = data.ShortName || '';
         qs('binLocation').value = data.BinLocation || '';
         qs('itemNotes').value = data.Notes || '';
+        if (qs('defaultSupplierId')) qs('defaultSupplierId').value = data.DefaultSupplierId || '';
+        if (qs('posDefaultSalesEmployeeId')) qs('posDefaultSalesEmployeeId').value = data.PosDefaultSalesEmployeeId || '';
+        if (qs('posDefaultCommissionCustomerId')) qs('posDefaultCommissionCustomerId').value = data.PosDefaultCommissionCustomerId || '';
+        if (qs('posCommissionType')) qs('posCommissionType').value = data.PosCommissionType || '';
+        if (qs('posCommissionPercent')) qs('posCommissionPercent').value = data.PosCommissionPercent || 0;
+        if (qs('posCommissionValue')) qs('posCommissionValue').value = data.PosCommissionValue || 0;
+        if (qs('posCommissionNetValue')) qs('posCommissionNetValue').value = data.PosCommissionNetValue || 0;
+        setChecked('posCommissionEnabled', data.PosCommissionEnabled);
+        setChecked('posExcludeCommission', data.PosExcludeCommission);
         qs('itemUnitsBody').innerHTML = '';
         (data.Units || []).forEach(function (unit) {
             addUnitRow(unit.IsDefault);
@@ -209,7 +244,7 @@
         var loadBtn = event.target.closest('.js-load-item');
         if (loadBtn) {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', page.getAttribute('data-details-url') + '?id=' + encodeURIComponent(loadBtn.getAttribute('data-id')), true);
+            xhr.open('GET', withPosRoute(addQuery(page.getAttribute('data-details-url'), 'id', loadBtn.getAttribute('data-id'))), true);
             xhr.onreadystatechange = function () {
                 if (xhr.readyState !== 4) return;
                 var response = JSON.parse(xhr.responseText || '{}');
@@ -250,7 +285,7 @@
         var loadGroupBtn = event.target.closest('.js-load-group');
         if (loadGroupBtn) {
             var groupXhr = new XMLHttpRequest();
-            groupXhr.open('GET', page.getAttribute('data-group-details-url') + '?id=' + encodeURIComponent(loadGroupBtn.getAttribute('data-id')), true);
+            groupXhr.open('GET', withPosRoute(addQuery(page.getAttribute('data-group-details-url'), 'id', loadGroupBtn.getAttribute('data-id'))), true);
             groupXhr.onreadystatechange = function () {
                 if (groupXhr.readyState !== 4) return;
                 var response = JSON.parse(groupXhr.responseText || '{}');
@@ -291,4 +326,10 @@
     });
 
     if (!qs('itemUnitsBody').querySelector('tr')) addUnitRow(true);
+    if (isPosHosted()) {
+        Array.prototype.forEach.call(page.querySelectorAll('a[href*="/MainErp/Items"], form[action*="/MainErp/Items"]'), function (el) {
+            var attr = el.tagName === 'FORM' ? 'action' : 'href';
+            el.setAttribute(attr, withPosRoute(el.getAttribute(attr)));
+        });
+    }
 })();

@@ -11,26 +11,7 @@ namespace MyERP.Areas.MainErp.Infrastructure
 
         public static bool IsPosHosted(HttpRequestBase request, HttpSessionStateBase session)
         {
-            if (request != null)
-            {
-                if (string.Equals(request.QueryString["host"], MainErpHostValue, StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-
-                if (string.Equals(request.QueryString["host"], PosHostValue, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-
-                if (MainErpPosSessionBridge.IsExplicitPosNavigation(request))
-                {
-                    return true;
-                }
-            }
-
-            return session != null
-                && string.Equals(session[MainErpPosSessionBridge.SourceSessionKey] as string, MainErpPosSessionBridge.SourcePos, StringComparison.OrdinalIgnoreCase);
+            return IsExplicitPosHostedRequest(request);
         }
 
         public static bool IsPosHosted(HttpContext context)
@@ -40,26 +21,27 @@ namespace MyERP.Areas.MainErp.Infrastructure
                 return false;
             }
 
-            if (context.Request != null)
+            return IsExplicitPosHostedRequest(context.Request == null ? null : new HttpRequestWrapper(context.Request));
+        }
+
+        private static bool IsExplicitPosHostedRequest(HttpRequestBase request)
+        {
+            if (request == null)
             {
-                if (string.Equals(context.Request.QueryString["host"], MainErpHostValue, StringComparison.OrdinalIgnoreCase))
-                {
-                    return false;
-                }
-
-                if (string.Equals(context.Request.QueryString["host"], PosHostValue, StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
-
-                if (string.Equals(context.Request.QueryString["fromPos"], "1", StringComparison.OrdinalIgnoreCase))
-                {
-                    return true;
-                }
+                return false;
             }
 
-            return context.Session != null
-                && string.Equals(context.Session[MainErpPosSessionBridge.SourceSessionKey] as string, MainErpPosSessionBridge.SourcePos, StringComparison.OrdinalIgnoreCase);
+            if (string.Equals(request.QueryString["host"], MainErpHostValue, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (string.Equals(request.QueryString["host"], PosHostValue, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return string.Equals(request.QueryString["fromPos"], "1", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

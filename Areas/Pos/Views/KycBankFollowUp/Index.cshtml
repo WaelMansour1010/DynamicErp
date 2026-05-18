@@ -1,7 +1,6 @@
 @{
     Layout = null;
-    ViewBag.Title = "متابعة KYC والبنك";
-    var posContext = ViewBag.PosContext as MyERP.Areas.Pos.Models.PosUserContext;
+    ViewBag.Title = "متابعة KYC";
     var branches = (ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>) ?? Enumerable.Empty<MyERP.Areas.Pos.Models.PosBranchDto>();
 }
 
@@ -9,175 +8,238 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewBag.Title</title>
-    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css?v=20260513-light-default")" rel="stylesheet" />
+    <style>
+        .kyc-follow-page { background:#f4f7fb; min-height:100vh; padding:16px; color:#172033; }
+        .kyc-follow-shell { display:grid; gap:14px; max-width:1480px; margin:0 auto; }
+        .kyc-follow-hero, .kyc-follow-panel { background:#fff; border:1px solid #dbe5f2; border-radius:8px; box-shadow:0 10px 24px rgba(18,38,63,.06); padding:14px; }
+        .kyc-follow-hero { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .kyc-follow-hero h1 { margin:0; font-size:22px; font-weight:900; }
+        .kyc-follow-hero span { color:#63748a; font-weight:700; }
+        .kyc-tabs { display:flex; gap:8px; flex-wrap:wrap; }
+        .kyc-tab { border:1px solid #d8e2ef; background:#f8fbff; color:#25364f; border-radius:8px; padding:9px 14px; font-weight:900; cursor:pointer; }
+        .kyc-tab.is-active { background:#fff0f4; border-color:#f25b86; color:#d9285f; }
+        .kyc-summary-grid { display:grid; grid-template-columns:repeat(6,minmax(130px,1fr)); gap:10px; }
+        .kyc-summary-card { background:#f8fbff; border:1px solid #dbe5f2; border-radius:8px; padding:12px; min-height:76px; }
+        .kyc-summary-card small { display:block; color:#64748b; font-weight:800; margin-bottom:7px; }
+        .kyc-summary-card strong { color:#14213d; font-size:22px; font-weight:900; }
+        .kyc-filter-grid { display:grid; grid-template-columns:repeat(6,minmax(150px,1fr)); gap:10px; align-items:end; }
+        .kyc-filter-grid label { display:grid; gap:6px; color:#34445c; font-weight:800; }
+        .kyc-filter-grid input, .kyc-filter-grid select { border:1px solid #d8e2ef; border-radius:8px; padding:10px; min-height:42px; background:#fff; }
+        .kyc-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+        .kyc-table-wrap { overflow:auto; border:1px solid #dbe5f2; border-radius:8px; background:#fff; }
+        .kyc-table { width:100%; border-collapse:collapse; min-width:1180px; }
+        .kyc-table th, .kyc-table td { border-bottom:1px solid #e7edf5; padding:10px; text-align:right; white-space:nowrap; }
+        .kyc-table th { background:#f3f7fc; color:#31445f; font-weight:900; position:sticky; top:0; }
+        .kyc-status { display:inline-flex; border-radius:999px; padding:4px 9px; background:#eef4ff; color:#24436d; font-weight:900; }
+        .kyc-report-footer { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; color:#64748b; font-weight:800; }
+        .kyc-tab-panel.is-hidden-ui { display:none!important; }
+        @@media (max-width:1100px) { .kyc-summary-grid { grid-template-columns:repeat(2,1fr); } .kyc-filter-grid { grid-template-columns:repeat(2,1fr); } }
+        @@media (max-width:640px) { .kyc-follow-page { padding:10px; } .kyc-follow-hero { display:block; } .kyc-summary-grid, .kyc-filter-grid { grid-template-columns:1fr; } }
+    </style>
 </head>
 <body>
-    <div class="pos-page"
-         dir="rtl"
+    <div class="kyc-follow-page"
+         data-report-url="@Url.Action("Report", "KycBankFollowUp", new { area = "Pos" })"
+         data-export-report-url="@Url.Action("ExportReport", "KycBankFollowUp", new { area = "Pos" })"
+         data-print-report-url="@Url.Action("PrintReport", "KycBankFollowUp", new { area = "Pos" })"
          data-preview-url="@Url.Action("Preview", "KycBankFollowUp", new { area = "Pos" })"
          data-export-url="@Url.Action("Export", "KycBankFollowUp", new { area = "Pos" })"
          data-folder-url="@Url.Action("KycFolder", "KycBankFollowUp", new { area = "Pos" })">
-        <div class="pos-shell">
-            <section class="pos-panel">
-                <div class="panel-heading">
-                    <h2>متابعة KYC والبنك</h2>
-                    <span>متابعة ملفات العملاء والتصدير البنكي</span>
+        <div class="kyc-follow-shell">
+            <section class="kyc-follow-hero">
+                <div>
+                    <h1>متابعة KYC</h1>
+                    <span>تقارير العملاء والتصدير البنكي من نفس شاشة المتابعة</span>
                 </div>
-
-                <div class="pos-grid four-cols">
-                    <label>
-                        الفرع
-                        <select id="kycBankBranchId">
-                            <option value="">كل الفروع المتاحة</option>
-                            @foreach (var branch in branches)
-                            {
-                                <option value="@branch.BranchId">@branch.BranchName</option>
-                            }
-                        </select>
-                    </label>
-                    <label>من تاريخ<input type="date" id="kycBankFromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
-                    <label>إلى تاريخ<input type="date" id="kycBankToDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
-                    <label>
-                        نوع التصدير
-                        <select id="kycBankCardLength">
-                            <option value="18">تصدير 1 - كارت 18 رقم</option>
-                            <option value="8">تصدير 2 - كارت 8 أرقام</option>
-                        </select>
-                    </label>
+                <div class="kyc-tabs" role="tablist">
+                    <button type="button" class="kyc-tab is-active" data-tab="reports">تقارير KYC</button>
+                    <button type="button" class="kyc-tab" data-tab="bank">التصدير البنكي</button>
                 </div>
-
-                <div class="action-bar">
-                    <button type="button" class="primary-action" id="previewKycBankBtn">عرض البيانات</button>
-                    <button type="button" class="secondary-action" data-export-length="18">تصدير 1</button>
-                    <button type="button" class="secondary-action" data-export-length="8">تصدير 2</button>
-                    <button type="button" class="secondary-action" id="copyKycFolderBtn">نسخ KYC</button>
-                </div>
-                <div id="kycBankMessage" class="pos-validation"></div>
             </section>
 
-            <section class="pos-panel">
-                <div class="panel-heading">
-                    <h2>النتيجة</h2>
-                    <span id="kycBankCount">لم يتم تشغيل البحث بعد</span>
+            <section id="reportsPanel" class="kyc-tab-panel">
+                <div class="kyc-summary-grid" id="kycSummaryCards">
+                    <div class="kyc-summary-card"><small>إجمالي العملاء</small><strong>0</strong></div>
+                    <div class="kyc-summary-card"><small>لديهم فواتير</small><strong>0</strong></div>
+                    <div class="kyc-summary-card"><small>بدون فواتير</small><strong>0</strong></div>
+                    <div class="kyc-summary-card"><small>بيانات ناقصة</small><strong>0</strong></div>
+                    <div class="kyc-summary-card"><small>غير مكتمل</small><strong>0</strong></div>
+                    <div class="kyc-summary-card"><small>لهم مرفقات</small><strong>0</strong></div>
                 </div>
-                <div id="kycBankFolder" class="empty-state is-hidden-ui"></div>
-                <div id="kycBankResult" class="report-result"></div>
+
+                <section class="kyc-follow-panel">
+                    <div class="kyc-filter-grid">
+                        <label>من تاريخ<input type="date" id="reportFromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                        <label>إلى تاريخ<input type="date" id="reportToDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                        <label>
+                            الفرع
+                            <select id="reportBranchId">
+                                <option value="">كل الفروع</option>
+                                @foreach (var branch in branches)
+                                {
+                                    <option value="@branch.BranchId">@branch.BranchName</option>
+                                }
+                            </select>
+                        </label>
+                        <label>حالة الفاتورة<select id="reportInvoiceStatus"><option value="all">كل عملاء KYC</option><option value="with">عملاء لديهم فواتير فقط</option><option value="without">عملاء بدون فواتير فقط</option></select></label>
+                        <label>بحث<input type="search" id="reportSearchTerm" placeholder="رقم قومي، هاتف، توكن، اسم العميل" /></label>
+                        <label>تصنيف التقرير<select id="reportSmartFilter"><option value="">كل التصنيفات</option><option value="bank-misr">بنك مصر</option><option value="bank-ahly">البنك الأهلي</option><option value="missing-required">بيانات أساسية ناقصة</option><option value="incomplete">KYC غير مكتمل</option><option value="recent">تم إنشاؤه حديثاً</option><option value="updated-unused">محدث ولم يستخدم في فاتورة</option><option value="has-attachments">له مرفقات</option><option value="no-attachments">بدون مرفقات</option></select></label>
+                    </div>
+                    <div class="kyc-actions" style="margin-top:12px">
+                        <button type="button" class="primary-action" id="loadKycReportBtn">بحث البيانات</button>
+                        <button type="button" class="secondary-action" id="exportKycReportBtn">Export Excel</button>
+                        <button type="button" class="secondary-action" id="printKycReportBtn">Print</button>
+                    </div>
+                    <div id="kycReportMessage" class="pos-validation"></div>
+                </section>
+
+                <section class="kyc-follow-panel">
+                    <div class="kyc-table-wrap" id="kycReportResult"><div class="empty-state">اضغط بحث البيانات لعرض تقرير KYC.</div></div>
+                    <div class="kyc-report-footer">
+                        <span id="kycReportCount">لا توجد بيانات محملة</span>
+                        <div class="kyc-actions">
+                            <button type="button" class="secondary-action" id="prevKycPageBtn">السابق</button>
+                            <span id="kycPageText">صفحة 1</span>
+                            <button type="button" class="secondary-action" id="nextKycPageBtn">التالي</button>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <section id="bankPanel" class="kyc-tab-panel is-hidden-ui">
+                <section class="kyc-follow-panel">
+                    <div class="panel-heading"><h2>التصدير البنكي</h2><span>تصدير ملفات البنك بنفس المنطق الحالي</span></div>
+                    <div class="kyc-filter-grid">
+                        <label>
+                            الفرع
+                            <select id="kycBankBranchId">
+                                <option value="">كل الفروع المتاحة</option>
+                                @foreach (var branch in branches)
+                                {
+                                    <option value="@branch.BranchId">@branch.BranchName</option>
+                                }
+                            </select>
+                        </label>
+                        <label>من تاريخ<input type="date" id="kycBankFromDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                        <label>إلى تاريخ<input type="date" id="kycBankToDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" /></label>
+                        <label>نوع التصدير<select id="kycBankCardLength"><option value="18">تصدير 1 - كارت 18 رقم</option><option value="8">تصدير 2 - كارت 8 أرقام</option></select></label>
+                    </div>
+                    <div class="kyc-actions" style="margin-top:12px">
+                        <button type="button" class="primary-action" id="previewKycBankBtn">عرض البيانات</button>
+                        <button type="button" class="secondary-action" data-export-length="18">تصدير 1</button>
+                        <button type="button" class="secondary-action" data-export-length="8">تصدير 2</button>
+                        <button type="button" class="secondary-action" id="copyKycFolderBtn">نسخ KYC</button>
+                    </div>
+                    <div id="kycBankMessage" class="pos-validation"></div>
+                </section>
+                <section class="kyc-follow-panel">
+                    <div class="panel-heading"><h2>النتيجة</h2><span id="kycBankCount">لم يتم تشغيل البحث بعد</span></div>
+                    <div id="kycBankFolder" class="empty-state is-hidden-ui"></div>
+                    <div id="kycBankResult" class="report-result"></div>
+                </section>
             </section>
         </div>
     </div>
 
     <script>
         (function () {
+            var pageNo = 1, pageSize = 25, lastTotal = 0;
             function byId(id) { return document.getElementById(id); }
-            function page() { return document.querySelector(".pos-page"); }
-            function escapeHtml(value) {
-                return String(value === null || value === undefined ? "" : value)
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/"/g, "&quot;");
-            }
-            function payload(length) {
-                return {
-                    fromDate: byId("kycBankFromDate").value,
-                    toDate: byId("kycBankToDate").value,
-                    branchId: parseInt(byId("kycBankBranchId").value, 10) || null,
-                    cardLength: length || parseInt(byId("kycBankCardLength").value, 10) || 18
-                };
-            }
-            function postJson(url, data, callback) {
+            function root() { return document.querySelector(".kyc-follow-page"); }
+            function esc(v) { return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+            function postJson(url, data, cb) {
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", url, true);
                 xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
                 xhr.onreadystatechange = function () {
-                    if (xhr.readyState !== 4) { return; }
+                    if (xhr.readyState !== 4) return;
                     var response = null;
-                    try { response = xhr.responseText ? JSON.parse(xhr.responseText) : null; }
-                    catch (ignore) { response = { success: false, message: "تعذر قراءة رد السيرفر" }; }
-                    callback(xhr.status, response);
+                    try { response = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (e) { response = { success:false, message:"تعذر قراءة رد السيرفر" }; }
+                    cb(xhr.status, response);
                 };
                 xhr.send(JSON.stringify(data));
             }
-            function renderTable(data) {
-                if (!data || !data.rows || !data.rows.length) {
-                    byId("kycBankResult").innerHTML = '<div class="empty-state">لا توجد بيانات مطابقة</div>';
-                    byId("kycBankCount").innerText = "عدد السجلات: 0";
-                    return;
+            function reportPayload() {
+                return { fromDate: byId("reportFromDate").value, toDate: byId("reportToDate").value, fromDateText: byId("reportFromDate").value, toDateText: byId("reportToDate").value, branchId: parseInt(byId("reportBranchId").value,10)||null, invoiceStatus: byId("reportInvoiceStatus").value, searchTerm: byId("reportSearchTerm").value, smartFilter: byId("reportSmartFilter").value, page: pageNo, pageSize: pageSize };
+            }
+            function submitForm(url, data) {
+                var form = document.createElement("form"); form.method = "POST"; form.action = url; form.target = "_blank";
+                Object.keys(data).forEach(function (key) { var i = document.createElement("input"); i.type = "hidden"; i.name = key; i.value = data[key] == null ? "" : data[key]; form.appendChild(i); });
+                document.body.appendChild(form); form.submit(); document.body.removeChild(form);
+            }
+            function renderSummary(s) {
+                s = s || {};
+                byId("kycSummaryCards").innerHTML =
+                    card("إجمالي العملاء", s.TotalCustomers || s.totalCustomers || 0) +
+                    card("لديهم فواتير", s.WithInvoices || s.withInvoices || 0) +
+                    card("بدون فواتير", s.WithoutInvoices || s.withoutInvoices || 0) +
+                    card("بيانات ناقصة", s.MissingRequiredData || s.missingRequiredData || 0) +
+                    card("غير مكتمل", s.IncompleteCustomers || s.incompleteCustomers || 0) +
+                    card("لهم مرفقات", s.WithAttachments || s.withAttachments || 0);
+            }
+            function card(t, v) { return '<div class="kyc-summary-card"><small>' + esc(t) + '</small><strong>' + esc(v) + '</strong></div>'; }
+            function renderReport(data) {
+                data = data || {}; renderSummary(data.Summary || data.summary); var rows = data.Rows || data.rows || [];
+                lastTotal = data.TotalRows || data.totalRows || rows.length || 0;
+                if (!rows.length) { byId("kycReportResult").innerHTML = '<div class="empty-state">لا توجد بيانات مطابقة.</div>'; }
+                else {
+                    var html = '<table class="kyc-table"><thead><tr><th>اسم العميل عربي</th><th>English</th><th>الرقم القومي</th><th>الهاتف</th><th>التوكن/الكارت</th><th>الفرع</th><th>تاريخ الإنشاء</th><th>آخر تحديث</th><th>له فاتورة</th><th>عدد الفواتير</th><th>آخر فاتورة</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>';
+                    rows.forEach(function (r) {
+                        var id = r.CustomerID || r.customerID || r.CustomerId || r.customerId || "";
+                        html += '<tr><td>' + esc(r.ArabicName || r.arabicName) + '</td><td>' + esc(r.EnglishName || r.englishName) + '</td><td>' + esc(r.NationalId || r.nationalId) + '</td><td>' + esc(r.Phone || r.phone) + '</td><td>' + esc(r.TokenCardNumber || r.tokenCardNumber) + '</td><td>' + esc(r.BranchName || r.branchName) + '</td><td>' + fmt(r.CreatedDate || r.createdDate) + '</td><td>' + fmt(r.LastUpdateDate || r.lastUpdateDate) + '</td><td>' + ((r.HasInvoice || r.hasInvoice) ? 'نعم' : 'لا') + '</td><td>' + esc(r.InvoiceCount || r.invoiceCount || 0) + '</td><td>' + fmt(r.LastInvoiceDate || r.lastInvoiceDate) + '</td><td><span class="kyc-status">' + esc(r.KycStatus || r.kycStatus) + '</span></td><td><a class="link-action" target="_blank" href="/Pos/PosTransaction/Kyc?customerId=' + esc(id) + '">فتح KYC</a></td></tr>';
+                    });
+                    byId("kycReportResult").innerHTML = html + '</tbody></table>';
                 }
-
-                var html = '<div class="responsive-table"><table class="pos-table"><thead><tr>';
-                for (var i = 0; i < data.columns.length; i++) {
-                    html += "<th>" + escapeHtml(data.columns[i].Title || data.columns[i].title) + "</th>";
+                byId("kycReportCount").textContent = "عدد النتائج: " + lastTotal;
+                byId("kycPageText").textContent = "صفحة " + pageNo;
+                byId("prevKycPageBtn").disabled = pageNo <= 1;
+                byId("nextKycPageBtn").disabled = pageNo * pageSize >= lastTotal;
+            }
+            function fmt(v) {
+                if (!v) return "";
+                var s = String(v);
+                var legacy = /\/Date\((\-?\d+)/.exec(s);
+                if (legacy) {
+                    var d = new Date(parseInt(legacy[1], 10));
+                    if (!isNaN(d.getTime())) {
+                        return esc(d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes()));
+                    }
                 }
-                html += "</tr></thead><tbody>";
-                for (var r = 0; r < data.rows.length; r++) {
-                    html += "<tr>";
-                    for (var c = 0; c < data.columns.length; c++) {
-                        var key = data.columns[c].Key || data.columns[c].key;
-                        html += "<td>" + escapeHtml(data.rows[r][key]) + "</td>";
-                    }
-                    html += "</tr>";
-                }
-                html += "</tbody></table></div>";
-                byId("kycBankResult").innerHTML = html;
-                byId("kycBankCount").innerText = "عدد السجلات: " + (data.totalRows || data.rows.length) + (data.totalRows > data.rows.length ? " - المعروض أول 100 فقط" : "");
+                return esc(s.replace("T"," ").substring(0,16));
             }
-            function preview() {
-                byId("kycBankMessage").innerText = "جاري تحميل البيانات...";
-                postJson(page().getAttribute("data-preview-url"), payload(), function (status, data) {
-                    if (status >= 200 && status < 300 && data && data.success) {
-                        byId("kycBankMessage").innerText = "تم تحميل البيانات";
-                        renderTable(data);
-                        return;
-                    }
-                    byId("kycBankMessage").innerText = (data && data.message) || "تعذر تحميل البيانات";
+            function pad(v) { return v < 10 ? "0" + v : String(v); }
+            function loadReport(reset) {
+                if (reset) pageNo = 1;
+                byId("kycReportMessage").textContent = "جاري تحميل التقرير...";
+                postJson(root().getAttribute("data-report-url"), reportPayload(), function (status, res) {
+                    if (status >= 200 && status < 300 && res && res.success) { byId("kycReportMessage").textContent = "تم تحميل التقرير"; renderReport(res.data || res.Data); }
+                    else byId("kycReportMessage").textContent = (res && res.message) || "تعذر تحميل التقرير";
                 });
             }
-            function exportExcel(length) {
-                var data = payload(length);
-                var form = document.createElement("form");
-                form.method = "POST";
-                form.action = page().getAttribute("data-export-url");
-                form.target = "_blank";
-                Object.keys(data).forEach(function (key) {
-                    var input = document.createElement("input");
-                    input.type = "hidden";
-                    input.name = key;
-                    input.value = data[key] === null || data[key] === undefined ? "" : data[key];
-                    form.appendChild(input);
-                });
-                document.body.appendChild(form);
-                form.submit();
-                document.body.removeChild(form);
+            function bankPayload(length) { return { fromDate: byId("kycBankFromDate").value, toDate: byId("kycBankToDate").value, branchId: parseInt(byId("kycBankBranchId").value,10)||null, cardLength: length || parseInt(byId("kycBankCardLength").value,10)||18 }; }
+            function renderBank(data) {
+                var rows = data.rows || data.Rows || [], cols = data.columns || data.Columns || [];
+                if (!rows.length) { byId("kycBankResult").innerHTML = '<div class="empty-state">لا توجد بيانات مطابقة</div>'; byId("kycBankCount").textContent = "عدد السجلات: 0"; return; }
+                var html = '<div class="kyc-table-wrap"><table class="kyc-table"><thead><tr>'; cols.forEach(function(c){ html += '<th>' + esc(c.Title || c.title) + '</th>'; }); html += '</tr></thead><tbody>';
+                rows.forEach(function(r){ html += '<tr>'; cols.forEach(function(c){ var k = c.Key || c.key; html += '<td>' + esc(r[k]) + '</td>'; }); html += '</tr>'; });
+                byId("kycBankResult").innerHTML = html + '</tbody></table></div>'; byId("kycBankCount").textContent = "عدد السجلات: " + (data.totalRows || rows.length);
             }
-            function copyFolder() {
-                byId("kycBankMessage").innerText = "جاري تحديد فولدر KYC...";
-                postJson(page().getAttribute("data-folder-url"), payload(), function (status, data) {
-                    if (!(status >= 200 && status < 300) || !data || !data.success) {
-                        byId("kycBankMessage").innerText = (data && data.message) || "تعذر تحديد فولدر KYC";
-                        return;
-                    }
-                    var box = byId("kycBankFolder");
-                    box.classList.remove("is-hidden-ui");
-                    box.innerHTML = '<strong>' + escapeHtml(data.message) + '</strong><br><code>' + escapeHtml(data.path) + '</code>';
-                    byId("kycBankMessage").innerText = data.exists ? "الفولدر موجود ويمكن نسخه" : "الفولدر غير موجود على السيرفر";
-                    if (navigator.clipboard && data.path) {
-                        navigator.clipboard.writeText(data.path);
-                    }
-                });
-            }
-
-            byId("previewKycBankBtn").addEventListener("click", preview);
-            byId("copyKycFolderBtn").addEventListener("click", copyFolder);
-            var exports = document.querySelectorAll("[data-export-length]");
-            for (var i = 0; i < exports.length; i++) {
-                exports[i].addEventListener("click", function () {
-                    exportExcel(parseInt(this.getAttribute("data-export-length"), 10));
-                });
-            }
+            function previewBank() { byId("kycBankMessage").textContent = "جاري التحميل..."; postJson(root().getAttribute("data-preview-url"), bankPayload(), function(s,d){ if(s>=200&&s<300&&d&&d.success){ byId("kycBankMessage").textContent="تم التحميل"; renderBank(d); } else byId("kycBankMessage").textContent=(d&&d.message)||"تعذر التحميل"; }); }
+            document.addEventListener("click", function(e) {
+                if (e.target.matches("[data-tab]")) { document.querySelectorAll(".kyc-tab").forEach(function(x){x.classList.remove("is-active")}); e.target.classList.add("is-active"); byId("reportsPanel").classList.toggle("is-hidden-ui", e.target.getAttribute("data-tab") !== "reports"); byId("bankPanel").classList.toggle("is-hidden-ui", e.target.getAttribute("data-tab") !== "bank"); }
+                if (e.target.id === "loadKycReportBtn") loadReport(true);
+                if (e.target.id === "prevKycPageBtn" && pageNo > 1) { pageNo--; loadReport(false); }
+                if (e.target.id === "nextKycPageBtn" && pageNo * pageSize < lastTotal) { pageNo++; loadReport(false); }
+                if (e.target.id === "exportKycReportBtn") submitForm(root().getAttribute("data-export-report-url"), reportPayload());
+                if (e.target.id === "printKycReportBtn") submitForm(root().getAttribute("data-print-report-url"), reportPayload());
+                if (e.target.id === "previewKycBankBtn") previewBank();
+                if (e.target.hasAttribute("data-export-length")) submitForm(root().getAttribute("data-export-url"), bankPayload(parseInt(e.target.getAttribute("data-export-length"),10)));
+                if (e.target.id === "copyKycFolderBtn") postJson(root().getAttribute("data-folder-url"), bankPayload(), function(s,d){ var box=byId("kycBankFolder"); box.classList.remove("is-hidden-ui"); box.innerHTML='<strong>'+esc((d&&d.message)||"")+'</strong><br><code>'+esc((d&&d.path)||"")+'</code>'; });
+            });
+            loadReport(true);
         })();
     </script>
 </body>

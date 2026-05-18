@@ -11,15 +11,8 @@
         : (System.IO.File.Exists(Server.MapPath(alternateLogoPath))
             ? alternateLogoPath
             : (System.IO.File.Exists(Server.MapPath(legacyLogoPath)) ? legacyLogoPath : null));
-    var isTellerCategory = posContext != null
-        && (string.Equals((posContext.UserCategory ?? string.Empty).Trim(), "تلر", StringComparison.OrdinalIgnoreCase)
-            || string.Equals((posContext.UserCategory ?? string.Empty).Trim(), "Teller", StringComparison.OrdinalIgnoreCase));
-    var isTellerUserType = posContext != null && posContext.UserType.GetValueOrDefault(-1) == 2;
-    var opensInvoiceDirectly = posContext != null
-        && (isTellerCategory || isTellerUserType || posContext.CanTeller)
-        && !posContext.IsFullAccess
-        && posContext.UserType.GetValueOrDefault(-1) != 0;
-    var showSalesIndexFirst = posContext != null && !opensInvoiceDirectly;
+    var opensInvoiceDirectly = posContext != null && posContext.CanTeller;
+    var showSalesIndexFirst = !kycStandalone && posContext != null && !opensInvoiceDirectly;
     var kycDefaultBranchName = posContext != null && !string.IsNullOrWhiteSpace(posContext.BranchName)
         ? posContext.BranchName
         : (posContext != null && posContext.BranchId.HasValue ? ("فرع " + posContext.BranchId.Value.ToString()) : "جلسة POS غير مكتملة");
@@ -42,6 +35,7 @@
      data-customer-lookup-url="@Url.Action("LookupCustomerByPhone", "PosTransaction", new { area = "Pos" })"
      data-customer-search-url="@Url.Action("SearchKeshniCardCustomers", "PosTransaction", new { area = "Pos" })"
      data-unused-kyc-lookup-url="@Url.Action("LookupUnusedKeshniCardCustomer", "PosTransaction", new { area = "Pos" })"
+     data-kyc-customer-url="@Url.Action("GetKeshniCardCustomer", "PosTransaction", new { area = "Pos" })"
      data-available-kyc-cards-url="@Url.Action("SearchAvailableKeshniCards", "PosTransaction", new { area = "Pos" })"
      data-kyc-card-availability-url="@Url.Action("ValidateKeshniCardAvailability", "PosTransaction", new { area = "Pos" })"
      data-save-keshni-card-url="@Url.Action("SaveKeshniCardCustomer", "PosTransaction", new { area = "Pos" })"

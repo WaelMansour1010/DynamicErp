@@ -99,7 +99,7 @@ namespace MyERP.Areas.Pos.Services
                     return Fail("تم إيقاف التنفيذ لأن قاعدة البيانات الحالية لا تطابق قاعدة POS المطلوبة.");
                 }
 
-                if (status.HashMismatchCount > 0)
+                if (status.HashMismatchCount > 0 && !request.IgnoreHashMismatch)
                 {
                     return Fail("تم إيقاف التنفيذ بسبب اختلاف Hash في سكريبت تم تطبيقه سابقاً.");
                 }
@@ -152,8 +152,8 @@ namespace MyERP.Areas.Pos.Services
                     SkippedCount = status.AppliedCount,
                     FailedCount = failed,
                     PendingCount = pending.Count,
-                    HashMismatchCount = 0,
-                    Message = applied == 0 ? "لا توجد تحديثات جديدة للتطبيق." : "تم تطبيق التحديثات المنتظرة بنجاح.",
+                    HashMismatchCount = status.HashMismatchCount,
+                    Message = BuildApplySuccessMessage(applied, status.HashMismatchCount, request.IgnoreHashMismatch),
                     Scripts = finalStatus.Scripts
                 };
             }
@@ -871,6 +871,20 @@ ORDER BY RunId DESC;";
             return new PosSqlUpdateRunResult { Success = false, Message = message };
         }
 
+
+        private static string BuildApplySuccessMessage(int applied, int hashMismatchCount, bool ignoredHashMismatch)
+        {
+            var message = applied == 0
+                ? "لا توجد تحديثات جديدة للتطبيق."
+                : "تم تطبيق التحديثات المنتظرة بنجاح.";
+
+            if (ignoredHashMismatch && hashMismatchCount > 0)
+            {
+                message += " تم تجاهل اختلافات Hash مؤقتا وتطبيق الجديد فقط.";
+            }
+
+            return message;
+        }
         private static string BuildDryRunMessage(PosSqlUpdateStatusResult status)
         {
             if (!status.IsPosDatabase)

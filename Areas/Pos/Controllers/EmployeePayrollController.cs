@@ -31,6 +31,7 @@ namespace MyERP.Areas.Pos.Controllers
             if (!CanOpen(context)) return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح شاشة الموظفين");
             ViewBag.ActiveScreen = "employee-payroll";
             FillOperationalContext(context);
+            ViewBag.SharedHrReadOnly = !CanSaveMedicalInsurance();
             return View();
         }
 
@@ -41,6 +42,8 @@ namespace MyERP.Areas.Pos.Controllers
             if (!CanOpen(context)) return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح مسير الرواتب");
             ViewBag.ActiveScreen = "salary-run";
             FillOperationalContext(context);
+            ViewBag.SharedHrReadOnly = false;
+            ViewBag.SharedHrSalaryWriteEnabled = CanSaveSalaryRun();
             return View();
         }
 
@@ -51,6 +54,7 @@ namespace MyERP.Areas.Pos.Controllers
             if (!CanOpen(context)) return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح التأمين الطبي");
             ViewBag.ActiveScreen = "medical-insurance";
             FillOperationalContext(context);
+            ViewBag.SharedHrReadOnly = !CanSaveMedicalInsurance();
             return View();
         }
 
@@ -95,7 +99,18 @@ namespace MyERP.Areas.Pos.Controllers
         [HttpPost]
         public JsonResult SaveProvider(MedicalInsuranceProvider provider)
         {
-            return PosOperationalOnly("Medical insurance provider administration");
+            if (!CanSaveMedicalInsurance()) return Json(new { success = false, message = "ليست لديك صلاحية حفظ شركات التأمين الطبي" });
+            try
+            {
+                var context = GetContext();
+                var id = _repository.SaveMedicalInsuranceProvider(provider, context == null ? 0 : context.UserId);
+                return Json(new { success = true, id = id, message = "تم حفظ شركة التأمين الطبي بنجاح" });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
 
@@ -116,19 +131,52 @@ namespace MyERP.Areas.Pos.Controllers
         [HttpPost]
         public JsonResult SavePlan(MedicalInsurancePlan plan)
         {
-            return PosOperationalOnly("Medical insurance plan administration");
+            if (!CanSaveMedicalInsurance()) return Json(new { success = false, message = "ليست لديك صلاحية حفظ خطط التأمين الطبي" });
+            try
+            {
+                var context = GetContext();
+                var id = _repository.SaveMedicalInsurancePlan(plan, context == null ? 0 : context.UserId);
+                return Json(new { success = true, id = id, message = "تم حفظ خطة التأمين الطبي بنجاح" });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpPost]
         public JsonResult Save(EmployeeSaveRequest request)
         {
-            return PosOperationalOnly("Employee administration");
+            if (!CanSaveMedicalInsurance()) return Json(new { success = false, message = "ليست لديك صلاحية حفظ بيانات الموظف أو التأمين الطبي" });
+            try
+            {
+                var context = GetContext();
+                var id = _repository.SaveEmployee(request, context == null ? 0 : context.UserId);
+                return Json(new { success = true, id = id, message = "تم حفظ بيانات الموظف والتأمين الطبي بنجاح" });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpPost]
         public JsonResult SetActive(int id, bool active)
         {
-            return PosOperationalOnly("Employee activation");
+            if (!CanSaveMedicalInsurance()) return Json(new { success = false, message = "ليست لديك صلاحية تعديل حالة الموظف" });
+            try
+            {
+                var context = GetContext();
+                _repository.SetEmployeeActive(id, active);
+                return Json(new { success = true, message = active ? "تم تفعيل الموظف" : "تم تعطيل الموظف" });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpGet]
@@ -149,7 +197,81 @@ namespace MyERP.Areas.Pos.Controllers
         [HttpPost]
         public JsonResult SaveSalaryRun(SalaryRunRequest request)
         {
-            return PosOperationalOnly("Salary run saving");
+            if (!CanSaveSalaryRun()) return Json(new { success = false, message = "ليست لديك صلاحية حفظ مسير الرواتب" });
+            try
+            {
+                var context = GetContext();
+                var userId = context == null ? 0 : context.UserId;
+                return Json(new { success = true, result = _repository.SaveSalaryRun(request, userId) });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public JsonResult PayrollAccountingReplay(PayrollAccountingReplayRequest request)
+        {
+            if (!CanUseJson()) return Json(new { success = false, message = "ليست لديك صلاحية معاينة قيد الرواتب" }, JsonRequestBehavior.AllowGet);
+            try
+            {
+                return LargeJson(new { success = true, replay = _repository.BuildPayrollAccountingReplayReport(request) }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult PayrollSalarySheet(SalaryRunRequest request)
+        {
+            if (!CanUseJson()) return Json(new { success = false, message = "ليست لديك صلاحية طباعة مسير الرواتب" }, JsonRequestBehavior.AllowGet);
+            try
+            {
+                return LargeJson(new { success = true, report = _repository.BuildPayrollSalarySheetReport(request) }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult PayrollPostingDryRun(PayrollPostingRequest request)
+        {
+            if (!CanUseJson()) return Json(new { success = false, message = "ليست لديك صلاحية معاينة ترحيل الرواتب" });
+            try
+            {
+                return LargeJson(new { success = true, result = _repository.BuildPayrollPostingDryRun(request) }, JsonRequestBehavior.DenyGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult PostPayrollJournal(PayrollPostingRequest request)
+        {
+            if (!CanSaveSalaryRun()) return Json(new { success = false, message = "ليست لديك صلاحية ترحيل قيد الرواتب" });
+            try
+            {
+                var context = GetContext();
+                var userId = context == null ? 0 : context.UserId;
+                var userName = context == null ? "POS Web" : context.UserName;
+                return LargeJson(new { success = true, result = _repository.PostPayrollJournal(request, userId, userName) }, JsonRequestBehavior.DenyGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = ex.Message });
+            }
         }
 
 
@@ -165,6 +287,21 @@ namespace MyERP.Areas.Pos.Controllers
         {
             if (!CanUseJson()) return Json(new { success = false, message = "ليست لديك صلاحية" }, JsonRequestBehavior.AllowGet);
             return Json(new { success = true, rows = _repository.GetMedicalInsuranceDeductions(filter) }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public JsonResult MedicalInsuranceReportBundle(MedicalInsuranceReportFilter filter)
+        {
+            if (!CanUseJson()) return Json(new { success = false, message = "ليست لديك صلاحية عرض تقارير التأمين الطبي" }, JsonRequestBehavior.AllowGet);
+            try
+            {
+                return LargeJson(new { success = true, report = _repository.GetMedicalInsuranceReportBundle(filter) }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
         }
 
         [HttpGet]
@@ -194,6 +331,23 @@ namespace MyERP.Areas.Pos.Controllers
         private bool CanOpen(Models.PosUserContext context)
         {
             return context != null && (context.IsFullAccess || context.UserType.GetValueOrDefault(-1) == 0 || _permissionService.CanView(context, "FrmEmployee") || _permissionService.CanView(context, "FrmEmpSalary5"));
+        }
+
+        private bool CanSaveSalaryRun()
+        {
+            var context = GetContext();
+            return context != null && (context.IsFullAccess || context.UserType.GetValueOrDefault(-1) == 0 || _permissionService.CanAdd(context, "FrmEmpSalary5") || _permissionService.CanEdit(context, "FrmEmpSalary5"));
+        }
+
+        private bool CanSaveMedicalInsurance()
+        {
+            var context = GetContext();
+            return context != null && (context.IsFullAccess
+                || context.UserType.GetValueOrDefault(-1) == 0
+                || _permissionService.CanAdd(context, "FrmEmployee")
+                || _permissionService.CanEdit(context, "FrmEmployee")
+                || _permissionService.CanAdd(context, "FrmInsurances")
+                || _permissionService.CanEdit(context, "FrmInsurances"));
         }
 
         private JsonResult LargeJson(object data, JsonRequestBehavior behavior)
@@ -264,7 +418,7 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 DatabaseName = GetDatabaseName(_employeePayrollConnectionString),
                 DemoOverrideActive = _databaseOverrideActive,
-                EnvironmentLabel = _databaseOverrideActive ? "Demo database" : "Kishny POS operational context",
+                EnvironmentLabel = _databaseOverrideActive ? "Demo database" : "POS operational context",
                 BranchName = context == null ? string.Empty : context.BranchName,
                 StoreName = context == null ? string.Empty : context.StoreName,
                 UserName = context == null ? string.Empty : context.UserName

@@ -424,6 +424,7 @@
     <Compile Include="Areas\MainErp\Controllers\FinancialAdministrationController.cs" />
     <Compile Include="Areas\MainErp\Controllers\LegacyHrFinanceController.cs" />
     <Compile Include="Areas\MainErp\Controllers\HomeController.cs" />
+    <Compile Include="Areas\MainErp\Controllers\HrController.cs" />
     <Compile Include="Areas\MainErp\Controllers\ItemsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\LocalizationController.cs" />
     <Compile Include="Areas\MainErp\Controllers\JournalEntriesController.cs" />
@@ -456,6 +457,7 @@
     <Compile Include="Areas\MainErp\Infrastructure\LegacyScreenPermissionService.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\MainErpPosSessionBridge.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\MainErpUnitOfWork.cs" />
+    <Compile Include="Areas\MainErp\Infrastructure\WebScreenPermissionService.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\ManualIdAllocation.cs" />
     <Compile Include="Areas\MainErp\Infrastructure\ManualIdTarget.cs" />
     <Compile Include="Areas\MainErp\Interfaces\IAccountCodeGenerationService.cs" />
@@ -638,6 +640,7 @@
     <Compile Include="Areas\Pos\Controllers\PosInvoiceReconciliationController.cs" />
     <Compile Include="Areas\Pos\Controllers\EmployeePayrollController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosPermissionsController.cs" />
+    <Compile Include="Areas\Pos\Controllers\WebPermissionsController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosReportsController.cs" />
     <Compile Include="Areas\Pos\Controllers\TokenInvoiceLookupController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosClosingController.cs" />
@@ -669,6 +672,7 @@
     <Compile Include="Areas\Pos\Services\PosExcelImportWorkbookMarker.cs" />
     <Compile Include="Areas\Pos\Services\PosKycExcelParser.cs" />
     <Compile Include="Areas\Pos\Services\PosTokenInvoiceLookupExcelParser.cs" />
+    <Compile Include="Areas\Pos\Services\PosKishnyTokenInvoiceImportService.cs" />
     <Compile Include="Areas\Pos\Services\PosExcelImportPreflightService.cs" />
     <Compile Include="Areas\Pos\Services\PosSystemErrorLogger.cs" />
     <Compile Include="Areas\Pos\Services\PosSqlAutoUpdateService.cs" />
@@ -4260,6 +4264,7 @@
     <Content Include="Areas\MainErp\Sql\11_LegacyHrFinance_Dania_Permission_QA_Users.sql" />
     <Content Include="Areas\MainErp\Sql\12_LegacyHrFinance_Dania_PayrollParity_Check.sql" />
     <Content Include="Areas\MainErp\Sql\13_LegacyHrFinance_Dania_ComponentParity_Probe.sql" />
+    <Content Include="Areas\MainErp\Sql\15_SharedHr_WebPermissions.sql" />
     <Content Include="Areas\MainErp\Views\Web.config" />
     <Content Include="Areas\MainErp\Views\Home\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\Accounting\PreviewTest.cshtml" />
@@ -4485,6 +4490,7 @@
     <Content Include="Areas\Pos\Sql\75_POS_ClosingReports_Performance.sql" />
     <Content Include="Areas\Pos\Sql\76_POS_OperationalSalesReports_Performance.sql" />
     <Content Include="Areas\Pos\Sql\77_POS_SalesAndKycSearch_Performance.sql" />
+    <Content Include="Areas\Pos\Sql\106_WebScreenPermissions_Catalog.sql" />
     <Content Include="Areas\Pos\Sql\README_POS_Dashboard_DailySnapshots.md" />
     <Content Include="Areas\Pos\Sql\README_POS_FinancialIntelligenceReports.md" />
     <Content Include="Areas\Pos\Sql\POS_SQL_AutoUpdate_Manifest.json" />

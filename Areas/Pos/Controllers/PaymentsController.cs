@@ -241,13 +241,13 @@ namespace MyERP.Areas.Pos.Controllers
                 return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
             }
 
-            if (!context.IsFullAccess && !context.CanOpenPayments)
+            if (!CanOpenPaymentScreen(context))
             {
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة");
             }
 
             ViewBag.Context = context;
-            ViewBag.Branches = context.IsFullAccess ? _repository.GetBranches() : new[] { new PosBranchDto { BranchId = context.BranchId.GetValueOrDefault(), BranchName = context.BranchName } };
+            ViewBag.Branches = CanUseRequestedBranch(context) ? _repository.GetBranches() : new[] { new PosBranchDto { BranchId = context.BranchId.GetValueOrDefault(), BranchName = context.BranchName } };
             return View();
         }
 
@@ -261,10 +261,18 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" }, JsonRequestBehavior.AllowGet);
             }
 
-            if (!context.IsFullAccess && !context.CanOpenPayments)
+            if (!CanOpenPaymentScreen(context))
             {
                 Response.StatusCode = 403;
                 return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" }, JsonRequestBehavior.AllowGet);
+            }
+
+            var branchMessage = ValidateRequestedBranch(context, branchId, "Lookups");
+            if (!string.IsNullOrWhiteSpace(branchMessage))
+            {
+                LogPaymentAction(context, "Lookups.BranchDenied", "Lookup", null, branchMessage, BuildBranchRequestSummary(branchId), "Warning", "Denied");
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = branchMessage }, JsonRequestBehavior.AllowGet);
             }
 
             var effectiveBranchId = EffectiveBranchId(context, branchId);
@@ -297,16 +305,24 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" }, JsonRequestBehavior.AllowGet);
             }
 
-            if (!context.IsFullAccess && !context.CanOpenPayments)
+            if (!CanOpenPaymentScreen(context))
             {
                 Response.StatusCode = 403;
                 return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" }, JsonRequestBehavior.AllowGet);
             }
 
             term = (term ?? string.Empty).Trim();
-            if (term.Length < 2)
+            if (term.Length > 0 && term.Length < 2)
             {
                 return Json(new { success = true, rows = new PosLookupDto[0] }, JsonRequestBehavior.AllowGet);
+            }
+
+            var branchMessage = ValidateRequestedBranch(context, branchId, "Lookup");
+            if (!string.IsNullOrWhiteSpace(branchMessage))
+            {
+                LogPaymentAction(context, "Lookup.BranchDenied", "Lookup", null, branchMessage, BuildBranchRequestSummary(branchId), "Warning", "Denied");
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = branchMessage }, JsonRequestBehavior.AllowGet);
             }
 
             var effectiveBranchId = EffectiveBranchId(context, branchId);
@@ -345,10 +361,18 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" }, JsonRequestBehavior.AllowGet);
             }
 
-            if (!context.IsFullAccess && !context.CanOpenPayments)
+            if (!CanOpenPaymentScreen(context))
             {
                 Response.StatusCode = 403;
                 return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" }, JsonRequestBehavior.AllowGet);
+            }
+
+            var branchMessage = ValidateRequestedBranch(context, branchId, "AccountBalance");
+            if (!string.IsNullOrWhiteSpace(branchMessage))
+            {
+                LogPaymentAction(context, "AccountBalance.BranchDenied", "Lookup", null, branchMessage, BuildBranchRequestSummary(branchId), "Warning", "Denied");
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = branchMessage }, JsonRequestBehavior.AllowGet);
             }
 
             try
@@ -374,10 +398,18 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" }, JsonRequestBehavior.AllowGet);
             }
 
-            if (!context.IsFullAccess && !context.CanOpenPayments)
+            if (!CanOpenPaymentScreen(context))
             {
                 Response.StatusCode = 403;
                 return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" }, JsonRequestBehavior.AllowGet);
+            }
+
+            var branchMessage = ValidateRequestedBranch(context, branchId, "EmployeeCustody");
+            if (!string.IsNullOrWhiteSpace(branchMessage))
+            {
+                LogPaymentAction(context, "EmployeeCustody.BranchDenied", "Lookup", null, branchMessage, BuildBranchRequestSummary(branchId), "Warning", "Denied");
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = branchMessage }, JsonRequestBehavior.AllowGet);
             }
 
             try
@@ -403,10 +435,18 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" });
             }
 
-            if (!context.IsFullAccess && !context.CanOpenPayments)
+            if (!CanOpenPaymentScreen(context))
             {
                 Response.StatusCode = 403;
                 return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" });
+            }
+
+            var branchMessage = ValidateRequestedBranch(context, request == null ? (int?)null : request.BranchId, "Preview");
+            if (!string.IsNullOrWhiteSpace(branchMessage))
+            {
+                LogPaymentAction(context, "Preview.BranchDenied", "Preview", null, branchMessage, BuildPaymentRequestSummary(request), "Warning", "Denied");
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = branchMessage });
             }
 
             ForceContext(request, context);
@@ -431,14 +471,22 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" });
             }
 
-            if (!context.IsFullAccess && !context.CanOpenPayments)
+            if (!CanOpenPaymentScreen(context))
             {
                 Response.StatusCode = 403;
                 return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" });
             }
 
             request = request ?? new PosPaymentSearchRequestDto();
-            if (!context.IsFullAccess)
+            var branchMessage = ValidateRequestedBranch(context, request.BranchId, "Search");
+            if (!string.IsNullOrWhiteSpace(branchMessage))
+            {
+                LogPaymentAction(context, "Search.BranchDenied", "Search", null, branchMessage, BuildBranchRequestSummary(request.BranchId), "Warning", "Denied");
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = branchMessage });
+            }
+
+            if (!CanUseRequestedBranch(context))
             {
                 request.BranchId = context.BranchId;
             }
@@ -452,7 +500,21 @@ namespace MyERP.Areas.Pos.Controllers
 
             try
             {
-                return Json(new { success = true, rows = _repository.SearchPosPayments(request, context.UserId, context.IsFullAccess) });
+                var result = _repository.SearchPosPayments(request, context.UserId, CanUseRequestedBranch(context));
+                return Json(new
+                {
+                    success = true,
+                    rows = result.Rows,
+                    totals = new
+                    {
+                        result.TotalCount,
+                        result.TotalAmount,
+                        result.PostedCount,
+                        result.PostedAmount,
+                        result.UnpostedCount,
+                        result.UnpostedAmount
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -471,13 +533,13 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" }, JsonRequestBehavior.AllowGet);
             }
 
-            if (!context.IsFullAccess && !context.CanOpenPayments)
+            if (!CanOpenPaymentScreen(context))
             {
                 Response.StatusCode = 403;
                 return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشة التمويل والاستعاضة" }, JsonRequestBehavior.AllowGet);
             }
 
-            var movement = _repository.GetPosPayment(id, context.UserId, context.IsFullAccess, context.BranchId);
+            var movement = _repository.GetPosPayment(id, context.UserId, CanUseRequestedBranch(context), context.BranchId);
             if (movement == null)
             {
                 Response.StatusCode = 404;
@@ -488,8 +550,8 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 success = true,
                 movement = movement,
-                canEdit = context.IsFullAccess || context.CanEditPayments,
-                editMessage = (context.IsFullAccess || context.CanEditPayments) ? "" : "ليس لديك صلاحية تعديل هذه الحركة"
+                canEdit = CanEditPayment(context),
+                editMessage = CanEditPayment(context) ? "" : "ليس لديك صلاحية تعديل هذه الحركة"
             }, JsonRequestBehavior.AllowGet);
         }
 
@@ -503,26 +565,51 @@ namespace MyERP.Areas.Pos.Controllers
                 return Json(new { success = false, message = "يجب تسجيل دخول نقطة البيع أولاً" });
             }
 
-            var isUpdate = request != null && request.NoteId.HasValue && request.NoteId.Value > 0;
-            if (!context.IsFullAccess && (!context.CanExecutePayments || (isUpdate && !context.CanEditPayments)))
+            if (request == null)
             {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = "بيانات الحركة غير مكتملة" });
+            }
+
+            var isUpdate = request.NoteId.HasValue && request.NoteId.Value > 0;
+            if (isUpdate && !CanEditPayment(context))
+            {
+                LogPaymentAction(context, "Save.EditDenied", "Save", request.NoteId, "ليست لديك صلاحية تعديل هذه الحركة", BuildPaymentRequestSummary(request), "Warning", "Denied");
                 Response.StatusCode = 403;
-                return Json(new { success = false, message = isUpdate ? "ليس لديك صلاحية تعديل هذه الحركة" : "ليست لديك صلاحية تنفيذ التمويل والاستعاضة" });
+                return Json(new { success = false, message = "ليست لديك صلاحية تعديل هذه الحركة" });
+            }
+
+            if (!isUpdate && !CanExecutePayment(context))
+            {
+                LogPaymentAction(context, "Save.CreateDenied", "Save", null, "ليست لديك صلاحية تنفيذ التمويل والاستعاضة", BuildPaymentRequestSummary(request), "Warning", "Denied");
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "ليست لديك صلاحية تنفيذ التمويل والاستعاضة" });
+            }
+
+            var branchMessage = ValidateRequestedBranch(context, request.BranchId, "Save");
+            if (!string.IsNullOrWhiteSpace(branchMessage))
+            {
+                LogPaymentAction(context, "Save.BranchDenied", "Save", request.NoteId, branchMessage, BuildPaymentRequestSummary(request), "Warning", "Denied");
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = branchMessage });
             }
 
             ForceContext(request, context);
             try
             {
-                var result = _repository.SavePosPayment(request, context.UserId, context.IsFullAccess || context.CanExecutePayments);
+                var result = _repository.SavePosPayment(request, context.UserId, CanExecutePayment(context) || (isUpdate && CanEditPayment(context)));
+                LogPaymentAction(context, isUpdate ? "Save.EditSucceeded" : "Save.CreateSucceeded", "Save", result == null ? request.NoteId : (int?)result.NoteId, isUpdate ? "تم تعديل حركة التمويل والاستعاضة" : "تم حفظ عملية التمويل والاستعاضة", BuildPaymentRequestSummary(request), "Info", "Success");
                 return Json(new { success = true, message = isUpdate ? "تم تعديل حركة التمويل والاستعاضة" : "تم حفظ عملية التمويل والاستعاضة", result = result });
             }
             catch (SqlException ex)
             {
+                LogPaymentAction(context, "Save.SqlException", "Save", request.NoteId, ex.Message, BuildPaymentRequestSummary(request), "Error", "SqlException", ex);
                 Response.StatusCode = 500;
                 return Json(new { success = false, message = "حدث خطأ من قاعدة البيانات أثناء الحفظ", technicalMessage = ex.Message });
             }
             catch (Exception ex)
             {
+                LogPaymentAction(context, "Save.Exception", "Save", request.NoteId, ex.Message, BuildPaymentRequestSummary(request), "Error", "Exception", ex);
                 Response.StatusCode = 400;
                 return Json(new { success = false, message = ex.Message });
             }
@@ -606,7 +693,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return;
             }
 
-            if (!context.IsFullAccess)
+            if (!CanUseRequestedBranch(context))
             {
                 request.BranchId = context.BranchId.GetValueOrDefault();
             }
@@ -624,7 +711,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return requestedBranchId.GetValueOrDefault();
             }
 
-            if (!context.IsFullAccess)
+            if (!CanUseRequestedBranch(context))
             {
                 return context.BranchId.GetValueOrDefault();
             }
@@ -632,19 +719,92 @@ namespace MyERP.Areas.Pos.Controllers
             return requestedBranchId.GetValueOrDefault(context.BranchId.GetValueOrDefault());
         }
 
+        private static bool CanOpenPaymentScreen(PosUserContext context)
+        {
+            return context != null && (context.IsFullAccess || context.CanOpenPayments);
+        }
+
+        private static bool CanExecutePayment(PosUserContext context)
+        {
+            return context != null && (context.IsFullAccess || context.CanExecutePayments);
+        }
+
+        private static bool CanEditPayment(PosUserContext context)
+        {
+            return context != null && (context.IsFullAccess || context.CanEditPayments);
+        }
+
+        private static bool CanUseRequestedBranch(PosUserContext context)
+        {
+            return context != null && (context.IsFullAccess || context.CanChangeDefaults || context.UserType.GetValueOrDefault(-1) == 0);
+        }
+
+        private static string ValidateRequestedBranch(PosUserContext context, int? requestedBranchId, string actionName)
+        {
+            if (context == null || CanUseRequestedBranch(context) || !requestedBranchId.HasValue || requestedBranchId.Value <= 0)
+            {
+                return string.Empty;
+            }
+
+            var contextBranchId = context.BranchId.GetValueOrDefault();
+            if (requestedBranchId.Value == contextBranchId)
+            {
+                return string.Empty;
+            }
+
+            return "لا يمكنك تنفيذ هذه العملية على فرع غير الفرع المسموح لك به.";
+        }
+
+        private static string BuildBranchRequestSummary(int? branchId)
+        {
+            return "RequestedBranchId=" + (branchId.HasValue ? branchId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "");
+        }
+
+        private static string BuildPaymentRequestSummary(PosPaymentRequestDto request)
+        {
+            if (request == null)
+            {
+                return "Request=null";
+            }
+
+            return string.Join("; ", new[]
+            {
+                "NoteId=" + (request.NoteId.HasValue ? request.NoteId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : ""),
+                "ClientRequestId=" + (request.ClientRequestId ?? ""),
+                "BranchId=" + request.BranchId.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                "CashingType=" + request.CashingType.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                "PaymentMethod=" + request.PaymentMethod.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                "Amount=" + request.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                "NameAccountCode=" + (request.NameAccountCode ?? ""),
+                "BoxId=" + (request.BoxId.HasValue ? request.BoxId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : ""),
+                "BankId=" + (request.BankId.HasValue ? request.BankId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : "")
+            });
+        }
+
+        private void LogPaymentAction(PosUserContext context, string actionName, string operationType, int? noteId, string message, string requestSummary, string severity, string status, Exception exception = null)
+        {
+            PosSystemErrorLogger.Log(_repository, Request, context, "FrmPayments", actionName, operationType, noteId, message, exception, requestSummary, severity, status);
+        }
+
         private static string ValidatePaymentSearch(PosPaymentSearchRequestDto request)
         {
             request = request ?? new PosPaymentSearchRequestDto();
             var term = (request.SearchText ?? string.Empty).Trim();
             var hasDateRange = request.FromDate.HasValue && request.ToDate.HasValue;
+            var hasSpecificFilter = request.BranchId.HasValue
+                || request.EmpId.HasValue
+                || !string.IsNullOrWhiteSpace(request.CustodyHolderCode)
+                || !string.IsNullOrWhiteSpace(request.CustodyHolderText)
+                || !string.IsNullOrWhiteSpace(request.PaymentSourceText)
+                || request.PostedStatus.HasValue;
             if (term.Length > 0 && term.Length < 3 && !term.All(char.IsDigit))
             {
                 return "اكتب 3 أحرف على الأقل للبحث العام";
             }
 
-            if (!hasDateRange && term.Length < 3)
+            if (!hasDateRange && term.Length < 3 && !hasSpecificFilter)
             {
-                return "حدد فترة البحث أو اكتب بحثاً محدداً من 3 أحرف على الأقل";
+                return "حدد فترة البحث أو اختر فلتر محدد أو اكتب بحثاً من 3 أحرف على الأقل";
             }
 
             return string.Empty;

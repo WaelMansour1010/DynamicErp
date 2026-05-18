@@ -1,252 +1,319 @@
 @{
     var hrArea = (ViewBag.SharedHrArea as string) ?? (ViewContext.RouteData.DataTokens["area"] as string) ?? string.Empty;
     var hrReadOnly = ViewBag.SharedHrReadOnly is bool && (bool)ViewBag.SharedHrReadOnly;
+    var salaryWriteEnabled = ViewBag.SharedHrSalaryWriteEnabled is bool && (bool)ViewBag.SharedHrSalaryWriteEnabled;
     var hrAdvancedPayroll = !hrReadOnly && string.Equals(hrArea, "MainErp", StringComparison.OrdinalIgnoreCase);
     Func<string, string> hrUrl = action => Url.Action(action, "EmployeePayroll", new { area = hrArea });
 }
-<main class="ep-page ep-demo-workspace" data-screen="salary"
+<main class="ep-page ep-payroll-command-center" data-screen="salary"
       data-read-only="@(hrReadOnly ? "true" : "false")"
       data-lookups-url="@hrUrl("Lookups")"
       data-preview-url="@hrUrl("PreviewSalaryRun")"
-      data-save-url="@(hrReadOnly ? string.Empty : hrUrl("SaveSalaryRun"))"
+      data-save-url="@(salaryWriteEnabled ? hrUrl("SaveSalaryRun") : string.Empty)"
       data-parity-url="@(hrAdvancedPayroll ? hrUrl("PayrollCompatibilityParity") : string.Empty)"
       data-explain-url="@(hrAdvancedPayroll ? hrUrl("PayrollCompatibilityExplain") : string.Empty)"
-      data-replay-url="@(hrAdvancedPayroll ? hrUrl("PayrollAccountingReplay") : string.Empty)"
+      data-replay-url="@((hrAdvancedPayroll || salaryWriteEnabled) ? hrUrl("PayrollAccountingReplay") : string.Empty)"
+      data-salary-sheet-url="@(!hrReadOnly ? hrUrl("PayrollSalarySheet") : string.Empty)"
+      data-posting-dry-run-url="@(!hrReadOnly ? hrUrl("PayrollPostingDryRun") : string.Empty)"
+      data-posting-url="@(salaryWriteEnabled ? hrUrl("PostPayrollJournal") : string.Empty)"
       data-test-posting-dry-run-url="@(hrAdvancedPayroll ? hrUrl("PayrollTestPostingDryRun") : string.Empty)"
       data-test-posting-generate-url="@(hrAdvancedPayroll ? hrUrl("GeneratePayrollTestPosting") : string.Empty)"
       data-test-posting-cleanup-url="@(hrAdvancedPayroll ? hrUrl("CleanupPayrollTestPosting") : string.Empty)">
-    <header class="ep-exec-hero">
-        <div>
-            <span class="ep-eyebrow">مسير الرواتب</span>
-            <h1>معاينة مسير الرواتب الآمنة</h1>
-            <p>معاينة قابلة للتفسير توضح الرواتب، المكونات، التأمين، السلف، وحالة التوافق قبل أي أثر محاسبي فعلي.</p>
+
+    <header class="ep-payroll-hero">
+        <div class="ep-payroll-title">
+            <span class="ep-eyebrow">Payroll Command Center</span>
+            <h1>مسير الرواتب</h1>
+            <p>مساحة عمل واحدة لمراجعة الموظفين، المتغيرات، التأمين، صافي الرواتب، والقيد المحاسبي قبل الاعتماد والترحيل.</p>
         </div>
-        <div class="ep-header-actions">
-            <a class="ep-link" href="@hrUrl("Employees")"><i class="fas fa-users"></i> الموظفون</a>
-            <a class="ep-link" href="@hrUrl("MedicalInsuranceReports")"><i class="fas fa-chart-bar"></i> تقارير التأمين</a>
-            @if (hrAdvancedPayroll)
-            {
-                <a class="ep-link" href="@Url.Action("Components", "LegacyHrFinance", new { area = "MainErp" })"><i class="fas fa-layer-group"></i> مكونات الرواتب</a>
-            }
+        <div class="ep-payroll-state-card">
+            <span>حالة المسير</span>
+            <strong id="epRunPostingSummary">غير مرحل</strong>
+            <small id="epRunPostingSummaryHint">سيتم إنشاء القيد عند اعتماد المسير</small>
         </div>
     </header>
 
-    <section class="ep-exec-dashboard" aria-label="مؤشرات المسير">
-        <article><span>موظفو المعاينة</span><strong id="epRunRowsCount">0</strong><small>حسب النطاق الحالي</small></article>
-        <article class="success"><span>لقطات محفوظة</span><strong id="epLegacyRowsCount">0</strong><small>صفوف تاريخية موثقة</small></article>
-        <article class="warning"><span>صفوف محسوبة</span><strong id="epReconstructedRowsCount">0</strong><small>محظورة من الترحيل</small></article>
-        <article><span>تقدم المطابقة</span><strong id="epParityProgress">--</strong><small>فحص تفصيلي للمكونات</small></article>
-        <article class="safe"><span>السلامة المالية</span><strong>محمي</strong><small>لا يتم إنشاء قيود من المعاينة</small></article>
-    </section>
-
-    <section class="ep-safety-banner">
-        <i class="fas fa-shield-alt"></i>
-        <div>
-            <strong>ترحيل الرواتب محمي حتى اكتمال مطابقة الحسابات.</strong>
-            <span>يمكن للإدارة رؤية الحسابات والتفسيرات بوضوح، لكن Notes و DOUBLE_ENTREY_VOUCHERS و SendTopost لا يتم إنشاؤها من الصفوف المعاد بناؤها.</span>
+    <section class="ep-payroll-filter-card" aria-label="فلاتر المسير">
+        <div class="ep-filter-grid">
+            <label>الشهر
+                <select id="epRunMonth">
+                    @for (var m = 1; m <= 12; m++)
+                    {
+                        <option value="@m" @(m == DateTime.Today.Month ? "selected" : "")>@m</option>
+                    }
+                </select>
+            </label>
+            <label>السنة
+                <input id="epRunYear" type="number" min="2000" max="2100" value="@DateTime.Today.Year" />
+            </label>
+            <label>الفرع
+                <select id="epRunBranch"><option value="">كل الفروع</option></select>
+            </label>
+            <label>الإدارة
+                <select id="epRunDepartment"><option value="">كل الإدارات</option></select>
+            </label>
+            <label>حالة الترحيل
+                <select id="epPostingStatus">
+                    <option value="">الكل</option>
+                    <option value="Unposted">غير مرحل</option>
+                    <option value="Posted">مرحل</option>
+                </select>
+            </label>
+            <label class="ep-filter-search">بحث موظف
+                <input id="epRunEmployee" type="number" min="1" placeholder="رقم الموظف اختياري" />
+            </label>
+        </div>
+        <div class="ep-filter-actions">
+            <button type="button" id="epPrevMonth" title="الشهر السابق"><i class="fas fa-chevron-right"></i></button>
+            <button type="button" id="epCurrentMonth" title="الشهر الحالي"><i class="fas fa-calendar-day"></i></button>
+            <button type="button" id="epNextMonth" title="الشهر التالي"><i class="fas fa-chevron-left"></i></button>
+            <button type="button" class="ep-primary" id="epPreviewRun" data-busy-text="جار حساب المعاينة..."><i class="fas fa-calculator"></i> معاينة المسير</button>
         </div>
     </section>
 
-    <section class="ep-wizard ep-demo-wizard">
-        <div class="ep-step active">1. الفترة</div>
-        <div class="ep-step active">2. النطاق</div>
-        <div class="ep-step active">3. معاينة</div>
-        <div class="ep-step protected">4. تفسير</div>
-        <div class="ep-step locked">5. ترحيل محمي</div>
+    <section class="ep-payroll-kpis" aria-label="ملخص المسير">
+        <article><i class="fas fa-users"></i><span>عدد الموظفين</span><strong id="epRunRowsCount">0</strong><small>بعد تطبيق قواعد الاستحقاق</small></article>
+        <article><i class="fas fa-wallet"></i><span>إجمالي الأساسي</span><strong id="epTopTotalBasic">0.00</strong><small>رواتب أساسية</small></article>
+        <article><i class="fas fa-plus-circle"></i><span>الإضافات والبدلات</span><strong id="epTopTotalAdditions">0.00</strong><small>بدلات ومتغيرات موجبة</small></article>
+        <article><i class="fas fa-minus-circle"></i><span>الخصومات</span><strong id="epTopTotalDeductions">0.00</strong><small>خصومات وسلف وتأمين</small></article>
+        <article class="net"><i class="fas fa-hand-holding-usd"></i><span>صافي الرواتب</span><strong id="epTopTotalNet">0.00</strong><small>المبلغ المستحق للموظفين</small></article>
+        <article class="issues"><i class="fas fa-exclamation-triangle"></i><span>أخطاء المراجعة</span><strong id="epIssueCount">0</strong><small id="epIssueHint">لا توجد ملاحظات حتى الآن</small></article>
     </section>
 
-    <section class="ep-toolbar ep-demo-toolbar">
-        <label>السنة<input id="epRunYear" type="number" min="2000" max="2100" value="@DateTime.Today.Year" /></label>
-        <label>الشهر<input id="epRunMonth" type="number" min="1" max="12" value="@DateTime.Today.Month" /></label>
-        <label>الفرع<select id="epRunBranch"><option value="">كل الفروع</option></select></label>
-        <label>الإدارة<select id="epRunDepartment"><option value="">كل الإدارات</option></select></label>
-        <label>رقم موظف<input id="epRunEmployee" type="number" min="1" placeholder="اختياري" /></label>
-        <button type="button" class="ep-primary" id="epPreviewRun"><i class="fas fa-calculator"></i> حساب المعاينة</button>
-        <button type="button" id="epPrevMonth"><i class="fas fa-chevron-right"></i> الشهر السابق</button>
-        <button type="button" id="epCurrentMonth"><i class="fas fa-calendar-day"></i> الشهر الحالي</button>
-        <button type="button" id="epNextMonth">الشهر التالي <i class="fas fa-chevron-left"></i></button>
-        <button type="button" id="epLoadParity"><i class="fas fa-microscope"></i> فحص التوافق</button>
-        <button type="button" id="epLoadReplay"><i class="fas fa-project-diagram"></i> محاكاة القيود</button>
-        <button type="button" id="epSaveRun" class="ep-protected-action"><i class="fas fa-lock"></i> حفظ محمي</button>
+    <section class="ep-payroll-process">
+        <button type="button" class="active" data-run-tab="employees"><span>1</span><strong>الموظفون</strong><small>من داخل النطاق</small></button>
+        <button type="button" data-run-tab="variables"><span>2</span><strong>المفردات والمتغيرات</strong><small>بدلات، خصومات، سلف، تأمين</small></button>
+        <button type="button" data-run-tab="journal"><span>3</span><strong>المراجعة المحاسبية</strong><small>قيد متوازن ومفهوم</small></button>
+        <button type="button" data-run-tab="issues"><span>4</span><strong>الأخطاء والتحذيرات</strong><small>مركز معالجة الملاحظات</small></button>
+        <button type="button" data-run-tab="approval"><span>5</span><strong>الاعتماد والنشر</strong><small>حفظ، طباعة، ترحيل</small></button>
+        <button type="button" data-run-tab="history"><span>6</span><strong>السجل والحركات</strong><small>تقرير المسير والتتبع</small></button>
     </section>
 
-    <section class="ep-operator-strip" aria-label="Operational shortcuts">
-        <article><strong>Ctrl + Enter</strong><span>حساب المعاينة</span></article>
-        <article><strong>Alt + P</strong><span>فحص التوافق</span></article>
-        <article><strong>Alt + R</strong><span>محاكاة محاسبية للقراءة فقط</span></article>
-        <article class="is-protected"><strong>محمي</strong><span>الترحيل المالي مغلق لحين اعتماد المطابقة</span></article>
-    </section>
-
-    <section class="ep-kpis ep-demo-kpis">
-        <div><span>إجمالي الأساسي</span><strong id="epTotalBasic">0.00</strong></div>
-        <div><span>الإضافات</span><strong id="epTotalAdditions">0.00</strong></div>
-        <div><span>الخصومات</span><strong id="epTotalDeductions">0.00</strong></div>
-        <div><span>تأمين الموظف</span><strong id="epTotalMedical">0.00</strong></div>
-        <div><span>تكلفة الشركة</span><strong id="epTotalCompanyMedical">0.00</strong></div>
-        <div><span>صافي الرواتب</span><strong id="epTotalNet">0.00</strong></div>
-    </section>
-
-    <section class="ep-payroll-grid">
-        <div class="ep-table-card">
-            <div class="ep-card-title">
-                <div>
-                    <h2>تفاصيل الموظفين</h2>
-                    <p>اضغط على "شرح" لفتح مصدر المكونات وقواعد التأمين والـ proration.</p>
-                </div>
-                <span class="ep-status-badge pending-approval" id="epPreviewStatus">بانتظار المعاينة</span>
+    <section class="ep-payroll-panel active" data-run-panel="employees">
+        <div class="ep-panel-head">
+            <div>
+                <h2>الموظفون داخل المسير</h2>
+                <p>عرض مضغوط للموظفين الذين دخلوا حساب المسير فعلياً بعد تطبيق الفرع والإدارة وحالة العمل وفترة المسير.</p>
             </div>
+            <span class="ep-status-badge pending-approval" id="epPreviewStatus">بانتظار المعاينة</span>
+        </div>
+        <div class="ep-panel-tools">
+            <div class="ep-search-box"><i class="fas fa-search"></i><input id="epSalarySearch" type="search" placeholder="ابحث باسم الموظف، الكود، الفرع، أو الإدارة" /></div>
+            <span><strong id="epPostedRowsCount">0</strong> مرحل</span>
+            <span><strong id="epUnpostedRowsCount">0</strong> غير مرحل</span>
+        </div>
+        <div class="ep-table-shell ep-payroll-table-shell">
             <table class="ep-table ep-payroll-table">
                 <thead>
                     <tr>
-                        <th>الموظف</th><th>الفرع</th><th>الحالة</th><th>الأساسي</th><th>الإضافات</th><th>السلف</th><th>خصومات</th><th>التأمين</th><th>الصافي</th><th></th>
+                        <th>كود الموظف</th>
+                        <th>اسم الموظف</th>
+                        <th>الفرع</th>
+                        <th>القسم</th>
+                        <th>الأساسي</th>
+                        <th>البدلات</th>
+                        <th>الخصومات</th>
+                        <th>التأمين</th>
+                        <th>السلف</th>
+                        <th>الصافي</th>
+                        <th>الحالة</th>
+                        <th>ملاحظات التحقق</th>
                     </tr>
                 </thead>
                 <tbody id="epSalaryRows">
-                    <tr><td colspan="10" class="ep-empty-row">اختر الفترة واضغط حساب المعاينة.</td></tr>
+                    <tr><td colspan="12" class="ep-empty-row">اختر الفترة ثم اضغط معاينة المسير.</td></tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="4">الإجمالي</th>
+                        <th id="epFooterTotalBasic">0.00</th>
+                        <th id="epFooterTotalAdditions">0.00</th>
+                        <th id="epFooterTotalDeductions">0.00</th>
+                        <th id="epFooterTotalMedical">0.00</th>
+                        <th id="epFooterTotalAdvance">0.00</th>
+                        <th id="epFooterTotalNet">0.00</th>
+                        <th colspan="2" id="epFooterTotalRows">0 موظف</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </section>
+
+    <section class="ep-payroll-panel" data-run-panel="variables" hidden>
+        <div class="ep-panel-head">
+            <div>
+                <h2>المفردات والمتغيرات</h2>
+                <p>تجميع سريع لتأثير البدلات، الخصومات، التأمين الطبي، والسلف على المسير الحالي.</p>
+            </div>
+        </div>
+        <div class="ep-variable-grid">
+            <article><span>إجمالي الأساسي</span><strong id="epTotalBasic">0.00</strong></article>
+            <article><span>إجمالي البدلات</span><strong id="epTotalAdditions">0.00</strong></article>
+            <article><span>إجمالي الخصومات</span><strong id="epTotalDeductions">0.00</strong></article>
+            <article><span>تأمين الموظفين</span><strong id="epTotalMedical">0.00</strong></article>
+            <article><span>حصة الشركة في التأمين</span><strong id="epTotalCompanyMedical">0.00</strong></article>
+            <article class="net"><span>صافي الرواتب</span><strong id="epTotalNet">0.00</strong></article>
+        </div>
+        <div class="ep-run-detail-panel" id="epRunDetailPanel" hidden>
+            <div class="ep-panel-head compact">
+                <div>
+                    <h3 id="epRunDetailTitle">تفاصيل الموظف</h3>
+                    <p id="epRunDetailSubtitle">اختر موظفاً من تبويب الموظفين لمراجعة تأثير المتغيرات.</p>
+                </div>
+                <span class="ep-status-badge pending-approval" id="epRunDetailStatus">غير محدد</span>
+            </div>
+            <div class="ep-run-detail-grid">
+                <article><span>الأساسي</span><strong id="epDetailBasic">0.00</strong></article>
+                <article><span>البدلات</span><strong id="epDetailAdditions">0.00</strong></article>
+                <article><span>السلف</span><strong id="epDetailAdvance">0.00</strong></article>
+                <article><span>الخصومات</span><strong id="epDetailDiscounts">0.00</strong></article>
+                <article><span>التأمين</span><strong id="epDetailInsurance">0.00</strong></article>
+                <article class="net"><span>الصافي</span><strong id="epDetailNet">0.00</strong></article>
+            </div>
+        </div>
+    </section>
+
+    <section class="ep-payroll-panel" data-run-panel="journal" hidden>
+        <div class="ep-panel-head">
+            <div>
+                <h2>معاينة القيد قبل الترحيل</h2>
+                <p>القيد يعرض رقم الحساب واسم الحساب والبيان والمدين والدائن بصورة قابلة للمراجعة المالية.</p>
+            </div>
+            <span class="ep-status-badge pending-approval" id="epJournalBalanceStatus">لم يتم الترحيل بعد</span>
+        </div>
+        <div class="ep-journal-summary">
+            <article><span>إجمالي المدين</span><strong id="epJournalDebitTotal">0.00</strong></article>
+            <article><span>إجمالي الدائن</span><strong id="epJournalCreditTotal">0.00</strong></article>
+            <article><span>الفرق</span><strong id="epJournalBalanceDiff">0.00</strong></article>
+        </div>
+        <div class="ep-table-shell">
+            <table class="ep-table ep-journal-table">
+                <thead>
+                    <tr>
+                        <th>Account_Serial</th>
+                        <th>Account_Name</th>
+                        <th>البيان</th>
+                        <th>مدين</th>
+                        <th>دائن</th>
+                    </tr>
+                </thead>
+                <tbody id="epJournalRows">
+                    <tr><td colspan="5" class="ep-empty-row">ستظهر معاينة القيد بعد حساب المسير.</td></tr>
                 </tbody>
             </table>
         </div>
-
-        <aside class="ep-insight-panel">
-            <h2>ملخص تنفيذي</h2>
-            <div class="ep-insight-list">
-                <div><strong>لقطات محفوظة</strong><span>صف تاريخي محفوظ يمكن قراءته بثقة أعلى.</span></div>
-                <div><strong>صفوف محسوبة</strong><span>صف تم إعادة بنائه من مصادر التشغيل ولا يسمح له بالترحيل حتى تثبت المطابقة.</span></div>
-                <div><strong>محاكاة</strong><span>محاكاة قيود في الذاكرة فقط لمقارنة الحسابات والفروع والإدارات.</span></div>
-            </div>
-        </aside>
     </section>
 
-    <section class="ep-table-card">
-        <div class="ep-card-title">
+    <section class="ep-payroll-panel" data-run-panel="issues" hidden>
+        <div class="ep-panel-head">
             <div>
-                <h2>معاينة القيد الناتج</h2>
-                <p>عرض توضيحي فقط. لا يتم إنشاء Notes أو DOUBLE_ENTREY_VOUCHERS من هذه المعاينة.</p>
+                <h2>Payroll Issues Center</h2>
+                <p>مكان واحد لمراجعة الحسابات الناقصة، القيود غير المتوازنة، الموظفين المستبعدين، أو أي إعداد غير مكتمل.</p>
             </div>
-            <span class="ep-status-badge active">قراءة فقط</span>
+            <span class="ep-status-badge active" id="epIssuesStatus">لا توجد ملاحظات</span>
         </div>
-        <table class="ep-table">
-            <thead><tr><th>الحساب</th><th>مدين</th><th>دائن</th><th>البيان</th><th>الموظف</th></tr></thead>
-            <tbody id="epJournalRows">
-                <tr><td colspan="5" class="ep-empty-row">ستظهر معاينة القيد بعد حساب المسير.</td></tr>
-            </tbody>
-        </table>
-    </section>
-
-    <section class="ep-table-card" id="epParityPanel" hidden>
-        <div class="ep-card-title">
-            <div>
-                <h2>فحص المطابقة</h2>
-                <p>تصنيف اختلافات المكونات والتأمين والتوزيع المحاسبي.</p>
-            </div>
-            <span class="ep-status-badge pending-approval">تشخيص</span>
-        </div>
-        <div class="ep-diagnostic-grid">
-            <article><span>اختلافات المكونات</span><strong id="epParityComponentRows">0</strong></article>
-            <article><span>إجمالي الاختلافات</span><strong id="epParityTotalRows">0</strong></article>
-            <article><span>فرق الصافي</span><strong id="epParityNetDiff">0.00</strong></article>
-        </div>
-        <div id="epParityCategories" class="ep-category-list"></div>
-    </section>
-
-    <section class="ep-table-card" id="epReplayPanel" hidden>
-        <div class="ep-card-title">
-            <div>
-                <h2>محاكاة محاسبية</h2>
-                <p>محاكاة قراءة فقط لقرارات الترحيل ومقارنتها بالقيود التاريخية.</p>
-            </div>
-            <span class="ep-status-badge suspended">الترحيل مغلق</span>
-        </div>
-        <div class="ep-diagnostic-grid">
-            <article><span>مدين تاريخي</span><strong id="epReplayLegacyDebit">0.00</strong></article>
-            <article><span>مدين المحاكاة</span><strong id="epReplayDebit">0.00</strong></article>
-            <article><span>فرق المدين</span><strong id="epReplayDebitDiff">0.00</strong></article>
-            <article><span>دائن تاريخي</span><strong id="epReplayLegacyCredit">0.00</strong></article>
-            <article><span>دائن المحاكاة</span><strong id="epReplayCredit">0.00</strong></article>
-            <article><span>فرق الدائن</span><strong id="epReplayCreditDiff">0.00</strong></article>
-        </div>
-        <div id="epReplayComparisons" class="ep-category-list"></div>
-    </section>
-
-    <section class="ep-table-card">
-        <div class="ep-card-title">
-            <div>
-                <h2>&#1605;&#1585;&#1575;&#1580;&#1593;&#1577; &#1575;&#1604;&#1605;&#1581;&#1575;&#1587;&#1576;</h2>
-                <p>Dry-run shows the expected debit/credit effect without writing. Protected generate writes marked test-only Notes and DOUBLE_ENTREY_VOUCHERS only on an allowlisted database, and cleanup removes the same batch marker.</p>
-            </div>
-            <span class="ep-status-badge protected">Finance review</span>
-        </div>
-        <div class="ep-diagnostic-grid">
-            <article><span>Step 1</span><strong>Dry-run</strong><small>No rows are created.</small></article>
-            <article><span>Step 2</span><strong>Review totals</strong><small>Accounts, branches, projects, and departments are grouped for finance.</small></article>
-            <article><span>Step 3</span><strong>Protected test write</strong><small>Requires password and confirmation phrase.</small></article>
-            <article><span>Step 4</span><strong>Cleanup by batch</strong><small>Deletes only rows carrying the generated test marker.</small></article>
+        <div id="epPayrollIssues" class="ep-payroll-issues">
+            <div class="ep-empty-row">لا توجد ملاحظات حتى الآن.</div>
         </div>
     </section>
 
-    <section class="ep-table-card ep-test-posting-panel" id="epTestPostingPanel">
-        <div class="ep-card-title">
+    <section class="ep-payroll-panel" data-run-panel="approval" hidden>
+        <div class="ep-panel-head">
             <div>
-                <h2>ترحيل اختباري محمي</h2>
-                <p>ينشئ الترحيل الاختباري قيودًا محاسبية موسومة داخل قاعدة الاختبار فقط، ولا يفعّل أي ترحيل إنتاجي.</p>
-            </div>
-            <span class="ep-status-badge protected"><i class="fas fa-vial"></i> وضع اختبار فقط</span>
-        </div>
-        <div class="ep-safety-banner compact">
-            <i class="fas fa-shield-alt"></i>
-            <div>
-                <strong>إنشاء ترحيل اختباري</strong>
-                <span>ابدأ بالمعاينة، راجع إجمالي المدين والدائن والحسابات المتأثرة، ثم أنشئ القيود الموسومة بعد كلمة المرور وعبارة التأكيد.</span>
+                <h2>الاعتماد والنشر</h2>
+                <p>راجع المعاينة أولاً، ثم احفظ المسير أو افحص القيد أو رحله حسب صلاحياتك.</p>
             </div>
         </div>
-        <div class="ep-test-posting-grid">
+        <div class="ep-approval-grid">
             <article>
-                <span>قاعدة البيانات</span>
-                <strong id="epTestPostingDatabase">--</strong>
-                <small id="epTestPostingAllowed">المعاينة غير محملة</small>
+                <i class="fas fa-calculator"></i>
+                <h3>1. معاينة</h3>
+                <p>تحميل الموظفين وحساب الإجماليات قبل أي حفظ أو ترحيل.</p>
             </article>
             <article>
-                <span>الإشعارات</span>
-                <strong id="epTestPostingNotes">0</strong>
-                <small>تنشأ لكل فرع في وضع الاختبار</small>
+                <i class="fas fa-balance-scale"></i>
+                <h3>2. مراجعة محاسبية</h3>
+                <p>فحص الحسابات والتأكد من توازن القيد قبل الاعتماد.</p>
             </article>
             <article>
-                <span>سطور القيود</span>
-                <strong id="epTestPostingLines">0</strong>
-                <small>من محرك إعادة البناء</small>
+                <i class="fas fa-file-signature"></i>
+                <h3>3. اعتماد وترحيل</h3>
+                <p>لا يسمح بالترحيل عند وجود حساب ناقص أو فرق في المدين والدائن.</p>
             </article>
-            <article>
-                <span>الاتزان</span>
-                <strong id="epTestPostingBalance">0.00</strong>
-                <small>المدين ناقص الدائن</small>
-            </article>
-        </div>
-        <div class="ep-test-posting-form">
-            <label>كلمة المرور<input id="epTestPostingPassword" type="password" autocomplete="off" placeholder="كلمة مرور الترحيل الاختباري" /></label>
-            <label>عبارة التأكيد<input id="epTestPostingPhrase" type="text" autocomplete="off" placeholder="اكتب عبارة التأكيد" /></label>
-            <label>تنظيف دفعة<input id="epTestPostingBatchId" type="text" autocomplete="off" placeholder="رقم دفعة الاختبار" /></label>
-            <button type="button" id="epTestPostingDryRun"><i class="fas fa-search-dollar"></i> معاينة الترحيل الاختباري</button>
-            <button type="button" class="ep-primary" id="epGenerateTestPosting"><i class="fas fa-file-invoice-dollar"></i> إنشاء الترحيل الاختباري</button>
-            <button type="button" class="ep-danger-soft" id="epCleanupTestPosting"><i class="fas fa-broom"></i> تنظيف الدفعة</button>
-        </div>
-        <div id="epTestPostingWarnings" class="ep-test-posting-warnings"></div>
-        <div class="ep-test-posting-lists">
-            <div><h3>الحسابات المتأثرة</h3><div id="epTestPostingAccounts"></div></div>
-            <div><h3>الفروع / المشاريع / الإدارات</h3><div id="epTestPostingDimensions"></div></div>
         </div>
     </section>
+
+    <section class="ep-payroll-panel" data-run-panel="history" hidden>
+        <div class="ep-panel-head">
+            <div>
+                <h2 id="epSheetTitle">مسير الرواتب</h2>
+                <p id="epSheetPeriod">اختر الفترة ثم اضغط معاينة أو طباعة.</p>
+            </div>
+            <span class="ep-status-badge active" id="epSheetJournalStatus">جاهز للطباعة</span>
+        </div>
+        <div class="ep-sheet-meta">
+            <span id="epSheetPeriodRange">الفترة: --</span>
+            <span id="epSheetGeneratedAt">وقت الإنشاء: --</span>
+            <span id="epSheetPostingFilter">حالة الترحيل: الكل</span>
+        </div>
+        <div class="ep-table-shell">
+            <table class="ep-table ep-sheet-table">
+                <thead><tr><th>الموظف</th><th>الفرع / الإدارة</th><th>الأساسي</th><th>الإضافات</th><th>السلف</th><th>الخصومات</th><th>التأمين</th><th>الصافي</th><th>حالة الترحيل</th></tr></thead>
+                <tbody id="epSalarySheetRows"><tr><td colspan="9" class="ep-empty-row">لم يتم توليد التقرير بعد.</td></tr></tbody>
+                <tfoot><tr><th colspan="2">الإجمالي</th><th id="epSheetTotalBasic">0.00</th><th id="epSheetTotalAllowances">0.00</th><th id="epSheetTotalAdvances">0.00</th><th id="epSheetTotalDeductions">0.00</th><th id="epSheetTotalInsurance">0.00</th><th id="epSheetTotalNet">0.00</th><th id="epSheetTotalRows">0</th></tr></tfoot>
+            </table>
+        </div>
+        <div class="ep-sheet-journal-totals">
+            <span>إجمالي المدين: <strong id="epSheetJournalDebit">0.00</strong></span>
+            <span>إجمالي الدائن: <strong id="epSheetJournalCredit">0.00</strong></span>
+            <span>الفرق: <strong id="epSheetJournalBalance">0.00</strong></span>
+        </div>
+    </section>
+
+    <section class="ep-table-card" id="epParityPanel" hidden></section>
+    <section class="ep-table-card" id="epReplayPanel" hidden></section>
+    <section class="ep-table-card ep-test-posting-panel" id="epTestPostingPanel" hidden>
+        <div id="epTestPostingWarnings"></div>
+        <div id="epTestPostingAccounts"></div>
+        <div id="epTestPostingDimensions"></div>
+        <span id="epTestPostingDatabase"></span>
+        <span id="epTestPostingAllowed"></span>
+        <span id="epTestPostingNotes"></span>
+        <span id="epTestPostingLines"></span>
+        <span id="epTestPostingBalance"></span>
+        <input id="epTestPostingPassword" type="password" />
+        <input id="epTestPostingPhrase" type="text" />
+        <input id="epTestPostingBatchId" type="text" />
+        <button type="button" id="epTestPostingDryRun"></button>
+        <button type="button" id="epGenerateTestPosting"></button>
+        <button type="button" id="epCleanupTestPosting"></button>
+    </section>
+
+    <div class="ep-sticky-payroll-actions" aria-label="أوامر المسير">
+        <button type="button" class="ep-primary" id="epPreviewRunSticky" data-busy-text="جار حساب المعاينة..."><i class="fas fa-calculator"></i> معاينة</button>
+        @if (salaryWriteEnabled)
+        {
+            <button type="button" id="epSaveRun" data-busy-text="جار إنشاء المسير..."><i class="fas fa-save"></i> إنشاء المسير</button>
+            <button type="button" id="epPostingDryRun" data-busy-text="جار فحص القيد..."><i class="fas fa-balance-scale"></i> مراجعة القيد</button>
+            <button type="button" class="ep-success" id="epPostPayroll" data-busy-text="جار الترحيل..."><i class="fas fa-file-invoice-dollar"></i> ترحيل القيد</button>
+        }
+        <button type="button" id="epPrintRun"><i class="fas fa-print"></i> طباعة</button>
+        <button type="button" id="epExportRun"><i class="fas fa-file-export"></i> تصدير</button>
+        <button type="button" id="epLoadParity" hidden></button>
+        <button type="button" id="epLoadReplay" hidden></button>
+    </div>
 
     <aside class="ep-explain-drawer" id="epExplainDrawer" hidden>
         <div class="ep-explain-head">
-            <div>
-                <span class="ep-eyebrow">Explainability</span>
-                <h2 id="epExplainTitle">شرح المكون</h2>
-            </div>
+            <div><span class="ep-eyebrow">شرح</span><h2 id="epExplainTitle">شرح البند</h2></div>
             <button type="button" id="epCloseExplain"><i class="fas fa-times"></i></button>
         </div>
         <div id="epExplainBody" class="ep-explain-body"></div>
     </aside>
     <div class="ep-drawer-backdrop" id="epExplainBackdrop" hidden></div>
 
-    <div class="ep-message" id="epMessage"></div>
+    <div class="ep-message" id="epMessage" role="status" aria-live="polite"></div>
+    <div class="ep-loading-shade" id="epLoadingShade" hidden>
+        <div><i class="fas fa-spinner fa-spin"></i><span id="epLoadingText">جار التنفيذ...</span></div>
+    </div>
 </main>

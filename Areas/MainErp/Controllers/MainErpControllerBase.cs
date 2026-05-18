@@ -20,7 +20,7 @@ namespace MyERP.Areas.MainErp.Controllers
             MainErpCultureManager.ApplyCurrentCulture();
 
             var isPosNavigation = MainErpPosSessionBridge.IsExplicitPosNavigation(filterContext.HttpContext.Request);
-            if (MainErpUserContext == null || isPosNavigation)
+            if (isPosNavigation)
             {
                 var bridgeResult = MainErpPosSessionBridge.TryRestore(filterContext.HttpContext.Request, filterContext.HttpContext.Session);
                 if (!bridgeResult.Success)
@@ -38,6 +38,13 @@ namespace MyERP.Areas.MainErp.Controllers
                         return;
                     }
                 }
+            }
+
+            if (MainErpUserContext == null)
+            {
+                var returnUrl = filterContext.HttpContext.Request.RawUrl;
+                filterContext.Result = RedirectToAction("Index", "Login", new { area = "MainErp", returnUrl });
+                return;
             }
 
             base.OnActionExecuting(filterContext);

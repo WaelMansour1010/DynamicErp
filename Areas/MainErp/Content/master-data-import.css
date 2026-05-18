@@ -262,6 +262,82 @@
     border-bottom: 1px solid #e6edf3;
 }
 
+.preview-mode-tabs {
+    display: flex;
+    gap: 10px;
+    padding: 10px 12px 0;
+    border-bottom: 1px solid #e6edf3;
+}
+
+.preview-mode {
+    border: 1px solid #d9e2ec;
+    background: #fff;
+    color: #334e68;
+    padding: 8px 14px;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.preview-mode.is-active {
+    background: #f0f4f8;
+    color: #102a43;
+    border-bottom-color: #f0f4f8;
+}
+
+.preview-panel {
+    display: none;
+}
+
+.preview-panel.is-active {
+    display: block;
+}
+
+.review-history-panel .summary-strip,
+.review-summary {
+    margin-bottom: 16px;
+}
+
+.batch-grid td form {
+    display: inline-block;
+    margin: 0 0 6px;
+}
+
+.batch-grid .review-form .button,
+.batch-grid .rollback-form button {
+    min-width: 84px;
+}
+
+.review-grid th:nth-child(1),
+.review-grid td:nth-child(1),
+.review-grid th:nth-child(2),
+.review-grid td:nth-child(2),
+.review-grid th:nth-child(3),
+.review-grid td:nth-child(3),
+.review-grid th:nth-child(8),
+.review-grid td:nth-child(8),
+.review-grid th:nth-child(9),
+.review-grid td:nth-child(9) {
+    width: 180px;
+}
+
+.review-grid th:nth-child(4),
+.review-grid td:nth-child(4),
+.review-grid th:nth-child(5),
+.review-grid td:nth-child(5),
+.review-grid th:nth-child(6),
+.review-grid td:nth-child(6),
+.review-grid th:nth-child(7),
+.review-grid td:nth-child(7),
+.review-grid th:nth-child(10),
+.review-grid td:nth-child(10),
+.review-grid th:nth-child(11),
+.review-grid td:nth-child(11),
+.review-grid th:nth-child(12),
+.review-grid td:nth-child(12) {
+    width: 120px;
+}
+
 .preview-grid {
     display: block;
     width: 100%;

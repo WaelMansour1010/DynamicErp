@@ -1,6 +1,8 @@
 @{
     Func<string, string> T = MyERP.Areas.MainErp.Infrastructure.Localization.MainErpLocalizationService.T;
     var mainErpContext = Session["MainErp.UserContext"] as MyERP.Areas.MainErp.Models.Security.MainErpUserContext;
+    var webPermissionService = new MyERP.Areas.MainErp.Infrastructure.WebScreenPermissionService();
+    Func<string, bool> canOpenWeb = key => mainErpContext == null || mainErpContext.IsAdmin || mainErpContext.UserType.GetValueOrDefault(-1) == 0 || webPermissionService.CanView(mainErpContext, key);
     var activeScreen = (ViewBag.ActiveScreen as string) ?? "";
     Func<string, bool> isActive = key => string.Equals(activeScreen, key, StringComparison.OrdinalIgnoreCase);
     Func<string[], bool> sectionActive = keys => keys.Any(k => string.Equals(activeScreen, k, StringComparison.OrdinalIgnoreCase));
@@ -10,7 +12,7 @@
     var inventoryOpen = sectionActive(new[] { "items", "store-data", "stocktaking", "defin-comp-item" });
     var excelOpen = sectionActive(new[] { "master-data-import" });
     var projectsOpen = sectionActive(new[] { "projects", "project-extracts" });
-    var hrOpen = sectionActive(new[] { "employee-payroll", "salary-run", "medical-insurance", "legacy-advances", "legacy-leave-entitlements", "legacy-compensation-adjustments" });
+    var hrOpen = sectionActive(new[] { "employee-payroll", "salary-run", "medical-insurance", "hr-advances", "hr-payroll-items", "hr-absences", "hr-vacations", "hr-allowances", "hr-end-service", "legacy-advances", "legacy-leave-entitlements", "legacy-compensation-adjustments" });
     var systemOpen = sectionActive(new[] { "users", "permissions", "branches", "options", "database-migration", "dashboard" });
 
     if (!(customersOpen || financeOpen || inventoryOpen || excelOpen || projectsOpen || hrOpen || systemOpen))
@@ -96,9 +98,12 @@
                 <a class="pos-nav-link main-erp-nav-link @(isActive("employee-payroll") ? "active" : "")" href="@Url.Action("Employees", "EmployeePayroll", new { area = "MainErp" })" title="الموظفين"><i class="fas fa-users"></i><span>الموظفين</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("salary-run") ? "active" : "")" href="@Url.Action("SalaryRun", "EmployeePayroll", new { area = "MainErp" })" title="المسير"><i class="fas fa-file-invoice-dollar"></i><span>المسير</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("medical-insurance") ? "active" : "")" href="@Url.Action("MedicalInsurance", "EmployeePayroll", new { area = "MainErp" })" title="التأمين الطبي"><i class="fas fa-briefcase-medical"></i><span>التأمين الطبي</span></a>
-                <a class="pos-nav-link main-erp-nav-link @(isActive("legacy-advances") ? "active" : "")" href="@Url.Action("Advances", "LegacyHrFinance", new { area = "MainErp" })" title="السلف"><i class="fas fa-hand-holding-usd"></i><span>السلف</span></a>
-                <a class="pos-nav-link main-erp-nav-link @(isActive("legacy-leave-entitlements") ? "active" : "")" href="@Url.Action("LeaveEntitlements", "LegacyHrFinance", new { area = "MainErp" })" title="الإجازات"><i class="fas fa-calendar-check"></i><span>الإجازات</span></a>
-                <a class="pos-nav-link main-erp-nav-link @(isActive("legacy-compensation-adjustments") ? "active" : "")" href="@Url.Action("CompensationAdjustments", "LegacyHrFinance", new { area = "MainErp" })" title="المتغيرات"><i class="fas fa-sliders-h"></i><span>المتغيرات</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("hr-advances") ? "active" : "")" href="@Url.Action("Advances", "Hr", new { area = "MainErp" })" title="السلف"><i class="fas fa-hand-holding-usd"></i><span>السلف</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("hr-payroll-items") ? "active" : "")" href="@Url.Action("PayrollItems", "Hr", new { area = "MainErp" })" title="المفردات"><i class="fas fa-list-alt"></i><span>المفردات</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("hr-absences") ? "active" : "")" href="@Url.Action("Absences", "Hr", new { area = "MainErp" })" title="الغياب"><i class="fas fa-user-clock"></i><span>الغياب</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("hr-vacations") ? "active" : "")" href="@Url.Action("Vacations", "Hr", new { area = "MainErp" })" title="الإجازات"><i class="fas fa-calendar-check"></i><span>الإجازات</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("hr-allowances") ? "active" : "")" href="@Url.Action("Allowances", "Hr", new { area = "MainErp" })" title="البدلات"><i class="fas fa-plus-circle"></i><span>البدلات</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("hr-end-service") ? "active" : "")" href="@Url.Action("EndOfService", "Hr", new { area = "MainErp" })" title="نهاية الخدمة"><i class="fas fa-user-minus"></i><span>نهاية الخدمة</span></a>
             </div>
         </section>
 
@@ -106,7 +111,10 @@
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="النظام"><span><i class="fas fa-shield-alt"></i><b>النظام</b></span><i class="fas fa-chevron-down nav-chevron"></i></button>
             <div class="pos-nav-submenu">
                 <a class="pos-nav-link main-erp-nav-link @(isActive("users") ? "active" : "")" href="@Url.Action("Index", "Users", new { area = "MainErp" })" title="المستخدمين"><i class="fas fa-user-cog"></i><span>المستخدمين</span></a>
-                <a class="pos-nav-link main-erp-nav-link @(isActive("permissions") ? "active" : "")" href="@Url.Action("Index", "Permissions", new { area = "MainErp" })" title="الصلاحيات"><i class="fas fa-user-shield"></i><span>الصلاحيات</span></a>
+                @if (canOpenWeb("MainERP.Admin.WebPermissions"))
+                {
+                    <a class="pos-nav-link main-erp-nav-link @(isActive("permissions") ? "active" : "")" href="@Url.Action("Index", "Permissions", new { area = "MainErp" })" title="الصلاحيات على الشاشات"><i class="fas fa-user-shield"></i><span>الصلاحيات على الشاشات</span></a>
+                }
                 <a class="pos-nav-link main-erp-nav-link @(isActive("branches") ? "active" : "")" href="@Url.Action("Index", "Branches", new { area = "MainErp" })" title="الفروع"><i class="fas fa-building"></i><span>الفروع</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("options") ? "active" : "")" href="@Url.Action("Index", "Options", new { area = "MainErp" })" title="الإعدادات"><i class="fas fa-cog"></i><span>الإعدادات</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("database-migration") ? "active" : "")" href="@Url.Action("Index", "DatabaseMigration", new { area = "MainErp" })" title="تحديثات قاعدة البيانات"><i class="fas fa-database"></i><span>تحديثات قاعدة البيانات</span></a>

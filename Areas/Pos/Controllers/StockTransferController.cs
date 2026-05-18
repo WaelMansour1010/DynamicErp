@@ -423,16 +423,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private static bool IsTellerOnly(PosUserContext context)
         {
-            if (context == null || context.IsFullAccess || context.UserType.GetValueOrDefault(-1) == 0)
-            {
-                return false;
-            }
-
-            var category = (context.UserCategory ?? string.Empty).Trim();
-            return context.UserType.GetValueOrDefault(-1) == 2
-                || context.CanTeller
-                || string.Equals(category, "تلر", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(category, "Teller", StringComparison.OrdinalIgnoreCase);
+            return context != null && context.CanTeller;
         }
 
         private PosUserContext GetPosContext()

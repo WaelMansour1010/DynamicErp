@@ -30,6 +30,9 @@ namespace MyERP.Areas.MainErp.Repositories.Items
                 Groups = LoadGroups(),
                 GroupTree = LoadGroupTree(),
                 Units = LoadUnits(),
+                SalesEmployees = LoadSalesEmployees(),
+                Customers = LoadCustomers(2),
+                Suppliers = LoadCustomers(1),
                 Message = user != null ? user.DefaultsWarning : null
             };
 
@@ -130,7 +133,8 @@ SELECT TOP (1)
     ItemID, ItemCode, ItemName, ItemNamee, GroupID, ItemType, PartNo, barCodeNO, CatlogNO, FactoryNO,
     PurchasePrice, SallingPrice, CustomerPrice, DealerPrice, CostPrice, minvalueqty, MaxValueqty,
     RequestLimit, HaveSerial, HaveGuarantee, GuaranteeValue, GuaranteeType, IsArchive, shortName,
-    BinLocation, CAST(ItemComment AS nvarchar(max)) AS ItemComment
+    BinLocation, DefaultSupplier, PercentVisa, MinVisa, MaxVisa, PercentVisaPur, MinVisaPur, MaxVisaPur,
+    CAST(ItemComment AS nvarchar(max)) AS ItemComment
 FROM dbo.TblItems
 WHERE ItemID = @Id;";
                     command.Parameters.Add("@Id", SqlDbType.Int).Value = id;
@@ -164,6 +168,13 @@ WHERE ItemID = @Id;";
                             model.ShortName = ReadString(reader, "shortName");
                             model.BinLocation = ReadString(reader, "BinLocation");
                             model.Notes = ReadString(reader, "ItemComment");
+                            model.DefaultSupplierId = ReadNullableInt(reader, "DefaultSupplier");
+                            model.PercentVisa = ReadNullableDecimal(reader, "PercentVisa");
+                            model.MinVisa = ReadNullableDecimal(reader, "MinVisa");
+                            model.MaxVisa = ReadNullableDecimal(reader, "MaxVisa");
+                            model.PercentVisaPur = ReadNullableDecimal(reader, "PercentVisaPur");
+                            model.MinVisaPur = ReadNullableDecimal(reader, "MinVisaPur");
+                            model.MaxVisaPur = ReadNullableDecimal(reader, "MaxVisaPur");
                         }
                     }
                 }
@@ -190,6 +201,68 @@ WHERE ItemID = @Id;";
                             Id = ReadInt(reader, "GroupID").ToString(CultureInfo.InvariantCulture),
                             Text = ReadString(reader, "GroupName"),
                             Extra = ReadString(reader, "Fullcode")
+                        });
+                    }
+                }
+            }
+
+            return items;
+        }
+
+        public IList<ItemLookupViewModel> LoadSalesEmployees()
+        {
+            var items = new List<ItemLookupViewModel>();
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = TableExists(connection, "TBLSalesRepData")
+                    ? @"SELECT TOP (300) s.EmpID AS Id, COALESCE(e.Emp_Name, e.Emp_Namee) AS Text, e.Emp_Code AS Extra
+FROM dbo.TBLSalesRepData s
+LEFT JOIN dbo.TblEmployee e ON e.Emp_ID = s.EmpID
+WHERE s.EmpID IS NOT NULL
+ORDER BY COALESCE(e.Emp_Name, e.Emp_Namee), s.EmpID;"
+                    : @"SELECT TOP (300) Emp_ID AS Id, COALESCE(Emp_Name, Emp_Namee) AS Text, Emp_Code AS Extra
+FROM dbo.TblEmployee
+ORDER BY COALESCE(Emp_Name, Emp_Namee), Emp_ID;";
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        items.Add(new ItemLookupViewModel
+                        {
+                            Id = ReadInt(reader, "Id").ToString(CultureInfo.InvariantCulture),
+                            Text = ReadString(reader, "Text"),
+                            Extra = ReadString(reader, "Extra")
+                        });
+                    }
+                }
+            }
+
+            return items;
+        }
+
+        public IList<ItemLookupViewModel> LoadCustomers(int? type)
+        {
+            var items = new List<ItemLookupViewModel>();
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var command = connection.CreateCommand())
+            {
+                var hasType = ColumnExists(connection, "TblCustemers", "Type");
+                command.CommandText = @"SELECT TOP (300) CusID AS Id, COALESCE(CusName, CusNamee) AS Text, Fullcode AS Extra
+FROM dbo.TblCustemers
+WHERE (@Type IS NULL OR @HasType = 0 OR [Type] = @Type)
+ORDER BY COALESCE(CusName, CusNamee), CusID;";
+                command.Parameters.Add("@Type", SqlDbType.Int).Value = (object)type ?? DBNull.Value;
+                command.Parameters.Add("@HasType", SqlDbType.Bit).Value = hasType;
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        items.Add(new ItemLookupViewModel
+                        {
+                            Id = ReadInt(reader, "Id").ToString(CultureInfo.InvariantCulture),
+                            Text = ReadString(reader, "Text"),
+                            Extra = ReadString(reader, "Extra")
                         });
                     }
                 }
@@ -780,14 +853,16 @@ INSERT INTO dbo.TblItems
     ItemID, ItemCode, ItemName, ItemNamee, GroupID, ItemType, PartNo, barCodeNO, CatlogNO, FactoryNO,
     PurchasePrice, SallingPrice, CustomerPrice, DealerPrice, CostPrice, minvalueqty, MaxValueqty,
     RequestLimit, HaveSerial, HaveGuarantee, GuaranteeValue, GuaranteeType, IsArchive, shortName,
-    BinLocation, ItemComment, LastUpdate, UserID, Fullcode
+    BinLocation, DefaultSupplier, PercentVisa, MinVisa, MaxVisa, PercentVisaPur, MinVisaPur, MaxVisaPur,
+    ItemComment, LastUpdate, UserID, Fullcode
 )
 VALUES
 (
     @ItemID, @ItemCode, @ItemName, @ItemNamee, @GroupID, @ItemType, @PartNo, @Barcode, @CatalogNo, @FactoryNo,
     @PurchasePrice, @SalePrice, @CustomerPrice, @DealerPrice, @CostPrice, @MinQty, @MaxQty,
     @RequestLimit, @HaveSerial, @HaveGuarantee, @GuaranteeValue, @GuaranteeType, @IsArchive, @ShortName,
-    @BinLocation, @Notes, GETDATE(), @UserID, @ItemCode
+    @BinLocation, @DefaultSupplier, @PercentVisa, @MinVisa, @MaxVisa, @PercentVisaPur, @MinVisaPur, @MaxVisaPur,
+    @Notes, GETDATE(), @UserID, @ItemCode
 );", connection, transaction))
             {
                 AddItemParameters(command, id, code, request, user);
@@ -823,6 +898,13 @@ SET ItemCode = @ItemCode,
     IsArchive = @IsArchive,
     shortName = @ShortName,
     BinLocation = @BinLocation,
+    DefaultSupplier = @DefaultSupplier,
+    PercentVisa = @PercentVisa,
+    MinVisa = @MinVisa,
+    MaxVisa = @MaxVisa,
+    PercentVisaPur = @PercentVisaPur,
+    MinVisaPur = @MinVisaPur,
+    MaxVisaPur = @MaxVisaPur,
     ItemComment = @Notes,
     LastUpdate = GETDATE(),
     UserID = @UserID,
@@ -861,6 +943,13 @@ WHERE ItemID = @ItemID;", connection, transaction))
             command.Parameters.Add("@IsArchive", SqlDbType.Bit).Value = request.IsArchived;
             command.Parameters.Add("@ShortName", SqlDbType.NVarChar, 4000).Value = EmptyToDbNull(request.ShortName);
             command.Parameters.Add("@BinLocation", SqlDbType.NVarChar, 255).Value = EmptyToDbNull(request.BinLocation);
+            command.Parameters.Add("@DefaultSupplier", SqlDbType.Int).Value = (object)request.DefaultSupplierId ?? DBNull.Value;
+            command.Parameters.Add("@PercentVisa", SqlDbType.Float).Value = NullableDecimalToDbValue(request.PercentVisa);
+            command.Parameters.Add("@MinVisa", SqlDbType.Float).Value = NullableDecimalToDbValue(request.MinVisa);
+            command.Parameters.Add("@MaxVisa", SqlDbType.Float).Value = NullableDecimalToDbValue(request.MaxVisa);
+            command.Parameters.Add("@PercentVisaPur", SqlDbType.Float).Value = NullableDecimalToDbValue(request.PercentVisaPur);
+            command.Parameters.Add("@MinVisaPur", SqlDbType.Float).Value = NullableDecimalToDbValue(request.MinVisaPur);
+            command.Parameters.Add("@MaxVisaPur", SqlDbType.Float).Value = NullableDecimalToDbValue(request.MaxVisaPur);
             command.Parameters.Add("@Notes", SqlDbType.NVarChar).Value = EmptyToDbNull(request.Notes);
             command.Parameters.Add("@UserID", SqlDbType.Int).Value = user != null ? user.UserId : 0;
         }
@@ -910,6 +999,11 @@ VALUES
         private static object EmptyToDbNull(string value)
         {
             return string.IsNullOrWhiteSpace(value) ? (object)DBNull.Value : value.Trim();
+        }
+
+        private static object NullableDecimalToDbValue(decimal? value)
+        {
+            return value.HasValue ? (object)Convert.ToDouble(value.Value) : DBNull.Value;
         }
 
         private static GroupListItemViewModel ReadGroup(IDataRecord reader)
@@ -962,10 +1056,37 @@ VALUES
             return value == DBNull.Value ? 0 : Convert.ToDecimal(value, CultureInfo.InvariantCulture);
         }
 
+        private static decimal? ReadNullableDecimal(IDataRecord reader, string name)
+        {
+            var value = reader[name];
+            return value == DBNull.Value ? (decimal?)null : Convert.ToDecimal(value, CultureInfo.InvariantCulture);
+        }
+
         private static bool ReadBool(IDataRecord reader, string name)
         {
             var value = reader[name];
             return value != DBNull.Value && Convert.ToBoolean(value, CultureInfo.InvariantCulture);
+        }
+
+        private static bool TableExists(SqlConnection connection, string tableName)
+        {
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = @Name;";
+                command.Parameters.Add("@Name", SqlDbType.NVarChar, 128).Value = tableName;
+                return command.ExecuteScalar() != null;
+            }
+        }
+
+        private static bool ColumnExists(SqlConnection connection, string tableName, string columnName)
+        {
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = @Table AND COLUMN_NAME = @Column;";
+                command.Parameters.Add("@Table", SqlDbType.NVarChar, 128).Value = tableName;
+                command.Parameters.Add("@Column", SqlDbType.NVarChar, 128).Value = columnName;
+                return command.ExecuteScalar() != null;
+            }
         }
     }
 }

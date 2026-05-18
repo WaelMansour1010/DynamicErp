@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -47,8 +47,14 @@ namespace MyERP.Common.EmployeePayroll
         {
             var rows = new List<MedicalInsuranceProvider>();
             using (var connection = OpenConnection())
-            using (var command = connection.CreateCommand())
             {
+                if (!TableExists(connection, "MedicalInsuranceProviders"))
+                {
+                    return rows;
+                }
+
+                using (var command = connection.CreateCommand())
+                {
                 command.CommandText = @"
 SELECT ProviderId, ProviderNameAr, ProviderNameEn, Phone, Notes, IsActive
 FROM dbo.MedicalInsuranceProviders WITH (NOLOCK)
@@ -70,6 +76,7 @@ ORDER BY IsActive DESC, ProviderNameAr;";
                         });
                     }
                 }
+                }
             }
 
             return rows;
@@ -79,8 +86,14 @@ ORDER BY IsActive DESC, ProviderNameAr;";
         {
             var rows = new List<MedicalInsurancePlan>();
             using (var connection = OpenConnection())
-            using (var command = connection.CreateCommand())
             {
+                if (!TableExists(connection, "MedicalInsurancePlans") || !TableExists(connection, "MedicalInsuranceProviders"))
+                {
+                    return rows;
+                }
+
+                using (var command = connection.CreateCommand())
+                {
                 command.CommandText = @"
 SELECT p.PlanId, p.ProviderId, pr.ProviderNameAr, p.PlanNameAr, p.PlanNameEn,
        p.DefaultMonthlyCost, p.DefaultEmployeeShareType, p.DefaultEmployeeShareValue,
@@ -104,6 +117,7 @@ ORDER BY p.IsActive DESC, pr.ProviderNameAr, p.PlanNameAr;";
                         rows.Add(ReadPlan(reader));
                     }
                 }
+                }
             }
 
             return rows;
@@ -112,8 +126,14 @@ ORDER BY p.IsActive DESC, pr.ProviderNameAr, p.PlanNameAr;";
         public MedicalInsurancePlan GetMedicalInsurancePlan(int planId)
         {
             using (var connection = OpenConnection())
-            using (var command = connection.CreateCommand())
             {
+                if (!TableExists(connection, "MedicalInsurancePlans") || !TableExists(connection, "MedicalInsuranceProviders"))
+                {
+                    return null;
+                }
+
+                using (var command = connection.CreateCommand())
+                {
                 command.CommandText = @"
 SELECT TOP (1) p.PlanId, p.ProviderId, pr.ProviderNameAr, p.PlanNameAr, p.PlanNameEn,
        p.DefaultMonthlyCost, p.DefaultEmployeeShareType, p.DefaultEmployeeShareValue,
@@ -133,6 +153,7 @@ WHERE p.PlanId = @PlanId;";
                 {
                     return reader.Read() ? ReadPlan(reader) : null;
                 }
+                }
             }
         }
 
@@ -140,12 +161,17 @@ WHERE p.PlanId = @PlanId;";
         {
             if (provider == null || string.IsNullOrWhiteSpace(provider.ProviderNameAr))
             {
-                throw new InvalidOperationException("Provider name is required.");
+                throw new InvalidOperationException("اسم شركة التأمين الطبي مطلوب.");
             }
 
             using (var connection = OpenConnection())
             using (var transaction = connection.BeginTransaction())
             {
+                if (!TableExists(connection, transaction, "MedicalInsuranceProviders"))
+                {
+                    throw new InvalidOperationException("جداول شركات التأمين الطبي غير مثبتة في قاعدة البيانات الحالية.");
+                }
+
                 var id = provider.ProviderId.GetValueOrDefault();
                 if (id <= 0)
                 {
@@ -185,7 +211,7 @@ WHERE ProviderId = @Id;"))
         {
             if (plan == null || plan.ProviderId <= 0 || string.IsNullOrWhiteSpace(plan.PlanNameAr))
             {
-                throw new InvalidOperationException("Provider and plan name are required.");
+                throw new InvalidOperationException("شركة التأمين واسم الخطة مطلوبان.");
             }
 
             ValidateShare("Employee", plan.DefaultMonthlyCost, plan.DefaultEmployeeShareType, plan.DefaultEmployeeShareValue);
@@ -195,6 +221,13 @@ WHERE ProviderId = @Id;"))
             using (var connection = OpenConnection())
             using (var transaction = connection.BeginTransaction())
             {
+                if (!TableExists(connection, transaction, "MedicalInsurancePlans"))
+                {
+                    throw new InvalidOperationException("جداول خطط التأمين الطبي غير مثبتة في قاعدة البيانات الحالية.");
+                }
+
+                ValidateMedicalInsurancePlanAccounts(connection, transaction, plan);
+
                 var id = plan.PlanId.GetValueOrDefault();
                 if (id <= 0)
                 {
@@ -409,7 +442,10 @@ SET Emp_Code = @Code,
 WHERE Emp_ID = @Id;"))
                     {
                         AddEmployeeParameters(command, request, employeeId, employeeAccounts);
-                        command.ExecuteNonQuery();
+                        if (command.ExecuteNonQuery() == 0)
+                        {
+                            throw new InvalidOperationException("الموظف المحدد غير موجود ولا يمكن تحديث بيانات التأمين الطبي له.");
+                        }
                     }
                 }
 
@@ -1095,6 +1131,7 @@ ORDER BY v.Notes_ID, v.DEV_ID_Line_No, v.Double_Entry_Vouchers_ID;";
                 }
             }
 
+            AttachReplayLineEmployeeLabels(report, replayRows);
             report.ReplayedDebitTotal = report.ReplayedLines.Where(x => !x.IsCredit).Sum(x => x.Value);
             report.ReplayedCreditTotal = report.ReplayedLines.Where(x => x.IsCredit).Sum(x => x.Value);
             report.LegacyDebitTotal = legacy.VoucherDebitTotal;
@@ -1132,6 +1169,104 @@ ORDER BY v.Notes_ID, v.DEV_ID_Line_No, v.Double_Entry_Vouchers_ID;";
             var result = BuildTestPostingSummary(report, true);
             result.Message = "Dry-run only. No Notes or DOUBLE_ENTREY_VOUCHERS rows were created.";
             result.SafetyStatus = "Protected test posting preview. Production posting remains disabled.";
+            return result;
+        }
+
+        public PayrollPostingResult BuildPayrollPostingDryRun(PayrollPostingRequest request)
+        {
+            request = request ?? new PayrollPostingRequest();
+            request.IncludeLineDetails = true;
+            var report = BuildPayrollAccountingReplayReport(request);
+            var result = BuildPostingSummary(report, true);
+            result.Message = result.AlreadyPosted
+                ? "تم ترحيل قيد استحقاق الرواتب لهذه الفترة من قبل."
+                : "معاينة فقط. لم يتم إنشاء أي قيد محاسبي.";
+            return result;
+        }
+
+        public PayrollPostingResult PostPayrollJournal(PayrollPostingRequest request, int userId, string userName)
+        {
+            request = request ?? new PayrollPostingRequest();
+            request.IncludeLineDetails = true;
+            if (ExistingPayrollPostingExists(request))
+            {
+                var existing = BuildPayrollPostingDryRun(request);
+                existing.IsDryRun = false;
+                existing.Message = "تم ترحيل قيد استحقاق الرواتب لهذه الفترة من قبل، ولم يتم إنشاء قيد مكرر.";
+                return existing;
+            }
+
+            var report = BuildPayrollAccountingReplayReport(request);
+            var result = BuildPostingSummary(report, false);
+            if (result.AlreadyPosted)
+            {
+                result.Message = "تم ترحيل قيد استحقاق الرواتب لهذه الفترة من قبل، ولم يتم إنشاء قيد مكرر.";
+                return result;
+            }
+
+            ValidatePayrollPosting(report, result);
+            if (request.SaveSalaryRunBeforePosting)
+            {
+                SaveSalaryRun(request, userId);
+                report = BuildPayrollAccountingReplayReport(request);
+                result = BuildPostingSummary(report, false);
+                if (result.AlreadyPosted)
+                {
+                    result.Message = "تم ترحيل قيد استحقاق الرواتب لهذه الفترة من قبل، ولم يتم إنشاء قيد مكرر.";
+                    return result;
+                }
+
+                ValidatePayrollPosting(report, result);
+            }
+
+            using (var connection = OpenConnection())
+            using (var transaction = connection.BeginTransaction(IsolationLevel.Serializable))
+            {
+                try
+                {
+                    if (FindExistingPayrollPosting(connection, transaction, request) > 0)
+                    {
+                        transaction.Rollback();
+                        result.AlreadyPosted = true;
+                        result.Message = "تم ترحيل قيد استحقاق الرواتب لهذه الفترة من قبل، ولم يتم إنشاء قيد مكرر.";
+                        return result;
+                    }
+
+                    var expectedLines = (report.ReplayedLines ?? new List<PayrollReplayedVoucherLine>())
+                        .Count(x => !string.IsNullOrWhiteSpace(x.AccountCode) && x.Value != 0);
+                    var noteIdByBranch = InsertPayrollPostingNotes(connection, transaction, report, request, userId, userName);
+                    var insertedLines = InsertPayrollPostingVoucherLines(connection, transaction, report, noteIdByBranch, userId, request);
+                    if (insertedLines != expectedLines)
+                    {
+                        throw new InvalidOperationException("تعذر ترحيل كل سطور قيد الرواتب. المتوقع " + expectedLines.ToString() + " وتم إنشاء " + insertedLines.ToString() + " فقط.");
+                    }
+
+                    var postedRows = MarkSalaryRowsPosted(connection, transaction, request);
+                    transaction.Commit();
+
+                    result.IsPosted = true;
+                    result.NoteIds = noteIdByBranch.Values.OrderBy(x => x).ToList();
+                    result.NoteId = result.NoteIds.Count > 0 ? (int?)result.NoteIds[0] : null;
+                    result.NoteSerial = result.NoteId;
+                    result.VoucherLinesCount = insertedLines;
+                    result.SalaryRowsMarkedPosted = postedRows;
+                    result.NotesCount = result.NoteIds.Count;
+                    result.Message = "تم ترحيل قيد استحقاق الرواتب بنجاح.";
+                }
+                catch
+                {
+                    try
+                    {
+                        transaction.Rollback();
+                    }
+                    catch
+                    {
+                    }
+
+                    throw;
+                }
+            }
+
             return result;
         }
 
@@ -1276,6 +1411,7 @@ WHERE TestPostingBatchId = @BatchId;"))
             };
             result.Balance = result.DebitTotal - result.CreditTotal;
             result.AffectedAccounts = BuildDimensionTotals(lines, x => x.AccountCode).Take(25).ToList();
+            EnrichAffectedAccountTotals(result.AffectedAccounts);
             result.AffectedBranches = BuildDimensionTotals(lines, x => x.BranchId.HasValue ? x.BranchId.Value.ToString() : "Unspecified").Take(25).ToList();
             result.AffectedProjects = BuildDimensionTotals(lines, x => x.ProjectId.HasValue ? x.ProjectId.Value.ToString() : "Unspecified").Take(25).ToList();
             result.AffectedDepartments = BuildDimensionTotals(lines, x => x.DepartmentId.HasValue ? x.DepartmentId.Value.ToString() : "Unspecified").Take(25).ToList();
@@ -1297,6 +1433,346 @@ WHERE TestPostingBatchId = @BatchId;"))
             return result;
         }
 
+        private PayrollPostingResult BuildPostingSummary(PayrollAccountingReplayReport report, bool isDryRun)
+        {
+            var allLines = (report.ReplayedLines ?? new List<PayrollReplayedVoucherLine>())
+                .Where(x => x.Value != 0)
+                .ToList();
+            var lines = allLines.Where(x => !string.IsNullOrWhiteSpace(x.AccountCode)).ToList();
+            var result = new PayrollPostingResult
+            {
+                IsDryRun = isDryRun,
+                DatabaseName = GetDatabaseName(),
+                NotesCount = allLines.Count == 0 ? 0 : 1,
+                VoucherLinesCount = lines.Count,
+                DebitTotal = allLines.Where(x => !x.IsCredit).Sum(x => x.Value),
+                CreditTotal = allLines.Where(x => x.IsCredit).Sum(x => x.Value)
+            };
+            result.Balance = result.DebitTotal - result.CreditTotal;
+            result.AffectedAccounts = BuildDimensionTotals(lines, x => x.AccountCode).Take(25).ToList();
+            EnrichAffectedAccountTotals(result.AffectedAccounts);
+            result.AffectedBranches = BuildDimensionTotals(lines, x => x.BranchId.HasValue ? x.BranchId.Value.ToString() : "Unspecified").Take(25).ToList();
+            result.AffectedProjects = BuildDimensionTotals(lines, x => x.ProjectId.HasValue ? x.ProjectId.Value.ToString() : "Unspecified").Take(25).ToList();
+            result.AffectedDepartments = BuildDimensionTotals(lines, x => x.DepartmentId.HasValue ? x.DepartmentId.Value.ToString() : "Unspecified").Take(25).ToList();
+            result.AlreadyPosted = ExistingPayrollPostingExists(report.Request as PayrollPostingRequest ?? ToPostingRequest(report.Request));
+            result.AccountIssues = BuildPayrollPostingAccountIssues(report);
+            if (Math.Abs(result.Balance) > 0.01m)
+            {
+                result.Warnings.Add("القيد غير متوازن ولا يمكن ترحيله.");
+            }
+
+            if (allLines.Count == 0)
+            {
+                result.Warnings.Add("لا توجد سطور محاسبية صالحة للترحيل.");
+            }
+
+            foreach (var issue in result.AccountIssues.Take(10))
+            {
+                result.Warnings.Add(issue.ArabicMessage);
+            }
+
+            return result;
+        }
+
+        private static PayrollPostingRequest ToPostingRequest(SalaryRunRequest request)
+        {
+            request = request ?? new SalaryRunRequest();
+            return new PayrollPostingRequest
+            {
+                Year = request.Year,
+                Month = request.Month,
+                BranchId = request.BranchId,
+                DepartmentId = request.DepartmentId,
+                EmployeeId = request.EmployeeId,
+                PostingStatus = request.PostingStatus,
+                IncludeSavedDrafts = request.IncludeSavedDrafts,
+                RowLimit = request.RowLimit,
+                JournalPreviewLimit = request.JournalPreviewLimit,
+                IncludeLineDetails = true
+            };
+        }
+
+        private void ValidatePayrollPosting(PayrollAccountingReplayReport report, PayrollPostingResult result)
+        {
+            var lines = (report.ReplayedLines ?? new List<PayrollReplayedVoucherLine>())
+                .Where(x => x.Value != 0)
+                .ToList();
+            if (lines.Count == 0)
+            {
+                throw new InvalidOperationException("لا توجد سطور محاسبية صالحة لترحيل مسير الرواتب.");
+            }
+
+            var accountIssues = result.AccountIssues != null && result.AccountIssues.Count > 0
+                ? result.AccountIssues.ToList()
+                : BuildPayrollPostingAccountIssues(report);
+            if (accountIssues.Any())
+            {
+                throw new InvalidOperationException(BuildPostingAccountIssueError(accountIssues));
+            }
+
+            if (Math.Abs(result.Balance) > 0.01m)
+            {
+                throw new InvalidOperationException("قيد الرواتب غير متوازن. إجمالي المدين " + result.DebitTotal.ToString("0.00") + " وإجمالي الدائن " + result.CreditTotal.ToString("0.00") + ".");
+            }
+        }
+
+        private IList<PayrollPostingAccountIssue> BuildPayrollPostingAccountIssues(PayrollAccountingReplayReport report)
+        {
+            var lines = (report == null || report.ReplayedLines == null)
+                ? new List<PayrollReplayedVoucherLine>()
+                : report.ReplayedLines.Where(x => x.Value != 0).ToList();
+            var issues = new List<PayrollPostingAccountIssue>();
+            foreach (var line in lines.Where(x => string.IsNullOrWhiteSpace(x.AccountCode)))
+            {
+                issues.Add(BuildPostingAccountIssue(line, "MissingConfiguredAccount"));
+            }
+
+            var accountCodes = lines
+                .Where(x => !string.IsNullOrWhiteSpace(x.AccountCode))
+                .Select(x => x.AccountCode.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (accountCodes.Count == 0)
+            {
+                foreach (var issue in issues)
+                {
+                    issue.ArabicMessage = FormatPostingAccountIssue(issue);
+                }
+
+                return issues;
+            }
+
+            var found = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            using (var connection = OpenConnection())
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT Account_Code FROM dbo.ACCOUNTS WITH (NOLOCK) WHERE Account_Code IN (" + BuildInListParameters(command, "@Account", accountCodes) + ");";
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        found.Add(ReadString(reader, "Account_Code"));
+                    }
+                }
+            }
+
+            foreach (var line in lines.Where(x => !string.IsNullOrWhiteSpace(x.AccountCode) && !found.Contains(x.AccountCode.Trim())))
+            {
+                issues.Add(BuildPostingAccountIssue(line, "AccountNotFound"));
+            }
+
+            foreach (var issue in issues)
+            {
+                issue.ArabicMessage = FormatPostingAccountIssue(issue);
+            }
+
+            return issues;
+        }
+
+        private static PayrollPostingAccountIssue BuildPostingAccountIssue(PayrollReplayedVoucherLine line, string issueType)
+        {
+            return new PayrollPostingAccountIssue
+            {
+                IssueType = issueType,
+                AccountCode = line == null ? string.Empty : (line.AccountCode ?? string.Empty).Trim(),
+                AccountSource = line == null ? string.Empty : FirstNonEmpty(line.AccountRoutingPath, line.RuleId),
+                Direction = line != null && line.IsCredit ? "Credit" : "Debit",
+                Amount = line == null ? 0 : line.Value,
+                EmployeeId = line == null ? null : line.EmployeeId,
+                EmployeeCode = line == null ? string.Empty : line.EmployeeCode,
+                EmployeeName = line == null ? string.Empty : line.EmployeeName,
+                ComponentNo = line == null ? null : line.ComponentNo,
+                ComponentName = line == null ? string.Empty : line.ComponentName,
+                RuleId = line == null ? string.Empty : line.RuleId
+            };
+        }
+
+        private static string BuildPostingAccountIssueError(IList<PayrollPostingAccountIssue> issues)
+        {
+            var messages = issues.Take(25).Select(FormatPostingAccountIssue).ToList();
+            var suffix = issues.Count > messages.Count ? " يوجد " + (issues.Count - messages.Count).ToString() + " بند آخر غير معروض." : string.Empty;
+            return "لا يمكن ترحيل قيد الرواتب قبل استكمال الحسابات التالية: " + string.Join(" | ", messages.ToArray()) + suffix;
+        }
+
+        private static string FormatPostingAccountIssue(PayrollPostingAccountIssue issue)
+        {
+            if (issue == null)
+            {
+                return string.Empty;
+            }
+
+            var employee = FirstNonEmpty(
+                (FirstNonEmpty(issue.EmployeeCode, issue.EmployeeId.HasValue ? issue.EmployeeId.Value.ToString() : string.Empty) + " " + FirstNonEmpty(issue.EmployeeName, string.Empty)).Trim(),
+                "بدون موظف محدد");
+            var component = FirstNonEmpty(FirstNonEmpty(issue.ComponentName, issue.RuleId), "إجمالي الراتب");
+            var source = FirstNonEmpty(issue.AccountSource, "مصدر الحساب غير محدد");
+            var direction = string.Equals(issue.Direction, "Credit", StringComparison.OrdinalIgnoreCase) ? "دائن" : "مدين";
+            if (string.Equals(issue.IssueType, "AccountNotFound", StringComparison.OrdinalIgnoreCase))
+            {
+                return "الموظف: " + employee + "، البند: " + component + "، الحساب غير موجود في الدليل: " + issue.AccountCode + "، المصدر: " + source + "، الاتجاه: " + direction + "، المبلغ: " + issue.Amount.ToString("0.00");
+            }
+
+            return "الموظف: " + employee + "، البند: " + component + "، الحساب غير محدد، المصدر: " + source + "، الاتجاه: " + direction + "، المبلغ: " + issue.Amount.ToString("0.00");
+        }
+
+        private bool ExistingPayrollPostingExists(PayrollPostingRequest request)
+        {
+            using (var connection = OpenConnection())
+            {
+                using (var transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted))
+                {
+                    return FindExistingPayrollPosting(connection, transaction, request) > 0;
+                }
+            }
+        }
+
+        private static int FindExistingPayrollPosting(SqlConnection connection, SqlTransaction transaction, SalaryRunRequest request)
+        {
+            using (var command = CreateCommand(connection, transaction, @"
+SELECT COUNT(1)
+FROM dbo.Notes WITH (UPDLOCK, HOLDLOCK)
+WHERE NoteType = 66
+  AND salary = @Salary
+  AND (@BranchId IS NULL OR branch_no = @BranchId OR EXISTS
+      (SELECT 1 FROM dbo.DOUBLE_ENTREY_VOUCHERS d WITH (NOLOCK)
+       WHERE d.Notes_ID = Notes.NoteID AND d.branch_id = @BranchId))
+  AND (@EmployeeId IS NULL OR EXISTS
+      (SELECT 1 FROM dbo.DOUBLE_ENTREY_VOUCHERS d WITH (NOLOCK)
+       WHERE d.Notes_ID = Notes.NoteID AND d.NEmpid = @EmployeeId));"))
+            {
+                command.Parameters.Add("@Salary", SqlDbType.Int).Value = SafeSalaryPeriodCode(request);
+                AddNullable(command, "@BranchId", SqlDbType.Int, request == null ? null : request.BranchId);
+                AddNullable(command, "@EmployeeId", SqlDbType.Float, request == null ? null : request.EmployeeId);
+                return Convert.ToInt32(command.ExecuteScalar() ?? 0);
+            }
+        }
+
+        private Dictionary<string, int> InsertPayrollPostingNotes(SqlConnection connection, SqlTransaction transaction, PayrollAccountingReplayReport report, PayrollPostingRequest request, int userId, string userName)
+        {
+            var periodEnd = new DateTime(request.Year, request.Month, 1).AddMonths(1).AddDays(-1);
+            var notesByBranch = new Dictionary<string, int>();
+            var linesByBranch = (report.ReplayedLines ?? new List<PayrollReplayedVoucherLine>())
+                .Where(x => !string.IsNullOrWhiteSpace(x.AccountCode) && x.Value != 0)
+                .GroupBy(x => BranchKey(x.BranchId))
+                .ToList();
+            foreach (var branchGroup in linesByBranch)
+            {
+                var noteId = NextId(connection, transaction, "Notes", "NoteID");
+                var replayedNote = report.ReplayedNotes.FirstOrDefault(x => BranchKey(x.BranchId) == branchGroup.Key);
+                var debit = branchGroup.Where(x => !x.IsCredit).Sum(x => x.Value);
+                var noteValue = replayedNote != null && replayedNote.NoteValue > 0 ? replayedNote.NoteValue : debit;
+                using (var command = CreateCommand(connection, transaction, @"
+INSERT INTO dbo.Notes
+(
+    NoteID, NoteDate, NoteType, NoteSerial, NoteSerial1, Note_Value, UserID, Remark,
+    branch_no, user_name, salary, PayrollMonth, PayrollYear, DateTimeEntry, NotePosted
+)
+VALUES
+(
+    @NoteID, @NoteDate, 66, @NoteSerial, @NoteSerial1, @NoteValue, @UserID, @Remark,
+    @BranchId, @UserName, @Salary, @PayrollMonth, @PayrollYear, GETDATE(), 0
+);"))
+                {
+                    command.Parameters.Add("@NoteID", SqlDbType.Int).Value = noteId;
+                    command.Parameters.Add("@NoteDate", SqlDbType.DateTime).Value = periodEnd;
+                    command.Parameters.Add("@NoteSerial", SqlDbType.Float).Value = noteId;
+                    command.Parameters.Add("@NoteSerial1", SqlDbType.Float).Value = noteId;
+                    command.Parameters.Add("@NoteValue", SqlDbType.Float).Value = Convert.ToDouble(noteValue);
+                    command.Parameters.Add("@UserID", SqlDbType.Int).Value = userId;
+                    command.Parameters.Add("@Remark", SqlDbType.NVarChar, 4000).Value = "قيد استحقاق رواتب الموظفين عن شهر " + request.Month + " سنة " + request.Year + " - POS Web";
+                    AddNullable(command, "@BranchId", SqlDbType.Int, ParseNullableInt(branchGroup.Key));
+                    command.Parameters.Add("@UserName", SqlDbType.NVarChar, 50).Value = (object)(userName ?? "POS Web") ?? DBNull.Value;
+                    command.Parameters.Add("@Salary", SqlDbType.Int).Value = SafeSalaryPeriodCode(request);
+                    command.Parameters.Add("@PayrollMonth", SqlDbType.Int).Value = request.Month;
+                    command.Parameters.Add("@PayrollYear", SqlDbType.Int).Value = request.Year;
+                    command.ExecuteNonQuery();
+                }
+
+                notesByBranch[branchGroup.Key] = noteId;
+            }
+
+            return notesByBranch;
+        }
+
+        private int InsertPayrollPostingVoucherLines(SqlConnection connection, SqlTransaction transaction, PayrollAccountingReplayReport report, IDictionary<string, int> noteIdByBranch, int userId, PayrollPostingRequest request)
+        {
+            var inserted = 0;
+            var nextVoucherId = NextId(connection, transaction, "DOUBLE_ENTREY_VOUCHERS", "Double_Entry_Vouchers_ID");
+            var lineNoByNote = new Dictionary<int, int>();
+            var periodEnd = new DateTime(request.Year, request.Month, 1).AddMonths(1).AddDays(-1);
+            foreach (var line in (report.ReplayedLines ?? new List<PayrollReplayedVoucherLine>()).Where(x => !string.IsNullOrWhiteSpace(x.AccountCode) && x.Value != 0))
+            {
+                var branchKey = BranchKey(line.BranchId);
+                int noteId;
+                if (!noteIdByBranch.TryGetValue(branchKey, out noteId))
+                {
+                    continue;
+                }
+
+                var lineNo = lineNoByNote.ContainsKey(noteId) ? lineNoByNote[noteId] + 1 : 1;
+                lineNoByNote[noteId] = lineNo;
+                var description = "قيد استحقاق رواتب الموظفين عن شهر " + request.Month + " سنة " + request.Year + " - " + FirstNonEmpty(FirstNonEmpty(line.ComponentName, line.RuleId), "POS Web");
+                if (description.Length > 3800)
+                {
+                    description = description.Substring(0, 3800);
+                }
+
+                using (var command = CreateCommand(connection, transaction, @"
+INSERT INTO dbo.DOUBLE_ENTREY_VOUCHERS
+(
+    Double_Entry_Vouchers_ID, DEV_ID_Line_No, Account_Code, Value, Credit_Or_Debit,
+    Double_Entry_Vouchers_Description, RecordDate, Notes_ID, UserID, Posted,
+    branch_id, project_id, Departementid, NEmpid, depet_value, credit_value, des
+)
+VALUES
+(
+    @VoucherId, @LineNo, @AccountCode, @Value, @CreditOrDebit,
+    @Description, @RecordDate, @NoteId, @UserId, 0,
+    @BranchId, @ProjectId, @DepartmentId, @EmployeeId, @DebitValue, @CreditValue, @ShortDescription
+);"))
+                {
+                    command.Parameters.Add("@VoucherId", SqlDbType.Int).Value = nextVoucherId++;
+                    command.Parameters.Add("@LineNo", SqlDbType.Int).Value = lineNo;
+                    command.Parameters.Add("@AccountCode", SqlDbType.NVarChar, 50).Value = line.AccountCode;
+                    command.Parameters.Add("@Value", SqlDbType.Money).Value = line.Value;
+                    command.Parameters.Add("@CreditOrDebit", SqlDbType.SmallInt).Value = line.IsCredit ? 1 : 0;
+                    command.Parameters.Add("@Description", SqlDbType.NVarChar, 4000).Value = description;
+                    command.Parameters.Add("@RecordDate", SqlDbType.DateTime).Value = periodEnd;
+                    command.Parameters.Add("@NoteId", SqlDbType.Int).Value = noteId;
+                    command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+                    AddNullable(command, "@BranchId", SqlDbType.Int, line.BranchId);
+                    AddNullable(command, "@ProjectId", SqlDbType.Int, line.ProjectId);
+                    AddNullable(command, "@DepartmentId", SqlDbType.Float, line.DepartmentId);
+                    AddNullable(command, "@EmployeeId", SqlDbType.Float, line.EmployeeId);
+                    command.Parameters.Add("@DebitValue", SqlDbType.Money).Value = line.IsCredit ? 0 : line.Value;
+                    command.Parameters.Add("@CreditValue", SqlDbType.Money).Value = line.IsCredit ? line.Value : 0;
+                    command.Parameters.Add("@ShortDescription", SqlDbType.NVarChar, 255).Value = description.Length > 255 ? description.Substring(0, 255) : description;
+                    command.ExecuteNonQuery();
+                    inserted++;
+                }
+            }
+
+            return inserted;
+        }
+
+        private static int MarkSalaryRowsPosted(SqlConnection connection, SqlTransaction transaction, SalaryRunRequest request)
+        {
+            using (var command = CreateCommand(connection, transaction, @"
+UPDATE dbo.emp_salary
+SET payed = 1
+WHERE sgn = @Sgn
+  AND (@BranchId IS NULL OR BranchId = @BranchId)
+  AND (@DepartmentId IS NULL OR DepartmentID = @DepartmentId)
+  AND (@EmployeeId IS NULL OR emp_id = @EmployeeId);"))
+            {
+                command.Parameters.Add("@Sgn", SqlDbType.VarChar, 20).Value = request.Year.ToString() + request.Month.ToString();
+                AddNullable(command, "@BranchId", SqlDbType.Int, request.BranchId);
+                AddNullable(command, "@DepartmentId", SqlDbType.Int, request.DepartmentId);
+                AddNullable(command, "@EmployeeId", SqlDbType.Int, request.EmployeeId);
+                return command.ExecuteNonQuery();
+            }
+        }
+
         private static IList<PayrollTestPostingDimensionTotal> BuildDimensionTotals(IEnumerable<PayrollReplayedVoucherLine> lines, Func<PayrollReplayedVoucherLine, string> keySelector)
         {
             return lines
@@ -1311,6 +1787,59 @@ WHERE TestPostingBatchId = @BatchId;"))
                 .OrderByDescending(x => Math.Abs(x.Debit - x.Credit))
                 .ThenByDescending(x => x.Lines)
                 .ToList();
+        }
+
+        private void EnrichAffectedAccountTotals(IList<PayrollTestPostingDimensionTotal> accounts)
+        {
+            if (accounts == null || accounts.Count == 0)
+            {
+                return;
+            }
+
+            var accountCodes = accounts
+                .Select(x => x.Key)
+                .Where(x => !string.IsNullOrWhiteSpace(x) && !string.Equals(x, "Unspecified", StringComparison.OrdinalIgnoreCase))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (accountCodes.Count == 0)
+            {
+                return;
+            }
+
+            var accountInfo = new Dictionary<string, Tuple<string, string>>(StringComparer.OrdinalIgnoreCase);
+            using (var connection = OpenConnection())
+            using (var command = connection.CreateCommand())
+            {
+                var parameterNames = new List<string>();
+                for (var i = 0; i < accountCodes.Count; i++)
+                {
+                    var parameterName = "@Account" + i.ToString();
+                    parameterNames.Add(parameterName);
+                    command.Parameters.Add(parameterName, SqlDbType.NVarChar, 50).Value = accountCodes[i];
+                }
+
+                command.CommandText = @"
+SELECT Account_Code, Account_Serial, Account_Name
+FROM dbo.ACCOUNTS WITH (NOLOCK)
+WHERE Account_Code IN (" + string.Join(",", parameterNames.ToArray()) + @");";
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        accountInfo[ReadString(reader, "Account_Code")] = Tuple.Create(ReadString(reader, "Account_Serial"), ReadString(reader, "Account_Name"));
+                    }
+                }
+            }
+
+            foreach (var account in accounts)
+            {
+                Tuple<string, string> info;
+                if (accountInfo.TryGetValue(account.Key, out info))
+                {
+                    account.AccountSerial = info.Item1;
+                    account.AccountName = info.Item2;
+                }
+            }
         }
 
         private Dictionary<string, int> InsertTestPostingNotes(SqlConnection connection, SqlTransaction transaction, PayrollAccountingReplayReport report, PayrollTestPostingRequest request, int userId, string userName, string marker)
@@ -1538,6 +2067,19 @@ END"))
             return int.TryParse(value, out parsed) ? (int?)parsed : null;
         }
 
+        private static string BuildInListParameters(SqlCommand command, string prefix, IList<string> values)
+        {
+            var names = new List<string>();
+            for (var i = 0; i < values.Count; i++)
+            {
+                var name = prefix + i.ToString();
+                names.Add(name);
+                command.Parameters.Add(name, SqlDbType.NVarChar, 50).Value = values[i];
+            }
+
+            return names.Count == 0 ? "NULL" : string.Join(",", names.ToArray());
+        }
+
         private static int SafeSalaryPeriodCode(SalaryRunRequest request)
         {
             int value;
@@ -1549,6 +2091,28 @@ END"))
             return preview.Rows.Any(x => x.IsLegacySnapshot)
                 ? preview.Rows.Where(x => x.IsLegacySnapshot)
                 : preview.Rows;
+        }
+
+        private static void AttachReplayLineEmployeeLabels(PayrollAccountingReplayReport report, IEnumerable<SalaryRunEmployeeRow> rows)
+        {
+            if (report == null || report.ReplayedLines == null || rows == null)
+            {
+                return;
+            }
+
+            var employeeById = rows
+                .Where(x => x.EmployeeId > 0)
+                .GroupBy(x => x.EmployeeId)
+                .ToDictionary(x => x.Key, x => x.First());
+            foreach (var line in report.ReplayedLines.Where(x => x.EmployeeId.HasValue))
+            {
+                SalaryRunEmployeeRow row;
+                if (employeeById.TryGetValue(line.EmployeeId.Value, out row))
+                {
+                    line.EmployeeCode = row.EmployeeCode;
+                    line.EmployeeName = row.EmployeeName;
+                }
+            }
         }
 
         private static void ReplayComponentAdditionExpenses(IEnumerable<SalaryRunEmployeeRow> rows, PayrollAccountingReplayReport report)
@@ -1869,6 +2433,11 @@ END"))
 
         private static void ReplayInsurance(SalaryRunEmployeeRow row, PayrollAccountingReplayReport report)
         {
+            if (row.MedicalInsuranceDeduction > 0 || row.MedicalInsuranceCompanyCost > 0)
+            {
+                ReplayMedicalInsurance(row, report);
+            }
+
             var value = row.InsuranceTrace != null && row.InsuranceTrace.RuntimeFunctionInsurance != 0
                 ? row.InsuranceTrace.RuntimeFunctionInsurance
                 : row.TotalInsuranceLegacy;
@@ -1891,6 +2460,37 @@ END"))
                 "TblSocialInsurance.Acount_Code1 via GetInsuranceAccount",
                 "ToalInsurance > 0",
                 "VB6 credits the configured social-insurance account for employee share.");
+        }
+
+        private static void ReplayMedicalInsurance(SalaryRunEmployeeRow row, PayrollAccountingReplayReport report)
+        {
+            if (row.MedicalInsuranceDeduction > 0)
+            {
+                AddReplayLine(report, row.AccruedSalaryAccountCode, row.MedicalInsuranceDeduction, false, row.BranchId, row.DepartmentId, row.EmployeeId, null, row.MedicalInsurancePlanName,
+                    "MEDICAL_INSURANCE_EMPLOYEE_SHARE_DEBIT",
+                    "TblEmployee.Account_Code1",
+                    "EmployeeMedicalInsurance active in payroll period; EmployeeMonthlyDeduction > 0",
+                    "POS medical insurance debits accrued salary to reduce the employee net salary by the employee share.");
+                AddReplayLine(report, row.MedicalInsuranceEmployeeAccountCode, row.MedicalInsuranceDeduction, true, row.BranchId, row.DepartmentId, row.EmployeeId, null, row.MedicalInsurancePlanName,
+                    "MEDICAL_INSURANCE_EMPLOYEE_SHARE_PAYABLE_CREDIT",
+                    "MedicalInsurancePlans.EmployeeDeductionAccountCode",
+                    "EmployeeMedicalInsurance active in payroll period; EmployeeMonthlyDeduction > 0",
+                    "POS medical insurance credits the configured insurance payable/deduction account for the employee share.");
+            }
+
+            if (row.MedicalInsuranceCompanyCost > 0)
+            {
+                AddReplayLine(report, row.MedicalInsuranceCompanyAccountCode, row.MedicalInsuranceCompanyCost, false, row.BranchId, row.DepartmentId, row.EmployeeId, null, row.MedicalInsurancePlanName,
+                    "MEDICAL_INSURANCE_COMPANY_COST_DEBIT",
+                    "MedicalInsurancePlans.CompanyCostAccountCode",
+                    "EmployeeMedicalInsurance active in payroll period; CompanyMonthlyCost > 0",
+                    "POS medical insurance recognizes the employer share as medical insurance expense/company cost.");
+                AddReplayLine(report, row.MedicalInsuranceEmployeeAccountCode, row.MedicalInsuranceCompanyCost, true, row.BranchId, row.DepartmentId, row.EmployeeId, null, row.MedicalInsurancePlanName,
+                    "MEDICAL_INSURANCE_COMPANY_PAYABLE_CREDIT",
+                    "MedicalInsurancePlans.EmployeeDeductionAccountCode",
+                    "EmployeeMedicalInsurance active in payroll period; CompanyMonthlyCost > 0",
+                    "POS medical insurance credits the insurance payable/deduction account for the employer share until provider payment clears it.");
+            }
         }
 
         private PayrollDistributionOptions ReadDistributionOptions(SqlConnection connection)
@@ -2790,6 +3390,59 @@ ORDER BY ABS(SUM(AllocationValue) - SUM(VoucherDebit)) DESC;";
             return PreviewSalaryRunCompatibility(request);
         }
 
+        public PayrollSalarySheetReport BuildPayrollSalarySheetReport(SalaryRunRequest request)
+        {
+            request = NormalizeSalaryRequest(request);
+            var preview = PreviewSalaryRun(request);
+            var posting = BuildPayrollPostingDryRun(ToPostingRequest(request));
+            var periodFrom = new DateTime(request.Year, request.Month, 1);
+            var periodTo = periodFrom.AddMonths(1).AddDays(-1);
+            var report = new PayrollSalarySheetReport
+            {
+                Request = request,
+                ReportTitle = "مسير رواتب",
+                PeriodLabel = "عن شهر " + request.Month.ToString() + " سنة " + request.Year.ToString(),
+                PeriodFrom = periodFrom,
+                PeriodTo = periodTo,
+                GeneratedAt = DateTime.Now,
+                TotalRows = preview.TotalRows,
+                PostedRows = preview.Rows.Count(x => x.IsApproved),
+                UnpostedRows = preview.Rows.Count(x => !x.IsApproved),
+                TotalBasic = preview.TotalBasic,
+                TotalAllowances = preview.TotalAdditions,
+                TotalAdvances = preview.TotalAdvance,
+                TotalInsurance = preview.TotalMedicalInsurance,
+                TotalNet = preview.TotalNet,
+                JournalDebitTotal = posting.DebitTotal,
+                JournalCreditTotal = posting.CreditTotal,
+                JournalBalance = posting.Balance,
+                JournalBalanced = Math.Abs(posting.Balance) <= 0.01m
+            };
+            report.TotalDeductions = preview.Rows.Sum(x => x.ExistingDiscounts + x.MedicalInsuranceDeduction);
+
+            foreach (var row in preview.Rows)
+            {
+                report.Rows.Add(new PayrollSalarySheetRow
+                {
+                    EmployeeId = row.EmployeeId,
+                    EmployeeCode = row.EmployeeCode,
+                    EmployeeName = row.EmployeeName,
+                    BranchName = row.BranchName,
+                    DepartmentName = row.DepartmentName,
+                    BasicSalary = row.BasicSalary,
+                    Allowances = row.SalaryAllowances + row.VariableAdditions,
+                    Deductions = row.ExistingDiscounts + row.MedicalInsuranceDeduction,
+                    Advances = row.AdvanceDeduction,
+                    Insurance = row.MedicalInsuranceDeduction,
+                    NetSalary = row.NetSalary,
+                    IsPosted = row.IsApproved,
+                    PostingStatus = row.IsApproved ? "مرحل" : "غير مرحل"
+                });
+            }
+
+            return report;
+        }
+
         private SalaryRunPreview PreviewSalaryRunCompatibility(SalaryRunRequest request)
         {
             request = NormalizeSalaryRequest(request);
@@ -2800,6 +3453,7 @@ ORDER BY ABS(SUM(AllocationValue) - SUM(VoucherDebit)) DESC;";
                 LoadCompatibilityRows(connection, preview, sgn);
                 AttachCompatibilityComponents(connection, preview, sgn);
                 AttachInsuranceCompatibilityTrace(connection, preview, sgn);
+                AttachMedicalInsuranceCompatibility(connection, preview);
             }
 
             RecalculateCompatibilityFallbackRows(preview);
@@ -2815,11 +3469,115 @@ ORDER BY ABS(SUM(AllocationValue) - SUM(VoucherDebit)) DESC;";
             }
 
             BuildJournalPreview(preview);
+            using (var connection = OpenConnection())
+            {
+                AttachJournalPreviewAccountInfo(connection, preview);
+            }
             preview.Message = preview.HasExistingApprovedRows
-                ? "VB6-compatible preview built from legacy emp_salary snapshots. Approved rows are read-only."
-                : "VB6-compatible preview built from emp_salary snapshots, with component reconstruction fallback where no snapshot exists.";
+                ? "تم بناء معاينة المسير من بيانات الرواتب الحالية. الصفوف المعتمدة للقراءة فقط."
+                : "تم بناء معاينة المسير من بيانات الرواتب الحالية مع إعادة تكوين البنود عند عدم وجود مسير محفوظ.";
             ApplySalaryPreviewPayloadLimits(preview, request);
             return preview;
+        }
+
+        private void AttachMedicalInsuranceCompatibility(SqlConnection connection, SalaryRunPreview preview)
+        {
+            if (preview.Rows.Count == 0
+                || !TableExists(connection, "EmployeeMedicalInsurance")
+                || !TableExists(connection, "MedicalInsurancePlans"))
+            {
+                return;
+            }
+
+            var request = preview.Request;
+            var periodStart = new DateTime(request.Year, request.Month, 1);
+            var periodEnd = periodStart.AddMonths(1).AddDays(-1);
+            var employeeIds = preview.Rows.Select(x => x.EmployeeId).Distinct().ToList();
+            var employeeCsv = string.Join(",", employeeIds.Select(x => x.ToString()).ToArray());
+            var byEmployee = preview.Rows.ToDictionary(x => x.EmployeeId);
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = @"
+;WITH ActiveInsurance AS
+(
+    SELECT
+        mi.*,
+        ROW_NUMBER() OVER (PARTITION BY mi.EmpId ORDER BY mi.StartDate DESC, mi.Id DESC) AS rn
+    FROM dbo.EmployeeMedicalInsurance mi WITH (NOLOCK)
+    INNER JOIN dbo.MedicalInsurancePlans plx WITH (NOLOCK) ON plx.PlanId = mi.PlanId
+    WHERE mi.EmpId IN (" + employeeCsv + @")
+      AND mi.IsActive = 1
+      AND mi.IsMonthly = 1
+      AND mi.StartDate <= @PeriodEnd
+      AND (mi.EndDate IS NULL OR mi.EndDate >= @PeriodStart)
+      AND plx.IsActive = 1
+      AND ISNULL(plx.LifecycleStatus, N'Active') NOT IN (N'Cancelled', N'Expired', N'Suspended')
+)
+SELECT
+    ids.EmpId,
+    ai.Id AS MedicalInsuranceId,
+    ISNULL(pl.PlanNameAr, N'') AS MedicalPlanName,
+    ISNULL(ai.MonthlyCost, 0) AS MonthlyCost,
+    ai.EmployeeShareType,
+    ISNULL(ai.EmployeeShareValue, 0) AS EmployeeShareValue,
+    ai.CompanyShareType,
+    ISNULL(ai.CompanyShareValue, 0) AS CompanyShareValue,
+    ISNULL(ai.EmployeeMonthlyDeduction, 0) AS EmployeeMonthlyDeduction,
+    ISNULL(ai.CompanyMonthlyCost, 0) AS CompanyMonthlyCost,
+    ISNULL(pl.EmployeeDeductionAccountCode, N'') AS EmployeeDeductionAccountCode,
+    ISNULL(pl.CompanyCostAccountCode, N'') AS CompanyCostAccountCode,
+    ISNULL(pmi.EmployeeDeduction, 0) AS SavedMedicalDeduction
+FROM (SELECT EmpId FROM (VALUES " + string.Join(",", employeeIds.Select(x => "(" + x.ToString() + ")").ToArray()) + @") v(EmpId)) ids
+LEFT JOIN ActiveInsurance ai ON ai.EmpId = ids.EmpId AND ai.rn = 1
+LEFT JOIN dbo.MedicalInsurancePlans pl WITH (NOLOCK) ON pl.PlanId = ai.PlanId
+LEFT JOIN dbo.PayrollMedicalInsuranceDeduction pmi WITH (NOLOCK)
+       ON pmi.EmpId = ids.EmpId AND pmi.[Year] = @Year AND pmi.[Month] = @Month;";
+                command.Parameters.Add("@Year", SqlDbType.Int).Value = request.Year;
+                command.Parameters.Add("@Month", SqlDbType.Int).Value = request.Month;
+                command.Parameters.Add("@PeriodStart", SqlDbType.DateTime).Value = periodStart;
+                command.Parameters.Add("@PeriodEnd", SqlDbType.DateTime).Value = periodEnd;
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        SalaryRunEmployeeRow row;
+                        if (!byEmployee.TryGetValue(ReadInt(reader, "EmpId"), out row))
+                        {
+                            continue;
+                        }
+
+                        var savedMedical = ReadDecimal(reader, "SavedMedicalDeduction");
+                        var monthlyCost = ReadDecimal(reader, "MonthlyCost");
+                        var medical = CalculateMedicalInsurance(monthlyCost, ReadString(reader, "EmployeeShareType"), ReadDecimal(reader, "EmployeeShareValue"), ReadString(reader, "CompanyShareType"), ReadDecimal(reader, "CompanyShareValue"));
+                        var storedEmployeeDeduction = ReadDecimal(reader, "EmployeeMonthlyDeduction");
+                        var storedCompanyCost = ReadDecimal(reader, "CompanyMonthlyCost");
+                        if (storedEmployeeDeduction > 0 || storedCompanyCost > 0)
+                        {
+                            medical.EmployeeDeduction = storedEmployeeDeduction;
+                            medical.CompanyCost = storedCompanyCost;
+                        }
+
+                        row.MedicalInsuranceId = ReadNullableInt(reader, "MedicalInsuranceId");
+                        row.MedicalInsurancePlanName = ReadString(reader, "MedicalPlanName");
+                        row.MedicalInsuranceMonthlyCost = monthlyCost;
+                        row.MedicalInsuranceDeduction = medical.EmployeeDeduction;
+                        row.MedicalInsuranceCompanyCost = medical.CompanyCost;
+                        row.MedicalInsuranceEmployeeAccountCode = ReadString(reader, "EmployeeDeductionAccountCode");
+                        row.MedicalInsuranceCompanyAccountCode = ReadString(reader, "CompanyCostAccountCode");
+
+                        if (savedMedical > 0)
+                        {
+                            row.ExistingDiscounts = Math.Max(0m, row.ExistingDiscounts - savedMedical);
+                        }
+
+                        if (row.IsLegacySnapshot && !row.IsApproved)
+                        {
+                            row.TotalDeductions = Math.Max(0m, row.TotalDeductions - savedMedical) + row.MedicalInsuranceDeduction;
+                            row.NetSalary = row.TotalBeforeDeductions - row.TotalDeductions;
+                        }
+                    }
+                }
+            }
         }
 
         private SalaryRunPreview PreviewSalaryRunCurrentBasis(SalaryRunRequest request)
@@ -2841,6 +3599,7 @@ ORDER BY ABS(SUM(AllocationValue) - SUM(VoucherDebit)) DESC;";
 SELECT
     e.Emp_ID, e.Emp_Code, e.Emp_Name, e.BranchId, b.branch_name, e.DepartmentID, d.DepartmentName,
     ISNULL(e.Emp_Salary, 0) AS Emp_Salary,
+    ISNULL(s.Emp_Salary, 0) AS SavedEmpSalary,
     ISNULL(e.Emp_Salary_sakn, 0) AS Emp_Salary_sakn,
     ISNULL(e.Emp_Salary_bus, 0) AS Emp_Salary_bus,
     ISNULL(e.Emp_Salary_food, 0) AS Emp_Salary_food,
@@ -2864,7 +3623,9 @@ SELECT
     mi.CompanyShareType,
     ISNULL(mi.CompanyShareValue, 0) AS CompanyShareValue,
     ISNULL(mi.EmployeeMonthlyDeduction, 0) AS EmployeeMonthlyDeduction,
-    ISNULL(mi.CompanyMonthlyCost, 0) AS CompanyMonthlyCost
+    ISNULL(mi.CompanyMonthlyCost, 0) AS CompanyMonthlyCost,
+    ISNULL(pl.EmployeeDeductionAccountCode, N'') AS MedicalEmployeeAccountCode,
+    ISNULL(pl.CompanyCostAccountCode, N'') AS MedicalCompanyAccountCode
 FROM dbo.TblEmployee e WITH (NOLOCK)
 LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = e.BranchId
 LEFT JOIN dbo.TblEmpDepartments d WITH (NOLOCK) ON d.DeparmentID = e.DepartmentID
@@ -2890,18 +3651,30 @@ OUTER APPLY (
       AND x.IsMonthly = 1
       AND x.StartDate <= @PeriodEnd
       AND (x.EndDate IS NULL OR x.EndDate >= @PeriodStart)
+      AND EXISTS (
+          SELECT 1
+          FROM dbo.MedicalInsurancePlans px WITH (NOLOCK)
+          WHERE px.PlanId = x.PlanId
+            AND px.IsActive = 1
+            AND ISNULL(px.LifecycleStatus, N'Active') NOT IN (N'Cancelled', N'Expired', N'Suspended')
+      )
     ORDER BY x.StartDate DESC, x.Id DESC
 ) mi
 LEFT JOIN dbo.MedicalInsurancePlans pl WITH (NOLOCK) ON pl.PlanId = mi.PlanId
 WHERE ISNULL(e.chkStop, 0) = 0
+  AND ISNULL(e.workstate, 0) = 1
+  AND e.BignDateWork IS NOT NULL
+  AND ISNULL(e.lastHolidaydate, e.BignDateWork) < @PeriodEnd
   AND (@BranchId IS NULL OR e.BranchId = @BranchId)
   AND (@DepartmentId IS NULL OR e.DepartmentID = @DepartmentId)
   AND (@EmployeeId IS NULL OR e.Emp_ID = @EmployeeId)
+  AND (@PostingStatus = N'' OR (@PostingStatus = N'Posted' AND ISNULL(s.payed, 0) = 1) OR (@PostingStatus = N'Unposted' AND ISNULL(s.payed, 0) = 0))
   AND (@IncludeSavedDrafts = 1 OR s.id IS NULL OR ISNULL(s.payed, 0) = 0)
 ORDER BY e.Fullcode, e.Emp_Code, e.Emp_ID;" : @"
 SELECT
     e.Emp_ID, e.Emp_Code, e.Emp_Name, e.BranchId, b.branch_name, e.DepartmentID, d.DepartmentName,
     ISNULL(e.Emp_Salary, 0) AS Emp_Salary,
+    ISNULL(s.Emp_Salary, 0) AS SavedEmpSalary,
     ISNULL(e.Emp_Salary_sakn, 0) AS Emp_Salary_sakn,
     ISNULL(e.Emp_Salary_bus, 0) AS Emp_Salary_bus,
     ISNULL(e.Emp_Salary_food, 0) AS Emp_Salary_food,
@@ -2925,7 +3698,9 @@ SELECT
     N'' AS CompanyShareType,
     CONVERT(money, 0) AS CompanyShareValue,
     CONVERT(money, 0) AS EmployeeMonthlyDeduction,
-    CONVERT(money, 0) AS CompanyMonthlyCost
+    CONVERT(money, 0) AS CompanyMonthlyCost,
+    N'' AS MedicalEmployeeAccountCode,
+    N'' AS MedicalCompanyAccountCode
 FROM dbo.TblEmployee e WITH (NOLOCK)
 LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = e.BranchId
 LEFT JOIN dbo.TblEmpDepartments d WITH (NOLOCK) ON d.DeparmentID = e.DepartmentID
@@ -2936,9 +3711,13 @@ OUTER APPLY (
     WHERE q.Emp_ID = e.Emp_ID
 ) a
 WHERE ISNULL(e.chkStop, 0) = 0
+  AND ISNULL(e.workstate, 0) = 1
+  AND e.BignDateWork IS NOT NULL
+  AND ISNULL(e.lastHolidaydate, e.BignDateWork) < @PeriodEnd
   AND (@BranchId IS NULL OR e.BranchId = @BranchId)
   AND (@DepartmentId IS NULL OR e.DepartmentID = @DepartmentId)
   AND (@EmployeeId IS NULL OR e.Emp_ID = @EmployeeId)
+  AND (@PostingStatus = N'' OR (@PostingStatus = N'Posted' AND ISNULL(s.payed, 0) = 1) OR (@PostingStatus = N'Unposted' AND ISNULL(s.payed, 0) = 0))
   AND (@IncludeSavedDrafts = 1 OR s.id IS NULL OR ISNULL(s.payed, 0) = 0)
 ORDER BY e.Fullcode, e.Emp_Code, e.Emp_ID;";
                 command.Parameters.Add("@Year", SqlDbType.Int).Value = request.Year;
@@ -2949,6 +3728,7 @@ ORDER BY e.Fullcode, e.Emp_Code, e.Emp_ID;";
                 AddNullable(command, "@BranchId", SqlDbType.Int, request.BranchId);
                 AddNullable(command, "@DepartmentId", SqlDbType.Int, request.DepartmentId);
                 AddNullable(command, "@EmployeeId", SqlDbType.Int, request.EmployeeId);
+                command.Parameters.Add("@PostingStatus", SqlDbType.NVarChar, 20).Value = request.PostingStatus ?? string.Empty;
                 command.Parameters.Add("@IncludeSavedDrafts", SqlDbType.Bit).Value = request.IncludeSavedDrafts;
 
                 using (var reader = command.ExecuteReader())
@@ -3001,6 +3781,8 @@ ORDER BY e.Fullcode, e.Emp_Code, e.Emp_ID;";
                             MedicalInsuranceMonthlyCost = monthlyCost,
                             MedicalInsuranceDeduction = medical.EmployeeDeduction,
                             MedicalInsuranceCompanyCost = medical.CompanyCost,
+                            MedicalInsuranceEmployeeAccountCode = ReadString(reader, "MedicalEmployeeAccountCode"),
+                            MedicalInsuranceCompanyAccountCode = ReadString(reader, "MedicalCompanyAccountCode"),
                             TotalDeductions = totalDeductions,
                             NetSalary = totalBeforeDeduction - totalDeductions,
                             ExistingSalaryRowId = ReadNullableInt(reader, "SalaryRowId"),
@@ -3026,6 +3808,10 @@ ORDER BY e.Fullcode, e.Emp_Code, e.Emp_ID;";
             }
 
             BuildJournalPreview(preview);
+            using (var connection = OpenConnection())
+            {
+                AttachJournalPreviewAccountInfo(connection, preview);
+            }
             preview.Message = preview.HasExistingApprovedRows
                 ? "توجد صفوف معتمدة لهذه الفترة، ولن يتم تعديلها من شاشة الويب."
                 : "تم حساب المسير مع إدراج نصيب الموظف من التأمين الطبي كخصم فقط.";
@@ -3074,6 +3860,7 @@ SELECT
     s.project_id, p.Project_name, p.Salary_account AS ProjectSalaryAccount,
     e.Account_code, e.Account_code1, e.Account_Code2, e.Account_Code3, e.BignDateWork, e.lastHolidaydate, opt.MonthIs30days, opt.EmpSalaryDigts,
     ISNULL(e.Emp_Salary, 0) AS Emp_Salary,
+    ISNULL(s.Emp_Salary, 0) AS SavedEmpSalary,
     s.id AS SalaryRowId, s.payed, s.total1, s.total2, s.EmpTotalNet, s.TotalAdvance, s.TotalDiscount,
     s.ToalInsurance, s.CountDays, s.AbcentDay, s.RemainDay, s.VoCation3, s.Mokafea, s.SalesCom,
     ISNULL(a.TotalAdvance, 0) AS RuntimeAdvance,
@@ -3093,9 +3880,13 @@ OUTER APPLY (
     WHERE q.Emp_ID = e.Emp_ID
 ) a
 WHERE ISNULL(e.chkStop, 0) = 0
+  AND ISNULL(e.workstate, 0) = 1
+  AND e.BignDateWork IS NOT NULL
+  AND ISNULL(e.lastHolidaydate, e.BignDateWork) < @PeriodEnd
   AND (@BranchId IS NULL OR e.BranchId = @BranchId)
   AND (@DepartmentId IS NULL OR e.DepartmentID = @DepartmentId)
   AND (@EmployeeId IS NULL OR e.Emp_ID = @EmployeeId)
+  AND (@PostingStatus = N'' OR (@PostingStatus = N'Posted' AND ISNULL(s.payed, 0) = 1) OR (@PostingStatus = N'Unposted' AND ISNULL(s.payed, 0) = 0))
   AND (@IncludeSavedDrafts = 1 OR s.id IS NULL OR ISNULL(s.payed, 0) = 0)
 ORDER BY e.Fullcode, e.Emp_Code, e.Emp_ID;" : @"
 SELECT
@@ -3103,6 +3894,7 @@ SELECT
     s.project_id, p.Project_name, p.Salary_account AS ProjectSalaryAccount,
     e.Account_code, e.Account_code1, e.Account_Code2, e.Account_Code3, e.BignDateWork, e.lastHolidaydate, opt.MonthIs30days, opt.EmpSalaryDigts,
     ISNULL(e.Emp_Salary, 0) AS Emp_Salary,
+    ISNULL(s.Emp_Salary, 0) AS SavedEmpSalary,
     s.id AS SalaryRowId, s.payed, s.total1, s.total2, s.EmpTotalNet, s.TotalAdvance, s.TotalDiscount,
     s.ToalInsurance, s.CountDays, s.AbcentDay, s.RemainDay, s.VoCation3, s.Mokafea, s.SalesCom,
     ISNULL(a.TotalAdvance, 0) AS RuntimeAdvance,
@@ -3122,17 +3914,23 @@ OUTER APPLY (
     WHERE q.Emp_ID = e.Emp_ID
 ) a
 WHERE ISNULL(e.chkStop, 0) = 0
+  AND ISNULL(e.workstate, 0) = 1
+  AND e.BignDateWork IS NOT NULL
+  AND ISNULL(e.lastHolidaydate, e.BignDateWork) < @PeriodEnd
   AND (@BranchId IS NULL OR e.BranchId = @BranchId)
   AND (@DepartmentId IS NULL OR e.DepartmentID = @DepartmentId)
   AND (@EmployeeId IS NULL OR e.Emp_ID = @EmployeeId)
+  AND (@PostingStatus = N'' OR (@PostingStatus = N'Posted' AND ISNULL(s.payed, 0) = 1) OR (@PostingStatus = N'Unposted' AND ISNULL(s.payed, 0) = 0))
   AND (@IncludeSavedDrafts = 1 OR s.id IS NULL OR ISNULL(s.payed, 0) = 0)
 ORDER BY e.Fullcode, e.Emp_Code, e.Emp_ID;";
                 command.Parameters.Add("@Year", SqlDbType.Int).Value = request.Year;
                 command.Parameters.Add("@Month", SqlDbType.Int).Value = request.Month;
                 command.Parameters.Add("@Sgn", SqlDbType.VarChar, 20).Value = sgn;
+                command.Parameters.Add("@PeriodEnd", SqlDbType.DateTime).Value = new DateTime(request.Year, request.Month, 1).AddMonths(1).AddDays(-1);
                 AddNullable(command, "@BranchId", SqlDbType.Int, request.BranchId);
                 AddNullable(command, "@DepartmentId", SqlDbType.Int, request.DepartmentId);
                 AddNullable(command, "@EmployeeId", SqlDbType.Int, request.EmployeeId);
+                command.Parameters.Add("@PostingStatus", SqlDbType.NVarChar, 20).Value = request.PostingStatus ?? string.Empty;
                 command.Parameters.Add("@IncludeSavedDrafts", SqlDbType.Bit).Value = request.IncludeSavedDrafts;
 
                 using (var reader = command.ExecuteReader())
@@ -3141,7 +3939,10 @@ ORDER BY e.Fullcode, e.Emp_Code, e.Emp_ID;";
                     {
                         var salaryRowId = ReadNullableInt(reader, "SalaryRowId");
                         var hasSnapshot = salaryRowId.HasValue;
+                        var employeeBasic = ReadDecimal(reader, "Emp_Salary");
+                        var snapshotBasic = ReadDecimal(reader, "SavedEmpSalary");
                         var snapshotTotal1 = ReadDecimal(reader, "total1");
+                        var snapshotAllowances = hasSnapshot ? snapshotTotal1 - snapshotBasic : 0m;
                         var snapshotTotal2 = ReadDecimal(reader, "total2");
                         var snapshotNet = ReadDecimal(reader, "EmpTotalNet");
                         var runtimeAdvance = ReadDecimal(reader, "RuntimeAdvance");
@@ -3171,8 +3972,9 @@ ORDER BY e.Fullcode, e.Emp_Code, e.Emp_ID;";
                             ProjectId = ReadNullableInt(reader, "project_id"),
                             ProjectName = ReadString(reader, "Project_name"),
                             ProjectSalaryAccountCode = ReadString(reader, "ProjectSalaryAccount"),
-                            BasicSalary = hasSnapshot ? snapshotTotal1 : ReadDecimal(reader, "Emp_Salary"),
-                            TotalBeforeDeductions = hasSnapshot ? snapshotTotal1 : ReadDecimal(reader, "Emp_Salary") + ReadDecimal(reader, "Mokafea") + ReadDecimal(reader, "SalesCom"),
+                            BasicSalary = hasSnapshot ? snapshotBasic : employeeBasic,
+                            SalaryAllowances = hasSnapshot ? snapshotAllowances : 0m,
+                            TotalBeforeDeductions = hasSnapshot ? snapshotTotal1 : employeeBasic + ReadDecimal(reader, "Mokafea") + ReadDecimal(reader, "SalesCom"),
                             AdvanceDeduction = runtimeAdvance == 0 ? savedAdvance : runtimeAdvance,
                             ExistingDiscounts = ReadDecimal(reader, "TotalDiscount"),
                             MedicalInsuranceDeduction = insurance,
@@ -3854,9 +4656,9 @@ ORDER BY e.Emp_ID;";
         public SalaryRunSaveResult SaveSalaryRun(SalaryRunRequest request, int userId)
         {
             var preview = PreviewSalaryRun(request);
-            if (preview.Rows.Any(x => !x.IsLegacySnapshot))
+            if (preview.Rows.Count == 0)
             {
-                throw new InvalidOperationException("Salary run save is disabled for reconstructed compatibility rows until VB6 component-level parity is approved.");
+                throw new InvalidOperationException("لا توجد بيانات موظفين صالحة لإنشاء مسير الرواتب للفترة المحددة.");
             }
 
             var result = new SalaryRunSaveResult();
@@ -3865,51 +4667,32 @@ ORDER BY e.Emp_ID;";
             var periodEnd = periodStart.AddMonths(1).AddDays(-1);
 
             using (var connection = OpenConnection())
-            using (var transaction = connection.BeginTransaction())
+            using (var transaction = connection.BeginTransaction(IsolationLevel.Serializable))
             {
+                ValidateSalaryRunDuplicates(connection, transaction, preview.Request, sgn);
                 foreach (var row in preview.Rows)
                 {
                     if (row.IsApproved)
                     {
+                        result.SkippedRows++;
                         continue;
                     }
 
-                    if (row.ExistingSalaryRowId.HasValue)
+                    var existingSalaryRowId = row.ExistingSalaryRowId ?? FindSalaryRunRowForUpdate(connection, transaction, sgn, row.EmployeeId);
+                    if (existingSalaryRowId.HasValue)
                     {
-                        using (var command = CreateCommand(connection, transaction, @"
-UPDATE dbo.emp_salary
-SET Emp_Code = @Code,
-    Emp_Name = @Name,
-    Emp_Salary = @Basic,
-    total1 = @TotalBefore,
-    TotalAdvance = @Advance,
-    TotalDiscount = @Discounts,
-    total2 = @TotalDeductions,
-    EmpTotalNet = @Net,
-    BranchId = @BranchId,
-    DepartmentID = @DepartmentId,
-    RecordDate = GETDATE()
-WHERE id = @Id AND ISNULL(payed, 0) = 0;"))
+                        row.ExistingSalaryRowId = existingSalaryRowId;
+                        var updated = UpdateSalaryRunRow(connection, transaction, row, preview.Request, sgn);
+                        result.UpdatedRows += updated;
+                        if (updated == 0)
                         {
-                            AddSalaryParameters(command, row, preview.Request, sgn);
-                            command.Parameters.Add("@Id", SqlDbType.Int).Value = row.ExistingSalaryRowId.Value;
-                            result.UpdatedRows += command.ExecuteNonQuery();
+                            result.SkippedRows++;
                         }
                     }
                     else
                     {
-                        using (var command = CreateCommand(connection, transaction, @"
-INSERT INTO dbo.emp_salary
-(emp_id, Emp_Code, Emp_Name, Emp_Salary, total1, TotalAdvance, TotalDiscount, total2, EmpTotalNet, sgn, m_year, m_month, payed, DepartmentID, BranchId, RecordDate)
-VALUES
-(@EmployeeId, @Code, @Name, @Basic, @TotalBefore, @Advance, @Discounts, @TotalDeductions, @Net, @Sgn, @YearText, @MonthText, 0, @DepartmentId, @BranchId, GETDATE());
-SELECT CONVERT(int, SCOPE_IDENTITY());"))
-                        {
-                            AddSalaryParameters(command, row, preview.Request, sgn);
-                            var id = Convert.ToInt32(command.ExecuteScalar());
-                            result.InsertedRows++;
-                            row.ExistingSalaryRowId = id;
-                        }
+                        row.ExistingSalaryRowId = InsertSalaryRunRow(connection, transaction, row, preview.Request, sgn);
+                        result.InsertedRows++;
                     }
 
                     SaveMedicalDeductionAudit(connection, transaction, row, preview.Request, periodStart, periodEnd, userId);
@@ -3919,8 +4702,101 @@ SELECT CONVERT(int, SCOPE_IDENTITY());"))
                 transaction.Commit();
             }
 
-            result.Message = "تم حفظ مسودة المسير. قيد التأمين الطبي يعرض كنصيب موظف ضمن الخصومات، وتكلفة الشركة محفوظة للتقرير دون ترحيل محاسبي تلقائي.";
+            result.Message = "تم حفظ مسير الرواتب. تمت إضافة " + result.InsertedRows.ToString() + " صف وتحديث " + result.UpdatedRows.ToString() + " صف، وتجاوز " + result.SkippedRows.ToString() + " صف مقفل أو مدفوع.";
             return result;
+        }
+
+        private static void ValidateSalaryRunDuplicates(SqlConnection connection, SqlTransaction transaction, SalaryRunRequest request, string sgn)
+        {
+            using (var command = CreateCommand(connection, transaction, @"
+SELECT TOP (10) emp_id, COUNT(1) AS DuplicateCount
+FROM dbo.emp_salary WITH (UPDLOCK, HOLDLOCK)
+WHERE sgn = @Sgn
+  AND (@BranchId IS NULL OR BranchId = @BranchId)
+  AND (@DepartmentId IS NULL OR DepartmentID = @DepartmentId)
+  AND (@EmployeeId IS NULL OR emp_id = @EmployeeId)
+GROUP BY emp_id
+HAVING COUNT(1) > 1
+ORDER BY emp_id;"))
+            {
+                command.Parameters.Add("@Sgn", SqlDbType.VarChar, 20).Value = sgn;
+                AddNullable(command, "@BranchId", SqlDbType.Int, request.BranchId);
+                AddNullable(command, "@DepartmentId", SqlDbType.Int, request.DepartmentId);
+                AddNullable(command, "@EmployeeId", SqlDbType.Int, request.EmployeeId);
+                var employees = new List<string>();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        employees.Add(Convert.ToString(reader["emp_id"]) + " (" + Convert.ToString(reader["DuplicateCount"]) + ")");
+                    }
+                }
+
+                if (employees.Count > 0)
+                {
+                    throw new InvalidOperationException("لا يمكن حفظ مسير الرواتب لوجود صفوف مكررة لنفس الموظف والفترة في emp_salary. الموظفون: " + string.Join(", ", employees.ToArray()));
+                }
+            }
+        }
+
+        private static int? FindSalaryRunRowForUpdate(SqlConnection connection, SqlTransaction transaction, string sgn, int employeeId)
+        {
+            using (var command = CreateCommand(connection, transaction, @"
+SELECT TOP (1) id
+FROM dbo.emp_salary WITH (UPDLOCK, HOLDLOCK)
+WHERE sgn = @Sgn AND emp_id = @EmployeeId
+ORDER BY id;"))
+            {
+                command.Parameters.Add("@Sgn", SqlDbType.VarChar, 20).Value = sgn;
+                command.Parameters.Add("@EmployeeId", SqlDbType.Int).Value = employeeId;
+                var value = command.ExecuteScalar();
+                return value == null || value == DBNull.Value ? (int?)null : Convert.ToInt32(value);
+            }
+        }
+
+        private static int UpdateSalaryRunRow(SqlConnection connection, SqlTransaction transaction, SalaryRunEmployeeRow row, SalaryRunRequest request, string sgn)
+        {
+            using (var command = CreateCommand(connection, transaction, @"
+UPDATE dbo.emp_salary
+SET Emp_Code = @Code,
+    Emp_Name = @Name,
+    Emp_Salary = @Basic,
+    total1 = @TotalBefore,
+    TotalAdvance = @Advance,
+    TotalDiscount = @Discounts,
+    total2 = @TotalDeductions,
+    EmpTotalNet = @Net,
+    ToalInsurance = @Insurance,
+    VoCation3 = @VacationDeduction,
+    AbcentDay = @AbsentDays,
+    CountDays = @CountDays,
+    RemainDay = @RemainingDays,
+    project_id = @ProjectId,
+    BranchId = @BranchId,
+    DepartmentID = @DepartmentId,
+    RecordDate = GETDATE()" + BuildComponentUpdateSet(row) + @"
+WHERE id = @Id AND ISNULL(payed, 0) = 0;"))
+            {
+                AddSalaryParameters(command, row, request, sgn);
+                AddSalarySnapshotParameters(command, row);
+                command.Parameters.Add("@Id", SqlDbType.Int).Value = row.ExistingSalaryRowId.Value;
+                return command.ExecuteNonQuery();
+            }
+        }
+
+        private static int InsertSalaryRunRow(SqlConnection connection, SqlTransaction transaction, SalaryRunEmployeeRow row, SalaryRunRequest request, string sgn)
+        {
+            using (var command = CreateCommand(connection, transaction, @"
+INSERT INTO dbo.emp_salary
+(emp_id, Emp_Code, Emp_Name, Emp_Salary, total1, TotalAdvance, TotalDiscount, total2, EmpTotalNet, sgn, m_year, m_month, payed, DepartmentID, BranchId, project_id, ToalInsurance, VoCation3, AbcentDay, CountDays, RemainDay, RecordDate" + BuildComponentInsertColumns(row) + @")
+VALUES
+(@EmployeeId, @Code, @Name, @Basic, @TotalBefore, @Advance, @Discounts, @TotalDeductions, @Net, @Sgn, @YearText, @MonthText, 0, @DepartmentId, @BranchId, @ProjectId, @Insurance, @VacationDeduction, @AbsentDays, @CountDays, @RemainingDays, GETDATE()" + BuildComponentInsertValues(row) + @");
+SELECT CONVERT(int, SCOPE_IDENTITY());"))
+            {
+                AddSalaryParameters(command, row, request, sgn);
+                AddSalarySnapshotParameters(command, row);
+                return Convert.ToInt32(command.ExecuteScalar());
+            }
         }
 
         public IList<MedicalInsuranceSubscriptionReportRow> GetMedicalInsuranceSubscriptions(MedicalInsuranceReportFilter filter)
@@ -3936,18 +4812,36 @@ SELECT CONVERT(int, SCOPE_IDENTITY());"))
                 }
 
                 command.CommandText = @"
-SELECT e.Emp_ID, e.Emp_Code, e.Emp_Name, pr.ProviderNameAr, pl.PlanNameAr,
+DECLARE @AsOfDate DATETIME;
+SET @AsOfDate = ISNULL(@To, GETDATE());
+
+SELECT e.Emp_ID, e.Emp_Code, e.Emp_Name, b.branch_name, dep.DepartmentName,
+       pr.ProviderNameAr, pl.PlanNameAr, mi.PolicyNumber, mi.CardNumber,
        mi.StartDate, mi.EndDate, mi.IsActive, mi.MonthlyCost,
-       mi.EmployeeMonthlyDeduction, mi.CompanyMonthlyCost
+       mi.EmployeeMonthlyDeduction, mi.CompanyMonthlyCost,
+       CASE
+           WHEN ISNULL(mi.IsActive, 0) = 0 THEN N'Cancelled'
+           WHEN mi.EndDate IS NOT NULL AND mi.EndDate < @AsOfDate THEN N'Expired'
+           ELSE N'Active'
+       END AS InsuranceStatus
 FROM dbo.EmployeeMedicalInsurance mi WITH (NOLOCK)
 INNER JOIN dbo.TblEmployee e WITH (NOLOCK) ON e.Emp_ID = mi.EmpId
+LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = e.BranchId
+LEFT JOIN dbo.TblEmpDepartments dep WITH (NOLOCK) ON dep.DeparmentID = e.DepartmentID
 LEFT JOIN dbo.MedicalInsurancePlans pl WITH (NOLOCK) ON pl.PlanId = mi.PlanId
 LEFT JOIN dbo.MedicalInsuranceProviders pr WITH (NOLOCK) ON pr.ProviderId = pl.ProviderId
 WHERE (@ActiveOnly = 0 OR mi.IsActive = 1)
   AND (@PlanId IS NULL OR mi.PlanId = @PlanId)
   AND (@ProviderId IS NULL OR pl.ProviderId = @ProviderId)
+  AND (@BranchId IS NULL OR e.BranchId = @BranchId)
+  AND (@DepartmentId IS NULL OR e.DepartmentID = @DepartmentId)
+  AND (@EmployeeId IS NULL OR e.Emp_ID = @EmployeeId)
   AND (@From IS NULL OR mi.EndDate IS NULL OR mi.EndDate >= @From)
   AND (@To IS NULL OR mi.StartDate <= @To)
+  AND (@Status = N'' OR
+       (@Status = N'Active' AND ISNULL(mi.IsActive, 0) = 1 AND (mi.EndDate IS NULL OR mi.EndDate >= @AsOfDate)) OR
+       (@Status = N'Expired' AND ISNULL(mi.IsActive, 0) = 1 AND mi.EndDate IS NOT NULL AND mi.EndDate < @AsOfDate) OR
+       (@Status = N'Cancelled' AND ISNULL(mi.IsActive, 0) = 0))
 ORDER BY mi.IsActive DESC, e.Emp_Name;";
                 AddReportParameters(command, filter);
                 using (var reader = command.ExecuteReader())
@@ -3959,11 +4853,16 @@ ORDER BY mi.IsActive DESC, e.Emp_Name;";
                             EmployeeId = ReadInt(reader, "Emp_ID"),
                             EmployeeCode = ReadString(reader, "Emp_Code"),
                             EmployeeName = ReadString(reader, "Emp_Name"),
+                            BranchName = ReadString(reader, "branch_name"),
+                            DepartmentName = ReadString(reader, "DepartmentName"),
                             ProviderName = ReadString(reader, "ProviderNameAr"),
                             PlanName = ReadString(reader, "PlanNameAr"),
+                            PolicyNumber = ReadString(reader, "PolicyNumber"),
+                            CardNumber = ReadString(reader, "CardNumber"),
                             StartDate = ReadNullableDate(reader, "StartDate"),
                             EndDate = ReadNullableDate(reader, "EndDate"),
                             IsActive = ReadBool(reader, "IsActive"),
+                            Status = ReadString(reader, "InsuranceStatus"),
                             MonthlyCost = ReadDecimal(reader, "MonthlyCost"),
                             EmployeeMonthlyDeduction = ReadDecimal(reader, "EmployeeMonthlyDeduction"),
                             CompanyMonthlyCost = ReadDecimal(reader, "CompanyMonthlyCost")
@@ -3988,16 +4887,26 @@ ORDER BY mi.IsActive DESC, e.Emp_Name;";
                 }
 
                 command.CommandText = @"
-SELECT e.Emp_ID, e.Emp_Code, e.Emp_Name, pl.PlanNameAr,
-       d.PeriodFrom, d.PeriodTo, d.EmployeeDeduction, d.CompanyCost
+SELECT e.Emp_ID, e.Emp_Code, e.Emp_Name, b.branch_name, dep.DepartmentName,
+       pr.ProviderNameAr, pl.PlanNameAr,
+       d.[Year], d.[Month], d.PeriodFrom, d.PeriodTo, d.EmployeeDeduction, d.CompanyCost,
+       ISNULL(s.payed, 0) AS IsPosted
 FROM dbo.PayrollMedicalInsuranceDeduction d WITH (NOLOCK)
 INNER JOIN dbo.TblEmployee e WITH (NOLOCK) ON e.Emp_ID = d.EmpId
 LEFT JOIN dbo.EmployeeMedicalInsurance mi WITH (NOLOCK) ON mi.Id = d.EmployeeInsuranceId
 LEFT JOIN dbo.MedicalInsurancePlans pl WITH (NOLOCK) ON pl.PlanId = mi.PlanId
+LEFT JOIN dbo.MedicalInsuranceProviders pr WITH (NOLOCK) ON pr.ProviderId = pl.ProviderId
+LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = e.BranchId
+LEFT JOIN dbo.TblEmpDepartments dep WITH (NOLOCK) ON dep.DeparmentID = e.DepartmentID
+LEFT JOIN dbo.emp_salary s WITH (NOLOCK) ON s.emp_id = d.EmpId AND s.sgn = CONVERT(NVARCHAR(10), d.[Year]) + CONVERT(NVARCHAR(10), d.[Month])
 WHERE (@PlanId IS NULL OR mi.PlanId = @PlanId)
   AND (@ProviderId IS NULL OR pl.ProviderId = @ProviderId)
+  AND (@BranchId IS NULL OR e.BranchId = @BranchId)
+  AND (@DepartmentId IS NULL OR e.DepartmentID = @DepartmentId)
+  AND (@EmployeeId IS NULL OR e.Emp_ID = @EmployeeId)
   AND (@From IS NULL OR d.PeriodTo >= @From)
   AND (@To IS NULL OR d.PeriodFrom <= @To)
+  AND (@PostingStatus = N'' OR (@PostingStatus = N'Posted' AND ISNULL(s.payed, 0) = 1) OR (@PostingStatus = N'Unposted' AND ISNULL(s.payed, 0) = 0))
 ORDER BY d.PeriodFrom DESC, e.Emp_Name;";
                 AddReportParameters(command, filter);
                 using (var reader = command.ExecuteReader())
@@ -4009,11 +4918,221 @@ ORDER BY d.PeriodFrom DESC, e.Emp_Name;";
                             EmployeeId = ReadInt(reader, "Emp_ID"),
                             EmployeeCode = ReadString(reader, "Emp_Code"),
                             EmployeeName = ReadString(reader, "Emp_Name"),
+                            BranchName = ReadString(reader, "branch_name"),
+                            DepartmentName = ReadString(reader, "DepartmentName"),
+                            ProviderName = ReadString(reader, "ProviderNameAr"),
                             PlanName = ReadString(reader, "PlanNameAr"),
                             PeriodFrom = ReadNullableDate(reader, "PeriodFrom").GetValueOrDefault(),
                             PeriodTo = ReadNullableDate(reader, "PeriodTo").GetValueOrDefault(),
+                            Year = ReadInt(reader, "Year"),
+                            Month = ReadInt(reader, "Month"),
                             EmployeeDeduction = ReadDecimal(reader, "EmployeeDeduction"),
-                            CompanyCost = ReadDecimal(reader, "CompanyCost")
+                            CompanyCost = ReadDecimal(reader, "CompanyCost"),
+                            IsPosted = ReadBool(reader, "IsPosted"),
+                            PostingStatus = ReadBool(reader, "IsPosted") ? "مرحل" : "غير مرحل"
+                        });
+                    }
+                }
+            }
+
+            return rows;
+        }
+
+        public MedicalInsuranceReportBundle GetMedicalInsuranceReportBundle(MedicalInsuranceReportFilter filter)
+        {
+            filter = NormalizeMedicalInsuranceReportFilter(filter);
+            var result = new MedicalInsuranceReportBundle
+            {
+                Filter = filter,
+                PeriodLabel = BuildMedicalInsurancePeriodLabel(filter)
+            };
+
+            result.Subscriptions = GetMedicalInsuranceSubscriptions(filter);
+            result.MonthlyDeductions = GetMedicalInsuranceDeductions(filter);
+            result.CompanyContributions = BuildMedicalInsuranceCompanyContributionSummary(result.MonthlyDeductions);
+            result.Payables = GetMedicalInsurancePayableSummary(filter);
+            result.PayrollIntegration = GetMedicalInsurancePayrollIntegration(filter);
+
+            result.SubscriptionCount = result.Subscriptions.Count;
+            result.ActiveCount = result.Subscriptions.Count(x => string.Equals(x.Status, "Active", StringComparison.OrdinalIgnoreCase));
+            result.ExpiredCount = result.Subscriptions.Count(x => string.Equals(x.Status, "Expired", StringComparison.OrdinalIgnoreCase));
+            result.CancelledCount = result.Subscriptions.Count(x => string.Equals(x.Status, "Cancelled", StringComparison.OrdinalIgnoreCase));
+            result.TotalMonthlyCost = result.Subscriptions.Sum(x => x.MonthlyCost);
+            result.TotalEmployeeDeduction = result.MonthlyDeductions.Sum(x => x.EmployeeDeduction);
+            result.TotalCompanyCost = result.MonthlyDeductions.Sum(x => x.CompanyCost);
+            result.TotalPayable = result.TotalEmployeeDeduction + result.TotalCompanyCost;
+            result.PostedPayableCredit = result.Payables.Sum(x => x.PostedNetCredit);
+            return result;
+        }
+
+        private IList<MedicalInsuranceContributionSummaryRow> BuildMedicalInsuranceCompanyContributionSummary(IList<MedicalInsuranceDeductionReportRow> rows)
+        {
+            return rows
+                .GroupBy(x => string.IsNullOrWhiteSpace(x.ProviderName) ? "بدون شركة تأمين" : x.ProviderName)
+                .Select(x => new MedicalInsuranceContributionSummaryRow
+                {
+                    GroupName = x.Key,
+                    Employees = x.Select(r => r.EmployeeId).Distinct().Count(),
+                    EmployeeDeduction = x.Sum(r => r.EmployeeDeduction),
+                    CompanyCost = x.Sum(r => r.CompanyCost),
+                    TotalPayable = x.Sum(r => r.EmployeeDeduction + r.CompanyCost)
+                })
+                .OrderByDescending(x => x.TotalPayable)
+                .ToList();
+        }
+
+        private IList<MedicalInsurancePayableSummaryRow> GetMedicalInsurancePayableSummary(MedicalInsuranceReportFilter filter)
+        {
+            var rows = new List<MedicalInsurancePayableSummaryRow>();
+            using (var connection = OpenConnection())
+            using (var command = connection.CreateCommand())
+            {
+                if (!TableExists(connection, "PayrollMedicalInsuranceDeduction")
+                    || !TableExists(connection, "MedicalInsurancePlans")
+                    || !TableExists(connection, "MedicalInsuranceProviders"))
+                {
+                    return rows;
+                }
+
+                command.CommandText = @"
+;WITH PayrollRows AS
+(
+    SELECT pr.ProviderId, pr.ProviderNameAr, pl.EmployeeDeductionAccountCode,
+           d.EmployeeDeduction, d.CompanyCost, d.[Year], d.[Month]
+    FROM dbo.PayrollMedicalInsuranceDeduction d WITH (NOLOCK)
+    INNER JOIN dbo.TblEmployee e WITH (NOLOCK) ON e.Emp_ID = d.EmpId
+    LEFT JOIN dbo.EmployeeMedicalInsurance mi WITH (NOLOCK) ON mi.Id = d.EmployeeInsuranceId
+    LEFT JOIN dbo.MedicalInsurancePlans pl WITH (NOLOCK) ON pl.PlanId = mi.PlanId
+    LEFT JOIN dbo.MedicalInsuranceProviders pr WITH (NOLOCK) ON pr.ProviderId = pl.ProviderId
+    LEFT JOIN dbo.emp_salary s WITH (NOLOCK) ON s.emp_id = d.EmpId AND s.sgn = CONVERT(NVARCHAR(10), d.[Year]) + CONVERT(NVARCHAR(10), d.[Month])
+    WHERE (@PlanId IS NULL OR mi.PlanId = @PlanId)
+      AND (@ProviderId IS NULL OR pl.ProviderId = @ProviderId)
+      AND (@BranchId IS NULL OR e.BranchId = @BranchId)
+      AND (@DepartmentId IS NULL OR e.DepartmentID = @DepartmentId)
+      AND (@EmployeeId IS NULL OR e.Emp_ID = @EmployeeId)
+      AND (@From IS NULL OR d.PeriodTo >= @From)
+      AND (@To IS NULL OR d.PeriodFrom <= @To)
+      AND (@PostingStatus = N'' OR (@PostingStatus = N'Posted' AND ISNULL(s.payed, 0) = 1) OR (@PostingStatus = N'Unposted' AND ISNULL(s.payed, 0) = 0))
+),
+PostedRows AS
+(
+    SELECT p.ProviderId, p.EmployeeDeductionAccountCode,
+           SUM(ISNULL(v.credit_value, 0)) AS PostedCredit,
+           SUM(ISNULL(v.depet_value, 0)) AS PostedDebit
+    FROM (SELECT DISTINCT ProviderId, EmployeeDeductionAccountCode, [Year], [Month] FROM PayrollRows) p
+    INNER JOIN dbo.Notes n WITH (NOLOCK) ON n.salary = CONVERT(NVARCHAR(10), p.[Year]) + CONVERT(NVARCHAR(10), p.[Month])
+    INNER JOIN dbo.DOUBLE_ENTREY_VOUCHERS v WITH (NOLOCK) ON v.Notes_ID = n.NoteID AND v.account_code = p.EmployeeDeductionAccountCode
+    GROUP BY p.ProviderId, p.EmployeeDeductionAccountCode
+)
+SELECT p.ProviderId, p.ProviderNameAr, p.EmployeeDeductionAccountCode,
+       SUM(p.EmployeeDeduction) AS EmployeeDeduction,
+       SUM(p.CompanyCost) AS CompanyCost,
+       SUM(p.EmployeeDeduction + p.CompanyCost) AS PayrollPayable,
+       ISNULL(MAX(r.PostedCredit), 0) AS PostedCredit,
+       ISNULL(MAX(r.PostedDebit), 0) AS PostedDebit
+FROM PayrollRows p
+LEFT JOIN PostedRows r ON ISNULL(r.ProviderId, -1) = ISNULL(p.ProviderId, -1)
+    AND ISNULL(r.EmployeeDeductionAccountCode, N'') = ISNULL(p.EmployeeDeductionAccountCode, N'')
+GROUP BY p.ProviderId, p.ProviderNameAr, p.EmployeeDeductionAccountCode
+ORDER BY p.ProviderNameAr;";
+                AddReportParameters(command, filter);
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var payrollPayable = ReadDecimal(reader, "PayrollPayable");
+                        var postedCredit = ReadDecimal(reader, "PostedCredit");
+                        var postedDebit = ReadDecimal(reader, "PostedDebit");
+                        rows.Add(new MedicalInsurancePayableSummaryRow
+                        {
+                            ProviderId = ReadNullableInt(reader, "ProviderId"),
+                            ProviderName = ReadString(reader, "ProviderNameAr"),
+                            AccountCode = ReadString(reader, "EmployeeDeductionAccountCode"),
+                            EmployeeDeduction = ReadDecimal(reader, "EmployeeDeduction"),
+                            CompanyCost = ReadDecimal(reader, "CompanyCost"),
+                            PayrollPayable = payrollPayable,
+                            PostedCredit = postedCredit,
+                            PostedDebit = postedDebit,
+                            PostedNetCredit = postedCredit - postedDebit,
+                            Difference = payrollPayable - (postedCredit - postedDebit)
+                        });
+                    }
+                }
+            }
+
+            return rows;
+        }
+
+        private IList<MedicalInsurancePayrollIntegrationRow> GetMedicalInsurancePayrollIntegration(MedicalInsuranceReportFilter filter)
+        {
+            var rows = new List<MedicalInsurancePayrollIntegrationRow>();
+            using (var connection = OpenConnection())
+            using (var command = connection.CreateCommand())
+            {
+                if (!TableExists(connection, "PayrollMedicalInsuranceDeduction"))
+                {
+                    return rows;
+                }
+
+                command.CommandText = @"
+SELECT e.Emp_ID, e.Emp_Code, e.Emp_Name, b.branch_name, dep.DepartmentName,
+       pr.ProviderNameAr, pl.PlanNameAr, d.[Year], d.[Month],
+       d.EmployeeDeduction, d.CompanyCost,
+       ISNULL(s.EmpTotalNet, 0) AS PayrollNetSalary,
+       ISNULL(s.payed, 0) AS IsPosted,
+       n.NoteID,
+       ISNULL(SUM(v.depet_value), 0) AS JournalDebit,
+       ISNULL(SUM(v.credit_value), 0) AS JournalCredit
+FROM dbo.PayrollMedicalInsuranceDeduction d WITH (NOLOCK)
+INNER JOIN dbo.TblEmployee e WITH (NOLOCK) ON e.Emp_ID = d.EmpId
+LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = e.BranchId
+LEFT JOIN dbo.TblEmpDepartments dep WITH (NOLOCK) ON dep.DeparmentID = e.DepartmentID
+LEFT JOIN dbo.EmployeeMedicalInsurance mi WITH (NOLOCK) ON mi.Id = d.EmployeeInsuranceId
+LEFT JOIN dbo.MedicalInsurancePlans pl WITH (NOLOCK) ON pl.PlanId = mi.PlanId
+LEFT JOIN dbo.MedicalInsuranceProviders pr WITH (NOLOCK) ON pr.ProviderId = pl.ProviderId
+LEFT JOIN dbo.emp_salary s WITH (NOLOCK) ON s.emp_id = d.EmpId AND s.sgn = CONVERT(NVARCHAR(10), d.[Year]) + CONVERT(NVARCHAR(10), d.[Month])
+LEFT JOIN dbo.Notes n WITH (NOLOCK) ON n.salary = CONVERT(NVARCHAR(10), d.[Year]) + CONVERT(NVARCHAR(10), d.[Month])
+LEFT JOIN dbo.DOUBLE_ENTREY_VOUCHERS v WITH (NOLOCK) ON v.Notes_ID = n.NoteID
+WHERE (@PlanId IS NULL OR mi.PlanId = @PlanId)
+  AND (@ProviderId IS NULL OR pl.ProviderId = @ProviderId)
+  AND (@BranchId IS NULL OR e.BranchId = @BranchId)
+  AND (@DepartmentId IS NULL OR e.DepartmentID = @DepartmentId)
+  AND (@EmployeeId IS NULL OR e.Emp_ID = @EmployeeId)
+  AND (@From IS NULL OR d.PeriodTo >= @From)
+  AND (@To IS NULL OR d.PeriodFrom <= @To)
+  AND (@PostingStatus = N'' OR (@PostingStatus = N'Posted' AND ISNULL(s.payed, 0) = 1) OR (@PostingStatus = N'Unposted' AND ISNULL(s.payed, 0) = 0))
+GROUP BY e.Emp_ID, e.Emp_Code, e.Emp_Name, b.branch_name, dep.DepartmentName,
+         pr.ProviderNameAr, pl.PlanNameAr, d.[Year], d.[Month], d.EmployeeDeduction, d.CompanyCost,
+         s.EmpTotalNet, s.payed, n.NoteID
+ORDER BY d.[Year] DESC, d.[Month] DESC, e.Emp_Name;";
+                AddReportParameters(command, filter);
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var debit = ReadDecimal(reader, "JournalDebit");
+                        var credit = ReadDecimal(reader, "JournalCredit");
+                        var posted = ReadBool(reader, "IsPosted");
+                        rows.Add(new MedicalInsurancePayrollIntegrationRow
+                        {
+                            EmployeeId = ReadInt(reader, "Emp_ID"),
+                            EmployeeCode = ReadString(reader, "Emp_Code"),
+                            EmployeeName = ReadString(reader, "Emp_Name"),
+                            BranchName = ReadString(reader, "branch_name"),
+                            DepartmentName = ReadString(reader, "DepartmentName"),
+                            ProviderName = ReadString(reader, "ProviderNameAr"),
+                            PlanName = ReadString(reader, "PlanNameAr"),
+                            Year = ReadInt(reader, "Year"),
+                            Month = ReadInt(reader, "Month"),
+                            EmployeeDeduction = ReadDecimal(reader, "EmployeeDeduction"),
+                            CompanyCost = ReadDecimal(reader, "CompanyCost"),
+                            PayrollNetSalary = ReadDecimal(reader, "PayrollNetSalary"),
+                            IsPosted = posted,
+                            PostingStatus = posted ? "مرحل" : "غير مرحل",
+                            NoteId = ReadNullableInt(reader, "NoteID"),
+                            JournalDebit = debit,
+                            JournalCredit = credit,
+                            JournalBalance = debit - credit
                         });
                     }
                 }
@@ -4039,7 +5158,7 @@ ORDER BY d.PeriodFrom DESC, e.Emp_Name;";
                 result.SchemaReady = hasSchema;
                 if (!hasSchema)
                 {
-                    result.Message = "Medical insurance setup is not installed in this database yet. POS shows operational visibility after MainErp setup is deployed.";
+                    result.Message = "Medical insurance setup is not installed in this database yet. Run the POS medical insurance SQL installer before using this screen.";
                     result.AccountingPreview = BuildInsuranceAccountingPreview(0, 0);
                     return result;
                 }
@@ -4440,13 +5559,88 @@ GROUP BY EmpId;";
                 {
                     preview.JournalPreview.Add(new SalaryRunJournalLine
                     {
-                        AccountCode = row.EmployeeAccountCode,
+                        AccountCode = row.MedicalInsuranceEmployeeAccountCode,
                         Credit = row.MedicalInsuranceDeduction,
-                        Description = "خصم التأمين الطبي - نصيب الموظف " + row.EmployeeName,
+                        Description = "استحقاق شركة التأمين الطبي - نصيب الموظف " + row.EmployeeName,
                         BranchId = row.BranchId,
                         DepartmentId = row.DepartmentId,
                         EmployeeId = row.EmployeeId
                     });
+                }
+
+                if (row.MedicalInsuranceCompanyCost > 0)
+                {
+                    preview.JournalPreview.Add(new SalaryRunJournalLine
+                    {
+                        AccountCode = row.MedicalInsuranceCompanyAccountCode,
+                        Debit = row.MedicalInsuranceCompanyCost,
+                        Description = "تكلفة التأمين الطبي - نصيب الشركة " + row.EmployeeName,
+                        BranchId = row.BranchId,
+                        DepartmentId = row.DepartmentId,
+                        EmployeeId = row.EmployeeId
+                    });
+                    preview.JournalPreview.Add(new SalaryRunJournalLine
+                    {
+                        AccountCode = row.MedicalInsuranceEmployeeAccountCode,
+                        Credit = row.MedicalInsuranceCompanyCost,
+                        Description = "استحقاق شركة التأمين الطبي - نصيب الشركة " + row.EmployeeName,
+                        BranchId = row.BranchId,
+                        DepartmentId = row.DepartmentId,
+                        EmployeeId = row.EmployeeId
+                    });
+                }
+            }
+        }
+
+        private void AttachJournalPreviewAccountInfo(SqlConnection connection, SalaryRunPreview preview)
+        {
+            if (preview == null || preview.JournalPreview == null || preview.JournalPreview.Count == 0)
+            {
+                return;
+            }
+
+            var accountCodes = preview.JournalPreview
+                .Select(x => x.AccountCode)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (accountCodes.Count == 0)
+            {
+                return;
+            }
+
+            var names = new Dictionary<string, Tuple<string, string>>(StringComparer.OrdinalIgnoreCase);
+            using (var command = connection.CreateCommand())
+            {
+                var parameterNames = new List<string>();
+                for (var i = 0; i < accountCodes.Count; i++)
+                {
+                    var parameterName = "@Account" + i.ToString();
+                    parameterNames.Add(parameterName);
+                    command.Parameters.Add(parameterName, SqlDbType.NVarChar, 50).Value = accountCodes[i];
+                }
+
+                command.CommandText = @"
+SELECT Account_Code, Account_Serial, Account_Name
+FROM dbo.ACCOUNTS WITH (NOLOCK)
+WHERE Account_Code IN (" + string.Join(",", parameterNames.ToArray()) + @");";
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        names[ReadString(reader, "Account_Code")] = Tuple.Create(ReadString(reader, "Account_Serial"), ReadString(reader, "Account_Name"));
+                    }
+                }
+            }
+
+            foreach (var line in preview.JournalPreview)
+            {
+                Tuple<string, string> account;
+                if (!string.IsNullOrWhiteSpace(line.AccountCode) && names.TryGetValue(line.AccountCode, out account))
+                {
+                    line.AccountSerial = account.Item1;
+                    line.AccountName = account.Item2;
                 }
             }
         }
@@ -4511,6 +5705,7 @@ GROUP BY EmpId;";
             {
                 command.CommandText = @"
 SELECT mi.Id, mi.EmpId, mi.PlanId, pl.PlanNameAr, pr.ProviderNameAr,
+       mi.PolicyNumber, mi.CardNumber, mi.CoveragePercent,
        mi.StartDate, mi.EndDate, mi.IsMonthly, mi.IsActive,
        mi.MonthlyCost, mi.EmployeeShareType, mi.EmployeeShareValue,
        mi.CompanyShareType, mi.CompanyShareValue,
@@ -4536,9 +5731,9 @@ ORDER BY mi.IsActive DESC, mi.StartDate DESC, mi.Id DESC;";
 
         private void SaveMedicalInsurance(SqlConnection connection, SqlTransaction transaction, EmployeeMedicalInsurance insurance, int employeeId, int userId)
         {
-            if (!TableExists(connection, "EmployeeMedicalInsurance"))
+            if (!TableExists(connection, transaction, "EmployeeMedicalInsurance"))
             {
-                throw new InvalidOperationException("Employee medical insurance tables are not installed in the current database.");
+                throw new InvalidOperationException("جداول اشتراكات التأمين الطبي للموظفين غير مثبتة في قاعدة البيانات الحالية.");
             }
 
             if (!insurance.StartDate.HasValue)
@@ -4555,6 +5750,8 @@ ORDER BY mi.IsActive DESC, mi.StartDate DESC, mi.Id DESC;";
                 }
             }
 
+            ValidateEmployeeMedicalInsurance(insurance);
+
             if (!insurance.Id.HasValue || insurance.Id.Value <= 0)
             {
                 insurance.Id = FindMatchingEmployeeMedicalInsuranceId(connection, transaction, insurance, employeeId);
@@ -4566,9 +5763,17 @@ ORDER BY mi.IsActive DESC, mi.StartDate DESC, mi.Id DESC;";
 
             if (insurance.Id.HasValue && insurance.Id.Value > 0)
             {
+                if (insurance.IsActive)
+                {
+                    EndOtherActiveMedicalInsurance(connection, transaction, employeeId, insurance.Id.Value, insurance.StartDate.Value, userId);
+                }
+
                 using (var command = CreateCommand(connection, transaction, @"
 UPDATE dbo.EmployeeMedicalInsurance
 SET PlanId = @PlanId,
+    PolicyNumber = @PolicyNumber,
+    CardNumber = @CardNumber,
+    CoveragePercent = @CoveragePercent,
     StartDate = @StartDate,
     EndDate = @EndDate,
     IsMonthly = @IsMonthly,
@@ -4590,33 +5795,27 @@ WHERE Id = @Id AND EmpId = @EmpId;"))
                 {
                     AddInsuranceParameters(command, insurance, employeeId, userId);
                     command.Parameters.Add("@Id", SqlDbType.Int).Value = insurance.Id.Value;
-                    command.ExecuteNonQuery();
+                    if (command.ExecuteNonQuery() == 0)
+                    {
+                        throw new InvalidOperationException("اشتراك التأمين الطبي المحدد غير موجود لهذا الموظف.");
+                    }
                 }
             }
             else if (insurance.IsActive || insurance.PlanId.HasValue || insurance.MonthlyCost > 0)
             {
                 if (insurance.IsActive)
                 {
-                    using (var command = CreateCommand(connection, transaction, @"
-UPDATE dbo.EmployeeMedicalInsurance
-SET IsActive = 0, EndDate = ISNULL(EndDate, DATEADD(day, -1, @StartDate)), UpdatedAt = GETDATE(), UpdatedBy = @UserId
-WHERE EmpId = @EmpId AND IsActive = 1;"))
-                    {
-                        command.Parameters.Add("@EmpId", SqlDbType.Int).Value = employeeId;
-                        command.Parameters.Add("@StartDate", SqlDbType.DateTime).Value = insurance.StartDate.Value;
-                        command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
-                        command.ExecuteNonQuery();
-                    }
+                    EndOtherActiveMedicalInsurance(connection, transaction, employeeId, null, insurance.StartDate.Value, userId);
                 }
 
                 using (var command = CreateCommand(connection, transaction, @"
 INSERT INTO dbo.EmployeeMedicalInsurance
-(EmpId, PlanId, StartDate, EndDate, IsMonthly, IsActive,
+(EmpId, PlanId, PolicyNumber, CardNumber, CoveragePercent, StartDate, EndDate, IsMonthly, IsActive,
  MonthlyCost, EmployeeShareType, EmployeeShareValue,
  CompanyShareType, CompanyShareValue, EmployeeMonthlyDeduction, CompanyMonthlyCost,
  Amount, PercentValue, DeductionType, Notes, CreatedBy, CreatedAt)
 VALUES
-(@EmpId, @PlanId, @StartDate, @EndDate, @IsMonthly, @IsActive,
+(@EmpId, @PlanId, @PolicyNumber, @CardNumber, @CoveragePercent, @StartDate, @EndDate, @IsMonthly, @IsActive,
  @MonthlyCost, @EmployeeShareType, @EmployeeShareValue,
  @CompanyShareType, @CompanyShareValue, @EmployeeMonthlyDeduction, @CompanyMonthlyCost,
  @EmployeeShareValue, CASE WHEN @EmployeeShareType = N'Percent' THEN @EmployeeShareValue ELSE 0 END, @EmployeeShareType, @Notes, @UserId, GETDATE());"))
@@ -4624,6 +5823,32 @@ VALUES
                     AddInsuranceParameters(command, insurance, employeeId, userId);
                     command.ExecuteNonQuery();
                 }
+            }
+        }
+
+        private void EndOtherActiveMedicalInsurance(SqlConnection connection, SqlTransaction transaction, int employeeId, int? keepInsuranceId, DateTime newStartDate, int userId)
+        {
+            using (var command = CreateCommand(connection, transaction, @"
+UPDATE dbo.EmployeeMedicalInsurance
+SET IsActive = 0,
+    EndDate = CASE
+        WHEN StartDate IS NOT NULL AND CONVERT(date, StartDate) >= CONVERT(date, @StartDate)
+            THEN StartDate
+        WHEN EndDate IS NULL OR CONVERT(date, EndDate) >= CONVERT(date, @StartDate)
+            THEN DATEADD(day, -1, @StartDate)
+        ELSE EndDate
+    END,
+    UpdatedAt = GETDATE(),
+    UpdatedBy = @UserId
+WHERE EmpId = @EmpId
+  AND IsActive = 1
+  AND (@KeepId IS NULL OR Id <> @KeepId);"))
+            {
+                command.Parameters.Add("@EmpId", SqlDbType.Int).Value = employeeId;
+                command.Parameters.Add("@StartDate", SqlDbType.DateTime).Value = newStartDate;
+                AddNullable(command, "@KeepId", SqlDbType.Int, keepInsuranceId);
+                command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+                command.ExecuteNonQuery();
             }
         }
 
@@ -4740,12 +5965,12 @@ WHERE p.PlanId = @PlanId;"))
         {
             if (monthlyCost < 0 || shareValue < 0)
             {
-                throw new InvalidOperationException(label + " share values cannot be negative.");
+                throw new InvalidOperationException("قيم نصيب " + label + " في التأمين الطبي لا تقبل أرقاما سالبة.");
             }
 
             if (string.Equals(shareType, "Percent", StringComparison.OrdinalIgnoreCase) && shareValue > 100)
             {
-                throw new InvalidOperationException(label + " percent cannot exceed 100.");
+                throw new InvalidOperationException("نسبة نصيب " + label + " في التأمين الطبي لا يمكن أن تتجاوز 100%.");
             }
         }
 
@@ -4753,17 +5978,114 @@ WHERE p.PlanId = @PlanId;"))
         {
             if (plan.StartDate.HasValue && plan.EndDate.HasValue && plan.EndDate.Value.Date < plan.StartDate.Value.Date)
             {
-                throw new InvalidOperationException("Plan end date cannot be before start date.");
+                throw new InvalidOperationException("تاريخ نهاية خطة التأمين لا يمكن أن يكون قبل تاريخ البداية.");
             }
 
             if (plan.MaxDependents < 0 || plan.ChildrenMaxAge < 0)
             {
-                throw new InvalidOperationException("Dependent rules cannot contain negative values.");
+                throw new InvalidOperationException("قواعد التابعين لا تقبل قيما سالبة.");
             }
 
             if (plan.DefaultCoveragePercent < 0 || plan.DefaultCoveragePercent > 100)
             {
-                throw new InvalidOperationException("Coverage percent must be between 0 and 100.");
+                throw new InvalidOperationException("نسبة التغطية يجب أن تكون بين 0 و 100.");
+            }
+
+            if (plan.IsActive && plan.DefaultMonthlyCost <= 0)
+            {
+                throw new InvalidOperationException("لا يمكن تفعيل خطة تأمين طبي بدون تكلفة شهرية صحيحة.");
+            }
+
+            if (plan.IsActive && plan.ShowInPayroll)
+            {
+                var calculation = CalculateMedicalInsurance(
+                    plan.DefaultMonthlyCost,
+                    plan.DefaultEmployeeShareType,
+                    plan.DefaultEmployeeShareValue,
+                    plan.DefaultCompanyShareType,
+                    plan.DefaultCompanyShareValue);
+
+                if (calculation.EmployeeDeduction > 0 && string.IsNullOrWhiteSpace(plan.EmployeeDeductionAccountCode))
+                {
+                    throw new InvalidOperationException("لا يمكن تفعيل خطة التأمين الطبي في المسير بدون حساب استحقاق/ذمم شركة التأمين (MedicalInsurancePlans.EmployeeDeductionAccountCode).");
+                }
+
+                if (calculation.CompanyCost > 0 && string.IsNullOrWhiteSpace(plan.CompanyCostAccountCode))
+                {
+                    throw new InvalidOperationException("لا يمكن تفعيل خطة التأمين الطبي في المسير بدون حساب مصروف التأمين الطبي للشركة (MedicalInsurancePlans.CompanyCostAccountCode).");
+                }
+            }
+        }
+
+        private void ValidateMedicalInsurancePlanAccounts(SqlConnection connection, SqlTransaction transaction, MedicalInsurancePlan plan)
+        {
+            if (plan == null || !plan.IsActive || !plan.ShowInPayroll)
+            {
+                return;
+            }
+
+            var calculation = CalculateMedicalInsurance(
+                plan.DefaultMonthlyCost,
+                plan.DefaultEmployeeShareType,
+                plan.DefaultEmployeeShareValue,
+                plan.DefaultCompanyShareType,
+                plan.DefaultCompanyShareValue);
+
+            if (calculation.EmployeeDeduction > 0)
+            {
+                ValidateMedicalInsurancePlanAccount(
+                    connection,
+                    transaction,
+                    plan.EmployeeDeductionAccountCode,
+                    "حساب استحقاق/ذمم شركة التأمين",
+                    "MedicalInsurancePlans.EmployeeDeductionAccountCode");
+            }
+
+            if (calculation.CompanyCost > 0)
+            {
+                ValidateMedicalInsurancePlanAccount(
+                    connection,
+                    transaction,
+                    plan.CompanyCostAccountCode,
+                    "حساب مصروف التأمين الطبي للشركة",
+                    "MedicalInsurancePlans.CompanyCostAccountCode");
+            }
+        }
+
+        private void ValidateMedicalInsurancePlanAccount(SqlConnection connection, SqlTransaction transaction, string accountCode, string accountLabel, string source)
+        {
+            if (string.IsNullOrWhiteSpace(accountCode))
+            {
+                throw new InvalidOperationException("لا يمكن حفظ/تفعيل خطة التأمين الطبي قبل تحديد " + accountLabel + " (" + source + ").");
+            }
+
+            var normalizedAccountCode = accountCode.Trim();
+            if (!AccountExists(connection, transaction, normalizedAccountCode, true))
+            {
+                throw new InvalidOperationException(accountLabel + " غير موجود أو ليس حسابا نهائيا في دليل الحسابات: " + normalizedAccountCode + "، المصدر: " + source + ".");
+            }
+        }
+
+        private static void ValidateEmployeeMedicalInsurance(EmployeeMedicalInsurance insurance)
+        {
+            if (insurance.EndDate.HasValue && insurance.StartDate.HasValue && insurance.EndDate.Value.Date < insurance.StartDate.Value.Date)
+            {
+                throw new InvalidOperationException("تاريخ نهاية اشتراك التأمين لا يمكن أن يكون قبل تاريخ البداية.");
+            }
+
+            if (insurance.IsActive && !insurance.PlanId.HasValue)
+            {
+                throw new InvalidOperationException("يجب اختيار خطة التأمين الطبي للاشتراك النشط.");
+            }
+
+            if (insurance.MonthlyCost < 0 || insurance.EmployeeShareValue < 0 || insurance.CompanyShareValue < 0)
+            {
+                throw new InvalidOperationException("قيم التأمين الطبي لا تقبل أرقاما سالبة.");
+            }
+
+            if (insurance.CoveragePercent < 0 || insurance.CoveragePercent > 100)
+            {
+                throw new InvalidOperationException("نسبة تغطية التأمين الطبي يجب أن تكون بين 0 و 100.");
             }
         }
 
@@ -4780,6 +6102,11 @@ WHERE p.PlanId = @PlanId;"))
                 throw new InvalidOperationException("Invalid payroll month.");
             }
 
+            var status = (request.PostingStatus ?? string.Empty).Trim();
+            request.PostingStatus =
+                string.Equals(status, "Posted", StringComparison.OrdinalIgnoreCase) ? "Posted" :
+                string.Equals(status, "Unposted", StringComparison.OrdinalIgnoreCase) ? "Unposted" :
+                string.Empty;
             return request;
         }
 
@@ -4877,10 +6204,71 @@ WHERE p.PlanId = @PlanId;"))
             AddNullable(command, "@DepartmentId", SqlDbType.Int, row.DepartmentId);
         }
 
+        private static void AddSalarySnapshotParameters(SqlCommand command, SalaryRunEmployeeRow row)
+        {
+            command.Parameters.Add("@Insurance", SqlDbType.Float).Value = Convert.ToDouble(row.TotalInsuranceLegacy);
+            command.Parameters.Add("@VacationDeduction", SqlDbType.Int).Value = Convert.ToInt32(Math.Round(row.VacationDeduction, 0));
+            command.Parameters.Add("@AbsentDays", SqlDbType.Float).Value = Convert.ToDouble(row.AbsentDays);
+            command.Parameters.Add("@CountDays", SqlDbType.Float).Value = Convert.ToDouble(row.CountDays);
+            command.Parameters.Add("@RemainingDays", SqlDbType.Float).Value = Convert.ToDouble(row.RemainingDays);
+            AddNullable(command, "@ProjectId", SqlDbType.Int, row.ProjectId);
+            for (var i = 1; i <= 40; i++)
+            {
+                command.Parameters.Add("@Comp" + i.ToString(), SqlDbType.Float).Value = Convert.ToDouble(GetComponentSnapshotValue(row, i));
+            }
+        }
+
+        private static decimal GetComponentSnapshotValue(SalaryRunEmployeeRow row, int componentNo)
+        {
+            var component = row.Components.FirstOrDefault(x => x.ComponentNo == componentNo);
+            if (component == null)
+            {
+                return 0m;
+            }
+
+            return row.IsLegacySnapshot ? component.SnapshotValue : component.SourceValue;
+        }
+
+        private static string BuildComponentUpdateSet(SalaryRunEmployeeRow row)
+        {
+            var parts = new List<string>();
+            for (var i = 1; i <= 40; i++)
+            {
+                parts.Add("Comp" + i.ToString() + " = @Comp" + i.ToString());
+            }
+
+            return "," + string.Join(",", parts.ToArray());
+        }
+
+        private static string BuildComponentInsertColumns(SalaryRunEmployeeRow row)
+        {
+            var parts = new List<string>();
+            for (var i = 1; i <= 40; i++)
+            {
+                parts.Add("Comp" + i.ToString());
+            }
+
+            return "," + string.Join(",", parts.ToArray());
+        }
+
+        private static string BuildComponentInsertValues(SalaryRunEmployeeRow row)
+        {
+            var parts = new List<string>();
+            for (var i = 1; i <= 40; i++)
+            {
+                parts.Add("@Comp" + i.ToString());
+            }
+
+            return "," + string.Join(",", parts.ToArray());
+        }
+
         private static void AddInsuranceParameters(SqlCommand command, EmployeeMedicalInsurance insurance, int employeeId, int userId)
         {
             command.Parameters.Add("@EmpId", SqlDbType.Int).Value = employeeId;
             AddNullable(command, "@PlanId", SqlDbType.Int, insurance.PlanId);
+            AddNullable(command, "@PolicyNumber", SqlDbType.NVarChar, insurance.PolicyNumber);
+            AddNullable(command, "@CardNumber", SqlDbType.NVarChar, insurance.CardNumber);
+            command.Parameters.Add("@CoveragePercent", SqlDbType.Money).Value = insurance.CoveragePercent <= 0 ? 100m : insurance.CoveragePercent;
             AddNullable(command, "@StartDate", SqlDbType.DateTime, insurance.StartDate);
             AddNullable(command, "@EndDate", SqlDbType.DateTime, insurance.EndDate);
             command.Parameters.Add("@IsMonthly", SqlDbType.Bit).Value = insurance.IsMonthly;
@@ -4898,11 +6286,55 @@ WHERE p.PlanId = @PlanId;"))
 
         private static void AddReportParameters(SqlCommand command, MedicalInsuranceReportFilter filter)
         {
+            filter = NormalizeMedicalInsuranceReportFilter(filter);
             command.Parameters.Add("@ActiveOnly", SqlDbType.Bit).Value = filter.ActiveOnly;
             AddNullable(command, "@ProviderId", SqlDbType.Int, filter.ProviderId);
             AddNullable(command, "@PlanId", SqlDbType.Int, filter.PlanId);
+            AddNullable(command, "@BranchId", SqlDbType.Int, filter.BranchId);
+            AddNullable(command, "@DepartmentId", SqlDbType.Int, filter.DepartmentId);
+            AddNullable(command, "@EmployeeId", SqlDbType.Int, filter.EmployeeId);
             AddNullable(command, "@From", SqlDbType.DateTime, filter.PeriodFrom);
             AddNullable(command, "@To", SqlDbType.DateTime, filter.PeriodTo);
+            command.Parameters.Add("@Status", SqlDbType.NVarChar, 20).Value = filter.Status ?? string.Empty;
+            command.Parameters.Add("@PostingStatus", SqlDbType.NVarChar, 20).Value = filter.PostingStatus ?? string.Empty;
+        }
+
+        private static MedicalInsuranceReportFilter NormalizeMedicalInsuranceReportFilter(MedicalInsuranceReportFilter filter)
+        {
+            filter = filter ?? new MedicalInsuranceReportFilter();
+            if (filter.PeriodFrom.HasValue && filter.PeriodTo.HasValue && filter.PeriodTo.Value.Date < filter.PeriodFrom.Value.Date)
+            {
+                var from = filter.PeriodFrom;
+                filter.PeriodFrom = filter.PeriodTo;
+                filter.PeriodTo = from;
+            }
+
+            var status = (filter.Status ?? string.Empty).Trim();
+            filter.Status =
+                string.Equals(status, "Active", StringComparison.OrdinalIgnoreCase) ? "Active" :
+                string.Equals(status, "Expired", StringComparison.OrdinalIgnoreCase) ? "Expired" :
+                string.Equals(status, "Cancelled", StringComparison.OrdinalIgnoreCase) ? "Cancelled" :
+                string.Empty;
+
+            var postingStatus = (filter.PostingStatus ?? string.Empty).Trim();
+            filter.PostingStatus =
+                string.Equals(postingStatus, "Posted", StringComparison.OrdinalIgnoreCase) ? "Posted" :
+                string.Equals(postingStatus, "Unposted", StringComparison.OrdinalIgnoreCase) ? "Unposted" :
+                string.Empty;
+
+            return filter;
+        }
+
+        private static string BuildMedicalInsurancePeriodLabel(MedicalInsuranceReportFilter filter)
+        {
+            if (filter == null || (!filter.PeriodFrom.HasValue && !filter.PeriodTo.HasValue))
+            {
+                return "كل الفترات";
+            }
+
+            var from = filter.PeriodFrom.HasValue ? filter.PeriodFrom.Value.ToString("yyyy/MM/dd") : "البداية";
+            var to = filter.PeriodTo.HasValue ? filter.PeriodTo.Value.ToString("yyyy/MM/dd") : "النهاية";
+            return from + " - " + to;
         }
 
         private static string NormalizeShareType(string value, string fallback)
@@ -5013,6 +6445,9 @@ WHERE p.PlanId = @PlanId;"))
                 PlanId = ReadNullableInt(reader, "PlanId"),
                 PlanName = ReadString(reader, "PlanNameAr"),
                 ProviderName = ReadString(reader, "ProviderNameAr"),
+                PolicyNumber = ReadString(reader, "PolicyNumber"),
+                CardNumber = ReadString(reader, "CardNumber"),
+                CoveragePercent = ReadDecimal(reader, "CoveragePercent"),
                 StartDate = ReadNullableDate(reader, "StartDate"),
                 EndDate = ReadNullableDate(reader, "EndDate"),
                 IsMonthly = ReadBool(reader, "IsMonthly"),

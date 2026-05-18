@@ -61,6 +61,88 @@ namespace MyERP.Areas.Pos.Models
         public string Message { get; set; }
     }
 
+    public class PosKishnyTokenInvoiceImportPreview
+    {
+        public string SourceFileName { get; set; }
+        public string SourceFileHash { get; set; }
+        public string StoredWorkbookPath { get; set; }
+        public DateTime? DefaultImportDate { get; set; }
+        public PosKishnyTokenInvoiceColumnMapping Mapping { get; set; }
+        public IList<PosKishnyTokenInvoiceImportRow> Rows { get; set; }
+
+        public PosKishnyTokenInvoiceImportPreview()
+        {
+            Mapping = new PosKishnyTokenInvoiceColumnMapping();
+            Rows = new List<PosKishnyTokenInvoiceImportRow>();
+        }
+    }
+
+    public class PosKishnyTokenInvoiceColumnMapping
+    {
+        public string TokenColumn { get; set; }
+        public string NationalIdColumn { get; set; }
+        public string MobileColumn { get; set; }
+        public string FullNameColumn { get; set; }
+        public string BranchColumn { get; set; }
+        public string DateColumn { get; set; }
+        public bool UsedHeaderRow { get; set; }
+    }
+
+    public class PosKishnyTokenInvoiceImportRow
+    {
+        public string SheetName { get; set; }
+        public int RowNumber { get; set; }
+        public string Token { get; set; }
+        public string NationalId { get; set; }
+        public string Mobile { get; set; }
+        public string FullName { get; set; }
+        public string BranchCode { get; set; }
+        public int? BranchId { get; set; }
+        public string BranchName { get; set; }
+        public DateTime? InvoiceDate { get; set; }
+        public string InvoiceDateText { get; set; }
+        public int? DefaultUserId { get; set; }
+        public int? DefaultStoreId { get; set; }
+        public int? DefaultBoxId { get; set; }
+        public int? DefaultPaymentTypeId { get; set; }
+        public int? CardItemId { get; set; }
+        public string CardItemName { get; set; }
+        public decimal CardPrice { get; set; }
+        public string KycStatus { get; set; }
+        public int? KycCustomerId { get; set; }
+        public string InvoiceStatus { get; set; }
+        public string Status { get; set; }
+        public int? TransactionId { get; set; }
+        public string InvoiceNumber { get; set; }
+        public IList<string> Messages { get; set; }
+
+        public PosKishnyTokenInvoiceImportRow()
+        {
+            Messages = new List<string>();
+            Status = "Ready";
+            InvoiceStatus = "Ready";
+            KycStatus = "WillCreate";
+        }
+    }
+
+    public class PosKishnyTokenInvoiceImportResult
+    {
+        public long BatchId { get; set; }
+        public string Status { get; set; }
+        public int TotalRows { get; set; }
+        public int ImportedInvoicesCount { get; set; }
+        public int CreatedKycCount { get; set; }
+        public int LinkedExistingKycCount { get; set; }
+        public int FailedRowsCount { get; set; }
+        public int DuplicateTokenCount { get; set; }
+        public IList<PosKishnyTokenInvoiceImportRow> Rows { get; set; }
+
+        public PosKishnyTokenInvoiceImportResult()
+        {
+            Rows = new List<PosKishnyTokenInvoiceImportRow>();
+        }
+    }
+
     public class PosExcelImportPreviewViewModel
     {
         public PosExcelImportPreviewResult Preview { get; set; }

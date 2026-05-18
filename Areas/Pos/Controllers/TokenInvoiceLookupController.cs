@@ -20,7 +20,7 @@ namespace MyERP.Areas.Pos.Controllers
         private const string SessionKey = "PosTokenInvoiceLookup.LastResult";
         private const string UploadSessionKey = "PosTokenInvoiceLookup.Upload";
         private const string LoadedCountSessionKey = "PosTokenInvoiceLookup.LoadedCount";
-        private const int DefaultBatchSize = 200;
+        private const int DefaultBatchSize = 500;
         private readonly PosSqlRepository _repository;
         private readonly PosTokenInvoiceLookupExcelParser _parser;
 
@@ -161,7 +161,7 @@ namespace MyERP.Areas.Pos.Controllers
                 }
 
                 var start = Math.Max(0, skip.GetValueOrDefault());
-                var pageSize = Math.Max(1, Math.Min(200, take.GetValueOrDefault(DefaultBatchSize)));
+                var pageSize = Math.Max(1, Math.Min(500, take.GetValueOrDefault(DefaultBatchSize)));
                 var rows = LookupTokenBatch(upload, start, pageSize);
                 var batchTokens = new HashSet<string>(
                     upload.Tokens.Skip(start).Take(pageSize).Select(x => x.Token ?? string.Empty),

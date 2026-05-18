@@ -16,6 +16,8 @@ namespace MyERP.Areas.Pos.Controllers
     {
         private const string PreviewSessionKey = "POS_EXCEL_IMPORT_PREVIEW";
         private const string KycPreviewSessionKey = "POS_KYC_EXCEL_IMPORT_PREVIEW";
+        private const string TokenInvoicePreviewSessionKey = "POS_TOKEN_INVOICE_EXCEL_IMPORT_PREVIEW";
+        private const string TokenInvoiceResultSessionKey = "POS_TOKEN_INVOICE_EXCEL_IMPORT_RESULT";
         private static readonly ConcurrentDictionary<string, PosExcelImportCommitProgress> CommitJobs = new ConcurrentDictionary<string, PosExcelImportCommitProgress>(StringComparer.OrdinalIgnoreCase);
         private readonly PosSqlRepository _repository;
         private readonly PosExcelImportParser _parser;
@@ -23,6 +25,7 @@ namespace MyERP.Areas.Pos.Controllers
         private readonly PosExcelImportCommitService _commitService;
         private readonly PosExcelImportWorkbookMarker _workbookMarker;
         private readonly PosKycExcelParser _kycExcelParser;
+        private readonly PosKishnyTokenInvoiceImportService _tokenInvoiceImportService;
 
         public ExcelImportController()
         {
@@ -32,6 +35,7 @@ namespace MyERP.Areas.Pos.Controllers
             _commitService = new PosExcelImportCommitService(_repository);
             _workbookMarker = new PosExcelImportWorkbookMarker();
             _kycExcelParser = new PosKycExcelParser();
+            _tokenInvoiceImportService = new PosKishnyTokenInvoiceImportService(_repository);
         }
 
         [HttpPost]
@@ -279,6 +283,133 @@ namespace MyERP.Areas.Pos.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public ActionResult TokenInvoicePreview(HttpPostedFileBase tokenInvoiceExcelFile, DateTime? defaultImportDate)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            if (!CanExecuteExcelImport(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية استيراد العمليات من Excel");
+            }
+
+            ViewBag.PosContext = context;
+            ViewBag.ActiveScreen = "excel-import";
+            ViewBag.CanImportExcel = CanExecuteExcelImport(context);
+
+            if (tokenInvoiceExcelFile == null || tokenInvoiceExcelFile.ContentLength == 0)
+            {
+                ViewBag.TokenInvoiceErrorMessage = "اختر ملف Excel يحتوي على التوكنات والفروع.";
+                return View("Index", new PosExcelImportIndexViewModel());
+            }
+
+            var extension = Path.GetExtension(tokenInvoiceExcelFile.FileName ?? string.Empty);
+            if (!string.Equals(extension, ".xlsx", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(extension, ".xls", StringComparison.OrdinalIgnoreCase))
+            {
+                ViewBag.TokenInvoiceErrorMessage = "صيغة الملف غير مدعومة. اختر ملف Excel فقط.";
+                return View("Index", new PosExcelImportIndexViewModel());
+            }
+
+            try
+            {
+                var storedPath = SaveUploadedWorkbook(tokenInvoiceExcelFile);
+                PosKishnyTokenInvoiceImportPreview preview;
+                using (var stream = System.IO.File.OpenRead(storedPath))
+                {
+                    preview = _tokenInvoiceImportService.Preview(stream, tokenInvoiceExcelFile.FileName, defaultImportDate, context);
+                }
+
+                preview.StoredWorkbookPath = storedPath;
+                Session[TokenInvoicePreviewSessionKey] = preview;
+                Session.Remove(TokenInvoiceResultSessionKey);
+                ViewBag.TokenInvoicePreview = preview;
+                ViewBag.TokenInvoiceFileName = Path.GetFileName(tokenInvoiceExcelFile.FileName ?? string.Empty);
+                if (preview.Rows.Count == 0)
+                {
+                    ViewBag.TokenInvoiceErrorMessage = "لم يتم العثور على صفوف صالحة داخل الملف.";
+                }
+
+                return View("Index", new PosExcelImportIndexViewModel());
+            }
+            catch (Exception ex)
+            {
+                ViewBag.TokenInvoiceErrorMessage = "تعذر قراءة ملف فواتير التوكنات: " + ex.Message;
+                return View("Index", new PosExcelImportIndexViewModel());
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult TokenInvoiceCommit(string adminPassword)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            if (!CanExecuteExcelImport(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية استيراد العمليات من Excel");
+            }
+
+            ViewBag.PosContext = context;
+            ViewBag.ActiveScreen = "excel-import";
+            ViewBag.CanImportExcel = CanExecuteExcelImport(context);
+
+            var preview = Session[TokenInvoicePreviewSessionKey] as PosKishnyTokenInvoiceImportPreview;
+            ViewBag.TokenInvoicePreview = preview;
+            if (preview == null || preview.Rows == null || preview.Rows.Count == 0)
+            {
+                ViewBag.TokenInvoiceErrorMessage = "لا توجد معاينة محفوظة. ارفع الملف واعمل معاينة أولا.";
+                return View("Index", new PosExcelImportIndexViewModel());
+            }
+
+            if (!_repository.ValidatePosUserPassword(context.UserId, adminPassword))
+            {
+                ViewBag.TokenInvoiceErrorMessage = "كلمة المرور غير صحيحة. لا يمكن ترحيل فواتير التوكنات.";
+                return View("Index", new PosExcelImportIndexViewModel());
+            }
+
+            var result = _tokenInvoiceImportService.Commit(preview, context);
+            Session[TokenInvoiceResultSessionKey] = result;
+            ViewBag.TokenInvoiceResult = result;
+            return View("Index", new PosExcelImportIndexViewModel());
+        }
+
+        [HttpGet]
+        public ActionResult DownloadTokenInvoiceTemplate()
+        {
+            var csv = "\uFEFFToken,National (ID),Mobile number,Full name,كود الفرع,Date\r\n21944904,26612310103211,01115291113,اسم العميل,EC049,02.04.2026\r\n";
+            return File(System.Text.Encoding.UTF8.GetBytes(csv), "text/csv", "KishnyTokenInvoiceTemplate.csv");
+        }
+
+        [HttpGet]
+        public ActionResult ExportTokenInvoiceResult(string type)
+        {
+            var result = Session[TokenInvoiceResultSessionKey] as PosKishnyTokenInvoiceImportResult;
+            var preview = Session[TokenInvoicePreviewSessionKey] as PosKishnyTokenInvoiceImportPreview;
+            var rows = result != null && result.Rows != null ? result.Rows : (preview == null ? new List<PosKishnyTokenInvoiceImportRow>() : preview.Rows);
+            if (string.Equals(type, "success", StringComparison.OrdinalIgnoreCase))
+            {
+                rows = rows.Where(x => string.Equals(x.Status, "Imported", StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+            else if (string.Equals(type, "failed", StringComparison.OrdinalIgnoreCase))
+            {
+                rows = rows.Where(x => !string.Equals(x.Status, "Imported", StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            var csv = BuildTokenInvoiceCsv(rows);
+            var name = "KishnyTokenInvoice_" + (string.IsNullOrWhiteSpace(type) ? "All" : type) + "_" + DateTime.Now.ToString("yyyyMMddHHmmss") + ".csv";
+            return File(System.Text.Encoding.UTF8.GetBytes(csv), "text/csv", name);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult KycCommit(string adminPassword)
         {
             var context = GetPosContext();
@@ -403,6 +534,41 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return File(fullPath, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", safeName);
+        }
+
+        private static string BuildTokenInvoiceCsv(IEnumerable<PosKishnyTokenInvoiceImportRow> rows)
+        {
+            var builder = new System.Text.StringBuilder();
+            builder.Append('\uFEFF');
+            builder.AppendLine("Row,Status,Token,National ID,Mobile,Full name,Branch code,Branch,Date,Card item,KYC status,Transaction ID,Invoice number,Messages");
+            foreach (var row in rows ?? Enumerable.Empty<PosKishnyTokenInvoiceImportRow>())
+            {
+                builder.AppendLine(string.Join(",", new[]
+                {
+                    Csv(row.RowNumber.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                    Csv(row.Status),
+                    Csv(row.Token),
+                    Csv(row.NationalId),
+                    Csv(row.Mobile),
+                    Csv(row.FullName),
+                    Csv(row.BranchCode),
+                    Csv(row.BranchName),
+                    Csv(row.InvoiceDate.HasValue ? row.InvoiceDate.Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) : ""),
+                    Csv((row.CardItemId.HasValue ? row.CardItemId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + " - " : "") + row.CardItemName),
+                    Csv(row.KycStatus),
+                    Csv(row.TransactionId.HasValue ? row.TransactionId.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) : ""),
+                    Csv(row.InvoiceNumber),
+                    Csv(row.Messages == null ? "" : string.Join(" | ", row.Messages))
+                }));
+            }
+
+            return builder.ToString();
+        }
+
+        private static string Csv(string value)
+        {
+            value = value ?? string.Empty;
+            return "\"" + value.Replace("\"", "\"\"") + "\"";
         }
 
         private PosUserContext GetPosContext()

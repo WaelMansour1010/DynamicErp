@@ -6,17 +6,22 @@
 }
 
 <section class="lhf-page" data-lhf-page="@Model.ModuleKey"
-         data-component-details-url="@Url.Action("ComponentDetails", "LegacyHrFinance", new { area = "MainErp" })"
-         data-save-component-url="@Url.Action("SaveComponent", "LegacyHrFinance", new { area = "MainErp" })">
+         data-component-details-url="@(ViewBag.ComponentDetailsUrl ?? Url.Action("ComponentDetails", "Hr", new { area = "MainErp" }))"
+         data-save-component-url="@(ViewBag.SaveComponentUrl ?? Url.Action("SaveComponent", "Hr", new { area = "MainErp" }))">
     @Html.AntiForgeryToken()
     <header class="lhf-hero">
         <div>
             <span>@Model.SourceSystem</span>
             <h2>@Model.Title</h2>
-            <p>@Model.SourceForm · @Model.LegacyTable</p>
+            <p>شاشة مشتركة بين POS و MainERP ضمن شؤون الموظفين</p>
         </div>
         <form method="get" class="lhf-search">
             <input type="search" name="searchText" value="@Model.SearchText" placeholder="بحث بالكود أو الموظف أو البيان" />
+            <select name="employeeStatus" title="حالة الموظف">
+                <option value="active" @(Model.EmployeeStatus == "active" ? "selected" : "")>الموظفون النشطون</option>
+                <option value="stopped" @(Model.EmployeeStatus == "stopped" ? "selected" : "")>الموظفون الموقوفون</option>
+                <option value="all" @(Model.EmployeeStatus == "all" ? "selected" : "")>كل الموظفين</option>
+            </select>
             <button type="submit"><i class="fas fa-search"></i><span>بحث</span></button>
         </form>
     </header>
@@ -111,7 +116,7 @@
                 <label><span>حساب المصروف/الاستحقاق</span><input id="lhfAccountCode" name="AccountCode" /></label>
                 <label><span>حساب مقابل</span><input id="lhfAccountCode1" name="AccountCode1" /></label>
                 <label><span>الوحدة</span><input id="lhfUnit" name="Unit" type="number" /></label>
-                <label><span>AllowIntrod</span><input id="lhfAllowIntroduction" name="AllowIntroduction" type="number" /></label>
+                <label><span>ترتيب/طريقة الاحتساب</span><input id="lhfAllowIntroduction" name="AllowIntroduction" type="number" /></label>
                 <label class="lhf-check"><input id="lhfAddOrDiscount" name="AddOrDiscount" type="checkbox" /><span>إضافة وليست خصم</span></label>
                 <label class="lhf-check"><input id="lhfFixedOrChanged" name="FixedOrChanged" type="checkbox" /><span>متغير</span></label>
                 <label class="lhf-check"><input id="lhfViewComponent" name="ViewComponent" type="checkbox" /><span>ظاهر في المسير</span></label>

@@ -147,6 +147,9 @@ namespace MyERP.Common.EmployeePayroll
         public int? PlanId { get; set; }
         public string PlanName { get; set; }
         public string ProviderName { get; set; }
+        public string PolicyNumber { get; set; }
+        public string CardNumber { get; set; }
+        public decimal CoveragePercent { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public bool IsMonthly { get; set; }
@@ -203,6 +206,7 @@ namespace MyERP.Common.EmployeePayroll
         public int? BranchId { get; set; }
         public int? DepartmentId { get; set; }
         public int? EmployeeId { get; set; }
+        public string PostingStatus { get; set; }
         public bool IncludeSavedDrafts { get; set; }
         public int RowLimit { get; set; }
         public int JournalPreviewLimit { get; set; }
@@ -259,6 +263,8 @@ namespace MyERP.Common.EmployeePayroll
         public decimal MedicalInsuranceMonthlyCost { get; set; }
         public decimal MedicalInsuranceDeduction { get; set; }
         public decimal MedicalInsuranceCompanyCost { get; set; }
+        public string MedicalInsuranceEmployeeAccountCode { get; set; }
+        public string MedicalInsuranceCompanyAccountCode { get; set; }
         public decimal TotalDeductions { get; set; }
         public decimal NetSalary { get; set; }
         public int? ExistingSalaryRowId { get; set; }
@@ -609,6 +615,8 @@ namespace MyERP.Common.EmployeePayroll
         public int? DepartmentId { get; set; }
         public int? ProjectId { get; set; }
         public int? EmployeeId { get; set; }
+        public string EmployeeCode { get; set; }
+        public string EmployeeName { get; set; }
         public int? ComponentNo { get; set; }
         public string ComponentName { get; set; }
         public string RuleId { get; set; }
@@ -664,6 +672,11 @@ namespace MyERP.Common.EmployeePayroll
         public string ConfirmationPhrase { get; set; }
     }
 
+    public class PayrollPostingRequest : PayrollAccountingReplayRequest
+    {
+        public bool SaveSalaryRunBeforePosting { get; set; }
+    }
+
     public class PayrollTestPostingCleanupRequest
     {
         public Guid TestPostingBatchId { get; set; }
@@ -704,9 +717,62 @@ namespace MyERP.Common.EmployeePayroll
         }
     }
 
+    public class PayrollPostingResult
+    {
+        public bool IsDryRun { get; set; }
+        public bool IsPosted { get; set; }
+        public bool AlreadyPosted { get; set; }
+        public string DatabaseName { get; set; }
+        public string Message { get; set; }
+        public int? NoteId { get; set; }
+        public int? NoteSerial { get; set; }
+        public IList<int> NoteIds { get; set; }
+        public int NotesCount { get; set; }
+        public int VoucherLinesCount { get; set; }
+        public int SalaryRowsMarkedPosted { get; set; }
+        public decimal DebitTotal { get; set; }
+        public decimal CreditTotal { get; set; }
+        public decimal Balance { get; set; }
+        public IList<string> Warnings { get; set; }
+        public IList<PayrollPostingAccountIssue> AccountIssues { get; set; }
+        public IList<PayrollTestPostingDimensionTotal> AffectedAccounts { get; set; }
+        public IList<PayrollTestPostingDimensionTotal> AffectedBranches { get; set; }
+        public IList<PayrollTestPostingDimensionTotal> AffectedProjects { get; set; }
+        public IList<PayrollTestPostingDimensionTotal> AffectedDepartments { get; set; }
+
+        public PayrollPostingResult()
+        {
+            Warnings = new List<string>();
+            AccountIssues = new List<PayrollPostingAccountIssue>();
+            NoteIds = new List<int>();
+            AffectedAccounts = new List<PayrollTestPostingDimensionTotal>();
+            AffectedBranches = new List<PayrollTestPostingDimensionTotal>();
+            AffectedProjects = new List<PayrollTestPostingDimensionTotal>();
+            AffectedDepartments = new List<PayrollTestPostingDimensionTotal>();
+        }
+    }
+
+    public class PayrollPostingAccountIssue
+    {
+        public string IssueType { get; set; }
+        public string AccountCode { get; set; }
+        public string AccountSource { get; set; }
+        public string Direction { get; set; }
+        public decimal Amount { get; set; }
+        public int? EmployeeId { get; set; }
+        public string EmployeeCode { get; set; }
+        public string EmployeeName { get; set; }
+        public int? ComponentNo { get; set; }
+        public string ComponentName { get; set; }
+        public string RuleId { get; set; }
+        public string ArabicMessage { get; set; }
+    }
+
     public class PayrollTestPostingDimensionTotal
     {
         public string Key { get; set; }
+        public string AccountSerial { get; set; }
+        public string AccountName { get; set; }
         public decimal Debit { get; set; }
         public decimal Credit { get; set; }
         public int Lines { get; set; }
@@ -754,6 +820,7 @@ namespace MyERP.Common.EmployeePayroll
     public class SalaryRunJournalLine
     {
         public string AccountCode { get; set; }
+        public string AccountSerial { get; set; }
         public string AccountName { get; set; }
         public decimal Debit { get; set; }
         public decimal Credit { get; set; }
@@ -767,8 +834,55 @@ namespace MyERP.Common.EmployeePayroll
     {
         public int InsertedRows { get; set; }
         public int UpdatedRows { get; set; }
+        public int SkippedRows { get; set; }
         public decimal TotalNet { get; set; }
         public string Message { get; set; }
+    }
+
+    public class PayrollSalarySheetReport
+    {
+        public SalaryRunRequest Request { get; set; }
+        public string ReportTitle { get; set; }
+        public string PeriodLabel { get; set; }
+        public DateTime PeriodFrom { get; set; }
+        public DateTime PeriodTo { get; set; }
+        public DateTime GeneratedAt { get; set; }
+        public IList<PayrollSalarySheetRow> Rows { get; set; }
+        public int TotalRows { get; set; }
+        public int PostedRows { get; set; }
+        public int UnpostedRows { get; set; }
+        public decimal TotalBasic { get; set; }
+        public decimal TotalAllowances { get; set; }
+        public decimal TotalDeductions { get; set; }
+        public decimal TotalAdvances { get; set; }
+        public decimal TotalInsurance { get; set; }
+        public decimal TotalNet { get; set; }
+        public decimal JournalDebitTotal { get; set; }
+        public decimal JournalCreditTotal { get; set; }
+        public decimal JournalBalance { get; set; }
+        public bool JournalBalanced { get; set; }
+
+        public PayrollSalarySheetReport()
+        {
+            Rows = new List<PayrollSalarySheetRow>();
+        }
+    }
+
+    public class PayrollSalarySheetRow
+    {
+        public int EmployeeId { get; set; }
+        public string EmployeeCode { get; set; }
+        public string EmployeeName { get; set; }
+        public string BranchName { get; set; }
+        public string DepartmentName { get; set; }
+        public decimal BasicSalary { get; set; }
+        public decimal Allowances { get; set; }
+        public decimal Deductions { get; set; }
+        public decimal Advances { get; set; }
+        public decimal Insurance { get; set; }
+        public decimal NetSalary { get; set; }
+        public bool IsPosted { get; set; }
+        public string PostingStatus { get; set; }
     }
 
     public class MedicalInsuranceReportFilter
@@ -777,6 +891,11 @@ namespace MyERP.Common.EmployeePayroll
         public DateTime? PeriodTo { get; set; }
         public int? ProviderId { get; set; }
         public int? PlanId { get; set; }
+        public int? BranchId { get; set; }
+        public int? DepartmentId { get; set; }
+        public int? EmployeeId { get; set; }
+        public string Status { get; set; }
+        public string PostingStatus { get; set; }
         public bool ActiveOnly { get; set; }
     }
 
@@ -785,11 +904,16 @@ namespace MyERP.Common.EmployeePayroll
         public int EmployeeId { get; set; }
         public string EmployeeCode { get; set; }
         public string EmployeeName { get; set; }
+        public string BranchName { get; set; }
+        public string DepartmentName { get; set; }
         public string ProviderName { get; set; }
         public string PlanName { get; set; }
+        public string PolicyNumber { get; set; }
+        public string CardNumber { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public bool IsActive { get; set; }
+        public string Status { get; set; }
         public decimal MonthlyCost { get; set; }
         public decimal EmployeeMonthlyDeduction { get; set; }
         public decimal CompanyMonthlyCost { get; set; }
@@ -800,11 +924,92 @@ namespace MyERP.Common.EmployeePayroll
         public int EmployeeId { get; set; }
         public string EmployeeCode { get; set; }
         public string EmployeeName { get; set; }
+        public string BranchName { get; set; }
+        public string DepartmentName { get; set; }
+        public string ProviderName { get; set; }
         public string PlanName { get; set; }
         public DateTime PeriodFrom { get; set; }
         public DateTime PeriodTo { get; set; }
+        public int Year { get; set; }
+        public int Month { get; set; }
         public decimal EmployeeDeduction { get; set; }
         public decimal CompanyCost { get; set; }
+        public bool IsPosted { get; set; }
+        public string PostingStatus { get; set; }
+    }
+
+    public class MedicalInsuranceContributionSummaryRow
+    {
+        public string GroupName { get; set; }
+        public int Employees { get; set; }
+        public decimal EmployeeDeduction { get; set; }
+        public decimal CompanyCost { get; set; }
+        public decimal TotalPayable { get; set; }
+    }
+
+    public class MedicalInsurancePayableSummaryRow
+    {
+        public int? ProviderId { get; set; }
+        public string ProviderName { get; set; }
+        public string AccountCode { get; set; }
+        public decimal EmployeeDeduction { get; set; }
+        public decimal CompanyCost { get; set; }
+        public decimal PayrollPayable { get; set; }
+        public decimal PostedCredit { get; set; }
+        public decimal PostedDebit { get; set; }
+        public decimal PostedNetCredit { get; set; }
+        public decimal Difference { get; set; }
+    }
+
+    public class MedicalInsurancePayrollIntegrationRow
+    {
+        public int EmployeeId { get; set; }
+        public string EmployeeCode { get; set; }
+        public string EmployeeName { get; set; }
+        public string BranchName { get; set; }
+        public string DepartmentName { get; set; }
+        public string ProviderName { get; set; }
+        public string PlanName { get; set; }
+        public int Year { get; set; }
+        public int Month { get; set; }
+        public decimal EmployeeDeduction { get; set; }
+        public decimal CompanyCost { get; set; }
+        public decimal PayrollNetSalary { get; set; }
+        public bool IsPosted { get; set; }
+        public string PostingStatus { get; set; }
+        public int? NoteId { get; set; }
+        public decimal JournalDebit { get; set; }
+        public decimal JournalCredit { get; set; }
+        public decimal JournalBalance { get; set; }
+    }
+
+    public class MedicalInsuranceReportBundle
+    {
+        public MedicalInsuranceReportFilter Filter { get; set; }
+        public string PeriodLabel { get; set; }
+        public int SubscriptionCount { get; set; }
+        public int ActiveCount { get; set; }
+        public int ExpiredCount { get; set; }
+        public int CancelledCount { get; set; }
+        public decimal TotalMonthlyCost { get; set; }
+        public decimal TotalEmployeeDeduction { get; set; }
+        public decimal TotalCompanyCost { get; set; }
+        public decimal TotalPayable { get; set; }
+        public decimal PostedPayableCredit { get; set; }
+        public IList<MedicalInsuranceSubscriptionReportRow> Subscriptions { get; set; }
+        public IList<MedicalInsuranceDeductionReportRow> MonthlyDeductions { get; set; }
+        public IList<MedicalInsuranceContributionSummaryRow> CompanyContributions { get; set; }
+        public IList<MedicalInsurancePayableSummaryRow> Payables { get; set; }
+        public IList<MedicalInsurancePayrollIntegrationRow> PayrollIntegration { get; set; }
+
+        public MedicalInsuranceReportBundle()
+        {
+            Subscriptions = new List<MedicalInsuranceSubscriptionReportRow>();
+            MonthlyDeductions = new List<MedicalInsuranceDeductionReportRow>();
+            CompanyContributions = new List<MedicalInsuranceContributionSummaryRow>();
+            Payables = new List<MedicalInsurancePayableSummaryRow>();
+            PayrollIntegration = new List<MedicalInsurancePayrollIntegrationRow>();
+        }
     }
 
     public class MedicalInsuranceOperationalFilter

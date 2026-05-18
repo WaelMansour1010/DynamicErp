@@ -105,17 +105,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private static bool OpensInvoiceDirectly(PosUserContext context)
         {
-            return context != null
-                && (IsTellerCategory(context.UserCategory) || context.CanTeller || context.UserType.GetValueOrDefault(-1) == 2)
-                && !context.IsFullAccess
-                && context.UserType.GetValueOrDefault(-1) != 0;
-        }
-
-        private static bool IsTellerCategory(string category)
-        {
-            var value = (category ?? string.Empty).Trim();
-            return string.Equals(value, "تلر", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(value, "Teller", StringComparison.OrdinalIgnoreCase);
+            return context != null && context.CanTeller;
         }
 
         private static bool IsAdmin(PosUserContext context)
@@ -292,6 +282,32 @@ namespace MyERP.Areas.Pos.Controllers
                 found = false,
                 message = string.Empty
             }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public JsonResult GetKeshniCardCustomer(int customerId)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                SetJsonErrorStatus(401);
+                return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً", "POS session context is missing."), JsonRequestBehavior.AllowGet);
+            }
+
+            if (customerId <= 0)
+            {
+                SetJsonErrorStatus(400);
+                return Json(Fail("رقم العميل غير صحيح", "Invalid KYC customer id."), JsonRequestBehavior.AllowGet);
+            }
+
+            var customer = _repository.GetKeshniCardCustomerById(customerId, context.BranchId, context.CanChangeDefaults);
+            if (customer == null)
+            {
+                SetJsonErrorStatus(404);
+                return Json(Fail("لم يتم العثور على بيانات KYC المطلوبة", "KYC customer was not found or is outside branch scope."), JsonRequestBehavior.AllowGet);
+            }
+
+            return Json(new { success = true, customer = customer }, JsonRequestBehavior.AllowGet);
         }
 
         [HttpPost]

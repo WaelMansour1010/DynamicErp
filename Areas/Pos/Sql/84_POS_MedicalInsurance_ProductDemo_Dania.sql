@@ -3,7 +3,7 @@
     SQL Server 2012 compatible.
 
     Prerequisite:
-    Run Areas/MainErp/Sql/06_EmployeePayroll_MedicalInsurance.sql first.
+    Run Areas/Pos/Sql/52_POS_EmployeePayroll_MedicalInsurance.sql first.
 
     Safety:
     - Inserts demo providers, plans, dependents, installments, and employee subscriptions only when missing.
@@ -14,19 +14,19 @@ SET NOCOUNT ON;
 
 IF OBJECT_ID(N'dbo.MedicalInsuranceProviders', N'U') IS NULL
 BEGIN
-    RAISERROR('MedicalInsuranceProviders is missing. Run Areas/MainErp/Sql/06_EmployeePayroll_MedicalInsurance.sql first.', 16, 1);
+    RAISERROR('MedicalInsuranceProviders is missing. Run Areas/Pos/Sql/52_POS_EmployeePayroll_MedicalInsurance.sql first.', 16, 1);
     RETURN;
 END;
 
 IF OBJECT_ID(N'dbo.MedicalInsurancePlans', N'U') IS NULL
 BEGIN
-    RAISERROR('MedicalInsurancePlans is missing. Run Areas/MainErp/Sql/06_EmployeePayroll_MedicalInsurance.sql first.', 16, 1);
+    RAISERROR('MedicalInsurancePlans is missing. Run Areas/Pos/Sql/52_POS_EmployeePayroll_MedicalInsurance.sql first.', 16, 1);
     RETURN;
 END;
 
 IF OBJECT_ID(N'dbo.EmployeeMedicalInsurance', N'U') IS NULL
 BEGIN
-    RAISERROR('EmployeeMedicalInsurance is missing. Run Areas/MainErp/Sql/06_EmployeePayroll_MedicalInsurance.sql first.', 16, 1);
+    RAISERROR('EmployeeMedicalInsurance is missing. Run Areas/Pos/Sql/52_POS_EmployeePayroll_MedicalInsurance.sql first.', 16, 1);
     RETURN;
 END;
 

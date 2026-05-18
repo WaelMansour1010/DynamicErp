@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.Linq;
 using MyERP.Areas.MainErp.Infrastructure;
 using MyERP.Areas.MainErp.ViewModels.MasterDataImport;
@@ -12,6 +13,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
     public class JournalEntryImportService
     {
         private const int ManualJournalNoteType = 57;
+        private const int OpeningBalanceNoteType = 101;
         private readonly string _connectionString;
 
         public JournalEntryImportService()
@@ -66,9 +68,11 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                     try
                     {
                         var importedCount = 0;
+                        var reviewItems = new List<JournalImportReviewItemViewModel>();
                         foreach (var group in validGroups)
                         {
-                            ImportJournalGroup(connection, transaction, group.ToList(), userName);
+                            var imported = ImportJournalGroup(connection, transaction, group.ToList(), userName);
+                            reviewItems.Add(BuildImportedReviewItem(group.ToList(), batchId, imported, "Imported"));
                             importedCount++;
                         }
 
@@ -77,6 +81,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                             InsertFileLog(connection, transaction, batchId, hash.Key, hash.Value, userName, importedCount);
                         }
 
+                        SaveReviewItems(connection, transaction, batchId, reviewItems);
                         CompleteBatch(connection, transaction, batchId, successRows, failedRows, importedCount, null);
                         transaction.Commit();
 
@@ -87,7 +92,8 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                             SuccessRows = successRows,
                             FailedRows = failedRows,
                             ImportedJournalCount = importedCount,
-                            Message = "Journal import completed successfully."
+                            Message = "Journal import completed successfully.",
+                            ReviewSnapshot = BuildReviewSnapshot(preview.EntityType, preview.FileName, batchId, importedCount, reviewItems, "Review imported journal entries")
                         };
                     }
                     catch (Exception ex)
@@ -117,6 +123,13 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                 row.Description = Clean(row.Description);
                 row.BranchId = defaultBranchId;
                 row.AccountWillBeCreated = false;
+
+                if (preview.EntityType == MasterDataImportEntityType.OpeningBalances)
+                {
+                    var defaultOpeningDate = GetDefaultOpeningBalanceDate();
+                    row.EntryDate = defaultOpeningDate;
+                    row.EntryDateText = defaultOpeningDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                }
 
                 if (IsFileHashImported(connection, transaction, row.FileHash))
                 {
@@ -245,7 +258,13 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                 };
             }
 
-            var batchId = CreateBatch(connection, null, preview.FileName, userName, rows.Count, validRows.Count, rows.Count - validRows.Count, 1, "Running", null);
+            var fileGroups = validRows
+                .GroupBy(r => string.IsNullOrWhiteSpace(r.FileName) ? preview.FileName : r.FileName, StringComparer.OrdinalIgnoreCase)
+                .OrderBy(g => g.Key)
+                .Select(g => g.ToList())
+                .ToList();
+            var journalCount = fileGroups.Count;
+            var batchId = CreateBatch(connection, null, preview.FileName, userName, rows.Count, validRows.Count, rows.Count - validRows.Count, journalCount, "Running", null);
             using (var transaction = connection.BeginTransaction(IsolationLevel.Serializable))
             {
                 try
@@ -253,41 +272,56 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                     var accountsCreated = 0;
                     foreach (var row in validRows.Where(r => r.AccountWillBeCreated))
                     {
-                        row.AccountCode = CreateNormalAccount(connection, transaction, row);
+                        row.AccountCode = CreateImportAccount(connection, transaction, row);
                         accountsCreated++;
                     }
 
-                    var voucherId = NextId(connection, transaction, "DOUBLE_ENTREY_VOUCHERS1", "Double_Entry_Vouchers_ID");
-                    var openingVoucherId = NextId(connection, transaction, "DOUBLE_ENTREY_VOUCHERS1", "opening_balance_voucher_id");
-                    var lineNo = 1;
-                    foreach (var row in validRows)
+                    var reviewItems = new List<JournalImportReviewItemViewModel>();
+                    var totalDifference = 0m;
+                    foreach (var fileRows in fileGroups)
                     {
-                        var value = row.Debit > 0 ? row.Debit : row.Credit;
-                        var creditOrDebit = row.Debit > 0 ? 0 : 1;
-                        InsertOpeningDevLine(connection, transaction, voucherId, lineNo, openingVoucherId, row, value, creditOrDebit, userName);
-                        UpdateAccountOpeningBalance(connection, transaction, row.AccountCode, value, creditOrDebit);
-                        lineNo++;
-                    }
-
-                    var debit = validRows.Sum(r => r.Debit);
-                    var credit = validRows.Sum(r => r.Credit);
-                    var difference = debit - credit;
-                    if (preview.AutoBalanceOpening && difference != 0m)
-                    {
-                        var intermediate = FindOpeningIntermediateAccount(connection, transaction);
-                        if (intermediate == null)
+                        var voucherId = NextId(connection, transaction, "DOUBLE_ENTREY_VOUCHERS1", "Double_Entry_Vouchers_ID");
+                        var openingVoucherId = NextId(connection, transaction, "DOUBLE_ENTREY_VOUCHERS1", "opening_balance_voucher_id");
+                        var openingNote = InsertOpeningNote(connection, transaction, fileRows, voucherId, userName);
+                        var lineNo = 1;
+                        foreach (var row in fileRows)
                         {
-                            throw new InvalidOperationException("Opening intermediate account was not found.");
+                            var value = row.Debit > 0 ? row.Debit : row.Credit;
+                            var creditOrDebit = row.Debit > 0 ? 0 : 1;
+                            InsertOpeningDevLine(connection, transaction, voucherId, lineNo, openingVoucherId, openingNote.NoteId, row, value, creditOrDebit, userName);
+                            UpdateAccountOpeningBalance(connection, transaction, row.AccountCode, value, creditOrDebit);
+                            lineNo++;
                         }
 
-                        var balanceRow = new JournalEntryImportRowViewModel
+                        var debit = fileRows.Sum(r => r.Debit);
+                        var credit = fileRows.Sum(r => r.Credit);
+                        var difference = debit - credit;
+                        totalDifference += difference;
+                        if (preview.AutoBalanceOpening && difference != 0m)
                         {
-                            AccountCode = intermediate.AccountCode,
-                            Description = "إقفال الفرق في حساب وسيط افتتاحي - Excel",
-                            EntryDate = validRows.Select(r => r.EntryDate).FirstOrDefault(d => d.HasValue) ?? GetDefaultOpeningBalanceDate(),
-                            BranchId = validRows.Select(r => r.BranchId).FirstOrDefault(b => b.HasValue) ?? 1
-                        };
-                        InsertOpeningDevLine(connection, transaction, voucherId, lineNo, openingVoucherId, balanceRow, Math.Abs(difference), difference > 0m ? 1 : 0, userName);
+                            var intermediate = FindOpeningIntermediateAccount(connection, transaction);
+                            if (intermediate == null)
+                            {
+                                throw new InvalidOperationException("Opening intermediate account was not found.");
+                            }
+
+                            var balanceRow = new JournalEntryImportRowViewModel
+                            {
+                                AccountCode = intermediate.AccountCode,
+                                Description = "إقفال الفرق في حساب وسيط افتتاحي - Excel",
+                                EntryDate = fileRows.Select(r => r.EntryDate).FirstOrDefault(d => d.HasValue) ?? GetDefaultOpeningBalanceDate(),
+                                BranchId = fileRows.Select(r => r.BranchId).FirstOrDefault(b => b.HasValue) ?? 1,
+                                FileName = fileRows.Select(r => r.FileName).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x))
+                            };
+                            InsertOpeningDevLine(connection, transaction, voucherId, lineNo, openingVoucherId, openingNote.NoteId, balanceRow, Math.Abs(difference), difference > 0m ? 1 : 0, userName);
+                        }
+
+                        reviewItems.Add(BuildImportedReviewItem(fileRows, batchId, new JournalImportExecutionInfo
+                        {
+                            VoucherId = openingVoucherId,
+                            NoteId = openingNote.NoteId,
+                            NoteSerial = openingNote.NoteSerial
+                        }, "Imported"));
                     }
 
                     foreach (var hash in preview.FileHashes)
@@ -295,7 +329,14 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                         InsertFileLog(connection, transaction, batchId, hash.Key, hash.Value, userName, 1);
                     }
 
-                    CompleteBatch(connection, transaction, batchId, validRows.Count, rows.Count - validRows.Count, 1, null);
+                    reviewItems = reviewItems
+                        .OrderBy(x => x.FileName)
+                        .ThenBy(x => x.SheetName)
+                        .ThenBy(x => x.GroupKey)
+                        .ToList();
+
+                    SaveReviewItems(connection, transaction, batchId, reviewItems);
+                    CompleteBatch(connection, transaction, batchId, validRows.Count, rows.Count - validRows.Count, journalCount, null);
                     transaction.Commit();
 
                     return new MasterDataImportResultViewModel
@@ -304,8 +345,9 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                         TotalRows = rows.Count,
                         SuccessRows = validRows.Count,
                         FailedRows = rows.Count - validRows.Count,
-                        ImportedJournalCount = 1,
-                        Message = "Opening balances imported. Accounts created: " + accountsCreated + ". Lines: " + validRows.Count + ". Difference: " + difference.ToString("0.00") + ". Voucher: " + openingVoucherId + "."
+                        ImportedJournalCount = journalCount,
+                        Message = "Opening balances imported. Accounts created: " + accountsCreated + ". Lines: " + validRows.Count + ". Difference: " + totalDifference.ToString("0.00") + ". Vouchers: " + journalCount + ".",
+                        ReviewSnapshot = BuildReviewSnapshot(preview.EntityType, preview.FileName, batchId, journalCount, reviewItems, "Review imported opening balances")
                     };
                 }
                 catch (Exception ex)
@@ -347,8 +389,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
 
             if (LooksEntityManaged(parent.PathText))
             {
-                row.Errors.Add("Missing account appears to belong to an entity-managed parent. Create the entity from its approved screen/import first.");
-                return;
+                row.ManagedEntityType = DetectManagedEntityType(parent.PathText);
             }
 
             row.AccountWillBeCreated = true;
@@ -407,16 +448,16 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
             }
         }
 
-        private void ImportJournalGroup(SqlConnection connection, SqlTransaction transaction, IList<JournalEntryImportRowViewModel> groupRows, string userName)
+        private JournalImportExecutionInfo ImportJournalGroup(SqlConnection connection, SqlTransaction transaction, IList<JournalEntryImportRowViewModel> groupRows, string userName)
         {
             foreach (var row in groupRows.Where(r => r.AccountWillBeCreated))
             {
-                row.AccountCode = CreateNormalAccount(connection, transaction, row);
+                row.AccountCode = CreateImportAccount(connection, transaction, row);
             }
 
             var first = groupRows.First();
             var noteValue = groupRows.Sum(r => r.Debit);
-            var noteId = InsertNote(connection, transaction, first, noteValue, userName);
+            var note = InsertNote(connection, transaction, first, noteValue, userName);
             var devId = NextId(connection, transaction, "DOUBLE_ENTREY_VOUCHERS", "Double_Entry_Vouchers_ID");
             var lineNo = 1;
 
@@ -424,12 +465,19 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
             {
                 var value = row.Debit > 0 ? row.Debit : row.Credit;
                 var creditOrDebit = row.Debit > 0 ? 0 : 1;
-                InsertDevLine(connection, transaction, devId, lineNo, row, noteId, value, creditOrDebit, userName);
+                InsertDevLine(connection, transaction, devId, lineNo, row, note.NoteId, value, creditOrDebit, userName);
                 lineNo++;
             }
+
+            return new JournalImportExecutionInfo
+            {
+                VoucherId = devId,
+                NoteId = note.NoteId,
+                NoteSerial = note.NoteSerial
+            };
         }
 
-        private long InsertNote(SqlConnection connection, SqlTransaction transaction, JournalEntryImportRowViewModel row, decimal noteValue, string userName)
+        private NoteInsertInfo InsertNote(SqlConnection connection, SqlTransaction transaction, JournalEntryImportRowViewModel row, decimal noteValue, string userName)
         {
             var noteId = NextId(connection, transaction, "Notes", "NoteID");
             var serial = NextNoteSerial(connection, transaction, row.BranchId ?? 1, row.EntryDate.Value);
@@ -439,7 +487,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                 { "NoteDate", row.EntryDate.Value },
                 { "NoteType", ManualJournalNoteType },
                 { "Note_Value", noteValue },
-                { "Remark", row.Description },
+                { "Remark", LimitForColumn(connection, transaction, "Notes", "Remark", row.Description, 500) },
                 { "UserID", 0 },
                 { "NotePosted", 0 },
                 { "Branch_NO", row.BranchId ?? 1 },
@@ -450,7 +498,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
             };
 
             InsertDynamic(connection, transaction, "Notes", values);
-            return noteId;
+            return new NoteInsertInfo { NoteId = noteId, NoteSerial = serial };
         }
 
         private void InsertDevLine(SqlConnection connection, SqlTransaction transaction, long devId, int lineNo, JournalEntryImportRowViewModel row, long noteId, decimal value, int creditOrDebit, string userName)
@@ -477,8 +525,46 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
             InsertDynamic(connection, transaction, "DOUBLE_ENTREY_VOUCHERS", values);
         }
 
-        private void InsertOpeningDevLine(SqlConnection connection, SqlTransaction transaction, long devId, int lineNo, long openingVoucherId, JournalEntryImportRowViewModel row, decimal value, int creditOrDebit, string userName)
+        private NoteInsertInfo InsertOpeningNote(SqlConnection connection, SqlTransaction transaction, IList<JournalEntryImportRowViewModel> rows, long voucherId, string userName)
         {
+            var first = rows.First();
+            var noteId = NextId(connection, transaction, "Notes1", "NoteID");
+            var noteDate = first.EntryDate.HasValue ? first.EntryDate.Value : GetDefaultOpeningBalanceDate();
+            var noteSerial = NextOpeningNoteSerial(connection, transaction, first.BranchId ?? 1);
+            var noteValue = rows.Sum(r => r.Debit > 0 ? r.Debit : r.Credit);
+            var remark = string.Join(" / ", new[]
+            {
+                "قيد افتتاحي مستورد من Excel",
+                first.FileName,
+                userName
+            }.Where(x => !string.IsNullOrWhiteSpace(x)));
+            remark = LimitForColumn(connection, transaction, "Notes1", "Remark", remark, 500);
+
+            var values = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "NoteID", noteId },
+                { "NoteDate", noteDate.Date },
+                { "DueDate", noteDate.Date },
+                { "NoteType", OpeningBalanceNoteType },
+                { "NoteSerial", noteSerial },
+                { "NoteSerial1", noteSerial },
+                { "Note_Value", noteValue },
+                { "Double_Entry_Vouchers_ID", voucherId },
+                { "UserID", 0 },
+                { "Remark", remark },
+                { "NotePosted", 0 },
+                { "branch_no", first.BranchId ?? 1 },
+                { "user_name", string.Empty },
+                { "note_value_by_characters", string.Empty }
+            };
+
+            InsertDynamic(connection, transaction, "Notes1", values);
+            return new NoteInsertInfo { NoteId = noteId, NoteSerial = noteSerial };
+        }
+
+        private void InsertOpeningDevLine(SqlConnection connection, SqlTransaction transaction, long devId, int lineNo, long openingVoucherId, long noteId, JournalEntryImportRowViewModel row, decimal value, int creditOrDebit, string userName)
+        {
+            var lineDescription = LimitForColumn(connection, transaction, "DOUBLE_ENTREY_VOUCHERS1", "Double_Entry_Vouchers_Description", BuildOpeningLineDescription(row), 500);
             var values = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase)
             {
                 { "Double_Entry_Vouchers_ID", devId },
@@ -486,8 +572,8 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                 { "Account_Code", row.AccountCode },
                 { "Value", value },
                 { "Credit_Or_Debit", creditOrDebit },
-                { "Double_Entry_Vouchers_Description", (row.Description ?? "قيد افتتاحي مستورد من Excel") + " - " + row.FileName },
-                { "Notes_ID", 1 },
+                { "Double_Entry_Vouchers_Description", lineDescription },
+                { "Notes_ID", noteId },
                 { "Account_Interval_ID", GetCurrentAccountInterval(connection, transaction) },
                 { "RecordDate", row.EntryDate.HasValue ? row.EntryDate.Value : GetDefaultOpeningBalanceDate() },
                 { "RecordDateH", string.Empty },
@@ -500,6 +586,205 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
             };
 
             InsertDynamic(connection, transaction, "DOUBLE_ENTREY_VOUCHERS1", values);
+        }
+
+        private static string BuildOpeningLineDescription(JournalEntryImportRowViewModel row)
+        {
+            var parts = new[]
+            {
+                row.Description,
+                row.FileName
+            }.Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+
+            if (parts.Length == 0)
+            {
+                return "قيد افتتاحي مستورد من Excel";
+            }
+
+            return string.Join(" - ", parts);
+        }
+
+        private static JournalImportReviewSnapshotViewModel BuildReviewSnapshot(string entityType, string sourceFileName, int batchId, int importedJournalCount, IList<JournalImportReviewItemViewModel> items, string title)
+        {
+            return new JournalImportReviewSnapshotViewModel
+            {
+                BatchId = batchId,
+                EntityType = entityType,
+                Title = title,
+                SourceFileName = sourceFileName,
+                ImportedJournalCount = importedJournalCount,
+                Items = items ?? new List<JournalImportReviewItemViewModel>()
+            };
+        }
+
+        private static JournalImportReviewItemViewModel BuildImportedReviewItem(IList<JournalEntryImportRowViewModel> rows, int batchId, JournalImportExecutionInfo imported, string source)
+        {
+            return new JournalImportReviewItemViewModel
+            {
+                FileName = rows.Select(x => x.FileName).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? string.Empty,
+                SheetName = rows.Select(x => x.SheetName).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? string.Empty,
+                GroupKey = rows.Select(x => x.GroupKey).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? string.Empty,
+                RowCount = rows.Count,
+                TotalDebit = rows.Sum(x => x.Debit),
+                TotalCredit = rows.Sum(x => x.Credit),
+                Difference = rows.Sum(x => x.Debit) - rows.Sum(x => x.Credit),
+                FirstAccountSerial = rows.Select(x => x.AccountSerial).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? string.Empty,
+                LastAccountSerial = rows.Select(x => x.AccountSerial).LastOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? string.Empty,
+                VoucherId = imported == null ? (long?)null : imported.VoucherId,
+                NoteId = imported == null ? (long?)null : imported.NoteId,
+                NoteSerial = imported == null ? (long?)null : imported.NoteSerial,
+                ReviewStatus = rows.All(x => x.IsValid) ? "Imported" : "Partial",
+                ReviewSource = source ?? string.Empty
+            };
+        }
+
+        private static void SaveReviewItems(SqlConnection connection, SqlTransaction transaction, int batchId, IList<JournalImportReviewItemViewModel> items)
+        {
+            if (items == null || items.Count == 0)
+            {
+                return;
+            }
+
+            using (var deleteCommand = new SqlCommand("DELETE FROM dbo.MasterDataImportJournalReview WHERE BatchId=@BatchId", connection, transaction))
+            {
+                deleteCommand.Parameters.AddWithValue("@BatchId", batchId);
+                deleteCommand.ExecuteNonQuery();
+            }
+
+            foreach (var item in items)
+            {
+                using (var command = new SqlCommand(@"INSERT INTO dbo.MasterDataImportJournalReview
+(BatchId, FileName, SheetName, GroupKey, [RowCount], TotalDebit, TotalCredit, Difference, FirstAccountSerial, LastAccountSerial, VoucherId, NoteId, NoteSerial, ReviewStatus, ReviewSource)
+VALUES
+(@BatchId, @FileName, @SheetName, @GroupKey, @RowCount, @TotalDebit, @TotalCredit, @Difference, @FirstAccountSerial, @LastAccountSerial, @VoucherId, @NoteId, @NoteSerial, @ReviewStatus, @ReviewSource)", connection, transaction))
+                {
+                    command.Parameters.AddWithValue("@BatchId", batchId);
+                    command.Parameters.AddWithValue("@FileName", (object)LimitForColumn(connection, transaction, "MasterDataImportJournalReview", "FileName", item.FileName, 260) ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@SheetName", (object)LimitForColumn(connection, transaction, "MasterDataImportJournalReview", "SheetName", item.SheetName, 128) ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@GroupKey", (object)LimitForColumn(connection, transaction, "MasterDataImportJournalReview", "GroupKey", item.GroupKey, 260) ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@RowCount", item.RowCount);
+                    command.Parameters.AddWithValue("@TotalDebit", item.TotalDebit);
+                    command.Parameters.AddWithValue("@TotalCredit", item.TotalCredit);
+                    command.Parameters.AddWithValue("@Difference", item.Difference);
+                    command.Parameters.AddWithValue("@FirstAccountSerial", (object)LimitForColumn(connection, transaction, "MasterDataImportJournalReview", "FirstAccountSerial", item.FirstAccountSerial, 50) ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@LastAccountSerial", (object)LimitForColumn(connection, transaction, "MasterDataImportJournalReview", "LastAccountSerial", item.LastAccountSerial, 50) ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@VoucherId", (object)item.VoucherId ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@NoteId", (object)item.NoteId ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@NoteSerial", (object)item.NoteSerial ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@ReviewStatus", (object)LimitForColumn(connection, transaction, "MasterDataImportJournalReview", "ReviewStatus", item.ReviewStatus, 50) ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@ReviewSource", (object)LimitForColumn(connection, transaction, "MasterDataImportJournalReview", "ReviewSource", item.ReviewSource, 50) ?? DBNull.Value);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
+        private static string LimitForColumn(SqlConnection connection, SqlTransaction transaction, string tableName, string columnName, string value, int fallbackMaxLength)
+        {
+            value = Clean(value);
+            if (string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+
+            var maxLength = GetColumnMaxLength(connection, transaction, tableName, columnName);
+            if (maxLength <= 0)
+            {
+                maxLength = fallbackMaxLength;
+            }
+
+            return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+        }
+
+        private static int GetColumnMaxLength(SqlConnection connection, SqlTransaction transaction, string tableName, string columnName)
+        {
+            using (var command = new SqlCommand(@"SELECT CHARACTER_MAXIMUM_LENGTH
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = @TableName AND COLUMN_NAME = @ColumnName", connection, transaction))
+            {
+                command.Parameters.AddWithValue("@TableName", tableName);
+                command.Parameters.AddWithValue("@ColumnName", columnName);
+                var result = command.ExecuteScalar();
+                if (result == null || result == DBNull.Value)
+                {
+                    return 0;
+                }
+
+                return Convert.ToInt32(result);
+            }
+        }
+
+        public JournalImportReviewSnapshotViewModel GetReviewSnapshot(int batchId)
+        {
+            using (var connection = new SqlConnection(_connectionString))
+            {
+                connection.Open();
+                EnsureJournalImportTables(connection, null);
+
+                var snapshot = new JournalImportReviewSnapshotViewModel
+                {
+                    BatchId = batchId
+                };
+
+                using (var command = new SqlCommand(@"SELECT TOP 1 BatchId, EntityType, FileName
+FROM dbo.MasterDataImportBatch
+WHERE BatchId = @BatchId", connection))
+                {
+                    command.Parameters.AddWithValue("@BatchId", batchId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (!reader.Read())
+                        {
+                            return null;
+                        }
+
+                        snapshot.EntityType = Convert.ToString(reader["EntityType"]);
+                        snapshot.SourceFileName = Convert.ToString(reader["FileName"]);
+                    }
+                }
+
+                if (!TableExists(connection, null, "MasterDataImportJournalReview"))
+                {
+                    return snapshot;
+                }
+
+                using (var command = new SqlCommand(@"SELECT FileName, SheetName, GroupKey, [RowCount], TotalDebit, TotalCredit, Difference,
+       FirstAccountSerial, LastAccountSerial, VoucherId, NoteId, NoteSerial, ReviewStatus, ReviewSource
+FROM dbo.MasterDataImportJournalReview
+WHERE BatchId = @BatchId
+ORDER BY FileName, SheetName, GroupKey, Id", connection))
+                {
+                    command.Parameters.AddWithValue("@BatchId", batchId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            snapshot.Items.Add(new JournalImportReviewItemViewModel
+                            {
+                                FileName = Convert.ToString(reader["FileName"]),
+                                SheetName = Convert.ToString(reader["SheetName"]),
+                                GroupKey = Convert.ToString(reader["GroupKey"]),
+                                RowCount = ReadInt(reader, "RowCount"),
+                                TotalDebit = ReadDecimal(reader, "TotalDebit"),
+                                TotalCredit = ReadDecimal(reader, "TotalCredit"),
+                                Difference = ReadDecimal(reader, "Difference"),
+                                FirstAccountSerial = Convert.ToString(reader["FirstAccountSerial"]),
+                                LastAccountSerial = Convert.ToString(reader["LastAccountSerial"]),
+                                VoucherId = reader["VoucherId"] == DBNull.Value ? (long?)null : Convert.ToInt64(reader["VoucherId"]),
+                                NoteId = reader["NoteId"] == DBNull.Value ? (long?)null : Convert.ToInt64(reader["NoteId"]),
+                                NoteSerial = reader["NoteSerial"] == DBNull.Value ? (long?)null : Convert.ToInt64(reader["NoteSerial"]),
+                                ReviewStatus = Convert.ToString(reader["ReviewStatus"]),
+                                ReviewSource = Convert.ToString(reader["ReviewSource"])
+                            });
+                        }
+                    }
+                }
+
+                snapshot.ImportedJournalCount = snapshot.Items.Select(x => x.GroupKey).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+                snapshot.Title = string.Equals(snapshot.EntityType, MasterDataImportEntityType.OpeningBalances, StringComparison.OrdinalIgnoreCase)
+                    ? "Review imported opening balances"
+                    : "Review imported journal entries";
+                return snapshot;
+            }
         }
 
         private static void UpdateAccountOpeningBalance(SqlConnection connection, SqlTransaction transaction, string accountCode, decimal value, int creditOrDebit)
@@ -690,6 +975,116 @@ ORDER BY LEN(Account_Serial), Account_Serial", connection, transaction))
             return accountCode;
         }
 
+        private string CreateImportAccount(SqlConnection connection, SqlTransaction transaction, JournalEntryImportRowViewModel row)
+        {
+            var accountCode = CreateNormalAccount(connection, transaction, row);
+            EnsureManagedEntityRecord(connection, transaction, row, accountCode);
+            EnsureOperationalMasterRecord(connection, transaction, row, accountCode);
+            return accountCode;
+        }
+
+        private void EnsureOperationalMasterRecord(SqlConnection connection, SqlTransaction transaction, JournalEntryImportRowViewModel row, string accountCode)
+        {
+            var chartRow = new MasterDataImportRowViewModel
+            {
+                RowNumber = row.RowNumber,
+                AccountCode = accountCode,
+                AccountSerial = row.AccountSerial,
+                AccountName = row.AccountName,
+                AccountNameEnglish = row.AccountName,
+                IsFinalAccount = true,
+                CurrencyCode = "1"
+            };
+
+            var service = new ChartOfAccountsImportService(new MainErpDbConnectionFactory());
+            service.EnsureOperationalMasterRecords(connection, transaction, chartRow, accountCode);
+        }
+
+        private void EnsureManagedEntityRecord(SqlConnection connection, SqlTransaction transaction, JournalEntryImportRowViewModel row, string accountCode)
+        {
+            if (string.IsNullOrWhiteSpace(accountCode))
+            {
+                return;
+            }
+
+            var entityType = row.ManagedEntityType ?? DetectManagedEntityTypeForRow(connection, transaction, row);
+            if (!entityType.HasValue)
+            {
+                return;
+            }
+
+            if (!TableExists(connection, transaction, "TblCustemers"))
+            {
+                return;
+            }
+
+            var branchId = GetDefaultBranchId(connection, transaction);
+            var name = Limit(Clean(row.AccountName), 255);
+            var nameEnglish = Limit(string.IsNullOrWhiteSpace(row.AccountName) ? accountCode : Clean(row.AccountName), 255);
+            var code = Limit(string.IsNullOrWhiteSpace(row.AccountSerial) ? accountCode : Clean(row.AccountSerial), 255);
+            var parent = InferParentAccount(row.AccountSerial, LoadAccounts(connection, transaction, "Account_Serial"));
+            var parentCode = parent == null ? string.Empty : parent.AccountCode;
+
+            using (var command = new SqlCommand(@"IF EXISTS (SELECT 1 FROM dbo.TblCustemers WHERE Account_Code = @AccountCode)
+BEGIN
+    UPDATE dbo.TblCustemers
+    SET CusName = COALESCE(NULLIF(@Name, N''), CusName),
+        CusNamee = COALESCE(NULLIF(@NameEnglish, N''), CusNamee),
+        [Type] = COALESCE([Type], @Type),
+        code = COALESCE(NULLIF(@Code, N''), code),
+        Fullcode = COALESCE(NULLIF(@Code, N''), Fullcode),
+        parent_account = COALESCE(NULLIF(@ParentAccount, N''), parent_account),
+        BranchId = CASE WHEN @BranchId > 0 THEN @BranchId ELSE BranchId END,
+        CurrncyID = COALESCE(CurrncyID, 1)
+    WHERE Account_Code = @AccountCode;
+END
+ELSE
+BEGIN
+    INSERT INTO dbo.TblCustemers
+    (CusID, CusName, CusNamee, [Type], OpenBalance, Account_Code, parent_account, code, Fullcode, BranchId, RecordDate, CurrncyID, CustomerandVendor, locked)
+    VALUES
+    ((SELECT ISNULL(MAX(CusID), 0) + 1 FROM dbo.TblCustemers), @Name, @NameEnglish, @Type, 0, @AccountCode, @ParentAccount, @Code, @Code, @BranchId, GETDATE(), 1, 0, 0);
+END", connection, transaction))
+            {
+                command.Parameters.AddWithValue("@AccountCode", accountCode);
+                command.Parameters.AddWithValue("@Name", (object)name ?? DBNull.Value);
+                command.Parameters.AddWithValue("@NameEnglish", (object)nameEnglish ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Type", entityType.Value);
+                command.Parameters.AddWithValue("@Code", (object)code ?? DBNull.Value);
+                command.Parameters.AddWithValue("@ParentAccount", (object)Limit(parentCode, 255) ?? DBNull.Value);
+                command.Parameters.AddWithValue("@BranchId", branchId);
+                command.ExecuteNonQuery();
+            }
+        }
+
+        private int? DetectManagedEntityTypeForRow(SqlConnection connection, SqlTransaction transaction, JournalEntryImportRowViewModel row)
+        {
+            var accountsBySerial = LoadAccounts(connection, transaction, "Account_Serial");
+            var parent = InferParentAccount(row.AccountSerial, accountsBySerial);
+            return parent == null ? (int?)null : DetectManagedEntityType(parent.PathText);
+        }
+
+        private static int? DetectManagedEntityType(string pathText)
+        {
+            var text = (pathText ?? string.Empty).ToLowerInvariant();
+            if (text.Contains("مقاول") || text.Contains("مقاولين") || text.Contains("subcontract") || text.Contains("sub contractor"))
+            {
+                return 3;
+            }
+
+            if (text.Contains("مورد") || text.Contains("موردين") || text.Contains("supplier") || text.Contains("vendor"))
+            {
+                return 2;
+            }
+
+            if (text.Contains("عميل") || text.Contains("عملاء") || text.Contains("customer"))
+            {
+                return 1;
+            }
+
+            return null;
+        }
+
         private static void InsertDynamic(SqlConnection connection, SqlTransaction transaction, string tableName, IDictionary<string, object> values)
         {
             var columns = values.Keys.Where(c => ColumnExists(connection, transaction, tableName, c)).ToList();
@@ -741,6 +1136,19 @@ WHERE NoteType=@NoteType
                 command.Parameters.AddWithValue("@NoteType", ManualJournalNoteType);
                 command.Parameters.AddWithValue("@Year", noteDate.Year);
                 command.Parameters.AddWithValue("@Month", noteDate.Month);
+                command.Parameters.AddWithValue("@BranchId", branchId);
+                return Convert.ToInt64(command.ExecuteScalar());
+            }
+        }
+
+        private static long NextOpeningNoteSerial(SqlConnection connection, SqlTransaction transaction, int branchId)
+        {
+            using (var command = new SqlCommand(@"SELECT ISNULL(MAX(CAST(CASE WHEN ISNUMERIC(NoteSerial)=1 THEN NoteSerial ELSE 0 END AS BIGINT)),0)+1
+FROM dbo.Notes1 WITH (UPDLOCK, HOLDLOCK)
+WHERE ISNULL(NoteType, 0)=@NoteType
+  AND (@BranchId = 0 OR branch_no = @BranchId OR branch_no IS NULL)", connection, transaction))
+            {
+                command.Parameters.AddWithValue("@NoteType", OpeningBalanceNoteType);
                 command.Parameters.AddWithValue("@BranchId", branchId);
                 return Convert.ToInt64(command.ExecuteScalar());
             }
@@ -867,6 +1275,35 @@ FROM dbo.ACCOUNTS", connection, transaction))
             }
         }
 
+        private static int GetDefaultBranchId(SqlConnection connection, SqlTransaction transaction)
+        {
+            if (TableExists(connection, transaction, "branches"))
+            {
+                using (var command = new SqlCommand("SELECT TOP 1 branch_id FROM dbo.branches WHERE branch_id IS NOT NULL ORDER BY branch_id", connection, transaction))
+                {
+                    var result = command.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        return Convert.ToInt32(result);
+                    }
+                }
+            }
+
+            if (TableExists(connection, transaction, "TblBranchesData"))
+            {
+                using (var command = new SqlCommand("SELECT TOP 1 branch_id FROM dbo.TblBranchesData WHERE branch_id IS NOT NULL ORDER BY branch_id", connection, transaction))
+                {
+                    var result = command.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        return Convert.ToInt32(result);
+                    }
+                }
+            }
+
+            return 1;
+        }
+
         private static string GenerateAccountCode(SqlConnection connection, SqlTransaction transaction, string parentCode)
         {
             var max = 0;
@@ -922,6 +1359,12 @@ FROM dbo.ACCOUNTS", connection, transaction))
             return index >= 0 && int.TryParse(accountCode.Substring(index + 1), out suffix) ? suffix : 0;
         }
 
+        private static string Limit(string value, int maxLength)
+        {
+            value = value ?? string.Empty;
+            return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+        }
+
         private static void EnsureJournalImportTables(SqlConnection connection, SqlTransaction transaction)
         {
             using (var command = new SqlCommand(@"IF OBJECT_ID('dbo.MasterDataImportJournalFileLog','U') IS NULL
@@ -962,7 +1405,33 @@ END
 IF COL_LENGTH('dbo.MasterDataImportBatch','ErrorMessage') IS NULL
 BEGIN
     ALTER TABLE dbo.MasterDataImportBatch ADD ErrorMessage nvarchar(max) NULL;
-END", connection, transaction))
+END
+IF OBJECT_ID('dbo.MasterDataImportJournalReview','U') IS NULL
+BEGIN
+    CREATE TABLE dbo.MasterDataImportJournalReview
+    (
+        Id int IDENTITY(1,1) NOT NULL CONSTRAINT PK_MasterDataImportJournalReview PRIMARY KEY,
+        BatchId int NOT NULL,
+        FileName nvarchar(260) NULL,
+        SheetName nvarchar(128) NULL,
+        GroupKey nvarchar(260) NULL,
+        [RowCount] int NOT NULL CONSTRAINT DF_MasterDataImportJournalReview_RowCount DEFAULT (0),
+        TotalDebit decimal(18,2) NOT NULL CONSTRAINT DF_MasterDataImportJournalReview_TotalDebit DEFAULT (0),
+        TotalCredit decimal(18,2) NOT NULL CONSTRAINT DF_MasterDataImportJournalReview_TotalCredit DEFAULT (0),
+        Difference decimal(18,2) NOT NULL CONSTRAINT DF_MasterDataImportJournalReview_Difference DEFAULT (0),
+        FirstAccountSerial nvarchar(50) NULL,
+        LastAccountSerial nvarchar(50) NULL,
+        VoucherId bigint NULL,
+        NoteId bigint NULL,
+        NoteSerial bigint NULL,
+        ReviewStatus nvarchar(50) NULL,
+        ReviewSource nvarchar(50) NULL,
+        CreatedAt datetime NOT NULL CONSTRAINT DF_MasterDataImportJournalReview_CreatedAt DEFAULT (GETDATE())
+    );
+    CREATE INDEX IX_MasterDataImportJournalReview_BatchId ON dbo.MasterDataImportJournalReview(BatchId);
+END
+IF COL_LENGTH('dbo.MasterDataImportJournalReview', 'RowCount') IS NULL
+    ALTER TABLE dbo.MasterDataImportJournalReview ADD [RowCount] int NOT NULL CONSTRAINT DF_MasterDataImportJournalReview_RowCount DEFAULT (0);", connection, transaction))
             {
                 command.ExecuteNonQuery();
             }
@@ -984,6 +1453,7 @@ END", connection, transaction))
 
         private static void InsertFileLog(SqlConnection connection, SqlTransaction transaction, int batchId, string fileName, string fileHash, string userName, int importedCount)
         {
+            fileName = LimitForColumn(connection, transaction, "MasterDataImportJournalFileLog", "FileName", fileName, 260);
             using (var command = new SqlCommand(@"INSERT INTO dbo.MasterDataImportJournalFileLog(BatchId, FileName, FileHash, UploadedBy, UploadedAt, ImportedJournalCount)
 VALUES (@BatchId, @FileName, @FileHash, @UploadedBy, GETDATE(), @ImportedJournalCount)", connection, transaction))
             {
@@ -998,6 +1468,7 @@ VALUES (@BatchId, @FileName, @FileHash, @UploadedBy, GETDATE(), @ImportedJournal
 
         private static int CreateBatch(SqlConnection connection, SqlTransaction transaction, string fileName, string userName, int totalRows, int successRows, int failedRows, int journalCount, string status, string error)
         {
+            fileName = LimitForColumn(connection, transaction, "MasterDataImportBatch", "FileName", fileName, 260);
             using (var command = new SqlCommand(@"INSERT INTO dbo.MasterDataImportBatch
 (FileName, EntityType, ImportedBy, ImportStartedAt, TotalRows, SuccessRows, FailedRows, Status, ErrorMessage)
 VALUES (@FileName, 'JournalEntries', @ImportedBy, GETDATE(), @TotalRows, @SuccessRows, @FailedRows, @Status, @ErrorMessage);
@@ -1032,6 +1503,11 @@ WHERE BatchId=@BatchId", connection, transaction))
         private static int ReadInt(IDataRecord reader, string name)
         {
             return reader[name] == DBNull.Value ? 0 : Convert.ToInt32(reader[name]);
+        }
+
+        private static decimal ReadDecimal(IDataRecord reader, string name)
+        {
+            return reader[name] == DBNull.Value ? 0m : Convert.ToDecimal(reader[name]);
         }
 
         private static bool IsDecimalTextValid(string value)
@@ -1079,6 +1555,19 @@ WHERE BatchId=@BatchId", connection, transaction))
             public int DebitOrCredit { get; set; }
             public int DifferentType { get; set; }
             public int Authority { get; set; }
+        }
+
+        private class NoteInsertInfo
+        {
+            public long NoteId { get; set; }
+            public long NoteSerial { get; set; }
+        }
+
+        private class JournalImportExecutionInfo
+        {
+            public long VoucherId { get; set; }
+            public long NoteId { get; set; }
+            public long NoteSerial { get; set; }
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿@model MyERP.Areas.MainErp.ViewModels.MasterDataImport.MasterDataImportIndexViewModel
+@using System.Globalization
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
     ViewBag.Title = "استيراد الملفات الأساسية";
@@ -72,6 +73,18 @@
     }
 </section>
 
+<section class="import-panel maintenance-panel">
+    <div class="rollback-header">
+        <strong>مراجعة الدليل وإنشاء الملفات المرتبطة</strong>
+        <span>يلف على دليل الحسابات الحالي ويُنشئ/يُحدّث الموظفين، العملاء، الموردين، المقاولين، البنوك، الخزن، المخازن، المشاريع، المصروفات، الإيرادات، ومجموعات الأصول حسب سياق الحساب.</span>
+    </div>
+    @using (Html.BeginForm("SyncOperationalMasters", "MasterDataImport", new { area = "MainErp" }, FormMethod.Post, new { @class = "rollback-form", data_progress_message = "Synchronizing operational master records from chart of accounts..." }))
+    {
+        @Html.AntiForgeryToken()
+        <button type="submit" class="button secondary" data-confirm="سيتم مراجعة دليل الحسابات الحالي وإنشاء الملفات التشغيلية الناقصة فقط بدون حذف الحسابات. هل تريد المتابعة؟">تظبيط الملفات من الدليل الحالي</button>
+    }
+</section>
+
 @if (Model.ImportBatches != null && Model.ImportBatches.Count > 0)
 {
     <section class="import-panel rollback-panel">
@@ -88,6 +101,7 @@
                     <th>&#1575;&#1604;&#1606;&#1575;&#1580;&#1581;</th>
                     <th>&#1575;&#1604;&#1581;&#1587;&#1575;&#1576;&#1575;&#1578; &#1575;&#1604;&#1605;&#1606;&#1588;&#1571;&#1577;</th>
                     <th>&#1575;&#1604;&#1581;&#1575;&#1604;&#1577;</th>
+                    <th>&#1575;&#1604;&#1605;&#1585;&#1575;&#1580;&#1593;&#1577;</th>
                     <th></th>
                 </tr>
             </thead>
@@ -97,12 +111,27 @@
                     <tr>
                         <td>@batch.BatchId</td>
                         <td>@batch.FileName</td>
-                        <td>@batch.ImportStartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@batch.ImportStartedAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)</td>
                         <td>@batch.SuccessRows</td>
                         <td>@batch.CreatedAccounts</td>
                         <td>@batch.Status</td>
                         <td>
-                            @if (batch.Status == "Completed")
+                            @if (batch.CanReview)
+                            {
+                                using (Html.BeginForm("ReviewBatch", "MasterDataImport", new { area = "MainErp" }, FormMethod.Post, new { @class = "rollback-form review-form" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="batchId" value="@batch.BatchId" />
+                                    <button type="submit" class="button secondary">مراجعة</button>
+                                }
+                            }
+                            else
+                            {
+                                <span class="muted">لا توجد مراجعة محفوظة</span>
+                            }
+                        </td>
+                        <td>
+                            @if (batch.CanRollback)
                             {
                                 using (Html.BeginForm("RollbackBatch", "MasterDataImport", new { area = "MainErp" }, FormMethod.Post, new { @class = "rollback-form", data_progress_message = "Rolling back imported accounts..." }))
                                 {
@@ -111,9 +140,14 @@
                                     <button type="submit" data-confirm="سيتم حذف الحسابات التي أنشأها هذا النقل فقط. هل تريد التراجع؟">&#1578;&#1585;&#1575;&#1580;&#1593;</button>
                                 }
                             }
+                            else if (string.Equals(batch.Status, "Completed", StringComparison.OrdinalIgnoreCase)
+                                && string.Equals(batch.EntityType, MyERP.Areas.MainErp.ViewModels.MasterDataImport.MasterDataImportEntityType.ChartOfAccounts, StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="muted">لا توجد تفاصيل كافية للتراجع عن هذه الدفعة.</span>
+                            }
                             else
                             {
-                                <span class="muted">&#1604;&#1575; &#1578;&#1608;&#1580;&#1583; &#1578;&#1601;&#1575;&#1589;&#1610;&#1604; &#1578;&#1585;&#1575;&#1580;&#1593;</span>
+                                <span class="muted">التراجع متاح فقط لدفعات دليل الحسابات التي أنشأت حسابات جديدة.</span>
                             }
                         </td>
                     </tr>
@@ -123,13 +157,179 @@
     </section>
 }
 
+@if (Model.LastImportReview != null && Model.LastImportReview.Items != null && Model.LastImportReview.Items.Count > 0)
+{
+    <section class="import-panel review-history-panel">
+        <div class="rollback-header">
+            <strong>مراجعة آخر استيراد ناجح</strong>
+            <span>الدفعة @Model.LastImportReview.BatchId - @(string.IsNullOrWhiteSpace(Model.LastImportReview.Title) ? "Imported journals review" : Model.LastImportReview.Title)</span>
+        </div>
+        <div class="summary-strip review-summary">
+            <div><strong>@Model.LastImportReview.ImportedJournalCount</strong><span>القيود الناتجة</span></div>
+            <div><strong>@Model.LastImportReview.Items.Count</strong><span>ملف/شيت/تجميع</span></div>
+            <div><strong>@Model.LastImportReview.SourceFileName</strong><span>المصدر</span></div>
+        </div>
+        <div class="grid-wrap">
+            <table class="preview-grid review-grid">
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Sheet</th>
+                        <th>Group</th>
+                        <th>Rows</th>
+                        <th>Total debit</th>
+                        <th>Total credit</th>
+                        <th>Difference</th>
+                        <th>First serial</th>
+                        <th>Last serial</th>
+                        <th>Voucher</th>
+                        <th>Note serial</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.LastImportReview.Items)
+                    {
+                        <tr class="ok">
+                            <td>@item.FileName</td>
+                            <td>@item.SheetName</td>
+                            <td>@item.GroupKey</td>
+                            <td>@item.RowCount</td>
+                            <td>@item.TotalDebit.ToString("0.00")</td>
+                            <td>@item.TotalCredit.ToString("0.00")</td>
+                            <td>@item.Difference.ToString("0.00")</td>
+                            <td>@item.FirstAccountSerial</td>
+                            <td>@item.LastAccountSerial</td>
+                            <td>@item.VoucherId</td>
+                            <td>@item.NoteSerial</td>
+                            <td>@item.ReviewStatus</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}
+
 @if (Model.HasPreview)
 {
+    if (Model.WorksheetDiagnostics != null && Model.WorksheetDiagnostics.Count > 0)
+    {
+        <section class="summary-strip">
+            <div><strong>@Model.WorksheetDiagnostics.Count</strong><span>Sheets scanned</span></div>
+            <div><strong>@(Model.WorksheetDiagnostics.Count(x => x.IsSkipped))</strong><span>Sheets skipped</span></div>
+            <div><strong>@(Model.WorksheetDiagnostics.Count(x => !x.IsSkipped))</strong><span>Sheets used</span></div>
+        </section>
+        <section class="grid-wrap">
+            <table class="preview-grid">
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Sheet</th>
+                        <th>Used range</th>
+                        <th>Header row</th>
+                        <th>Data rows</th>
+                        <th>Serial column</th>
+                        <th>Name column</th>
+                        <th>Balance column</th>
+                        <th>Amount columns</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sheet in Model.WorksheetDiagnostics)
+                    {
+                        <tr class="@(sheet.IsSkipped ? "bad" : "ok")">
+                            <td>@sheet.FileName</td>
+                            <td>@sheet.SheetName</td>
+                            <td>@sheet.UsedRange</td>
+                            <td>@(sheet.HeaderRowNumber.HasValue ? sheet.HeaderRowNumber.Value.ToString() : "-")</td>
+                            <td>@sheet.DataRowsCount</td>
+                            <td>@sheet.DetectedAccountSerialColumn</td>
+                            <td>@sheet.DetectedAccountNameColumn</td>
+                            <td>@sheet.DetectedBalanceColumn</td>
+                            <td>@sheet.DetectedAmountColumns</td>
+                            <td>@(sheet.IsSkipped ? sheet.SkipReason : "Used")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+        if (Model.WorksheetDiagnostics.Any(x => x.ColumnDiagnostics != null && x.ColumnDiagnostics.Count > 0))
+        {
+            <section class="grid-wrap">
+                <table class="preview-grid">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Sheet</th>
+                            <th>Column</th>
+                            <th>Header</th>
+                            <th>Samples</th>
+                            <th>Digit ratio</th>
+                            <th>Decimal/comma</th>
+                            <th>Zero ratio</th>
+                            <th>Distinct</th>
+                            <th>Score</th>
+                            <th>Decision</th>
+                            <th>Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sheet in Model.WorksheetDiagnostics.Where(x => x.ColumnDiagnostics != null))
+                        {
+                            foreach (var column in sheet.ColumnDiagnostics)
+                            {
+                                <tr class="@(column.Decision == "Accepted" ? "ok" : "bad")">
+                                    <td>@sheet.FileName</td>
+                                    <td>@sheet.SheetName</td>
+                                    <td>@column.ColumnIndex</td>
+                                    <td>@column.HeaderText</td>
+                                    <td>@column.SampleValues</td>
+                                    <td>@column.DigitOnlyRatio.ToString("0.##")</td>
+                                    <td>@column.DecimalOrCommaRatio.ToString("0.##")</td>
+                                    <td>@column.ZeroRatio.ToString("0.##")</td>
+                                    <td>@column.DistinctCount</td>
+                                    <td>@column.FinalScore.ToString("0.##")</td>
+                                    <td>@(string.IsNullOrWhiteSpace(column.AcceptedRole) ? column.Decision : column.Decision + " / " + column.AcceptedRole)</td>
+                                    <td>@column.Reason</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </section>
+        }
+        if (Model.WorksheetDiagnostics.Any(x => x.ParsedRowPreview != null && x.ParsedRowPreview.Count > 0))
+        {
+            <section class="grid-wrap">
+                <table class="preview-grid">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Sheet</th>
+                            <th>First parsed rows</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sheet in Model.WorksheetDiagnostics.Where(x => x.ParsedRowPreview != null && x.ParsedRowPreview.Count > 0))
+                        {
+                            <tr class="ok">
+                                <td>@sheet.FileName</td>
+                                <td>@sheet.SheetName</td>
+                                <td>@string.Join(" || ", sheet.ParsedRowPreview)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </section>
+        }
+    }
     <section class="summary-strip">
         <div><strong>@Model.TotalRows</strong><span>&#1573;&#1580;&#1605;&#1575;&#1604;&#1610; &#1575;&#1604;&#1589;&#1601;&#1608;&#1601;</span></div>
         <div><strong>@Model.ValidRows</strong><span>&#1589;&#1581;&#1610;&#1581;</span></div>
         <div><strong>@Model.ErrorRows</strong><span>&#1571;&#1582;&#1591;&#1575;&#1569;</span></div>
-        @if (Model.UsesJournalGrid)
+        if (Model.UsesJournalGrid)
         {
             <div><strong>@Model.JournalCount</strong><span>Journal groups</span></div>
             <div><strong>@Model.TotalDebit.ToString("0.00")</strong><span>Total debit</span></div>
@@ -141,6 +341,14 @@
     </section>
 
     <section class="grid-wrap">
+        @if (Model.UsesJournalGrid && Model.CurrentReviewItems != null && Model.CurrentReviewItems.Count > 0)
+        {
+            <div class="preview-mode-tabs" role="tablist">
+                <button type="button" class="preview-mode is-active" data-preview-mode="rows">صفوف المعاينة</button>
+                <button type="button" class="preview-mode" data-preview-mode="review">مراجعة التجميع</button>
+            </div>
+        }
+        <div class="preview-panel is-active" data-preview-panel="rows">
         <div class="preview-toolbar">
             <div class="preview-tabs" role="tablist">
                 <button type="button" class="preview-filter is-active" data-filter="all">&#1575;&#1604;&#1603;&#1604; <span>@Model.TotalRows</span></button>
@@ -153,7 +361,7 @@
             </label>
         </div>
         <div class="preview-hint">&#1605;&#1585;&#1585; &#1571;&#1601;&#1602;&#1610;&#1575; &#1604;&#1605;&#1585;&#1575;&#1580;&#1593;&#1577; &#1603;&#1604; &#1575;&#1604;&#1571;&#1593;&#1605;&#1583;&#1577;. &#1589;&#1601;&#1608;&#1601; &#1575;&#1604;&#1571;&#1582;&#1591;&#1575;&#1569; &#1587;&#1578;&#1592;&#1604; &#1605;&#1605;&#1610;&#1586;&#1577;.</div>
-        @if (Model.UsesJournalGrid)
+        if (Model.UsesJournalGrid)
         {
         <table class="preview-grid">
             <thead>
@@ -172,7 +380,7 @@
                     <th>Description</th>
                     <th>Branch</th>
                     <th>Account action</th>
-                    @if (Model.IsOpeningBalanceImport)
+                    if (Model.IsOpeningBalanceImport)
                     {
                         <th>Opening balance</th>
                         <th>Balance type</th>
@@ -190,7 +398,7 @@
                         <td class="col-status"><span class="status-pill @(row.IsValid ? "status-ok" : "status-bad")">@(row.IsValid ? "صحيح" : "خطأ")</span></td>
                         <td class="col-errors">@row.ErrorDetails</td>
                         <td>@row.GroupKey</td>
-                        <td>@(row.EntryDate.HasValue ? row.EntryDate.Value.ToString("yyyy-MM-dd") : row.EntryDateText)</td>
+                        <td>@(row.EntryDate.HasValue ? row.EntryDate.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : row.EntryDateText)</td>
                         <td>@row.AccountSerial</td>
                         <td class="arabic-cell">@row.AccountName</td>
                         <td>@row.Debit</td>
@@ -198,7 +406,7 @@
                         <td class="arabic-cell">@row.Description</td>
                         <td>@row.Branch</td>
                         <td>@(row.AccountWillBeCreated ? "Create account" : "Use existing")</td>
-                        @if (Model.IsOpeningBalanceImport)
+                        if (Model.IsOpeningBalanceImport)
                         {
                             <td>@row.OpeningBalanceText</td>
                             <td>@row.BalanceType</td>
@@ -251,6 +459,47 @@
             </tbody>
         </table>
         }
+        </div>
+
+        @if (Model.UsesJournalGrid && Model.CurrentReviewItems != null && Model.CurrentReviewItems.Count > 0)
+        {
+            <div class="preview-panel" data-preview-panel="review">
+                <div class="preview-hint">تلخيص كل ملف وشيت وتجميع قبل الاستيراد، مع عدد السطور والمبالغ وأول وآخر مسلسل حساب.</div>
+                <table class="preview-grid review-grid">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Sheet</th>
+                            <th>Group</th>
+                            <th>Rows</th>
+                            <th>Total debit</th>
+                            <th>Total credit</th>
+                            <th>Difference</th>
+                            <th>First serial</th>
+                            <th>Last serial</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.CurrentReviewItems)
+                        {
+                            <tr class="@(item.ReviewStatus == "Ready" ? "ok" : "bad")">
+                                <td>@item.FileName</td>
+                                <td>@item.SheetName</td>
+                                <td>@item.GroupKey</td>
+                                <td>@item.RowCount</td>
+                                <td>@item.TotalDebit.ToString("0.00")</td>
+                                <td>@item.TotalCredit.ToString("0.00")</td>
+                                <td>@item.Difference.ToString("0.00")</td>
+                                <td>@item.FirstAccountSerial</td>
+                                <td>@item.LastAccountSerial</td>
+                                <td>@item.ReviewStatus</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
     </section>
 
     using (Html.BeginForm("Import", "MasterDataImport", new { area = "MainErp" }, FormMethod.Post, new { @class = "import-submit", data_progress_message = "Importing rows into MainERP. Keep this page open..." }))
@@ -301,40 +550,69 @@
             var startedAt = 0;
             var timer = null;
 
+            function disableSubmitButtons(form) {
+                if (form.classList.contains("import-form")) {
+                    return;
+                }
+
+                window.setTimeout(function () {
+                    Array.prototype.slice.call(form.querySelectorAll("button")).forEach(function (button) {
+                        if (!button.disabled) {
+                            button.setAttribute("data-was-enabled", "true");
+                            button.disabled = true;
+                        }
+                    });
+                }, 0);
+            }
+
             function showProgress(form) {
                 if (!progressOverlay) { return; }
                 startedAt = new Date().getTime();
-                progressTitle.innerText = form.classList.contains("import-submit") ? "جاري الاستيراد" : "جاري إعداد المعاينة";
-                progressText.innerText = form.getAttribute("data-progress-message") || "Working...";
+                if (progressTitle) {
+                    progressTitle.innerText = form.classList.contains("import-submit") ? "جاري الاستيراد" : "جاري إعداد المعاينة";
+                }
+                if (progressText) {
+                    progressText.innerText = form.getAttribute("data-progress-message") || "Working...";
+                }
                 progressOverlay.hidden = false;
-                Array.prototype.slice.call(form.querySelectorAll("button")).forEach(function (button) {
-                    if (!button.disabled) {
-                        button.setAttribute("data-was-enabled", "true");
-                        button.disabled = true;
-                    }
-                });
+                disableSubmitButtons(form);
                 timer = window.setInterval(function () {
                     var seconds = Math.max(0, Math.floor((new Date().getTime() - startedAt) / 1000));
-                    progressElapsed.innerText = "Elapsed: " + seconds + "s";
+                    if (progressElapsed) {
+                        progressElapsed.innerText = "Elapsed: " + seconds + "s";
+                    }
                 }, 1000);
             }
 
             Array.prototype.slice.call(document.querySelectorAll(".import-form, .import-submit, .rollback-form")).forEach(function (form) {
                 form.addEventListener("submit", function (event) {
-                    var confirmButton = form.querySelector("[data-confirm]");
-                    if (confirmButton && !window.confirm(confirmButton.getAttribute("data-confirm"))) {
-                        event.preventDefault();
-                        return;
-                    }
+                    try {
+                        var confirmButton = form.querySelector("[data-confirm]");
+                        if (confirmButton && !window.confirm(confirmButton.getAttribute("data-confirm"))) {
+                            event.preventDefault();
+                            return;
+                        }
 
-                    showProgress(form);
+                        if (form.classList.contains("import-form")) {
+                            var fileInput = form.querySelector("input[type='file']");
+                            if (fileInput && fileInput.files && fileInput.files.length === 0) {
+                                event.preventDefault();
+                                window.alert("اختر ملف Excel أولا.");
+                                return;
+                            }
+                        }
+
+                        showProgress(form);
+                    } catch (error) {
+                        if (window.console && window.console.warn) {
+                            window.console.warn("Import progress UI failed; continuing normal submit.", error);
+                        }
+                    }
                 });
             });
 
-            var table = document.querySelector(".preview-grid");
-            if (!table) { return; }
-
-            var rows = Array.prototype.slice.call(table.querySelectorAll("tbody tr"));
+            var previewRowsTable = document.querySelector("[data-preview-panel='rows'] .preview-grid");
+            var rows = previewRowsTable ? Array.prototype.slice.call(previewRowsTable.querySelectorAll("tbody tr[data-status]")) : [];
             var filters = Array.prototype.slice.call(document.querySelectorAll(".preview-filter"));
             var search = document.getElementById("importPreviewSearch");
             var activeFilter = "all";
@@ -348,22 +626,26 @@
                 });
             }
 
-            filters.forEach(function (button) {
-                button.addEventListener("click", function () {
-                    filters.forEach(function (item) { item.classList.remove("is-active"); });
-                    button.classList.add("is-active");
-                    activeFilter = button.getAttribute("data-filter") || "all";
-                    applyPreviewFilters();
+            if (rows.length > 0) {
+                filters.forEach(function (button) {
+                    button.addEventListener("click", function () {
+                        filters.forEach(function (item) { item.classList.remove("is-active"); });
+                        button.classList.add("is-active");
+                        activeFilter = button.getAttribute("data-filter") || "all";
+                        applyPreviewFilters();
+                    });
                 });
-            });
 
-            if (search) {
-                search.addEventListener("input", applyPreviewFilters);
+                if (search) {
+                    search.addEventListener("input", applyPreviewFilters);
+                }
             }
 
             var entitySelect = document.querySelector("select[name='entityType']");
             var modeChoice = document.querySelector("[data-chart-mode]");
             var openingOption = document.querySelector("[data-opening-balance-option]");
+            var previewModes = Array.prototype.slice.call(document.querySelectorAll(".preview-mode"));
+            var previewPanels = Array.prototype.slice.call(document.querySelectorAll(".preview-panel"));
             function toggleModeChoice() {
                 if (!entitySelect) { return; }
                 if (modeChoice) {
@@ -377,6 +659,22 @@
             if (entitySelect) {
                 entitySelect.addEventListener("change", toggleModeChoice);
             }
+
+            previewModes.forEach(function (button) {
+                button.addEventListener("click", function () {
+                    var target = button.getAttribute("data-preview-mode");
+                    previewModes.forEach(function (item) { item.classList.remove("is-active"); });
+                    previewPanels.forEach(function (panel) { panel.classList.remove("is-active"); });
+                    button.classList.add("is-active");
+                    var panel = document.querySelector("[data-preview-panel='" + target + "']");
+                    if (panel) {
+                        panel.classList.add("is-active");
+                    }
+                });
+            });
         })();
     </script>
 }
+
+
+

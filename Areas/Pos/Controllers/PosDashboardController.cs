@@ -304,16 +304,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private static bool IsTellerOnly(PosUserContext context)
         {
-            if (context == null || IsAdmin(context))
-            {
-                return false;
-            }
-
-            var category = (context.UserCategory ?? string.Empty).Trim();
-            return context.UserType.GetValueOrDefault(-1) == 2
-                || context.CanTeller
-                || string.Equals(category, "تلر", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(category, "Teller", StringComparison.OrdinalIgnoreCase);
+            return context != null && context.CanTeller;
         }
 
         private static bool CanOpenKycBankFollowUp(PosUserContext context)
@@ -519,6 +510,36 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "medical-insurance-reports")
             {
                 return Url.Content("~/Pos/EmployeePayroll/MedicalInsuranceReports");
+            }
+
+            if (screen == "hr-advances")
+            {
+                return Url.Content("~/MainErp/Hr/Advances?fromPos=1&host=pos");
+            }
+
+            if (screen == "hr-payroll-items")
+            {
+                return Url.Content("~/MainErp/Hr/PayrollItems?fromPos=1&host=pos");
+            }
+
+            if (screen == "hr-absences")
+            {
+                return Url.Content("~/MainErp/Hr/Absences?fromPos=1&host=pos");
+            }
+
+            if (screen == "hr-vacations")
+            {
+                return Url.Content("~/MainErp/Hr/Vacations?fromPos=1&host=pos");
+            }
+
+            if (screen == "hr-allowances")
+            {
+                return Url.Content("~/MainErp/Hr/Allowances?fromPos=1&host=pos");
+            }
+
+            if (screen == "hr-end-service")
+            {
+                return Url.Content("~/MainErp/Hr/EndOfService?fromPos=1&host=pos");
             }
 
             if (screen == "system-health")

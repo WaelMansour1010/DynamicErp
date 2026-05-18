@@ -12,9 +12,9 @@ namespace MyERP.Areas.MainErp.Services.LegacyHrFinance
             _repository = repository;
         }
 
-        public LegacyHrFinancePageViewModel Load(string moduleKey, string searchText, int page, int pageSize)
+        public LegacyHrFinancePageViewModel Load(string moduleKey, string searchText, int page, int pageSize, string employeeStatus = "active")
         {
-            return _repository.Load(moduleKey, searchText, page, pageSize);
+            return _repository.Load(moduleKey, searchText, page, pageSize, employeeStatus);
         }
 
         public PayrollComponentEditViewModel GetComponent(int id)

@@ -5,6 +5,10 @@
     var kycCommitResult = ViewBag.KycCommitResult as MyERP.Areas.Pos.Models.PosKycExcelCommitResult;
     var kycErrorMessage = ViewBag.KycErrorMessage as string;
     var kycFileName = ViewBag.KycFileName as string;
+    var tokenInvoicePreview = ViewBag.TokenInvoicePreview as MyERP.Areas.Pos.Models.PosKishnyTokenInvoiceImportPreview;
+    var tokenInvoiceResult = ViewBag.TokenInvoiceResult as MyERP.Areas.Pos.Models.PosKishnyTokenInvoiceImportResult;
+    var tokenInvoiceErrorMessage = ViewBag.TokenInvoiceErrorMessage as string;
+    var tokenInvoiceFileName = ViewBag.TokenInvoiceFileName as string;
     ViewBag.Title = "استيراد العمليات من Excel";
 }
 
@@ -32,6 +36,9 @@
         .status-draft { background: #e0f2fe; color: #075985; }
         .status-ready { background: #dcfce7; color: #166534; }
         .status-rejected { background: #fee2e2; color: #991b1b; }
+        .import-progress { background:#e2e8f0; border-radius:999px; display:none; height:10px; margin-top:10px; overflow:hidden; }
+        .import-progress span { animation: importMove 1.2s infinite linear; background:#2563eb; display:block; height:100%; width:35%; }
+        @@keyframes importMove { from { margin-right:-35%; } to { margin-right:100%; } }
         @@media (max-width: 900px) { .excel-import-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -82,6 +89,161 @@
                 </button>
             </div>
         </form>
+    </section>
+
+    <section class="erp-card">
+        <div class="erp-card-head">
+            <div>
+                <h2>استيراد فواتير كروت كيشني من التوكنات</h2>
+                <p>ارفع ملف يحتوي على التوكن والرقم القومي وكود الفرع والتاريخ. سيتم تحديد صنف الكارت من رصيد التوكن في المخزن وإنشاء الفاتورة بنفس مسار شاشة البيع.</p>
+            </div>
+            <span class="status-chip status-draft">Token invoices</span>
+        </div>
+
+        <form method="post" action="@Url.Action("TokenInvoicePreview", "ExcelImport", new { area = "Pos" })" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <div class="file-picker">
+                <i class="fas fa-file-excel" aria-hidden="true"></i>
+                <input type="file" name="tokenInvoiceExcelFile" accept=".xlsx,.xls" required />
+            </div>
+            <div class="excel-import-grid" style="margin-top:14px;">
+                <label class="excel-import-field">
+                    <span>تاريخ افتراضي عند غياب تاريخ الصف</span>
+                    <input type="date" name="defaultImportDate" />
+                </label>
+            </div>
+            <div class="kyc-import-note" style="margin-top:14px;">
+                الأعمدة تقرأ بمرونة: Token / التوكن / رقم الكارت، National ID / الرقم القومي، Mobile / الموبايل، Full name / اسم العميل، كود الفرع / Branch Code، Date / التاريخ. لن يتم ترحيل أي صف قبل المعاينة.
+            </div>
+            <div class="erp-actions erp-actions-inline" style="margin-top:14px;">
+                <button type="submit" class="erp-btn erp-btn-primary">معاينة فواتير التوكنات</button>
+                <a class="erp-btn erp-btn-secondary" href="@Url.Action("DownloadTokenInvoiceTemplate", "ExcelImport", new { area = "Pos" })">تحميل نموذج</a>
+            </div>
+            <div class="import-progress"><span></span></div>
+        </form>
+
+        @if (!string.IsNullOrWhiteSpace(tokenInvoiceErrorMessage))
+        {
+            <div class="import-note" style="margin-top:14px;">@tokenInvoiceErrorMessage</div>
+        }
+
+        @if (tokenInvoicePreview != null && tokenInvoicePreview.Rows != null && tokenInvoicePreview.Rows.Count > 0)
+        {
+            var readyRows = tokenInvoicePreview.Rows.Count(x => x.Status == "Ready");
+            var rejectedRows = tokenInvoicePreview.Rows.Count(x => x.Status != "Ready");
+            <div class="erp-card-head" style="margin-top:18px;">
+                <div>
+                    <h2>معاينة فواتير التوكنات</h2>
+                    <p>@tokenInvoiceFileName - الإجمالي: @tokenInvoicePreview.Rows.Count - جاهز: @readyRows - مرفوض/يحتاج مراجعة: @rejectedRows</p>
+                    <p>الأعمدة المكتشفة: Token=@tokenInvoicePreview.Mapping.TokenColumn، National=@tokenInvoicePreview.Mapping.NationalIdColumn، Mobile=@tokenInvoicePreview.Mapping.MobileColumn، Name=@tokenInvoicePreview.Mapping.FullNameColumn، Branch=@tokenInvoicePreview.Mapping.BranchColumn، Date=@tokenInvoicePreview.Mapping.DateColumn</p>
+                </div>
+                <div class="erp-actions erp-actions-inline">
+                    <a class="erp-btn erp-btn-secondary" href="@Url.Action("ExportTokenInvoiceResult", "ExcelImport", new { area = "Pos", type = "all" })">تصدير المعاينة</a>
+                    <a class="erp-btn erp-btn-secondary" href="@Url.Action("ExportTokenInvoiceResult", "ExcelImport", new { area = "Pos", type = "failed" })">تصدير الأخطاء</a>
+                </div>
+            </div>
+            <div class="responsive-table">
+                <table class="pos-table">
+                    <thead>
+                        <tr>
+                            <th>الصف</th>
+                            <th>الحالة</th>
+                            <th>التوكن</th>
+                            <th>الرقم القومي</th>
+                            <th>الموبايل</th>
+                            <th>اسم العميل</th>
+                            <th>كود الفرع</th>
+                            <th>الفرع</th>
+                            <th>التاريخ</th>
+                            <th>صنف الكارت</th>
+                            <th>KYC</th>
+                            <th>ملاحظات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in tokenInvoicePreview.Rows.Take(300))
+                        {
+                            var statusClass = row.Status == "Ready" ? "status-ready" : "status-rejected";
+                            <tr>
+                                <td>@row.RowNumber</td>
+                                <td><span class="status-chip @statusClass">@row.Status</span></td>
+                                <td>@row.Token</td>
+                                <td>@row.NationalId</td>
+                                <td>@row.Mobile</td>
+                                <td>@row.FullName</td>
+                                <td>@row.BranchCode</td>
+                                <td>@row.BranchName</td>
+                                <td>@(row.InvoiceDate.HasValue ? row.InvoiceDate.Value.ToString("yyyy-MM-dd") : "")</td>
+                                <td>@(row.CardItemId.HasValue ? row.CardItemId + " - " + row.CardItemName : "")</td>
+                                <td>@row.KycStatus</td>
+                                <td>@(row.Messages != null ? string.Join(" | ", row.Messages) : "")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <form method="post" action="@Url.Action("TokenInvoiceCommit", "ExcelImport", new { area = "Pos" })" style="margin-top:14px;">
+                @Html.AntiForgeryToken()
+                <div class="excel-import-grid">
+                    <label class="excel-import-field">
+                        <span>كلمة مرور المستخدم للتنفيذ</span>
+                        <input type="password" name="adminPassword" autocomplete="current-password" required />
+                    </label>
+                </div>
+                <div class="erp-actions erp-actions-inline" style="margin-top:14px;">
+                    <button type="submit" class="erp-btn erp-btn-primary">ترحيل الصفوف الجاهزة كفواتير كارت</button>
+                </div>
+                <div class="import-progress"><span></span></div>
+                <div class="import-note" style="margin-top:10px;">
+                    سيتم ترحيل الصفوف الجاهزة فقط. الصف الذي يفشل لا يوقف باقي الصفوف، ولن يتم تعديل KYC متعارض أو بيع توكن مكرر.
+                </div>
+            </form>
+        }
+
+        @if (tokenInvoiceResult != null)
+        {
+            <div class="erp-card-head" style="margin-top:18px;">
+                <div>
+                    <h2>نتيجة ترحيل فواتير التوكنات</h2>
+                    <p>الإجمالي: @tokenInvoiceResult.TotalRows - فواتير: @tokenInvoiceResult.ImportedInvoicesCount - KYC جديد: @tokenInvoiceResult.CreatedKycCount - KYC موجود: @tokenInvoiceResult.LinkedExistingKycCount - فشل: @tokenInvoiceResult.FailedRowsCount - تكرار توكن: @tokenInvoiceResult.DuplicateTokenCount</p>
+                </div>
+                <div class="erp-actions erp-actions-inline">
+                    <a class="erp-btn erp-btn-secondary" href="@Url.Action("ExportTokenInvoiceResult", "ExcelImport", new { area = "Pos", type = "success" })">تصدير الناجح</a>
+                    <a class="erp-btn erp-btn-secondary" href="@Url.Action("ExportTokenInvoiceResult", "ExcelImport", new { area = "Pos", type = "failed" })">تصدير الفاشل</a>
+                </div>
+            </div>
+            <div class="responsive-table">
+                <table class="pos-table">
+                    <thead>
+                        <tr>
+                            <th>الحالة</th>
+                            <th>الصف</th>
+                            <th>التوكن</th>
+                            <th>Transaction_ID</th>
+                            <th>رقم الفاتورة</th>
+                            <th>KYC</th>
+                            <th>الرسالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in tokenInvoiceResult.Rows)
+                        {
+                            var statusClass = row.Status == "Imported" ? "status-ready" : "status-rejected";
+                            <tr>
+                                <td><span class="status-chip @statusClass">@row.Status</span></td>
+                                <td>@row.RowNumber</td>
+                                <td>@row.Token</td>
+                                <td>@row.TransactionId</td>
+                                <td>@row.InvoiceNumber</td>
+                                <td>@row.KycStatus</td>
+                                <td>@(row.Messages != null ? string.Join(" | ", row.Messages) : "")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
     </section>
 
     <section class="erp-card">
@@ -277,5 +439,21 @@
         </div>
     </section>
 </main>
+<script>
+    (function () {
+        var forms = document.querySelectorAll('form[action*="TokenInvoice"]');
+        for (var i = 0; i < forms.length; i++) {
+            forms[i].addEventListener("submit", function () {
+                var progress = this.querySelector(".import-progress");
+                var button = this.querySelector('button[type="submit"]');
+                if (progress) { progress.style.display = "block"; }
+                if (button) {
+                    button.disabled = true;
+                    button.innerText = "جاري التنفيذ...";
+                }
+            });
+        }
+    })();
+</script>
 </body>
 </html>

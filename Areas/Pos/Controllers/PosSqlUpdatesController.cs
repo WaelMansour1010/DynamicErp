@@ -66,7 +66,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult ApplyPending(bool? confirmBackup)
+        public ActionResult ApplyPending(bool? confirmBackup, bool? ignoreHashMismatch)
         {
             var context = GetPosContext();
             if (context == null)
@@ -83,6 +83,7 @@ namespace MyERP.Areas.Pos.Controllers
             var run = _updateService.ApplyPending(new PosSqlUpdateRunRequest
             {
                 ConfirmBackup = confirmBackup.GetValueOrDefault(false),
+                IgnoreHashMismatch = ignoreHashMismatch.GetValueOrDefault(false),
                 UserId = context.UserId,
                 UserName = context.UserName,
                 ClientIp = GetClientIp(),

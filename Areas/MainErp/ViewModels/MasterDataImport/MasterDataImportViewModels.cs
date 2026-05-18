@@ -11,10 +11,12 @@ namespace MyERP.Areas.MainErp.ViewModels.MasterDataImport
             EntityTypes = MasterDataImportEntityType.GetAll();
             Rows = new List<MasterDataImportRowViewModel>();
             JournalRows = new List<JournalEntryImportRowViewModel>();
+            WorksheetDiagnostics = new List<MasterDataImportWorksheetDiagnosticViewModel>();
             EntityType = MasterDataImportEntityType.ChartOfAccounts;
             StopOnAnyError = true;
             ImportMode = MasterDataImportMode.Merge;
             ImportBatches = new List<MasterDataImportBatchViewModel>();
+            CurrentReviewItems = new List<JournalImportReviewItemViewModel>();
         }
 
         public string EntityType { get; set; }
@@ -25,7 +27,10 @@ namespace MyERP.Areas.MainErp.ViewModels.MasterDataImport
         public IList<MasterDataImportEntityType> EntityTypes { get; set; }
         public IList<MasterDataImportRowViewModel> Rows { get; set; }
         public IList<JournalEntryImportRowViewModel> JournalRows { get; set; }
+        public IList<MasterDataImportWorksheetDiagnosticViewModel> WorksheetDiagnostics { get; set; }
         public IList<MasterDataImportBatchViewModel> ImportBatches { get; set; }
+        public IList<JournalImportReviewItemViewModel> CurrentReviewItems { get; set; }
+        public JournalImportReviewSnapshotViewModel LastImportReview { get; set; }
         public bool IsJournalImport { get { return EntityType == MasterDataImportEntityType.JournalEntries; } }
         public bool IsOpeningBalanceImport { get { return EntityType == MasterDataImportEntityType.OpeningBalances; } }
         public bool UsesJournalGrid { get { return IsJournalImport || IsOpeningBalanceImport; } }
@@ -89,6 +94,7 @@ namespace MyERP.Areas.MainErp.ViewModels.MasterDataImport
         {
             Rows = new List<MasterDataImportRowViewModel>();
             JournalRows = new List<JournalEntryImportRowViewModel>();
+            WorksheetDiagnostics = new List<MasterDataImportWorksheetDiagnosticViewModel>();
             FileHashes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
 
@@ -98,6 +104,7 @@ namespace MyERP.Areas.MainErp.ViewModels.MasterDataImport
         public bool AutoBalanceOpening { get; set; }
         public IList<MasterDataImportRowViewModel> Rows { get; set; }
         public IList<JournalEntryImportRowViewModel> JournalRows { get; set; }
+        public IList<MasterDataImportWorksheetDiagnosticViewModel> WorksheetDiagnostics { get; set; }
         public IDictionary<string, string> FileHashes { get; set; }
     }
 
@@ -148,6 +155,7 @@ namespace MyERP.Areas.MainErp.ViewModels.MasterDataImport
         public int FailedRows { get; set; }
         public int ImportedJournalCount { get; set; }
         public string Message { get; set; }
+        public JournalImportReviewSnapshotViewModel ReviewSnapshot { get; set; }
     }
 
     public class MasterDataImportBatchViewModel
@@ -160,6 +168,62 @@ namespace MyERP.Areas.MainErp.ViewModels.MasterDataImport
         public int FailedRows { get; set; }
         public string Status { get; set; }
         public int CreatedAccounts { get; set; }
+        public bool HasReview { get; set; }
+        public bool CanRollback
+        {
+            get
+            {
+                return string.Equals(Status, "Completed", StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(EntityType, MasterDataImportEntityType.ChartOfAccounts, StringComparison.OrdinalIgnoreCase)
+                    && CreatedAccounts > 0;
+            }
+        }
+        public bool CanReview
+        {
+            get
+            {
+                return string.Equals(Status, "Completed", StringComparison.OrdinalIgnoreCase)
+                    && (string.Equals(EntityType, MasterDataImportEntityType.JournalEntries, StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(EntityType, MasterDataImportEntityType.OpeningBalances, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+    }
+
+    [Serializable]
+    public class MasterDataImportWorksheetDiagnosticViewModel
+    {
+        public string FileName { get; set; }
+        public string SheetName { get; set; }
+        public string UsedRange { get; set; }
+        public int? HeaderRowNumber { get; set; }
+        public int DataRowsCount { get; set; }
+        public string SkipReason { get; set; }
+        public string DetectedAccountSerialColumn { get; set; }
+        public string DetectedAccountNameColumn { get; set; }
+        public string DetectedBalanceColumn { get; set; }
+        public string DetectedDebitColumn { get; set; }
+        public string DetectedCreditColumn { get; set; }
+        public string DetectedAmountColumns { get; set; }
+        public IList<MasterDataImportColumnDiagnosticViewModel> ColumnDiagnostics { get; set; }
+        public IList<string> ParsedRowPreview { get; set; }
+        public bool IsSkipped { get { return !string.IsNullOrWhiteSpace(SkipReason); } }
+    }
+
+    [Serializable]
+    public class MasterDataImportColumnDiagnosticViewModel
+    {
+        public int ColumnIndex { get; set; }
+        public string HeaderText { get; set; }
+        public string SampleValues { get; set; }
+        public decimal DigitOnlyRatio { get; set; }
+        public decimal DecimalOrCommaRatio { get; set; }
+        public decimal ZeroRatio { get; set; }
+        public int DistinctCount { get; set; }
+        public int NonEmptyCount { get; set; }
+        public decimal FinalScore { get; set; }
+        public string AcceptedRole { get; set; }
+        public string Decision { get; set; }
+        public string Reason { get; set; }
     }
 
     [Serializable]
@@ -192,6 +256,7 @@ namespace MyERP.Areas.MainErp.ViewModels.MasterDataImport
         public string CostCenter { get; set; }
         public string FileHash { get; set; }
         public bool AccountWillBeCreated { get; set; }
+        public int? ManagedEntityType { get; set; }
         public string OpeningBalanceText { get; set; }
         public string BalanceType { get; set; }
         public bool IsOpeningBalance { get; set; }
@@ -200,5 +265,40 @@ namespace MyERP.Areas.MainErp.ViewModels.MasterDataImport
         public bool IsValid { get { return Errors.Count == 0; } }
         public IList<string> Errors { get; set; }
         public string ErrorDetails { get { return string.Join("; ", Errors); } }
+    }
+
+    [Serializable]
+    public class JournalImportReviewSnapshotViewModel
+    {
+        public JournalImportReviewSnapshotViewModel()
+        {
+            Items = new List<JournalImportReviewItemViewModel>();
+        }
+
+        public int BatchId { get; set; }
+        public string EntityType { get; set; }
+        public string Title { get; set; }
+        public string SourceFileName { get; set; }
+        public int ImportedJournalCount { get; set; }
+        public IList<JournalImportReviewItemViewModel> Items { get; set; }
+    }
+
+    [Serializable]
+    public class JournalImportReviewItemViewModel
+    {
+        public string FileName { get; set; }
+        public string SheetName { get; set; }
+        public string GroupKey { get; set; }
+        public int RowCount { get; set; }
+        public decimal TotalDebit { get; set; }
+        public decimal TotalCredit { get; set; }
+        public decimal Difference { get; set; }
+        public string FirstAccountSerial { get; set; }
+        public string LastAccountSerial { get; set; }
+        public long? VoucherId { get; set; }
+        public long? NoteId { get; set; }
+        public long? NoteSerial { get; set; }
+        public string ReviewStatus { get; set; }
+        public string ReviewSource { get; set; }
     }
 }

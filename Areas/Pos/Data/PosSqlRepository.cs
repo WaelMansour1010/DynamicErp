@@ -25,9 +25,11 @@ namespace MyERP.Areas.Pos.Data
         private static readonly object PosSystemErrorLogEnsureLock = new object();
         private static readonly object PosSaveAttemptLogEnsureLock = new object();
         private static readonly object PosSaveIdempotencyEnsureLock = new object();
+        private static readonly object PosPaymentIdempotencyEnsureLock = new object();
         private static bool _posSystemErrorLogEnsured;
         private static bool _posSaveAttemptLogEnsured;
         private static bool _posSaveIdempotencyEnsured;
+        private static bool _posPaymentIdempotencyEnsured;
 
         private readonly string _connectionString;
 
@@ -368,6 +370,8 @@ WHERE User_ID = @userId
                 return;
             }
 
+            var permissions = GetTemporaryPosPermissions(context.UserId);
+
             if (context.IsFullAccess)
             {
                 context.CanViewJournalEntry = true;
@@ -380,7 +384,7 @@ WHERE User_ID = @userId
                 context.CanOpenPayments = true;
                 context.CanExecutePayments = true;
                 context.CanEditPayments = true;
-                context.CanTeller = true;
+                context.CanTeller = IsTemporaryAllowed(permissions, "CanTeller");
                 context.CanCancelOrReturn = true;
                 context.CanCancelInvoice = true;
                 context.CanEditKyc = true;
@@ -400,8 +404,7 @@ WHERE User_ID = @userId
                 return;
             }
 
-            var permissions = GetTemporaryPosPermissions(context.UserId);
-            var isTeller = IsTellerCategory(context.UserCategory) || IsTemporaryAllowed(permissions, "CanTeller");
+            var isTeller = IsTemporaryAllowed(permissions, "CanTeller");
             context.CanSave = context.CanSave || isTeller || IsTemporaryAllowed(permissions, "CanSaveInvoice");
             context.CanEditSalesInvoice = context.CanChangeDefaults || IsTemporaryAllowed(permissions, "CanEditSalesInvoice") || IsTemporaryAllowed(permissions, "CanEditInvoice");
             context.CanEditSalesInvoicePos = IsTemporaryAllowed(permissions, "CanEditSalesInvoicePos");
@@ -459,12 +462,6 @@ WHERE User_ID = @userId
         {
             bool value;
             return permissions != null && permissions.TryGetValue(key, out value) && !value;
-        }
-
-        private static bool IsTellerCategory(string category)
-        {
-            return string.Equals((category ?? string.Empty).Trim(), "تلر", StringComparison.OrdinalIgnoreCase)
-                || string.Equals((category ?? string.Empty).Trim(), "Teller", StringComparison.OrdinalIgnoreCase);
         }
 
         private IDictionary<string, bool> GetTemporaryPosPermissions(int userId)
@@ -4531,7 +4528,7 @@ VALUES
     @branchId,
     @userId,
     @empId,
-    GETDATE()
+    @saveDate
 );
 
 SELECT @id AS Id;";
@@ -7953,6 +7950,16 @@ ORDER BY b.branch_id;";
             table.Columns.Add("NetCashOut", typeof(decimal));
             table.Columns.Add("BoxValue", typeof(decimal));
             table.Columns.Add("ClosingStatus", typeof(string));
+            table.Columns.Add("TotalSaleDay2", typeof(decimal));
+            table.Columns.Add("TotalRevVat", typeof(decimal));
+            table.Columns.Add("CountTransactionIn", typeof(decimal));
+            table.Columns.Add("CountTransactionOut", typeof(decimal));
+            table.Columns.Add("WalletNet", typeof(decimal));
+            table.Columns.Add("PosTotal", typeof(decimal));
+            table.Columns.Add("TawqeefiTotal", typeof(decimal));
+            table.Columns.Add("NetPosFinalProfit", typeof(decimal));
+            table.Columns.Add("Bank9995", typeof(decimal));
+            table.Columns.Add("Bank8846", typeof(decimal));
 
             if (source == null)
             {
@@ -7964,6 +7971,14 @@ ORDER BY b.branch_id;";
             {
                 var totalReturns = ReadReportDecimal(sourceRow, "TOTALTRETURN", "TotalReturns", "TotalReturn");
                 var totalSaleDay2Vat = ReadReportDecimal(sourceRow, "TotalSaleDay2Vat");
+                var totalSaleDay2 = ReadReportDecimal(sourceRow, "TotalSaleDay2", "mTotalSalCard", "CardValue");
+                var totalRevVat = ReadReportDecimal(sourceRow, "TotalRevVat", "TotalRevvat");
+                var countTransactionIn = ReadReportDecimal(sourceRow, "CountTransaction");
+                var countTransactionOut = ReadReportDecimal(sourceRow, "CountTransactionCash");
+                var walletSupply = ReadReportDecimal(sourceRow, "CashOutTotal") + ReadReportDecimal(sourceRow, "CashOut") - ReadReportDecimal(sourceRow, "CashOutDisc");
+                var netCashOut = ReadReportDecimal(sourceRow, "CashOutTotal");
+                var walletNet = walletSupply - netCashOut;
+                var posTotal = ReadReportDecimal(sourceRow, "PosTotal");
                 var totalSupply = ReadReportDecimal(sourceRow, "Net")
                     + totalSaleDay2Vat
                     + ReadReportDecimal(sourceRow, "TotalRevPOS")
@@ -7977,19 +7992,29 @@ ORDER BY b.branch_id;";
                 row["TotalSupply"] = totalSupply;
                 row["CountCards"] = ReadReportDecimal(sourceRow, "CountCards", "CardCount");
                 row["TotalSaleDay2Vat"] = totalSaleDay2Vat;
-                row["CardValue"] = ReadReportDecimal(sourceRow, "TotalSaleDay2", "mTotalSalCard", "CardValue") + totalSaleDay2Vat;
-                row["CountTransaction"] = ReadReportDecimal(sourceRow, "CountTransactionCash") + ReadReportDecimal(sourceRow, "CountTransaction");
+                row["CardValue"] = totalSaleDay2 + totalSaleDay2Vat;
+                row["CountTransaction"] = countTransactionOut + countTransactionIn;
                 row["WalletBalance"] = ReadReportDecimal(sourceRow, "CashOutTotal") + ReadReportDecimal(sourceRow, "CashOut");
-                row["WalletSupply"] = ReadReportDecimal(sourceRow, "CashOutTotal") + ReadReportDecimal(sourceRow, "CashOut") - ReadReportDecimal(sourceRow, "CashOutDisc");
+                row["WalletSupply"] = walletSupply;
                 row["BankBalanceCharge"] = ReadReportDecimal(sourceRow, "bankbalancecharge", "BankBalanceCharge");
                 row["TotalRechargeValue"] = ReadReportDecimal(sourceRow, "TotalRechargeValue");
                 row["TotalRev2"] = ReadReportDecimal(sourceRow, "TotalRev2");
-                row["TotalRevWithVat"] = ReadReportDecimal(sourceRow, "TotalRev2") + ReadReportDecimal(sourceRow, "TotalRevVat", "TotalRevvat");
+                row["TotalRevWithVat"] = ReadReportDecimal(sourceRow, "TotalRev2") + totalRevVat;
                 row["ReturnsCount"] = ReadReportDecimal(sourceRow, "COUNTRETURN", "CountReturns", "ReturnsCount");
                 row["TotalReturns"] = totalReturns;
-                row["NetCashOut"] = ReadReportDecimal(sourceRow, "CashOutTotal");
+                row["NetCashOut"] = netCashOut;
                 row["BoxValue"] = ReadReportDecimal(sourceRow, "BoxValue", "BoxBalance", "TotalBoxValue");
                 row["ClosingStatus"] = ResolveParityClosingStatus(sourceRow);
+                row["TotalSaleDay2"] = totalSaleDay2;
+                row["TotalRevVat"] = totalRevVat;
+                row["CountTransactionIn"] = countTransactionIn;
+                row["CountTransactionOut"] = countTransactionOut;
+                row["WalletNet"] = walletNet;
+                row["PosTotal"] = posTotal;
+                row["TawqeefiTotal"] = ReadReportDecimal(sourceRow, "TawqeefiTotal");
+                row["NetPosFinalProfit"] = ReadReportDecimal(sourceRow, "NetPosFinalProfit");
+                row["Bank9995"] = ReadReportDecimal(sourceRow, "Bank9995");
+                row["Bank8846"] = ReadReportDecimal(sourceRow, "Bank8846");
                 table.Rows.Add(row);
             }
 
@@ -8443,8 +8468,8 @@ WHERE Transaction_Date >= @date
             const string setupSql = @"
 CREATE TABLE #UploadedTokens
 (
-    Token NVARCHAR(255) NOT NULL,
-    TokenKey NVARCHAR(255) NOT NULL,
+    Token NVARCHAR(255) COLLATE DATABASE_DEFAULT NOT NULL,
+    TokenKey NVARCHAR(255) COLLATE DATABASE_DEFAULT NOT NULL,
     UploadedCount INT NOT NULL,
     FirstRowNumber INT NOT NULL
 );";
@@ -9550,6 +9575,355 @@ VALUES
                     }
                 }
             }
+        }
+
+        public PosKycReportResult GetKycReport(PosKycReportRequest request, PosUserContext context)
+        {
+            request = request ?? new PosKycReportRequest();
+            var from = ResolveKycReportDate(request.FromDate, request.FromDateText, new DateTime(DateTime.Today.Year, 1, 1));
+            var to = ResolveKycReportDate(request.ToDate, request.ToDateText, DateTime.Today);
+            if (to < from)
+            {
+                var swap = from;
+                from = to;
+                to = swap;
+            }
+
+            var canSeeAllBranches = context != null && (context.UserType.GetValueOrDefault(-1) == 0 || context.IsFullAccess || context.IsFullAccessCustomerService);
+            var branchId = canSeeAllBranches && request.BranchId.HasValue && request.BranchId.Value > 0 ? request.BranchId : (canSeeAllBranches ? null : (context != null ? context.BranchId : null));
+            var invoiceStatus = (request.InvoiceStatus ?? "all").Trim().ToLowerInvariant();
+            if (invoiceStatus != "with" && invoiceStatus != "without")
+            {
+                invoiceStatus = "all";
+            }
+
+            var smartFilter = (request.SmartFilter ?? string.Empty).Trim().ToLowerInvariant();
+            var page = request.Page <= 0 ? 1 : request.Page;
+            var pageSize = request.PageSize <= 0 ? 25 : Math.Min(request.PageSize, 100000);
+            var offset = (page - 1) * pageSize;
+            var search = (request.SearchTerm ?? string.Empty).Trim();
+
+            return ExecuteKycReportProcedure(from, to, branchId, invoiceStatus, smartFilter, search, offset, page, pageSize);
+
+#if false
+            var result = new PosKycReportResult
+            {
+                Summary = new PosKycReportSummaryDto(),
+                Rows = new List<PosKycReportRowDto>(),
+                Page = page,
+                PageSize = pageSize
+            };
+
+            const string sql = @"
+DECLARE @toExclusive DATETIME = DATEADD(DAY, 1, @toDate);
+DECLARE @searchLike NVARCHAR(260) = CASE WHEN @search = N'' THEN NULL ELSE N'%' + @search + N'%' END;
+
+;WITH KycBase AS
+(
+    SELECT
+        c.Id AS CustomerID,
+        COALESCE(NULLIF(c.name, N''), NULLIF(c.CustName, N''), LTRIM(RTRIM(ISNULL(c.ArabicName0, N'') + N' ' + ISNULL(c.ArabicName1, N'') + N' ' + ISNULL(c.ArabicName2, N'') + N' ' + ISNULL(c.ArabicName3, N'')))) AS ArabicName,
+        COALESCE(NULLIF(c.namee, N''), LTRIM(RTRIM(ISNULL(c.EnglishName0, N'') + N' ' + ISNULL(c.EnglishName1, N'') + N' ' + ISNULL(c.EnglishName2, N'') + N' ' + ISNULL(c.EnglishName3, N'')))) AS EnglishName,
+        NULLIF(LTRIM(RTRIM(ISNULL(c.Tet_NumPoket, N''))), N'') AS NationalId,
+        COALESCE(NULLIF(c.PhoneNo2, N''), NULLIF(c.PhoneNo, N''), NULLIF(c.tel, N'')) AS Phone,
+        COALESCE(NULLIF(c.CardNo, N''), NULLIF(c.CardId, N''), NULLIF(c.card, N'')) AS TokenCardNumber,
+        c.CardNo,
+        c.CardId,
+        c.BranchID,
+        COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), c.BranchID)) AS BranchName,
+        COALESCE(c.SaveDate, c.RecordDate, c.OrderDate) AS CreatedDate,
+        COALESCE(c.RecordDate, c.SaveDate, c.OrderDate) AS LastUpdateDate,
+        CASE WHEN NULLIF(LTRIM(RTRIM(ISNULL(c.PhoneNo2, N''))), N'') IS NULL
+               OR NULLIF(LTRIM(RTRIM(ISNULL(c.Tet_NumPoket, N''))), N'') IS NULL
+               OR COALESCE(NULLIF(c.CardNo, N''), NULLIF(c.CardId, N'')) IS NULL
+             THEN 1 ELSE 0 END AS MissingRequiredData,
+        CASE WHEN c.BirthDate IS NULL
+               OR NULLIF(LTRIM(RTRIM(ISNULL(c.Address, N''))), N'') IS NULL
+               OR NULLIF(LTRIM(RTRIM(ISNULL(c.name, N''))), N'') IS NULL
+             THEN 1 ELSE 0 END AS IncompleteKyc
+    FROM dbo.TblCusCsh c WITH (NOLOCK)
+    LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = c.BranchID
+    WHERE ISNULL(c.EasyCashType, 0) = 0
+      AND COALESCE(c.SaveDate, c.RecordDate, c.OrderDate) >= @fromDate
+      AND COALESCE(c.SaveDate, c.RecordDate, c.OrderDate) < @toExclusive
+      AND (@branchId IS NULL OR c.BranchID = @branchId)
+      AND
+      (
+          @search = N''
+          OR c.PhoneNo2 = @search
+          OR c.PhoneNo = @search
+          OR c.tel = @search
+          OR c.Tet_NumPoket = @search
+          OR c.CardNo = @search
+          OR c.CardId = @search
+          OR c.card = @search
+          OR ISNULL(c.name, N'') LIKE @searchLike
+          OR ISNULL(c.CustName, N'') LIKE @searchLike
+          OR ISNULL(c.namee, N'') LIKE @searchLike
+      )
+),
+ReportBase AS
+(
+    SELECT
+        k.*,
+        ISNULL(inv.InvoiceCount, 0) AS InvoiceCount,
+        inv.LastInvoiceDate,
+        CASE WHEN inv.InvoiceCount IS NULL OR inv.InvoiceCount = 0 THEN 0 ELSE 1 END AS HasInvoice,
+        CASE WHEN att.AttachmentCount IS NULL OR att.AttachmentCount = 0 THEN 0 ELSE 1 END AS HasAttachments
+    FROM KycBase k
+    OUTER APPLY
+    (
+        SELECT COUNT(1) AS InvoiceCount, MAX(t.Transaction_Date) AS LastInvoiceDate
+        FROM dbo.Transactions t WITH (NOLOCK)
+        WHERE t.Transaction_Type = 21
+          AND NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL
+          AND (t.VisaNumber = k.CardNo OR t.VisaNumber = k.CardId)
+    ) inv
+    OUTER APPLY
+    (
+        SELECT COUNT(1) AS AttachmentCount
+        FROM dbo.Subject_doc sd WITH (NOLOCK)
+        WHERE sd.operation_type = N'0701201991'
+          AND ISNULL(sd.IsDeleted, 0) = 0
+          AND (sd.subject_no = k.TokenCardNumber OR LTRIM(RTRIM(sd.subject_no)) = LTRIM(RTRIM(k.TokenCardNumber)))
+    ) att
+),
+Filtered AS
+(
+    SELECT *
+    FROM ReportBase
+    WHERE (@invoiceStatus = N'all' OR (@invoiceStatus = N'with' AND HasInvoice = 1) OR (@invoiceStatus = N'without' AND HasInvoice = 0))
+      AND (@smartFilter = N'' OR @smartFilter = N'all'
+        OR (@smartFilter = N'missing-required' AND MissingRequiredData = 1)
+        OR (@smartFilter = N'incomplete' AND IncompleteKyc = 1)
+        OR (@smartFilter = N'recent' AND CreatedDate >= DATEADD(DAY, -7, GETDATE()))
+        OR (@smartFilter = N'updated-unused' AND HasInvoice = 0 AND LastUpdateDate IS NOT NULL)
+        OR (@smartFilter = N'has-attachments' AND HasAttachments = 1)
+        OR (@smartFilter = N'no-attachments' AND HasAttachments = 0))
+)
+SELECT
+    COUNT(1) AS TotalCustomers,
+    SUM(CASE WHEN HasInvoice = 1 THEN 1 ELSE 0 END) AS WithInvoices,
+    SUM(CASE WHEN HasInvoice = 0 THEN 1 ELSE 0 END) AS WithoutInvoices,
+    SUM(CASE WHEN IncompleteKyc = 1 THEN 1 ELSE 0 END) AS IncompleteCustomers,
+    SUM(CASE WHEN MissingRequiredData = 1 THEN 1 ELSE 0 END) AS MissingRequiredData,
+    SUM(CASE WHEN HasAttachments = 1 THEN 1 ELSE 0 END) AS WithAttachments
+FROM Filtered;
+
+;WITH KycBase AS
+(
+    SELECT
+        c.Id AS CustomerID,
+        COALESCE(NULLIF(c.name, N''), NULLIF(c.CustName, N''), LTRIM(RTRIM(ISNULL(c.ArabicName0, N'') + N' ' + ISNULL(c.ArabicName1, N'') + N' ' + ISNULL(c.ArabicName2, N'') + N' ' + ISNULL(c.ArabicName3, N'')))) AS ArabicName,
+        COALESCE(NULLIF(c.namee, N''), LTRIM(RTRIM(ISNULL(c.EnglishName0, N'') + N' ' + ISNULL(c.EnglishName1, N'') + N' ' + ISNULL(c.EnglishName2, N'') + N' ' + ISNULL(c.EnglishName3, N'')))) AS EnglishName,
+        NULLIF(LTRIM(RTRIM(ISNULL(c.Tet_NumPoket, N''))), N'') AS NationalId,
+        COALESCE(NULLIF(c.PhoneNo2, N''), NULLIF(c.PhoneNo, N''), NULLIF(c.tel, N'')) AS Phone,
+        COALESCE(NULLIF(c.CardNo, N''), NULLIF(c.CardId, N''), NULLIF(c.card, N'')) AS TokenCardNumber,
+        c.CardNo,
+        c.CardId,
+        c.BranchID,
+        COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), c.BranchID)) AS BranchName,
+        COALESCE(c.SaveDate, c.RecordDate, c.OrderDate) AS CreatedDate,
+        COALESCE(c.RecordDate, c.SaveDate, c.OrderDate) AS LastUpdateDate,
+        CASE WHEN NULLIF(LTRIM(RTRIM(ISNULL(c.PhoneNo2, N''))), N'') IS NULL
+               OR NULLIF(LTRIM(RTRIM(ISNULL(c.Tet_NumPoket, N''))), N'') IS NULL
+               OR COALESCE(NULLIF(c.CardNo, N''), NULLIF(c.CardId, N'')) IS NULL
+             THEN 1 ELSE 0 END AS MissingRequiredData,
+        CASE WHEN c.BirthDate IS NULL
+               OR NULLIF(LTRIM(RTRIM(ISNULL(c.Address, N''))), N'') IS NULL
+               OR NULLIF(LTRIM(RTRIM(ISNULL(c.name, N''))), N'') IS NULL
+             THEN 1 ELSE 0 END AS IncompleteKyc
+    FROM dbo.TblCusCsh c WITH (NOLOCK)
+    LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = c.BranchID
+    WHERE ISNULL(c.EasyCashType, 0) = 0
+      AND COALESCE(c.SaveDate, c.RecordDate, c.OrderDate) >= @fromDate
+      AND COALESCE(c.SaveDate, c.RecordDate, c.OrderDate) < @toExclusive
+      AND (@branchId IS NULL OR c.BranchID = @branchId)
+      AND (@search = N'' OR c.PhoneNo2 = @search OR c.PhoneNo = @search OR c.tel = @search OR c.Tet_NumPoket = @search OR c.CardNo = @search OR c.CardId = @search OR c.card = @search OR ISNULL(c.name, N'') LIKE @searchLike OR ISNULL(c.CustName, N'') LIKE @searchLike OR ISNULL(c.namee, N'') LIKE @searchLike)
+),
+ReportBase AS
+(
+    SELECT k.*, ISNULL(inv.InvoiceCount, 0) AS InvoiceCount, inv.LastInvoiceDate,
+           CASE WHEN inv.InvoiceCount IS NULL OR inv.InvoiceCount = 0 THEN 0 ELSE 1 END AS HasInvoice,
+           CASE WHEN att.AttachmentCount IS NULL OR att.AttachmentCount = 0 THEN 0 ELSE 1 END AS HasAttachments
+    FROM KycBase k
+    OUTER APPLY (SELECT COUNT(1) AS InvoiceCount, MAX(t.Transaction_Date) AS LastInvoiceDate FROM dbo.Transactions t WITH (NOLOCK) WHERE t.Transaction_Type = 21 AND NULLIF(LTRIM(RTRIM(ISNULL(t.VisaNumber, N''))), N'') IS NOT NULL AND (t.VisaNumber = k.CardNo OR t.VisaNumber = k.CardId)) inv
+    OUTER APPLY (SELECT COUNT(1) AS AttachmentCount FROM dbo.Subject_doc sd WITH (NOLOCK) WHERE sd.operation_type = N'0701201991' AND ISNULL(sd.IsDeleted, 0) = 0 AND (sd.subject_no = k.TokenCardNumber OR LTRIM(RTRIM(sd.subject_no)) = LTRIM(RTRIM(k.TokenCardNumber)))) att
+),
+Filtered AS
+(
+    SELECT *, COUNT(1) OVER() AS TotalRows
+    FROM ReportBase
+    WHERE (@invoiceStatus = N'all' OR (@invoiceStatus = N'with' AND HasInvoice = 1) OR (@invoiceStatus = N'without' AND HasInvoice = 0))
+      AND (@smartFilter = N'' OR @smartFilter = N'all'
+        OR (@smartFilter = N'missing-required' AND MissingRequiredData = 1)
+        OR (@smartFilter = N'incomplete' AND IncompleteKyc = 1)
+        OR (@smartFilter = N'recent' AND CreatedDate >= DATEADD(DAY, -7, GETDATE()))
+        OR (@smartFilter = N'updated-unused' AND HasInvoice = 0 AND LastUpdateDate IS NOT NULL)
+        OR (@smartFilter = N'has-attachments' AND HasAttachments = 1)
+        OR (@smartFilter = N'no-attachments' AND HasAttachments = 0))
+)
+SELECT *
+FROM Filtered
+ORDER BY CreatedDate DESC, CustomerID DESC
+OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY;";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.CommandTimeout = 60;
+                command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = from;
+                command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = to;
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = branchId.HasValue ? (object)branchId.Value : DBNull.Value;
+                command.Parameters.Add("@search", SqlDbType.NVarChar, 255).Value = search;
+                command.Parameters.Add("@invoiceStatus", SqlDbType.NVarChar, 20).Value = invoiceStatus;
+                command.Parameters.Add("@smartFilter", SqlDbType.NVarChar, 40).Value = smartFilter;
+                command.Parameters.Add("@offset", SqlDbType.Int).Value = offset;
+                command.Parameters.Add("@pageSize", SqlDbType.Int).Value = pageSize;
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        result.Summary.TotalCustomers = ReadInt(reader, "TotalCustomers").GetValueOrDefault();
+                        result.Summary.WithInvoices = ReadInt(reader, "WithInvoices").GetValueOrDefault();
+                        result.Summary.WithoutInvoices = ReadInt(reader, "WithoutInvoices").GetValueOrDefault();
+                        result.Summary.IncompleteCustomers = ReadInt(reader, "IncompleteCustomers").GetValueOrDefault();
+                        result.Summary.MissingRequiredData = ReadInt(reader, "MissingRequiredData").GetValueOrDefault();
+                        result.Summary.WithAttachments = ReadInt(reader, "WithAttachments").GetValueOrDefault();
+                    }
+
+                    if (reader.NextResult())
+                    {
+                        while (reader.Read())
+                        {
+                            var row = new PosKycReportRowDto
+                            {
+                                CustomerID = ReadInt(reader, "CustomerID").GetValueOrDefault(),
+                                ArabicName = ReadString(reader, "ArabicName"),
+                                EnglishName = ReadString(reader, "EnglishName"),
+                                NationalId = ReadString(reader, "NationalId"),
+                                Phone = ReadString(reader, "Phone"),
+                                TokenCardNumber = ReadString(reader, "TokenCardNumber"),
+                                BranchName = ReadString(reader, "BranchName"),
+                                CreatedDate = ReadDateTime(reader, "CreatedDate"),
+                                LastUpdateDate = ReadDateTime(reader, "LastUpdateDate"),
+                                HasInvoice = ReadInt(reader, "HasInvoice").GetValueOrDefault() == 1,
+                                InvoiceCount = ReadInt(reader, "InvoiceCount").GetValueOrDefault(),
+                                LastInvoiceDate = ReadDateTime(reader, "LastInvoiceDate"),
+                                HasAttachments = ReadInt(reader, "HasAttachments").GetValueOrDefault() == 1
+                            };
+                            row.KycStatus = row.HasInvoice ? "مستخدم في فاتورة" : (string.IsNullOrWhiteSpace(row.NationalId) || string.IsNullOrWhiteSpace(row.Phone) || string.IsNullOrWhiteSpace(row.TokenCardNumber) ? "بيانات ناقصة" : "مكتمل بدون فاتورة");
+                            result.Rows.Add(row);
+                            result.TotalRows = ReadInt(reader, "TotalRows").GetValueOrDefault();
+                        }
+                    }
+                }
+            }
+
+            if (result.TotalRows == 0)
+            {
+                result.TotalRows = result.Summary.TotalCustomers;
+            }
+
+            return result;
+#endif
+        }
+
+        private PosKycReportResult ExecuteKycReportProcedure(DateTime from, DateTime to, int? branchId, string invoiceStatus, string smartFilter, string search, int offset, int page, int pageSize)
+        {
+            var result = new PosKycReportResult
+            {
+                Summary = new PosKycReportSummaryDto(),
+                Rows = new List<PosKycReportRowDto>(),
+                Page = page,
+                PageSize = pageSize
+            };
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand("dbo.usp_POS_KycFollowUp_Report", connection))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 120;
+                command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = from;
+                command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = to;
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = branchId.HasValue ? (object)branchId.Value : DBNull.Value;
+                command.Parameters.Add("@search", SqlDbType.NVarChar, 255).Value = search;
+                command.Parameters.Add("@invoiceStatus", SqlDbType.NVarChar, 20).Value = invoiceStatus;
+                command.Parameters.Add("@smartFilter", SqlDbType.NVarChar, 40).Value = smartFilter;
+                command.Parameters.Add("@offset", SqlDbType.Int).Value = offset;
+                command.Parameters.Add("@pageSize", SqlDbType.Int).Value = pageSize;
+
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        result.Summary.TotalCustomers = ReadInt(reader, "TotalCustomers").GetValueOrDefault();
+                        result.Summary.WithInvoices = ReadInt(reader, "WithInvoices").GetValueOrDefault();
+                        result.Summary.WithoutInvoices = ReadInt(reader, "WithoutInvoices").GetValueOrDefault();
+                        result.Summary.IncompleteCustomers = ReadInt(reader, "IncompleteCustomers").GetValueOrDefault();
+                        result.Summary.MissingRequiredData = ReadInt(reader, "MissingRequiredData").GetValueOrDefault();
+                        result.Summary.WithAttachments = ReadInt(reader, "WithAttachments").GetValueOrDefault();
+                    }
+
+                    if (reader.NextResult())
+                    {
+                        while (reader.Read())
+                        {
+                            var row = new PosKycReportRowDto
+                            {
+                                CustomerID = ReadInt(reader, "CustomerID").GetValueOrDefault(),
+                                ArabicName = ReadString(reader, "ArabicName"),
+                                EnglishName = ReadString(reader, "EnglishName"),
+                                NationalId = ReadString(reader, "NationalId"),
+                                Phone = ReadString(reader, "Phone"),
+                                TokenCardNumber = ReadString(reader, "TokenCardNumber"),
+                                BranchName = ReadString(reader, "BranchName"),
+                                CreatedDate = ReadDateTime(reader, "CreatedDate"),
+                                LastUpdateDate = ReadDateTime(reader, "LastUpdateDate"),
+                                HasInvoice = ReadInt(reader, "HasInvoice").GetValueOrDefault() == 1,
+                                InvoiceCount = ReadInt(reader, "InvoiceCount").GetValueOrDefault(),
+                                LastInvoiceDate = ReadDateTime(reader, "LastInvoiceDate"),
+                                HasAttachments = ReadInt(reader, "HasAttachments").GetValueOrDefault() == 1
+                            };
+                            row.KycStatus = row.HasInvoice ? "مستخدم في فاتورة" : (string.IsNullOrWhiteSpace(row.NationalId) || string.IsNullOrWhiteSpace(row.Phone) || string.IsNullOrWhiteSpace(row.TokenCardNumber) ? "بيانات ناقصة" : "مكتمل بدون فاتورة");
+                            result.Rows.Add(row);
+                            result.TotalRows = ReadInt(reader, "TotalRows").GetValueOrDefault();
+                        }
+                    }
+                }
+            }
+
+            if (result.TotalRows == 0)
+            {
+                result.TotalRows = result.Summary.TotalCustomers;
+            }
+
+            return result;
+        }
+
+        private static DateTime ResolveKycReportDate(DateTime? boundDate, string textDate, DateTime fallback)
+        {
+            if (boundDate.HasValue)
+            {
+                return boundDate.Value.Date;
+            }
+
+            if (!string.IsNullOrWhiteSpace(textDate))
+            {
+                DateTime parsed;
+                var value = textDate.Trim();
+                if (DateTime.TryParseExact(value, new[] { "yyyy-MM-dd", "dd/MM/yyyy", "d/M/yyyy", "MM/dd/yyyy" }, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed)
+                    || DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed)
+                    || DateTime.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.None, out parsed))
+                {
+                    return parsed.Date;
+                }
+            }
+
+            return fallback.Date;
         }
 
         public DataTable RunKycBankExport(int cardLength, DateTime fromDate, DateTime toDate, int? branchId, bool canChangeDefaults)
@@ -10826,6 +11200,7 @@ OUTER APPLY (
                             lines.Add(new PosPaymentLineDto
                             {
                                 AccountCode = ReadString(reader, "AccountCode"),
+                                AccountSerial = ReadString(reader, "AccountSerial"),
                                 AccountName = ReadString(reader, "DisplayName"),
                                 Debit = ReadDecimal(reader, "Debit").GetValueOrDefault(),
                                 Credit = ReadDecimal(reader, "Credit").GetValueOrDefault(),
@@ -10839,22 +11214,134 @@ OUTER APPLY (
             return lines;
         }
 
-        public IList<PosPaymentMovementDto> SearchPosPayments(PosPaymentSearchRequestDto request, int userId, bool canChangeDefaults)
+        public PosPaymentSearchResultDto SearchPosPayments(PosPaymentSearchRequestDto request, int userId, bool canChangeDefaults)
         {
             EnsurePosPaymentAuditColumns();
             request = request ?? new PosPaymentSearchRequestDto();
-            var list = new List<PosPaymentMovementDto>();
+            var result = new PosPaymentSearchResultDto();
 
             using (var connection = new SqlConnection(_connectionString))
-            using (var command = new SqlCommand("dbo.usp_POS_Payments_Search", connection))
+            using (var command = new SqlCommand(@"
+IF OBJECT_ID('tempdb..#PosPaymentSearch') IS NOT NULL DROP TABLE #PosPaymentSearch;
+
+SELECT
+    n.NoteID,
+    CASE WHEN ISNUMERIC(n.NoteSerial) = 1 THEN CONVERT(NVARCHAR(50), CAST(n.NoteSerial AS DECIMAL(38,0))) ELSE CONVERT(NVARCHAR(50), n.NoteSerial) END AS NoteSerial,
+    CASE WHEN ISNUMERIC(n.NoteSerial1) = 1 THEN CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) ELSE CONVERT(NVARCHAR(50), n.NoteSerial1) END AS NoteSerial1,
+    n.NoteDate,
+    ISNULL(n.branch_no, 0) AS BranchId,
+    COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
+    ISNULL(n.CashingType, 0) AS CashingType,
+    CASE WHEN ISNULL(n.CashingType, 0) = 5 THEN N'استعاضة عهدة' WHEN ISNULL(n.CashingType, 0) = 6 THEN N'تمويل خزينة' ELSE CONVERT(NVARCHAR(20), n.CashingType) END AS CashingTypeName,
+    ISNULL(n.BTCashAccountcode, N'') AS NameAccountCode,
+    mainAcc.Account_Serial AS NameAccountSerial,
+    mainAcc.Account_Name AS NameAccountName,
+    LTRIM(RTRIM(COALESCE(CONVERT(NVARCHAR(255), mainAcc.Account_Serial) + N' - ', N'') + COALESCE(NULLIF(mainAcc.Account_Name, N''), NULLIF(mainBox.BoxName, N''), NULLIF(mainBox.BoxNameE, N''), ISNULL(n.person, N'')))) AS NameAccountDisplayName,
+    ISNULL(n.person, N'') AS NameText,
+    ISNULL(n.NoteCashingType, 0) AS PaymentMethod,
+    CAST(ISNULL(n.Note_Value, 0) AS DECIMAL(18,2)) AS Value,
+    n.BoxID,
+    n.BankID,
+    n.ChqueNum AS ReferenceNo,
+    n.DueDate AS ReferenceDate,
+    CASE
+        WHEN ISNULL(n.NoteCashingType, 0) = 0 THEN COALESCE(NULLIF(pb.BoxName, N''), NULLIF(pb.BoxNameE, N''), N'خزنة ' + CONVERT(NVARCHAR(20), n.BoxID))
+        ELSE COALESCE(NULLIF(bd.BankName, N''), NULLIF(bd.BankNameE, N''), N'بنك ' + CONVERT(NVARCHAR(20), n.BankID))
+    END AS PaymentSourceName,
+    CASE WHEN ISNULL(n.NoteCashingType, 0) = 0 THEN N'خزنة' ELSE N'بنك' END AS PaymentSourceType,
+    CAST(CASE WHEN EXISTS (SELECT 1 FROM dbo.DOUBLE_ENTREY_VOUCHERS dev WHERE dev.Notes_ID = n.NoteID AND ISNULL(dev.Posted, 0) = 1) OR ISNULL(n.NotePosted, 0) = 1 THEN 1 ELSE 0 END AS BIT) AS IsPosted,
+    n.Emp_ID AS EmpId,
+    n.UserID AS CreatedUserId,
+    u.UserName AS CreatedUserName,
+    n.DateTimeEntry AS CreatedDate,
+    n.LastModifiedByUserId,
+    mu.UserName AS LastModifiedByUserName,
+    n.LastModifiedDate,
+    n.PostedBy AS PostedByUserId,
+    pu.UserName AS PostedByUserName,
+    COALESCE(n.PostDate, n.PostedDate, postedDev.PostedDate) AS PostedDate,
+    postedDev.Double_Entry_Vouchers_ID AS JournalVoucherId
+INTO #PosPaymentSearch
+FROM dbo.Notes n
+LEFT JOIN dbo.TblBranchesData b ON b.branch_id = n.branch_no
+LEFT JOIN dbo.TblUsers u ON u.UserID = n.UserID
+LEFT JOIN dbo.TblUsers mu ON mu.UserID = n.LastModifiedByUserId
+LEFT JOIN dbo.TblUsers pu ON pu.UserID = n.PostedBy
+LEFT JOIN dbo.TblBoxesData pb ON pb.BoxID = n.BoxID
+LEFT JOIN dbo.BanksData bd ON bd.BankID = n.BankID
+LEFT JOIN dbo.TblBoxesData mainBox ON mainBox.Account_Code = n.BTCashAccountcode
+LEFT JOIN dbo.ACCOUNTS mainAcc ON mainAcc.Account_Code = n.BTCashAccountcode
+OUTER APPLY (
+    SELECT TOP (1) dev.Double_Entry_Vouchers_ID, dev.PostedDate
+    FROM dbo.DOUBLE_ENTREY_VOUCHERS dev
+    WHERE dev.Notes_ID = n.NoteID
+    ORDER BY dev.Double_Entry_Vouchers_ID, dev.DEV_ID_Line_No
+) postedDev
+WHERE n.NoteType = 50
+  AND (@fromDate IS NULL OR n.NoteDate >= @fromDate)
+  AND (@toDate IS NULL OR n.NoteDate < DATEADD(DAY, 1, @toDate))
+  AND (@branchId IS NULL OR n.branch_no = @branchId)
+  AND (@empId IS NULL OR n.Emp_ID = @empId)
+  AND (@custodyHolderCode = N'' OR ISNULL(n.BTCashAccountcode, N'') = @custodyHolderCode)
+  AND (@canChangeDefaults = 1 OR n.UserID = @userId OR n.branch_no = @contextBranchId)
+  AND (@postedStatus IS NULL
+       OR (@postedStatus = 1 AND (EXISTS (SELECT 1 FROM dbo.DOUBLE_ENTREY_VOUCHERS dev WHERE dev.Notes_ID = n.NoteID AND ISNULL(dev.Posted, 0) = 1) OR ISNULL(n.NotePosted, 0) = 1))
+       OR (@postedStatus = 0 AND NOT EXISTS (SELECT 1 FROM dbo.DOUBLE_ENTREY_VOUCHERS dev WHERE dev.Notes_ID = n.NoteID AND ISNULL(dev.Posted, 0) = 1) AND ISNULL(n.NotePosted, 0) = 0))
+  AND (
+      @paymentSourceText = N''
+      OR CONVERT(NVARCHAR(50), ISNULL(n.BoxID, 0)) LIKE N'%' + @paymentSourceText + N'%'
+      OR CONVERT(NVARCHAR(50), ISNULL(n.BankID, 0)) LIKE N'%' + @paymentSourceText + N'%'
+      OR ISNULL(pb.BoxName, N'') LIKE N'%' + @paymentSourceText + N'%'
+      OR ISNULL(pb.BoxNameE, N'') LIKE N'%' + @paymentSourceText + N'%'
+      OR ISNULL(bd.BankName, N'') LIKE N'%' + @paymentSourceText + N'%'
+      OR ISNULL(bd.BankNameE, N'') LIKE N'%' + @paymentSourceText + N'%'
+      OR ISNULL(n.ChqueNum, N'') LIKE N'%' + @paymentSourceText + N'%'
+  )
+  AND (
+      @custodyHolderText = N''
+      OR ISNULL(n.person, N'') LIKE N'%' + @custodyHolderText + N'%'
+      OR ISNULL(n.BTCashAccountcode, N'') LIKE N'%' + @custodyHolderText + N'%'
+      OR ISNULL(mainBox.BoxName, N'') LIKE N'%' + @custodyHolderText + N'%'
+      OR ISNULL(mainBox.BoxNameE, N'') LIKE N'%' + @custodyHolderText + N'%'
+      OR ISNULL(mainAcc.Account_Serial, N'') LIKE N'%' + @custodyHolderText + N'%'
+      OR ISNULL(mainAcc.Account_Name, N'') LIKE N'%' + @custodyHolderText + N'%'
+  )
+  AND
+  (
+      @searchText = N''
+      OR CONVERT(NVARCHAR(50), n.NoteID) = @searchText
+      OR CASE WHEN ISNUMERIC(n.NoteSerial1) = 1 THEN CONVERT(NVARCHAR(50), CAST(n.NoteSerial1 AS DECIMAL(38,0))) ELSE CONVERT(NVARCHAR(50), n.NoteSerial1) END LIKE N'%' + @searchText + N'%'
+      OR CASE WHEN ISNUMERIC(n.NoteSerial) = 1 THEN CONVERT(NVARCHAR(50), CAST(n.NoteSerial AS DECIMAL(38,0))) ELSE CONVERT(NVARCHAR(50), n.NoteSerial) END LIKE N'%' + @searchText + N'%'
+      OR ISNULL(n.person, N'') LIKE N'%' + @searchText + N'%'
+      OR ISNULL(n.Remark, N'') LIKE N'%' + @searchText + N'%'
+      OR ISNULL(n.ChqueNum, N'') LIKE N'%' + @searchText + N'%'
+      OR ISNULL(n.BTCashAccountcode, N'') LIKE N'%' + @searchText + N'%'
+  )
+;
+
+SELECT TOP (100) *
+FROM #PosPaymentSearch
+ORDER BY NoteDate DESC, NoteID DESC;
+
+SELECT
+    TotalCount = COUNT(1),
+    TotalAmount = CAST(ISNULL(SUM(Value), 0) AS DECIMAL(18,2)),
+    PostedCount = SUM(CASE WHEN IsPosted = 1 THEN 1 ELSE 0 END),
+    PostedAmount = CAST(ISNULL(SUM(CASE WHEN IsPosted = 1 THEN Value ELSE 0 END), 0) AS DECIMAL(18,2)),
+    UnpostedCount = SUM(CASE WHEN IsPosted = 0 THEN 1 ELSE 0 END),
+    UnpostedAmount = CAST(ISNULL(SUM(CASE WHEN IsPosted = 0 THEN Value ELSE 0 END), 0) AS DECIMAL(18,2))
+FROM #PosPaymentSearch;", connection))
             {
-                command.CommandType = CommandType.StoredProcedure;
                 command.CommandTimeout = 90;
                 command.Parameters.Add("@searchText", SqlDbType.NVarChar, 100).Value = (request.SearchText ?? string.Empty).Trim();
                 Add(command, "@fromDate", SqlDbType.DateTime, request.FromDate.HasValue ? (object)request.FromDate.Value.Date : DBNull.Value);
                 Add(command, "@toDate", SqlDbType.DateTime, request.ToDate.HasValue ? (object)request.ToDate.Value.Date : DBNull.Value);
                 Add(command, "@branchId", SqlDbType.Int, request.BranchId);
                 Add(command, "@empId", SqlDbType.Int, request.EmpId);
+                command.Parameters.Add("@custodyHolderCode", SqlDbType.NVarChar, 255).Value = (request.CustodyHolderCode ?? string.Empty).Trim();
+                command.Parameters.Add("@custodyHolderText", SqlDbType.NVarChar, 100).Value = (request.CustodyHolderText ?? string.Empty).Trim();
+                command.Parameters.Add("@paymentSourceText", SqlDbType.NVarChar, 100).Value = (request.PaymentSourceText ?? string.Empty).Trim();
+                Add(command, "@postedStatus", SqlDbType.Int, request.PostedStatus);
                 command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
                 command.Parameters.Add("@contextBranchId", SqlDbType.Int).Value = request.BranchId.GetValueOrDefault(0);
                 command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
@@ -10863,7 +11350,9 @@ OUTER APPLY (
                 {
                     while (reader.Read())
                     {
-                        list.Add(new PosPaymentMovementDto
+                        var isPosted = ReadBoolean(reader, "IsPosted");
+                        var journalVoucherId = isPosted ? ReadInt(reader, "JournalVoucherId") : null;
+                        result.Rows.Add(new PosPaymentMovementDto
                         {
                             NoteId = ReadInt(reader, "NoteID").GetValueOrDefault(),
                             NoteSerial = ReadString(reader, "NoteSerial"),
@@ -10874,21 +11363,48 @@ OUTER APPLY (
                             CashingType = ReadInt(reader, "CashingType").GetValueOrDefault(),
                             CashingTypeName = NormalizePaymentCashingTypeDisplay(ReadInt(reader, "CashingType").GetValueOrDefault(), ReadString(reader, "CashingTypeName")),
                             NameAccountCode = ReadString(reader, "NameAccountCode"),
+                            NameAccountSerial = ReadString(reader, "NameAccountSerial"),
+                            NameAccountName = FixArabicMojibakeForDisplay(ReadString(reader, "NameAccountName")),
+                            NameAccountDisplayName = FixArabicMojibakeForDisplay(ReadString(reader, "NameAccountDisplayName")),
                             NameText = FixArabicMojibakeForDisplay(ReadString(reader, "NameText")),
                             PaymentMethod = ReadInt(reader, "PaymentMethod").GetValueOrDefault(),
                             Value = ReadDecimal(reader, "Value").GetValueOrDefault(),
+                            BoxId = ReadInt(reader, "BoxID"),
+                            BankId = ReadInt(reader, "BankID"),
+                            PaymentSourceName = FixArabicMojibakeForDisplay(ReadString(reader, "PaymentSourceName")),
+                            PaymentSourceType = FixArabicMojibakeForDisplay(ReadString(reader, "PaymentSourceType")),
+                            ReferenceNo = ReadString(reader, "ReferenceNo"),
+                            ReferenceDate = ReadDateTime(reader, "ReferenceDate"),
+                            IsPosted = isPosted,
+                            PostedStatusText = isPosted ? "مرحل" : "غير مرحل",
                             EmpId = ReadInt(reader, "EmpId"),
                             CreatedUserId = ReadInt(reader, "CreatedUserId"),
                             CreatedUserName = ReadString(reader, "CreatedUserName"),
+                            CreatedDate = ReadDateTime(reader, "CreatedDate"),
                             LastModifiedByUserId = ReadInt(reader, "LastModifiedByUserId"),
                             LastModifiedByUserName = ReadString(reader, "LastModifiedByUserName"),
-                            LastModifiedDate = ReadDateTime(reader, "LastModifiedDate")
+                            LastModifiedDate = ReadDateTime(reader, "LastModifiedDate"),
+                            PostedByUserId = ReadInt(reader, "PostedByUserId"),
+                            PostedByUserName = ReadString(reader, "PostedByUserName"),
+                            PostedDate = ReadDateTime(reader, "PostedDate"),
+                            JournalVoucherId = journalVoucherId,
+                            JournalNumber = journalVoucherId.HasValue ? "قيد رقم " + journalVoucherId.Value.ToString(CultureInfo.InvariantCulture) : string.Empty
                         });
+                    }
+
+                    if (reader.NextResult() && reader.Read())
+                    {
+                        result.TotalCount = ReadInt(reader, "TotalCount").GetValueOrDefault();
+                        result.TotalAmount = ReadDecimal(reader, "TotalAmount").GetValueOrDefault();
+                        result.PostedCount = ReadInt(reader, "PostedCount").GetValueOrDefault();
+                        result.PostedAmount = ReadDecimal(reader, "PostedAmount").GetValueOrDefault();
+                        result.UnpostedCount = ReadInt(reader, "UnpostedCount").GetValueOrDefault();
+                        result.UnpostedAmount = ReadDecimal(reader, "UnpostedAmount").GetValueOrDefault();
                     }
                 }
             }
 
-            return list;
+            return result;
         }
 
         public PosPaymentMovementDto GetPosPayment(int noteId, int userId, bool canChangeDefaults, int? branchId)
@@ -10905,6 +11421,9 @@ SELECT TOP (1)
     COALESCE(NULLIF(b.branch_name, N''), NULLIF(b.branch_namee, N''), N'فرع ' + CONVERT(NVARCHAR(20), n.branch_no)) AS BranchName,
     ISNULL(n.CashingType, 0) AS CashingType,
     ISNULL(n.BTCashAccountcode, N'') AS NameAccountCode,
+    mainAcc.Account_Serial AS NameAccountSerial,
+    mainAcc.Account_Name AS NameAccountName,
+    LTRIM(RTRIM(COALESCE(CONVERT(NVARCHAR(255), mainAcc.Account_Serial) + N' - ', N'') + COALESCE(NULLIF(mainAcc.Account_Name, N''), NULLIF(mainBox.BoxName, N''), NULLIF(mainBox.BoxNameE, N''), ISNULL(n.person, N'')))) AS NameAccountDisplayName,
     ISNULL(n.person, N'') AS NameText,
     ISNULL(n.NoteCashingType, 0) AS PaymentMethod,
     CAST(ISNULL(n.Note_Value, 0) AS DECIMAL(18,2)) AS Value,
@@ -10923,16 +11442,31 @@ SELECT TOP (1)
     ISNULL(n.general_des_notes, N'') AS GeneralDescription,
     n.UserID AS CreatedUserId,
     u.UserName AS CreatedUserName,
+    n.DateTimeEntry AS CreatedDate,
     n.LastModifiedByUserId,
     mu.UserName AS LastModifiedByUserName,
-    n.LastModifiedDate
+    n.LastModifiedDate,
+    CAST(CASE WHEN EXISTS (SELECT 1 FROM dbo.DOUBLE_ENTREY_VOUCHERS dev WHERE dev.Notes_ID = n.NoteID AND ISNULL(dev.Posted, 0) = 1) OR ISNULL(n.NotePosted, 0) = 1 THEN 1 ELSE 0 END AS BIT) AS IsPosted,
+    n.PostedBy AS PostedByUserId,
+    pu.UserName AS PostedByUserName,
+    COALESCE(n.PostDate, n.PostedDate, postedDev.PostedDate) AS PostedDate,
+    postedDev.Double_Entry_Vouchers_ID AS JournalVoucherId
 FROM dbo.Notes n
 LEFT JOIN dbo.TblBranchesData b ON b.branch_id = n.branch_no
 LEFT JOIN dbo.TblUsers u ON u.UserID = n.UserID
 LEFT JOIN dbo.TblUsers mu ON mu.UserID = n.LastModifiedByUserId
+LEFT JOIN dbo.TblUsers pu ON pu.UserID = n.PostedBy
 LEFT JOIN dbo.TblBoxesData pb ON pb.BoxID = n.BoxID
 LEFT JOIN dbo.BanksData bd ON bd.BankID = n.BankID
 LEFT JOIN dbo.TblEmployee e ON e.Emp_ID = n.Emp_ID
+LEFT JOIN dbo.TblBoxesData mainBox ON mainBox.Account_Code = n.BTCashAccountcode
+LEFT JOIN dbo.ACCOUNTS mainAcc ON mainAcc.Account_Code = n.BTCashAccountcode
+OUTER APPLY (
+    SELECT TOP (1) dev.Double_Entry_Vouchers_ID, dev.PostedDate
+    FROM dbo.DOUBLE_ENTREY_VOUCHERS dev
+    WHERE dev.Notes_ID = n.NoteID
+    ORDER BY dev.Double_Entry_Vouchers_ID, dev.DEV_ID_Line_No
+) postedDev
 WHERE n.NoteID = @noteId
   AND n.NoteType = 50
   AND (@canChangeDefaults = 1 OR n.UserID = @userId OR n.branch_no = @branchId);";
@@ -10949,6 +11483,8 @@ WHERE n.NoteID = @noteId
                 {
                     if (reader.Read())
                     {
+                        var isPosted = ReadBoolean(reader, "IsPosted");
+                        var journalVoucherId = isPosted ? ReadInt(reader, "JournalVoucherId") : null;
                         item = new PosPaymentMovementDto
                         {
                             NoteId = ReadInt(reader, "NoteID").GetValueOrDefault(),
@@ -10959,6 +11495,9 @@ WHERE n.NoteID = @noteId
                             BranchName = FixArabicMojibakeForDisplay(ReadString(reader, "BranchName")),
                             CashingType = ReadInt(reader, "CashingType").GetValueOrDefault(),
                             NameAccountCode = ReadString(reader, "NameAccountCode"),
+                            NameAccountSerial = ReadString(reader, "NameAccountSerial"),
+                            NameAccountName = FixArabicMojibakeForDisplay(ReadString(reader, "NameAccountName")),
+                            NameAccountDisplayName = FixArabicMojibakeForDisplay(ReadString(reader, "NameAccountDisplayName")),
                             NameText = FixArabicMojibakeForDisplay(ReadString(reader, "NameText")),
                             PaymentMethod = ReadInt(reader, "PaymentMethod").GetValueOrDefault(),
                             Value = ReadDecimal(reader, "Value").GetValueOrDefault(),
@@ -10977,9 +11516,17 @@ WHERE n.NoteID = @noteId
                             GeneralDescription = FixArabicMojibakeForDisplay(ReadString(reader, "GeneralDescription")),
                             CreatedUserId = ReadInt(reader, "CreatedUserId"),
                             CreatedUserName = ReadString(reader, "CreatedUserName"),
+                            CreatedDate = ReadDateTime(reader, "CreatedDate"),
                             LastModifiedByUserId = ReadInt(reader, "LastModifiedByUserId"),
                             LastModifiedByUserName = ReadString(reader, "LastModifiedByUserName"),
-                            LastModifiedDate = ReadDateTime(reader, "LastModifiedDate")
+                            LastModifiedDate = ReadDateTime(reader, "LastModifiedDate"),
+                            IsPosted = isPosted,
+                            PostedStatusText = isPosted ? "مرحل" : "غير مرحل",
+                            PostedByUserId = ReadInt(reader, "PostedByUserId"),
+                            PostedByUserName = ReadString(reader, "PostedByUserName"),
+                            PostedDate = ReadDateTime(reader, "PostedDate"),
+                            JournalVoucherId = journalVoucherId,
+                            JournalNumber = journalVoucherId.HasValue ? "قيد رقم " + journalVoucherId.Value.ToString(CultureInfo.InvariantCulture) : string.Empty
                         };
                     }
                 }
@@ -11000,6 +11547,7 @@ WHERE n.NoteID = @noteId
                 throw new UnauthorizedAccessException("ليست لديك صلاحية تنفيذ التمويل والاستعاضة");
             }
 
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             ValidatePosPayment(request);
             var lines = PreviewPosPayment(request);
             var debit = lines.Sum(l => l.Debit);
@@ -11014,17 +11562,43 @@ WHERE n.NoteID = @noteId
                 connection.Open();
                 using (var transaction = connection.BeginTransaction())
                 {
+                    Guid clientRequestId;
+                    var hasClientRequestId = TryGetPaymentClientRequestId(request, out clientRequestId);
+                    var idempotencyCanBeFailed = false;
                     try
                     {
                         EnsurePosPaymentAuditColumns(connection, transaction);
                         var isUpdate = request.NoteId.HasValue && request.NoteId.Value > 0;
+
+                        if (!isUpdate && hasClientRequestId)
+                        {
+                            EnsurePosPaymentIdempotencyTable();
+                            var idempotency = TryBeginPosPaymentIdempotency(connection, transaction, clientRequestId, request, userId);
+                            if (idempotency != null && string.Equals(idempotency.Status, "Completed", StringComparison.OrdinalIgnoreCase) && idempotency.NoteId.HasValue)
+                            {
+                                transaction.Commit();
+                                return LoadPosPaymentSaveResult(idempotency.NoteId.Value);
+                            }
+
+                            if (idempotency != null && string.Equals(idempotency.Status, "InProgress", StringComparison.OrdinalIgnoreCase))
+                            {
+                                throw new InvalidOperationException("جاري حفظ نفس الطلب بالفعل. انتظر نتيجة الحفظ ولا تضغط تنفيذ مرة أخرى.");
+                            }
+
+                            idempotencyCanBeFailed = true;
+                        }
+
                         var noteId = isUpdate ? request.NoteId.Value : GetNextIdFromSequence(connection, transaction, "Notes", "NoteID");
                         var noteSerial = isUpdate
                             ? ExecuteScalarString(connection, transaction, "SELECT CONVERT(NVARCHAR(50), CAST(NoteSerial AS DECIMAL(38,0))) FROM dbo.Notes WITH (UPDLOCK, HOLDLOCK) WHERE NoteID = @NoteID AND NoteType = 50", new SqlParameter("@NoteID", noteId))
                             : GenerateNotesSerial(connection, transaction, request.BranchId, request.PaymentDate);
                         var noteSerial1 = isUpdate
                             ? ExecuteScalarString(connection, transaction, "SELECT CONVERT(NVARCHAR(50), CAST(NoteSerial1 AS DECIMAL(38,0))) FROM dbo.Notes WITH (UPDLOCK, HOLDLOCK) WHERE NoteID = @NoteID AND NoteType = 50", new SqlParameter("@NoteID", noteId))
-                            : ExecuteScalarString(connection, transaction, "SELECT CONVERT(NVARCHAR(50), ISNULL(MAX(CAST(NoteSerial1 AS BIGINT)), 0) + 1) FROM dbo.Notes WITH (UPDLOCK, HOLDLOCK) WHERE NoteType = 50 AND ISNUMERIC(NoteSerial1) = 1", null);
+                            : GeneratePaymentVoucherSerial(connection, transaction, request.BranchId, request.PaymentDate, request.CashingType, 50, userId);
+                        var numberingType = ResolveSandNumberingType(connection, transaction, 0, request.BranchId);
+                        var numberingType1 = ResolveSandNumberingType(connection, transaction, 4, request.BranchId);
+                        var posted = ResolvePosPaymentPostedFlag(connection, transaction, request.BranchId);
+                        var accountIntervalId = ResolveAccountIntervalId(connection, transaction, request.PaymentDate);
 
                         if (isUpdate && string.IsNullOrWhiteSpace(noteSerial1))
                         {
@@ -11101,8 +11675,8 @@ VALUES
     @NoteID, @BranchId, @NoteSerial, @NoteSerial1, @NoteSerial1, @Value,
     @Remarks, @GeneralDescription, @Person, 50, @NoteDate, @CashingType,
     @BtCashAccount, @BoxID, @BankID, @ReferenceNo, @ReferenceDate, @PaymentMethod,
-    @EmpID, @EmpAccountCode, @BoxValue, @EmpValue, @UserID, 0,
-    0, YEAR(@NoteDate), MONTH(@NoteDate), CONVERT(NVARCHAR(50), @Value)
+    @EmpID, @EmpAccountCode, @BoxValue, @EmpValue, @UserID, @NumberingType,
+    @NumberingType1, YEAR(@NoteDate), MONTH(@NoteDate), CONVERT(NVARCHAR(50), @Value)
 );",
                             new SqlParameter("@NoteID", noteId),
                             new SqlParameter("@BranchId", request.BranchId),
@@ -11124,26 +11698,152 @@ VALUES
                             new SqlParameter("@EmpAccountCode", request.EmpAccountCode ?? string.Empty),
                             new SqlParameter("@BoxValue", request.BoxValue),
                             new SqlParameter("@EmpValue", request.EmpValue),
-                            new SqlParameter("@UserID", userId));
+                            new SqlParameter("@UserID", userId),
+                            new SqlParameter("@NumberingType", numberingType.HasValue ? (object)numberingType.Value : DBNull.Value),
+                            new SqlParameter("@NumberingType1", numberingType1.HasValue ? (object)numberingType1.Value : DBNull.Value));
                         }
 
-                        var voucherId = ExecuteScalarInt(connection, transaction, "SELECT ISNULL(MAX(Double_Entry_Vouchers_ID),0) + 1 FROM dbo.DOUBLE_ENTREY_VOUCHERS WITH (UPDLOCK, HOLDLOCK)", null).GetValueOrDefault();
+                        var voucherId = GetNextIdFromSequence(connection, transaction, "DOUBLE_ENTREY_VOUCHERS", "Double_Entry_Vouchers_ID");
                         var lineNo = 1;
                         foreach (var line in lines)
                         {
-                            AddPosPaymentDevLine(connection, transaction, voucherId, lineNo++, line, noteId, request.PaymentDate, userId, request.BranchId);
+                            AddPosPaymentDevLine(connection, transaction, voucherId, lineNo++, line, noteId, request.PaymentDate, userId, request.BranchId, posted, accountIntervalId);
+                        }
+
+                        if (!isUpdate && hasClientRequestId)
+                        {
+                            CompletePosPaymentIdempotency(connection, transaction, clientRequestId, noteId, noteSerial, noteSerial1, Convert.ToInt32(stopwatch.ElapsedMilliseconds));
                         }
 
                         transaction.Commit();
                         return new PosPaymentResultDto { NoteId = noteId, NoteSerial = noteSerial, NoteSerial1 = noteSerial1, Lines = lines };
                     }
-                    catch
+                    catch (Exception ex)
                     {
                         transaction.Rollback();
+                        if (hasClientRequestId && idempotencyCanBeFailed)
+                        {
+                            FailPosPaymentIdempotency(clientRequestId, ex.Message, Convert.ToInt32(stopwatch.ElapsedMilliseconds));
+                        }
+
                         throw;
                     }
                 }
             }
+        }
+
+        private static bool TryGetPaymentClientRequestId(PosPaymentRequestDto request, out Guid clientRequestId)
+        {
+            clientRequestId = Guid.Empty;
+            if (request == null || string.IsNullOrWhiteSpace(request.ClientRequestId))
+            {
+                return false;
+            }
+
+            return Guid.TryParse(request.ClientRequestId.Trim(), out clientRequestId) && clientRequestId != Guid.Empty;
+        }
+
+        private static PosPaymentIdempotencyState TryBeginPosPaymentIdempotency(SqlConnection connection, SqlTransaction transaction, Guid clientRequestId, PosPaymentRequestDto request, int userId)
+        {
+            using (var command = new SqlCommand(@"
+SELECT TOP (1) Status, NoteID
+FROM dbo.POS_PaymentSaveIdempotency WITH (UPDLOCK, HOLDLOCK)
+WHERE ClientRequestId = @ClientRequestId;", connection, transaction))
+            {
+                command.Parameters.Add("@ClientRequestId", SqlDbType.UniqueIdentifier).Value = clientRequestId;
+                using (var reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return new PosPaymentIdempotencyState
+                        {
+                            Status = ReadString(reader, "Status"),
+                            NoteId = ReadInt(reader, "NoteID")
+                        };
+                    }
+                }
+            }
+
+            ExecuteNonQuery(connection, transaction, @"
+INSERT INTO dbo.POS_PaymentSaveIdempotency
+(
+    ClientRequestId, CreatedAt, LastSeenAt, UserID, BranchId, CashingType,
+    PaymentMethod, BoxID, BankID, Amount, Status
+)
+VALUES
+(
+    @ClientRequestId, GETDATE(), GETDATE(), @UserID, @BranchId, @CashingType,
+    @PaymentMethod, @BoxID, @BankID, @Amount, N'InProgress'
+);",
+                new SqlParameter("@ClientRequestId", clientRequestId),
+                new SqlParameter("@UserID", userId),
+                new SqlParameter("@BranchId", request.BranchId),
+                new SqlParameter("@CashingType", request.CashingType),
+                new SqlParameter("@PaymentMethod", request.PaymentMethod),
+                new SqlParameter("@BoxID", request.BoxId.HasValue ? (object)request.BoxId.Value : DBNull.Value),
+                new SqlParameter("@BankID", request.BankId.HasValue ? (object)request.BankId.Value : DBNull.Value),
+                new SqlParameter("@Amount", request.Value));
+
+            return null;
+        }
+
+        private static void CompletePosPaymentIdempotency(SqlConnection connection, SqlTransaction transaction, Guid clientRequestId, int noteId, string noteSerial, string noteSerial1, int durationMs)
+        {
+            ExecuteNonQuery(connection, transaction, @"
+UPDATE dbo.POS_PaymentSaveIdempotency
+SET Status = N'Completed',
+    NoteID = @NoteID,
+    NoteSerial = @NoteSerial,
+    NoteSerial1 = @NoteSerial1,
+    DurationMs = @DurationMs,
+    LastSeenAt = GETDATE(),
+    CompletedAt = GETDATE(),
+    ErrorMessage = NULL
+WHERE ClientRequestId = @ClientRequestId;",
+                new SqlParameter("@ClientRequestId", clientRequestId),
+                new SqlParameter("@NoteID", noteId),
+                new SqlParameter("@NoteSerial", noteSerial ?? string.Empty),
+                new SqlParameter("@NoteSerial1", noteSerial1 ?? string.Empty),
+                new SqlParameter("@DurationMs", durationMs));
+        }
+
+        private void FailPosPaymentIdempotency(Guid clientRequestId, string message, int durationMs)
+        {
+            EnsurePosPaymentIdempotencyTable();
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(@"
+UPDATE dbo.POS_PaymentSaveIdempotency
+SET Status = N'Failed',
+    DurationMs = @DurationMs,
+    LastSeenAt = GETDATE(),
+    CompletedAt = GETDATE(),
+    ErrorMessage = @ErrorMessage
+WHERE ClientRequestId = @ClientRequestId
+  AND Status <> N'Completed';", connection))
+            {
+                command.Parameters.Add("@ClientRequestId", SqlDbType.UniqueIdentifier).Value = clientRequestId;
+                Add(command, "@DurationMs", SqlDbType.Int, durationMs);
+                AddString(command, "@ErrorMessage", SqlDbType.NVarChar, 1000, TruncateLogMessage(message, 1000));
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        private PosPaymentResultDto LoadPosPaymentSaveResult(int noteId)
+        {
+            var movement = GetPosPayment(noteId, 0, true, null);
+            if (movement == null)
+            {
+                throw new InvalidOperationException("تم العثور على طلب حفظ سابق لكن تعذر تحميل الحركة المحفوظة.");
+            }
+
+            return new PosPaymentResultDto
+            {
+                NoteId = movement.NoteId,
+                NoteSerial = movement.NoteSerial,
+                NoteSerial1 = movement.NoteSerial1,
+                Lines = movement.Lines ?? new List<PosPaymentLineDto>()
+            };
         }
 
         private void ValidatePosPayment(PosPaymentRequestDto request)
@@ -11157,6 +11857,7 @@ VALUES
             if (request.PaymentMethod == 0 && !request.BoxId.HasValue) { throw new InvalidOperationException("الخزنة مطلوبة في الدفع النقدي"); }
             if (request.PaymentMethod != 0 && !request.BankId.HasValue) { throw new InvalidOperationException("البنك مطلوب"); }
             if ((request.PaymentMethod == 1 || request.PaymentMethod == 2 || request.PaymentMethod == 3) && string.IsNullOrWhiteSpace(request.ReferenceNo)) { throw new InvalidOperationException("رقم الشيك/الحوالة مطلوب"); }
+            if (request.BoxValue > 0 || request.EmpValue > 0) { throw new InvalidOperationException("استعاضة العهدة في كيشني تسجل قيداً من طرفين فقط؛ لا تستخدم تقسيم قيمة الخزنة/عهدة الموظف في هذه الشاشة."); }
             if (request.BoxValue + request.EmpValue > 0 && Math.Abs((request.BoxValue + request.EmpValue) - request.Value) > 0.01m) { throw new InvalidOperationException("مجموع قيمة الخزنة والعهدة يجب أن يساوي قيمة الدفع"); }
             if (request.EmpValue > 0 && string.IsNullOrWhiteSpace(request.EmpAccountCode)) { throw new InvalidOperationException("حساب عهدة الموظف مطلوب"); }
             ValidatePosPaymentRelationships(request);
@@ -11210,6 +11911,7 @@ VALUES
             const string sql = @"
 SELECT
     d.Account_Code,
+    acc.Account_Serial,
     acc.Account_Name,
     d.Double_Entry_Vouchers_Description,
     CASE WHEN ISNULL(d.Credit_Or_Debit, 0) = 0 THEN CAST(ISNULL(d.Value, 0) AS DECIMAL(18,2)) ELSE 0 END AS Debit,
@@ -11230,6 +11932,7 @@ ORDER BY d.DEV_ID_Line_No;";
                         lines.Add(new PosPaymentLineDto
                         {
                             AccountCode = ReadString(reader, "Account_Code"),
+                            AccountSerial = ReadString(reader, "Account_Serial"),
                             AccountName = ReadString(reader, "Account_Name"),
                             Description = FixArabicMojibakeForDisplay(ReadString(reader, "Double_Entry_Vouchers_Description")),
                             Debit = ReadDecimal(reader, "Debit").GetValueOrDefault(),
@@ -11662,7 +12365,7 @@ SELECT ISNULL(@AffectedUsers, 0) AS AffectedUsers, ISNULL(@UpdatedRows, 0) AS Up
                 new PosPermissionItemDto { Key = "CanOpenPayments", Title = "فتح شاشة التمويل والاستعاضة" },
                 new PosPermissionItemDto { Key = "CanExecutePayments", Title = "تنفيذ التمويل والاستعاضة" },
                 new PosPermissionItemDto { Key = "CanEditPayments", Title = "تعديل حركات التمويل والاستعاضة السابقة" },
-                new PosPermissionItemDto { Key = "CanTeller", Title = "مستخدم كاشير / بائع" },
+                new PosPermissionItemDto { Key = "CanTeller", Title = "وضع الكاشير المبسط (إخفاء القوائم وفتح شاشة البيع مباشرة)" },
                 new PosPermissionItemDto { Key = "CanCancelOrReturn", Title = "عمل مرتجع/إلغاء" }
             };
 
@@ -11995,6 +12698,68 @@ END;";
                 }
 
                 _posSaveIdempotencyEnsured = true;
+            }
+        }
+
+        private void EnsurePosPaymentIdempotencyTable()
+        {
+            if (_posPaymentIdempotencyEnsured)
+            {
+                return;
+            }
+
+            lock (PosPaymentIdempotencyEnsureLock)
+            {
+                if (_posPaymentIdempotencyEnsured)
+                {
+                    return;
+                }
+
+                const string sql = @"
+IF OBJECT_ID(N'dbo.POS_PaymentSaveIdempotency', N'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.POS_PaymentSaveIdempotency
+    (
+        ClientRequestId UNIQUEIDENTIFIER NOT NULL CONSTRAINT PK_POS_PaymentSaveIdempotency PRIMARY KEY,
+        CreatedAt DATETIME NOT NULL CONSTRAINT DF_POS_PaymentSaveIdempotency_CreatedAt DEFAULT (GETDATE()),
+        LastSeenAt DATETIME NULL,
+        CompletedAt DATETIME NULL,
+        UserID INT NULL,
+        BranchId INT NULL,
+        CashingType INT NULL,
+        PaymentMethod INT NULL,
+        BoxID INT NULL,
+        BankID INT NULL,
+        Amount DECIMAL(19,4) NULL,
+        Status NVARCHAR(30) NOT NULL CONSTRAINT DF_POS_PaymentSaveIdempotency_Status DEFAULT (N'InProgress'),
+        NoteID INT NULL,
+        NoteSerial NVARCHAR(100) NULL,
+        NoteSerial1 NVARCHAR(100) NULL,
+        DurationMs INT NULL,
+        ErrorMessage NVARCHAR(1000) NULL
+    );
+END;
+
+IF COL_LENGTH(N'dbo.POS_PaymentSaveIdempotency', N'LastSeenAt') IS NULL ALTER TABLE dbo.POS_PaymentSaveIdempotency ADD LastSeenAt DATETIME NULL;
+IF COL_LENGTH(N'dbo.POS_PaymentSaveIdempotency', N'CompletedAt') IS NULL ALTER TABLE dbo.POS_PaymentSaveIdempotency ADD CompletedAt DATETIME NULL;
+IF COL_LENGTH(N'dbo.POS_PaymentSaveIdempotency', N'DurationMs') IS NULL ALTER TABLE dbo.POS_PaymentSaveIdempotency ADD DurationMs INT NULL;
+IF COL_LENGTH(N'dbo.POS_PaymentSaveIdempotency', N'ErrorMessage') IS NULL ALTER TABLE dbo.POS_PaymentSaveIdempotency ADD ErrorMessage NVARCHAR(1000) NULL;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = N'IX_POS_PaymentSaveIdempotency_Status_CreatedAt' AND object_id = OBJECT_ID(N'dbo.POS_PaymentSaveIdempotency'))
+BEGIN
+    CREATE INDEX IX_POS_PaymentSaveIdempotency_Status_CreatedAt
+    ON dbo.POS_PaymentSaveIdempotency(Status, CreatedAt DESC)
+    INCLUDE (UserID, BranchId, CashingType, PaymentMethod, NoteID, NoteSerial1, DurationMs);
+END;";
+
+                using (var connection = new SqlConnection(_connectionString))
+                using (var command = new SqlCommand(sql, connection))
+                {
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+
+                _posPaymentIdempotencyEnsured = true;
             }
         }
 
@@ -12517,6 +13282,7 @@ WHERE Transaction_ID = @transactionId;";
             Add(command, "@branchId", SqlDbType.Int, request.BranchId);
             Add(command, "@userId", SqlDbType.Int, request.UserId);
             Add(command, "@empId", SqlDbType.Int, request.EmpId);
+            Add(command, "@saveDate", SqlDbType.DateTime, request.OrderDate ?? DateTime.Today);
         }
 
         private static PosCustomerLookupDto MapKeshniCardCustomer(IDataRecord reader)
@@ -12705,6 +13471,85 @@ WHERE Transaction_ID = @transactionId;";
             }
         }
 
+        private static string GeneratePaymentVoucherSerial(SqlConnection connection, SqlTransaction transaction, int branchId, DateTime noteDate, int sanadNo, int noteType, int userId)
+        {
+            using (var command = new SqlCommand("dbo.usp_Voucher_coding_V2", connection, transaction))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.Parameters.Add("@my_branch", SqlDbType.Int).Value = branchId;
+                command.Parameters.Add("@date1", SqlDbType.Date).Value = noteDate.Date;
+                command.Parameters.Add("@Sanad_No", SqlDbType.Int).Value = sanadNo;
+                command.Parameters.Add("@NoteType", SqlDbType.Int).Value = noteType;
+                command.Parameters.Add("@departement_name", SqlDbType.Int).Value = 1;
+                command.Parameters.Add("@Transaction_Type", SqlDbType.Int).Value = 0;
+                command.Parameters.Add("@Prefix", SqlDbType.VarChar, 10).Value = DBNull.Value;
+                command.Parameters.Add("@StoreID", SqlDbType.Int).Value = 0;
+                command.Parameters.Add("@BillType", SqlDbType.Int).Value = 0;
+                command.Parameters.Add("@MosemID", SqlDbType.BigInt).Value = 0;
+                command.Parameters.Add("@mTableName", SqlDbType.VarChar, 100).Value = DBNull.Value;
+                command.Parameters.Add("@mUserID", SqlDbType.BigInt).Value = userId;
+                var result = command.Parameters.Add("@Result", SqlDbType.VarChar, 50);
+                result.Direction = ParameterDirection.Output;
+                var tail = command.Parameters.Add("@mSerInv", SqlDbType.BigInt);
+                tail.Direction = ParameterDirection.Output;
+                var returnCode = command.Parameters.Add("@ReturnCode", SqlDbType.Int);
+                returnCode.Direction = ParameterDirection.ReturnValue;
+                command.ExecuteNonQuery();
+
+                var serial = Convert.ToString(result.Value, CultureInfo.InvariantCulture);
+                if (Convert.ToInt32(returnCode.Value, CultureInfo.InvariantCulture) != 0 || string.IsNullOrWhiteSpace(serial) || string.Equals(serial, "error", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException("تعذر توليد رقم سند التمويل والاستعاضة من نظام الترقيم.");
+                }
+
+                return serial;
+            }
+        }
+
+        private static int? ResolveSandNumberingType(SqlConnection connection, SqlTransaction transaction, int sanadNo, int branchId)
+        {
+            return ExecuteScalarInt(connection, transaction, @"
+SELECT TOP (1) numbering_id
+FROM dbo.sanad_numbering WITH (NOLOCK)
+WHERE sanad_no = @SanadNo
+  AND (branch_no = @BranchId OR branch_no IS NULL OR branch_no = 0)
+ORDER BY CASE WHEN branch_no = @BranchId THEN 0 WHEN branch_no = 1 THEN 1 ELSE 2 END, id;",
+                new SqlParameter("@SanadNo", sanadNo),
+                new SqlParameter("@BranchId", branchId));
+        }
+
+        private static int? ResolveAccountIntervalId(SqlConnection connection, SqlTransaction transaction, DateTime recordDate)
+        {
+            var intervalId = ExecuteScalarInt(connection, transaction, @"
+SELECT TOP (1) AccountIntervalID
+FROM dbo.TblAccountIntervals WITH (NOLOCK)
+WHERE @RecordDate >= ISNULL(StartDate, '19000101')
+  AND @RecordDate < DATEADD(DAY, 1, ISNULL(EndDate, '99991230'))
+ORDER BY CASE WHEN ISNULL(OpenState, 0) = 0 THEN 0 ELSE 1 END, AccountIntervalID DESC;",
+                new SqlParameter("@RecordDate", recordDate.Date));
+
+            if (intervalId.HasValue)
+            {
+                return intervalId;
+            }
+
+            return ExecuteScalarInt(connection, transaction, @"
+SELECT TOP (1) AccountIntervalID
+FROM dbo.TblAccountIntervals WITH (NOLOCK)
+ORDER BY CASE WHEN ISNULL(OpenState, 0) = 0 THEN 0 ELSE 1 END, AccountIntervalID DESC;");
+        }
+
+        private static int? ResolvePosPaymentPostedFlag(SqlConnection connection, SqlTransaction transaction, int branchId)
+        {
+            var requiresApproval = ExecuteScalarInt(connection, transaction, @"
+SELECT TOP (1) 1
+FROM dbo.TblApprovalDef WITH (NOLOCK)
+WHERE ScreenName IN (N'FrmPayments1', N'FrmPayments')
+  AND (BranchId IS NULL OR BranchId = 0 OR BranchId = @BranchId);",
+                new SqlParameter("@BranchId", branchId));
+            return requiresApproval.HasValue ? (int?)1 : null;
+        }
+
         private static decimal? ParseNullableDecimal(string value)
         {
             decimal parsed;
@@ -12736,6 +13581,45 @@ VALUES
                 new SqlParameter("@NoteId", noteId),
                 new SqlParameter("@UserId", userId),
                 new SqlParameter("@BranchId", branchId));
+        }
+
+        private static void AddPosPaymentDevLine(SqlConnection connection, SqlTransaction transaction, int voucherId, int lineNo, PosPaymentLineDto line, int noteId, DateTime recordDate, int userId, int branchId, int? posted, int? accountIntervalId)
+        {
+            var lineNo1 = GetNextIdFromSequence(connection, transaction, "DOUBLE_ENTREY_VOUCHERS", "DEV_ID_Line_No1");
+            ExecuteNonQuery(connection, transaction, @"
+INSERT INTO dbo.DOUBLE_ENTREY_VOUCHERS
+(
+    Double_Entry_Vouchers_ID, DEV_ID_Line_No, Account_Code, Value,
+    Credit_Or_Debit, Double_Entry_Vouchers_Description, RecordDate,
+    Notes_ID, UserID, currency, rate, branch_id, DueDate,
+    DEV_ID_Line_No1, Posted, Account_Interval_ID
+)
+VALUES
+(
+    @VoucherId, @LineNo, @AccountCode, @Value,
+    @CreditOrDebit, @Description, @RecordDate,
+    @NoteId, @UserId, N'', 1, @BranchId, @RecordDate,
+    @LineNo1, @Posted, @AccountIntervalId
+);",
+                new SqlParameter("@VoucherId", voucherId),
+                new SqlParameter("@LineNo", lineNo),
+                new SqlParameter("@AccountCode", line.AccountCode ?? string.Empty),
+                new SqlParameter("@Value", line.Debit > 0 ? line.Debit : line.Credit),
+                new SqlParameter("@CreditOrDebit", line.Debit > 0 ? 0 : 1),
+                new SqlParameter("@Description", line.Description ?? string.Empty),
+                new SqlParameter("@RecordDate", recordDate.Date),
+                new SqlParameter("@NoteId", noteId),
+                new SqlParameter("@UserId", userId),
+                new SqlParameter("@BranchId", branchId),
+                new SqlParameter("@LineNo1", lineNo1),
+                new SqlParameter("@Posted", posted.HasValue ? (object)posted.Value : DBNull.Value),
+                new SqlParameter("@AccountIntervalId", accountIntervalId.HasValue ? (object)accountIntervalId.Value : DBNull.Value));
+        }
+
+        private sealed class PosPaymentIdempotencyState
+        {
+            public string Status { get; set; }
+            public int? NoteId { get; set; }
         }
 
         private static int? ReadInt(IDataRecord reader, string name)

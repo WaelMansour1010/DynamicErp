@@ -1,110 +1,428 @@
 @model MyERP.Areas.MainErp.ViewModels.Security.MainErpPermissionsIndexViewModel
 @using System.Linq
+@using System.Web
 @{
-    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    ViewBag.Title = "الصلاحيات";
+    ViewBag.Title = "الصلاحيات على الشاشات";
+    var host = (Model.Host ?? "").Trim();
+    var isPosHost = string.Equals(host, "pos", System.StringComparison.OrdinalIgnoreCase);
+    Layout = isPosHost ? null : "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    var hostQuery = string.IsNullOrWhiteSpace(host) ? "" : "&host=" + HttpUtility.UrlEncode(host);
+    var endpointArea = isPosHost ? "Pos" : "MainErp";
+    var endpointController = isPosHost ? "WebPermissions" : "Permissions";
+    var usersUrl = isPosHost ? Url.Content("~/Pos/PosLegacyAdmin/Users") : Url.Action("Index", "Users", new { area = "MainErp" });
 }
 
-<section class="erp-ui-page users-page" dir="rtl">
-    <header class="erp-page-header">
+@if (isPosHost)
+{
+    <link href="@Url.Content("~/assets/css/Courses/css/fontawesome-all.min.css")" rel="stylesheet" />
+}
+
+<section class="web-permissions-page" dir="rtl" data-host="@host" data-area="@Model.DefaultAreaFilter" data-admin="@(Model.IsAdminView ? "true" : "false")">
+    <header class="web-perm-header">
         <div>
-            <span>ScreenJuncUser</span>
-            <h1>الصلاحيات</h1>
-            <p>مصفوفة صلاحيات MainErp كما هي محفوظة في قاعدة Eng مع عرض الشاشات والمستخدمين داخل النظام.</p>
+            <span class="web-perm-eyebrow">WebScreenPermissions</span>
+            <h1>الصلاحيات على الشاشات</h1>
+            <p>كتالوج صلاحيات ويب مستقل يعرض أسماء الشاشات الحقيقية ومساراتها، بدون الاعتماد على أسماء نماذج VB6 القديمة.</p>
         </div>
-        <form method="get" class="erp-filter-grid">
-            <label class="erp-field">
-                <span>بحث</span>
-                <input type="search" name="searchText" value="@Model.SearchText" placeholder="اسم شاشة، مستخدم، أو مجموعة" />
-            </label>
-            <button type="submit" class="erp-btn erp-btn-primary"><i class="fas fa-search"></i><span>بحث</span></button>
-            <a class="erp-btn" href="@Url.Action("Index", "Users", new { area = "MainErp" })"><i class="fas fa-users-cog"></i><span>المستخدمين</span></a>
-        </form>
+        <div class="web-perm-actions">
+            <a class="web-perm-btn" href="@usersUrl"><i class="fas fa-users-cog"></i><span>المستخدمون</span></a>
+            <button type="button" class="web-perm-btn web-perm-btn-primary" id="saveMatrixBtn"><i class="fas fa-save"></i><span>حفظ التغييرات</span></button>
+        </div>
     </header>
 
-    <div class="erp-kpi-grid">
-        <article><span>المستخدمون</span><strong>@Model.TotalUsers</strong><small>ضمن النطاق الحالي</small></article>
-        <article><span>الشاشات</span><strong>@Model.TotalScreens</strong><small>ScreenJuncUser</small></article>
-        <article><span>سطور الصلاحيات</span><strong>@Model.TotalPermissionRows</strong><small>قراءة فعلية من Eng</small></article>
-        <article><span>النطاق</span><strong>@(Model.IsAdminView ? "مدير" : "مستخدم")</strong><small>غير المدير يرى صلاحياته فقط</small></article>
+    <div class="web-perm-kpis" id="permissionKpis">
+        <article><span>المستخدمون النشطون</span><strong>0</strong><small>من جدول المستخدمين</small></article>
+        <article><span>شاشات الويب</span><strong>0</strong><small>WebScreens</small></article>
+        <article><span>صلاحيات ممنوحة</span><strong>0</strong><small>إجمالي الأعلام المفعلة</small></article>
+        <article><span>بدون صلاحيات</span><strong>0</strong><small>مستخدمون بلا أي صلاحية ويب</small></article>
     </div>
 
-    <div class="erp-split-grid">
-        <section class="erp-table-card">
-            <header><h2>ملخص المستخدمين</h2><span>@Model.Users.Count مستخدم</span></header>
-            <div class="erp-table-wrap">
-                <table class="erp-table">
-                    <thead>
-                        <tr>
-                            <th>المستخدم</th>
-                            <th>الشاشات</th>
-                            <th>صلاحية كاملة</th>
-                            <th>مخفية</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var user in Model.Users)
-                        {
-                            <tr>
-                                <td><strong>@user.UserName</strong><small>#@user.UserId</small></td>
-                                <td>@user.ScreenCount</td>
-                                <td><span class="erp-status is-active">@user.FullAccessCount</span></td>
-                                <td><span class="erp-status">@user.HiddenCount</span></td>
-                            </tr>
-                        }
-                        @if (!Model.Users.Any())
-                        {
-                            <tr><td colspan="4" class="erp-empty">لا توجد نتائج مطابقة.</td></tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </section>
+    <nav class="web-perm-tabs" aria-label="تبويبات الصلاحيات">
+        <button type="button" class="active" data-tab="users"><i class="fas fa-user-shield"></i><span>المستخدمون</span></button>
+        <button type="button" data-tab="screens"><i class="fas fa-desktop"></i><span>الشاشات</span></button>
+        <button type="button" data-tab="templates"><i class="fas fa-layer-group"></i><span>القوالب / الأدوار</span></button>
+        <button type="button" data-tab="copy"><i class="fas fa-copy"></i><span>نسخ الصلاحيات</span></button>
+    </nav>
 
-        <section class="erp-table-card">
-            <header><h2>مصفوفة الشاشات</h2><span>@Model.Screens.Count شاشة</span></header>
-            <div class="erp-table-wrap">
-                <table class="erp-table">
-                    <thead>
-                        <tr>
-                            <th>الشاشة</th>
-                            <th>المجموعة</th>
-                            <th>مستخدمون</th>
-                            <th>عرض</th>
-                            <th>إضافة</th>
-                            <th>تعديل</th>
-                            <th>حذف</th>
-                            <th>طباعة</th>
-                            <th>بحث</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var screen in Model.Screens)
-                        {
-                            <tr>
-                                <td><strong>@(string.IsNullOrWhiteSpace(screen.DisplayName) ? screen.ScreenName : screen.DisplayName)</strong><small>@screen.ScreenName</small></td>
-                                <td>@(string.IsNullOrWhiteSpace(screen.ModuleName) ? "-" : screen.ModuleName)</td>
-                                <td>@screen.UsersCount</td>
-                                <td>@Flag(screen.CanShow)</td>
-                                <td>@Flag(screen.CanAdd)</td>
-                                <td>@Flag(screen.CanEdit)</td>
-                                <td>@Flag(screen.CanDelete)</td>
-                                <td>@Flag(screen.CanPrint)</td>
-                                <td>@Flag(screen.CanSearch)</td>
-                            </tr>
-                        }
-                        @if (!Model.Screens.Any())
-                        {
-                            <tr><td colspan="9" class="erp-empty">لا توجد شاشات مطابقة.</td></tr>
-                        }
-                    </tbody>
-                </table>
+    <section class="web-perm-filters">
+        <label>
+            <span>النطاق</span>
+            <select id="areaFilter">
+                <option value="@Model.DefaultAreaFilter">@Model.DefaultAreaFilter فقط</option>
+            </select>
+        </label>
+        <label>
+            <span>المستخدم</span>
+            <select id="userFilter">
+                <option value="">اختر مستخدم</option>
+                @foreach (var user in Model.Users)
+                {
+                    <option value="@user.Id">@user.Name</option>
+                }
+            </select>
+        </label>
+        <label>
+            <span>المجموعة</span>
+            <select id="moduleFilter">
+                <option value="">كل المجموعات</option>
+                @foreach (var module in Model.Modules)
+                {
+                    <option value="@module.Key">@module.Name (@module.GroupName)</option>
+                }
+            </select>
+        </label>
+        <label>
+            <span>الحالة</span>
+            <select id="permissionFilter">
+                <option value="all">كل الشاشات</option>
+                <option value="granted">لها صلاحيات</option>
+                <option value="missing">بدون صلاحيات</option>
+            </select>
+        </label>
+        <label class="web-perm-search">
+            <span>بحث</span>
+            <input id="searchFilter" type="search" placeholder="اسم الشاشة، المسار، أو ScreenKey" />
+        </label>
+        <button type="button" class="web-perm-btn web-perm-btn-primary" id="reloadMatrixBtn"><i class="fas fa-search"></i><span>بحث</span></button>
+    </section>
+
+    <section class="web-perm-panel active" data-panel="users">
+        <div class="web-perm-toolbar">
+            <div>
+                <h2>وضع المستخدم</h2>
+                <p>اختر مستخدما ثم عدل صلاحياته على شاشات الويب، مجمعة حسب الموديول.</p>
             </div>
-        </section>
-    </div>
+            <div class="web-perm-toolbar-actions">
+                <button type="button" class="web-perm-btn" id="selectModuleBtn"><i class="fas fa-check-double"></i><span>تحديد الموديول</span></button>
+                <button type="button" class="web-perm-btn" id="clearModuleBtn"><i class="fas fa-eraser"></i><span>مسح الموديول</span></button>
+                <a class="web-perm-btn" id="exportMatrixLink" href="@Url.Action("Export", endpointController, new { area = endpointArea })?userId=0@hostQuery"><i class="fas fa-file-excel"></i><span>تصدير Excel</span></a>
+            </div>
+        </div>
+        <div class="web-perm-table-wrap">
+            <table class="web-perm-table" id="matrixTable">
+                <thead>
+                    <tr>
+                        <th>الشاشة</th>
+                        <th>الموديول</th>
+                        <th>عرض</th>
+                        <th>إضافة</th>
+                        <th>تعديل</th>
+                        <th>حذف</th>
+                        <th>طباعة</th>
+                        <th>تصدير</th>
+                        <th>اعتماد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="9" class="web-perm-empty">اختر مستخدما لعرض مصفوفة الصلاحيات.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <footer class="web-perm-footer"><span id="matrixCount">0 شاشة</span><span id="dirtyState">لا توجد تغييرات</span></footer>
+    </section>
+
+    <section class="web-perm-panel" data-panel="screens">
+        <div class="web-perm-toolbar">
+            <div>
+                <h2>وضع الشاشة</h2>
+                <p>اختر شاشة من المصفوفة لمعرفة المستخدمين الذين لديهم صلاحية عليها.</p>
+            </div>
+        </div>
+        <div class="web-perm-user-list" id="screenUsersList">
+            <div class="web-perm-empty">اضغط على اسم شاشة في المصفوفة لعرض مستخدميها.</div>
+        </div>
+    </section>
+
+    <section class="web-perm-panel" data-panel="templates">
+        <div class="web-perm-form-card">
+            <h2>تطبيق قالب صلاحيات</h2>
+            <label>
+                <span>القالب</span>
+                <select id="templateSelect">
+                    <option value="">اختر قالب</option>
+                    @foreach (var template in Model.Templates)
+                    {
+                        <option value="@template.Id">@template.Name (@template.GroupName)</option>
+                    }
+                </select>
+            </label>
+            <button type="button" class="web-perm-btn web-perm-btn-primary" id="applyTemplateBtn"><i class="fas fa-layer-group"></i><span>تطبيق على المستخدم الحالي</span></button>
+        </div>
+    </section>
+
+    <section class="web-perm-panel" data-panel="copy">
+        <div class="web-perm-form-card">
+            <h2>نسخ الصلاحيات من مستخدم إلى مستخدم</h2>
+            <label>
+                <span>من المستخدم</span>
+                <select id="copySourceUser">
+                    <option value="">اختر المصدر</option>
+                    @foreach (var user in Model.Users)
+                    {
+                        <option value="@user.Id">@user.Name</option>
+                    }
+                </select>
+            </label>
+            <label>
+                <span>إلى المستخدم</span>
+                <select id="copyTargetUser">
+                    <option value="">اختر الهدف</option>
+                    @foreach (var user in Model.Users)
+                    {
+                        <option value="@user.Id">@user.Name</option>
+                    }
+                </select>
+            </label>
+            <button type="button" class="web-perm-btn web-perm-btn-primary" id="copyPermissionsBtn"><i class="fas fa-copy"></i><span>نسخ الصلاحيات</span></button>
+        </div>
+    </section>
+
+    <div class="web-perm-toast" id="permissionToast" role="status" aria-live="polite"></div>
 </section>
 
-@helper Flag(bool value)
-{
-    <span class="erp-status @(value ? "is-active" : "")">@(value ? "نعم" : "لا")</span>
-}
+<style>
+    .web-permissions-page{--bg:#f6f8fb;--panel:#fff;--ink:#132033;--muted:#637083;--line:#e3e8f0;--brand:#155e75;--brand2:#0f766e;--soft:#ecfeff;--danger:#b91c1c;color:var(--ink);background:var(--bg);min-height:100vh;padding:20px}
+    .web-perm-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}
+    .web-perm-eyebrow{display:inline-flex;color:#e11d48;font-weight:800;font-size:12px;margin-bottom:6px}
+    .web-perm-header h1{margin:0;font-size:26px;line-height:1.25;font-weight:900}
+    .web-perm-header p,.web-perm-toolbar p{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .web-perm-actions,.web-perm-toolbar-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .web-perm-btn{border:1px solid var(--line);background:#fff;color:var(--ink);height:38px;padding:0 12px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:800;text-decoration:none;cursor:pointer;white-space:nowrap}
+    .web-perm-btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border-color:transparent}
+    .web-perm-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+    .web-perm-kpis article{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:13px 14px}
+    .web-perm-kpis span,.web-perm-kpis small{display:block;color:var(--muted);font-size:12px}
+    .web-perm-kpis strong{display:block;font-size:26px;margin:4px 0;font-weight:900}
+    .web-perm-tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+    .web-perm-tabs button{border:1px solid var(--line);background:#fff;border-radius:8px;height:40px;padding:0 14px;display:inline-flex;gap:8px;align-items:center;font-weight:900;cursor:pointer}
+    .web-perm-tabs button.active{background:#102a43;color:#fff;border-color:#102a43}
+    .web-perm-filters{display:grid;grid-template-columns:1fr 1.4fr 1.3fr 1fr 1.6fr auto;gap:10px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:12px;align-items:end}
+    .web-perm-filters label,.web-perm-form-card label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted);font-weight:800}
+    .web-perm-filters select,.web-perm-filters input,.web-perm-form-card select{height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;color:var(--ink);background:#fff}
+    .web-perm-panel{display:none;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+    .web-perm-panel.active{display:block}
+    .web-perm-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;border-bottom:1px solid var(--line)}
+    .web-perm-toolbar h2,.web-perm-form-card h2{margin:0;font-size:18px}
+    .web-perm-table-wrap{overflow:auto;max-height:58vh}
+    .web-perm-table{width:100%;border-collapse:separate;border-spacing:0;min-width:920px}
+    .web-perm-table th{position:sticky;top:0;background:#f3f6fa;z-index:1;color:#334155;font-size:12px;text-align:center;padding:10px;border-bottom:1px solid var(--line)}
+    .web-perm-table td{padding:10px;border-bottom:1px solid #edf1f6;text-align:center;vertical-align:middle}
+    .web-perm-table td:first-child,.web-perm-table th:first-child{text-align:right;min-width:280px}
+    .screen-title{border:0;background:transparent;color:var(--ink);font-weight:900;cursor:pointer;text-align:right;padding:0}
+    .screen-title small{display:block;color:var(--muted);font-weight:600;font-size:11px;margin-top:3px;direction:ltr;text-align:right}
+    .module-chip{display:inline-flex;border-radius:999px;background:var(--soft);color:#0f766e;padding:4px 9px;font-weight:900;font-size:12px}
+    .perm-toggle{inline-size:20px;block-size:20px;accent-color:#0f766e;cursor:pointer}
+    .web-perm-empty{padding:24px;text-align:center;color:var(--muted)}
+    .web-perm-footer{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;padding:10px 14px;background:#fafbfd}
+    .web-perm-user-list{padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+    .web-user-card{border:1px solid var(--line);border-radius:8px;padding:12px;background:#fff}
+    .web-user-card strong{display:block}.web-user-card small{color:var(--muted)}
+    .web-perm-form-card{padding:16px;display:grid;grid-template-columns:minmax(220px,360px) minmax(220px,360px) auto;gap:12px;align-items:end}
+    .web-perm-toast{position:fixed;left:24px;bottom:24px;background:#102a43;color:#fff;border-radius:8px;padding:12px 14px;box-shadow:0 16px 36px rgba(15,23,42,.22);opacity:0;transform:translateY(12px);transition:.2s;pointer-events:none;z-index:50}
+    .web-perm-toast.show{opacity:1;transform:translateY(0)}
+    @@media(max-width:1100px){.web-perm-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.web-perm-filters{grid-template-columns:1fr 1fr}.web-perm-form-card{grid-template-columns:1fr}.web-perm-header,.web-perm-toolbar{flex-direction:column;align-items:stretch}}
+    @@media(max-width:640px){.web-perm-kpis,.web-perm-filters{grid-template-columns:1fr}.web-perm-tabs button{flex:1}.web-perm-header h1{font-size:22px}}
+</style>
+
+<script>
+(function () {
+    var root = document.querySelector(".web-permissions-page");
+    if (!root) return;
+    var endpoints = {
+        matrix: "@Url.Action("Matrix", endpointController, new { area = endpointArea })",
+        save: "@Url.Action("Save", endpointController, new { area = endpointArea })",
+        copy: "@Url.Action("Copy", endpointController, new { area = endpointArea })",
+        template: "@Url.Action("ApplyTemplate", endpointController, new { area = endpointArea })",
+        exportUrl: "@Url.Action("Export", endpointController, new { area = endpointArea })"
+    };
+    var dirty = {};
+    var lastScreens = [];
+
+    function byId(id) { return document.getElementById(id); }
+    function val(id) { var el = byId(id); return el ? el.value : ""; }
+    function toast(text) {
+        var el = byId("permissionToast");
+        el.textContent = text || "";
+        el.classList.add("show");
+        window.clearTimeout(el._t);
+        el._t = window.setTimeout(function () { el.classList.remove("show"); }, 2800);
+    }
+    function activeArea() {
+        var area = val("areaFilter");
+        if (area === "All") return "";
+        return area || root.getAttribute("data-area") || "MainERP";
+    }
+    function query() {
+        return {
+            userId: val("userFilter"),
+            areaName: activeArea(),
+            moduleKey: val("moduleFilter"),
+            searchText: val("searchFilter"),
+            permissionFilter: val("permissionFilter") || "all",
+            showAllAreas: val("areaFilter") === "All",
+            host: root.getAttribute("data-host") || "",
+            page: 1,
+            pageSize: 120
+        };
+    }
+    function loadMatrix(screenId) {
+        var q = query();
+        if (screenId) q.screenId = screenId;
+        var qs = Object.keys(q).map(function (k) { return encodeURIComponent(k) + "=" + encodeURIComponent(q[k] == null ? "" : q[k]); }).join("&");
+        fetch(endpoints.matrix + "?" + qs, { credentials: "same-origin" })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success && data.Success !== true) throw new Error(data.message || data.Message || "تعذر التحميل");
+                renderKpis(data.dashboard || data.Dashboard || {});
+                renderMatrix(data.screens || data.Screens || []);
+                renderScreenUsers(data.users || data.Users || []);
+                updateExportLink();
+            })
+            .catch(function (err) { toast(err.message || "تعذر تحميل البيانات"); });
+    }
+    function renderKpis(k) {
+        var values = [k.ActiveUsers || k.activeUsers || 0, k.WebScreens || k.webScreens || 0, k.GrantedPermissions || k.grantedPermissions || 0, k.UsersWithoutPermissions || k.usersWithoutPermissions || 0];
+        document.querySelectorAll("#permissionKpis strong").forEach(function (el, i) { el.textContent = values[i]; });
+    }
+    function flag(screen, name) {
+        var p = screen.Permissions || screen.permissions || {};
+        return !!(p[name] || p[name.charAt(0).toLowerCase() + name.slice(1)]);
+    }
+    function prop(screen, name) {
+        return screen[name] || screen[name.charAt(0).toLowerCase() + name.slice(1)] || "";
+    }
+    function renderMatrix(screens) {
+        lastScreens = screens;
+        dirty = {};
+        var tbody = document.querySelector("#matrixTable tbody");
+        var hasUser = !!val("userFilter");
+        if (!screens.length) {
+            tbody.innerHTML = '<tr><td colspan="9" class="web-perm-empty">لا توجد شاشات مطابقة.</td></tr>';
+            byId("matrixCount").textContent = "0 شاشة";
+            setDirty(false);
+            return;
+        }
+        tbody.innerHTML = screens.map(function (s) {
+            var id = prop(s, "WebScreenId");
+            var caption = prop(s, "ArabicCaption") || prop(s, "EnglishCaption") || prop(s, "ScreenKey");
+            var route = prop(s, "RouteUrl") || prop(s, "ScreenKey");
+            var moduleKey = prop(s, "ModuleKey");
+            var area = prop(s, "AreaName");
+            return '<tr data-screen-id="' + id + '" data-module="' + moduleKey + '">' +
+                '<td><button type="button" class="screen-title" data-screen="' + id + '">' + escapeHtml(caption) + '<small>' + escapeHtml(route) + ' · ' + escapeHtml(prop(s, "ScreenKey")) + '</small></button></td>' +
+                '<td><span class="module-chip">' + escapeHtml(area + " / " + moduleKey) + '</span></td>' +
+                toggle(id, "CanView", flag(s, "CanView"), !hasUser) +
+                toggle(id, "CanAdd", flag(s, "CanAdd"), !hasUser) +
+                toggle(id, "CanEdit", flag(s, "CanEdit"), !hasUser) +
+                toggle(id, "CanDelete", flag(s, "CanDelete"), !hasUser) +
+                toggle(id, "CanPrint", flag(s, "CanPrint"), !hasUser) +
+                toggle(id, "CanExport", flag(s, "CanExport"), !hasUser) +
+                toggle(id, "CanApprove", flag(s, "CanApprove"), !hasUser) +
+                '</tr>';
+        }).join("");
+        byId("matrixCount").textContent = screens.length + " شاشة";
+        setDirty(false);
+    }    function toggle(id, name, checked, disabled) {
+        return '<td><input class="perm-toggle" type="checkbox" data-id="' + id + '" data-flag="' + name + '"' + (checked ? " checked" : "") + (disabled ? " disabled" : "") + ' /></td>';
+    }
+    function renderScreenUsers(users) {
+        var box = byId("screenUsersList");
+        if (!users || !users.length) {
+            box.innerHTML = '<div class="web-perm-empty">لا توجد صلاحيات ممنوحة لهذه الشاشة.</div>';
+            return;
+        }
+        box.innerHTML = users.map(function (u) {
+            var p = u.Permissions || u.permissions || {};
+            var flags = ["View", "Add", "Edit", "Delete", "Print", "Export", "Approve"].filter(function (f) { return p["Can" + f] || p["can" + f]; }).join(" / ");
+            return '<article class="web-user-card"><strong>' + escapeHtml(prop(u, "UserName")) + '</strong><small>#' + escapeHtml(prop(u, "UserId")) + ' · ' + escapeHtml(flags || "عرض") + '</small></article>';
+        }).join("");
+    }
+    function setDirty(isDirty) {
+        byId("dirtyState").textContent = isDirty ? "توجد تغييرات غير محفوظة" : "لا توجد تغييرات";
+    }
+    function collectRows() {
+        var map = {};
+        document.querySelectorAll(".perm-toggle").forEach(function (cb) {
+            var id = cb.getAttribute("data-id");
+            map[id] = map[id] || { WebScreenId: parseInt(id, 10) };
+            map[id][cb.getAttribute("data-flag")] = cb.checked;
+        });
+        return Object.keys(map).filter(function (id) { return dirty[id]; }).map(function (id) { return map[id]; });
+    }
+    function save() {
+        var userId = parseInt(val("userFilter"), 10) || 0;
+        var items = collectRows();
+        if (!userId) return toast("اختر المستخدم أولا.");
+        if (!items.length) return toast("لا توجد تغييرات للحفظ.");
+        if (!window.confirm("سيتم حفظ تغييرات الصلاحيات للمستخدم المحدد. هل تريد المتابعة؟")) return;
+        postJson(endpoints.save, { UserId: userId, Items: items }, function (data) {
+            toast(data.message || data.Message || "تم الحفظ");
+            loadMatrix();
+        });
+    }
+    function postJson(url, body, done) {
+        fetch(url, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+            .then(function (r) { return r.json().then(function (j) { if (!r.ok || j.success === false) throw new Error(j.message || j.Message || "تعذر تنفيذ العملية"); return j; }); })
+            .then(done)
+            .catch(function (err) { toast(err.message || "تعذر تنفيذ العملية"); });
+    }
+    function updateExportLink() {
+        byId("exportMatrixLink").href = endpoints.exportUrl + "?userId=" + encodeURIComponent(val("userFilter") || "0") + "&areaName=" + encodeURIComponent(activeArea()) + "&showAllAreas=" + (val("areaFilter") === "All") + "&host=" + encodeURIComponent(root.getAttribute("data-host") || "");
+    }
+    function moduleAction(checked) {
+        var moduleKey = val("moduleFilter");
+        document.querySelectorAll("#matrixTable tbody tr").forEach(function (tr) {
+            if (moduleKey && tr.getAttribute("data-module") !== moduleKey) return;
+            tr.querySelectorAll(".perm-toggle").forEach(function (cb) {
+                cb.checked = checked;
+                dirty[cb.getAttribute("data-id")] = true;
+            });
+        });
+        setDirty(true);
+    }
+    function escapeHtml(text) {
+        return String(text == null ? "" : text).replace(/[&<>"']/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]; });
+    }
+
+    document.addEventListener("change", function (e) {
+        if (e.target.classList.contains("perm-toggle")) {
+            dirty[e.target.getAttribute("data-id")] = true;
+            setDirty(true);
+        }
+        if (["userFilter", "areaFilter", "moduleFilter", "permissionFilter"].indexOf(e.target.id) >= 0) loadMatrix();
+    });
+    document.addEventListener("click", function (e) {
+        var tab = e.target.closest("[data-tab]");
+        if (tab) {
+            document.querySelectorAll("[data-tab]").forEach(function (b) { b.classList.remove("active"); });
+            document.querySelectorAll("[data-panel]").forEach(function (p) { p.classList.remove("active"); });
+            tab.classList.add("active");
+            document.querySelector('[data-panel="' + tab.getAttribute("data-tab") + '"]').classList.add("active");
+        }
+        var screen = e.target.closest("[data-screen]");
+        if (screen) {
+            document.querySelector('[data-tab="screens"]').click();
+            loadMatrix(screen.getAttribute("data-screen"));
+        }
+    });
+    byId("reloadMatrixBtn").addEventListener("click", function () { loadMatrix(); });
+    byId("saveMatrixBtn").addEventListener("click", save);
+    byId("selectModuleBtn").addEventListener("click", function () { moduleAction(true); });
+    byId("clearModuleBtn").addEventListener("click", function () { moduleAction(false); });
+    byId("copyPermissionsBtn").addEventListener("click", function () {
+        postJson(endpoints.copy, { SourceUserId: parseInt(val("copySourceUser"), 10) || 0, TargetUserId: parseInt(val("copyTargetUser"), 10) || 0, AreaName: activeArea() }, function (data) {
+            toast(data.message || data.Message || "تم النسخ");
+            loadMatrix();
+        });
+    });
+    byId("applyTemplateBtn").addEventListener("click", function () {
+        postJson(endpoints.template, { TemplateId: parseInt(val("templateSelect"), 10) || 0, UserId: parseInt(val("userFilter"), 10) || 0 }, function (data) {
+            toast(data.message || data.Message || "تم تطبيق القالب");
+            loadMatrix();
+        });
+    });
+    byId("searchFilter").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); loadMatrix(); } });
+    updateExportLink();
+    loadMatrix();
+})();
+</script>

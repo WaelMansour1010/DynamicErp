@@ -165,10 +165,31 @@ ORDER BY b.BatchId DESC;", connection))
             using (var connection = _connectionFactory.CreateOpenConnection())
             {
                 EnsureBatchTable(connection, null);
-                var status = LookupScalar(connection, null, "SELECT TOP 1 Status FROM dbo.MasterDataImportBatch WHERE BatchId=@value", batchId.ToString());
+                string status;
+                string entityType;
+                using (var command = new SqlCommand("SELECT TOP 1 Status, EntityType FROM dbo.MasterDataImportBatch WHERE BatchId=@value", connection))
+                {
+                    command.Parameters.AddWithValue("@value", batchId.ToString());
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (!reader.Read())
+                        {
+                            throw new InvalidOperationException("Import batch was not found.");
+                        }
+
+                        status = Convert.ToString(reader["Status"]);
+                        entityType = Convert.ToString(reader["EntityType"]);
+                    }
+                }
+
                 if (string.IsNullOrWhiteSpace(status))
                 {
                     throw new InvalidOperationException("Import batch was not found.");
+                }
+
+                if (!string.Equals(entityType, MasterDataImportEntityType.ChartOfAccounts, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException("Rollback is available only for Chart of Accounts import batches.");
                 }
 
                 if (!string.Equals(status, "Completed", StringComparison.OrdinalIgnoreCase))
@@ -214,6 +235,52 @@ WHERE BatchId=@BatchId", connection, transaction))
                     catch
                     {
                         transaction.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public MasterDataImportResultViewModel SyncOperationalMasterRecordsFromExistingChart(string userName)
+        {
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            {
+                EnsureBatchTable(connection, null);
+                var rows = LoadExistingChartRows(connection, null);
+                var batchId = CreateBatch(connection, null, "Existing chart operational sync", userName, rows.Count, 0, 0);
+
+                using (var transaction = connection.BeginTransaction(IsolationLevel.Serializable))
+                {
+                    try
+                    {
+                        var beforeCounts = CountOperationalTables(connection, transaction);
+                        var processed = 0;
+
+                        foreach (var row in rows)
+                        {
+                            EnsureOperationalMasterRecords(connection, transaction, row, row.AccountCode);
+                            processed++;
+                        }
+
+                        var afterCounts = CountOperationalTables(connection, transaction);
+                        var created = afterCounts.Sum(x => x.Value) - beforeCounts.Sum(x => x.Value);
+
+                        CompleteBatch(connection, transaction, batchId, processed, 0, null);
+                        transaction.Commit();
+
+                        return new MasterDataImportResultViewModel
+                        {
+                            BatchId = batchId,
+                            TotalRows = rows.Count,
+                            SuccessRows = processed,
+                            FailedRows = 0,
+                            Message = "Operational master records were synchronized from the existing chart. Scanned accounts: " + rows.Count + ", linked records created: " + created + "."
+                        };
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        CompleteBatch(connection, null, batchId, 0, rows.Count, ex.Message);
                         throw;
                     }
                 }
@@ -554,14 +621,93 @@ VALUES (@BatchId, N'ACCOUNTS', @RecordKey, @RecordSerial, @RowNumber, N'Created'
             }
         }
 
-        private void EnsureOperationalMasterRecords(SqlConnection connection, SqlTransaction transaction, MasterDataImportRowViewModel row, string accountCode)
+        private static IList<MasterDataImportRowViewModel> LoadExistingChartRows(SqlConnection connection, SqlTransaction transaction)
+        {
+            var rows = new List<MasterDataImportRowViewModel>();
+            using (var command = new SqlCommand(@"SELECT
+    Account_Code,
+    Parent_Account_Code,
+    Account_Name,
+    Account_NameEng,
+    Account_Serial,
+    last_account,
+    currenct_code,
+    AccountTypes,
+    AccountTab,
+    DepitOrCredit,
+    Differenttype,
+    Authority
+FROM dbo.ACCOUNTS
+WHERE ISNULL(Account_Code, N'') <> N''
+  AND Account_Code <> N'r'
+ORDER BY LEN(Account_Code), Account_Code", connection, transaction))
+            using (var reader = command.ExecuteReader())
+            {
+                var rowNumber = 1;
+                while (reader.Read())
+                {
+                    var accountCode = Convert.ToString(reader["Account_Code"]);
+                    var parentCode = Convert.ToString(reader["Parent_Account_Code"]);
+                    rows.Add(new MasterDataImportRowViewModel
+                    {
+                        RowNumber = rowNumber++,
+                        AccountCode = accountCode,
+                        ImportedAccountCode = accountCode,
+                        AccountSerial = Convert.ToString(reader["Account_Serial"]),
+                        AccountName = Convert.ToString(reader["Account_Name"]),
+                        AccountNameEnglish = Convert.ToString(reader["Account_NameEng"]),
+                        ParentAccountCode = parentCode,
+                        ResolvedParentAccountCode = parentCode,
+                        IsFinalAccount = ReadBool(reader, "last_account"),
+                        CurrencyCode = Convert.ToString(reader["currenct_code"]),
+                        AccountTypes = ReadNullableInt(reader, "AccountTypes"),
+                        AccountTab = ReadNullableInt(reader, "AccountTab"),
+                        DebitOrCredit = ReadNullableInt(reader, "DepitOrCredit"),
+                        DifferentType = ReadNullableInt(reader, "Differenttype"),
+                        Authority = ReadNullableInt(reader, "Authority")
+                    });
+                }
+            }
+
+            return rows;
+        }
+
+        private static IDictionary<string, int> CountOperationalTables(SqlConnection connection, SqlTransaction transaction)
+        {
+            var tables = new[]
+            {
+                "BanksData",
+                "TblBoxesData",
+                "TblStore",
+                "TblCustemers",
+                "TblEmployee",
+                "projects",
+                "FixedAssetsGroup",
+                "ExpensesType",
+                "TblRevenuesTypes"
+            };
+
+            var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var table in tables)
+            {
+                counts[table] = TableExists(connection, transaction, table)
+                    ? Convert.ToInt32(Scalar(connection, transaction, "SELECT COUNT(1) FROM dbo." + table))
+                    : 0;
+            }
+
+            return counts;
+        }
+
+        public void EnsureOperationalMasterRecords(SqlConnection connection, SqlTransaction transaction, MasterDataImportRowViewModel row, string accountCode)
         {
             if (string.IsNullOrWhiteSpace(accountCode))
             {
                 return;
             }
 
+            var branch = GetDefaultBranch(connection, transaction);
             var ownText = (row.AccountName ?? string.Empty) + " " + (row.AccountNameEnglish ?? string.Empty);
+            var directParentCode = GetDirectParentCode(connection, transaction, accountCode);
             var directParentText = GetDirectParentText(connection, transaction, accountCode);
             var path = GetAccountPathText(connection, transaction, accountCode) + " " + ownText;
             var isFixedAsset = LooksLikeFixedAsset(path);
@@ -570,25 +716,37 @@ VALUES (@BatchId, N'ACCOUNTS', @RecordKey, @RecordSerial, @RowNumber, N'Created'
                 return;
             }
 
-            if (LooksLikeBank(path))
+            if (LooksLikeExpenseType(path, directParentText) && IsWithinBranchTree(connection, transaction, accountCode, branch.GetAccount(33)))
+            {
+                EnsureExpenseTypeData(connection, transaction, row, accountCode, directParentCode, branch.GetAccount(33));
+                return;
+            }
+
+            if (LooksLikeRevenueType(path, directParentText) && IsWithinBranchTree(connection, transaction, accountCode, branch.GetAccount(34)))
+            {
+                EnsureRevenueTypeData(connection, transaction, row, accountCode, directParentCode, branch.GetAccount(34));
+                return;
+            }
+
+            if (LooksLikeBank(path) && IsWithinBranchTree(connection, transaction, accountCode, branch.GetAccount(20)))
             {
                 EnsureBankData(connection, transaction, row, accountCode);
                 return;
             }
 
-            if (LooksLikeCustodyBox(path))
+            if (LooksLikeCustodyBox(path) && IsWithinBranchTree(connection, transaction, accountCode, branch.GetAccount(35)))
             {
                 EnsureCashBoxData(connection, transaction, row, accountCode, true);
                 return;
             }
 
-            if (LooksLikeCashBox(path))
+            if (LooksLikeCashBox(path) && IsWithinBranchTree(connection, transaction, accountCode, branch.GetAccount(6)))
             {
                 EnsureCashBoxData(connection, transaction, row, accountCode, false);
                 return;
             }
 
-            if (LooksLikeEmployeeReceivable(path))
+            if (LooksLikeEmployeeReceivable(path) && IsEmployeeReceivableOperationalAccount(path, ownText))
             {
                 EnsureEmployeeData(connection, transaction, row, accountCode);
                 return;
@@ -628,6 +786,16 @@ VALUES (@BatchId, N'ACCOUNTS', @RecordKey, @RecordSerial, @RowNumber, N'Created'
             {
                 EnsureFixedAssetGroupData(connection, transaction, row, accountCode);
                 return;
+            }
+        }
+
+        private static string GetDirectParentCode(SqlConnection connection, SqlTransaction transaction, string accountCode)
+        {
+            using (var command = new SqlCommand("SELECT TOP 1 Parent_Account_Code FROM dbo.ACCOUNTS WHERE Account_Code = @AccountCode", connection, transaction))
+            {
+                command.Parameters.AddWithValue("@AccountCode", accountCode);
+                var result = command.ExecuteScalar();
+                return result == null || result == DBNull.Value ? string.Empty : Convert.ToString(result);
             }
         }
 
@@ -671,6 +839,61 @@ FOR XML PATH(N''), TYPE", connection, transaction))
         {
             value = (value ?? string.Empty).ToLowerInvariant();
             return value.Contains("bank") || value.Contains("\u0628\u0646\u0643") || value.Contains("\u0628\u0646\u0648\u0643");
+        }
+
+        private static bool LooksLikeExpenseType(string pathText, string directParentText)
+        {
+            var text = ((pathText ?? string.Empty) + " " + (directParentText ?? string.Empty)).ToLowerInvariant();
+            var hasExpenseWord = text.Contains("expense")
+                || text.Contains("expenses")
+                || text.Contains("\u0645\u0635\u0631\u0648\u0641")
+                || text.Contains("\u0645\u0635\u0627\u0631\u064a\u0641")
+                || text.Contains("\u0639\u0645\u0648\u0644\u0629")
+                || text.Contains("\u0639\u0645\u0648\u0644\u0627\u062a")
+                || text.Contains("\u0641\u0648\u0627\u0626\u062f");
+            return hasExpenseWord;
+        }
+
+        private static bool LooksLikeRevenueType(string pathText, string directParentText)
+        {
+            var text = ((pathText ?? string.Empty) + " " + (directParentText ?? string.Empty)).ToLowerInvariant();
+            return text.Contains("revenue")
+                || text.Contains("revenues")
+                || text.Contains("income")
+                || text.Contains("\u0627\u064a\u0631\u0627\u062f")
+                || text.Contains("\u0625\u064a\u0631\u0627\u062f")
+                || text.Contains("\u0627\u0644\u0627\u064a\u0631\u0627\u062f")
+                || text.Contains("\u0627\u0644\u0625\u064a\u0631\u0627\u062f");
+        }
+
+        private static bool IsWithinBranchTree(SqlConnection connection, SqlTransaction transaction, string accountCode, string rootAccountCode)
+        {
+            accountCode = Clean(accountCode);
+            rootAccountCode = Clean(rootAccountCode);
+            if (string.IsNullOrWhiteSpace(accountCode) || string.IsNullOrWhiteSpace(rootAccountCode))
+            {
+                return false;
+            }
+
+            using (var command = new SqlCommand(@";WITH AccountPath AS
+(
+    SELECT Account_Code, Parent_Account_Code, 0 AS Depth
+    FROM dbo.ACCOUNTS
+    WHERE Account_Code = @AccountCode
+    UNION ALL
+    SELECT p.Account_Code, p.Parent_Account_Code, ap.Depth + 1
+    FROM dbo.ACCOUNTS p
+    INNER JOIN AccountPath ap ON p.Account_Code = ap.Parent_Account_Code
+    WHERE ap.Depth < 30
+)
+SELECT TOP 1 1
+FROM AccountPath
+WHERE Account_Code = @RootAccountCode", connection, transaction))
+            {
+                command.Parameters.AddWithValue("@AccountCode", accountCode);
+                command.Parameters.AddWithValue("@RootAccountCode", rootAccountCode);
+                return command.ExecuteScalar() != null;
+            }
         }
 
         private static bool LooksLikeCashBox(string value)
@@ -734,16 +957,57 @@ FOR XML PATH(N''), TYPE", connection, transaction))
         private static bool LooksLikeEmployeeReceivable(string value)
         {
             value = (value ?? string.Empty).ToLowerInvariant();
-            return value.Contains("employee")
-                || value.Contains("staff")
+            return value.Contains("employee receivable")
+                || value.Contains("employees receivable")
+                || value.Contains("staff receivable")
                 || value.Contains("receivable employee")
                 || value.Contains("\u0630\u0645\u0645")
-                || value.Contains("\u0630\u0645\u0647")
-                || value.Contains("\u0630\u0645\u0629")
                 || value.Contains("\u0630\u0645\u0645 \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646")
                 || value.Contains("\u0630\u0645\u0629 \u0645\u0648\u0638\u0641")
-                || value.Contains("\u0645\u0648\u0638\u0641")
-                || value.Contains("\u0645\u0648\u0638\u0641\u064a\u0646");
+                || value.Contains("\u0630\u0645\u0645 \u0627\u0644\u0639\u0627\u0645\u0644\u064a\u0646");
+        }
+
+        private static bool IsEmployeeReceivableOperationalAccount(string pathText, string ownText)
+        {
+            var path = (pathText ?? string.Empty).ToLowerInvariant();
+            var own = (ownText ?? string.Empty).ToLowerInvariant();
+            var hasEmployeeReceivableParent =
+                path.Contains("\u0630\u0645\u0645 \u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646")
+                || path.Contains("\u0630\u0645\u0645 \u0627\u0644\u0639\u0627\u0645\u0644\u064a\u0646")
+                || path.Contains("\u0630\u0645\u0629 \u0645\u0648\u0638\u0641")
+                || path.Contains("employee receivable")
+                || path.Contains("employees receivable")
+                || path.Contains("staff receivable");
+
+            if (!hasEmployeeReceivableParent)
+            {
+                return false;
+            }
+
+            return !IsEmployeeReceivableGroupName(own);
+        }
+
+        private static bool IsEmployeeReceivableGroupName(string value)
+        {
+            value = (value ?? string.Empty).Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return true;
+            }
+
+            var normalized = value
+                .Replace("\u0630\u0645\u0645", " ")
+                .Replace("\u0630\u0645\u0629", " ")
+                .Replace("\u0630\u0645\u0647", " ")
+                .Replace("\u0627\u0644\u0645\u0648\u0638\u0641\u064a\u0646", " ")
+                .Replace("\u0627\u0644\u0639\u0627\u0645\u0644\u064a\u0646", " ")
+                .Replace("employee", " ")
+                .Replace("employees", " ")
+                .Replace("receivable", " ")
+                .Replace("staff", " ");
+
+            normalized = new string(normalized.Where(c => !char.IsDigit(c) && !char.IsPunctuation(c) && !char.IsSymbol(c)).ToArray()).Trim();
+            return string.IsNullOrWhiteSpace(normalized);
         }
 
         private static bool LooksLikeProject(string value)
@@ -813,6 +1077,28 @@ BEGIN
         Currency = COALESCE(Currency, 1)
     WHERE Account_Code = @AccountCode;
 END
+ELSE IF EXISTS (SELECT 1 FROM dbo.TblEmployee WHERE Emp_Code = @Code)
+BEGIN
+    UPDATE dbo.TblEmployee
+    SET Emp_Name = COALESCE(NULLIF(@Name, N''), Emp_Name),
+        Emp_Namee = COALESCE(NULLIF(@NameEnglish, N''), Emp_Namee),
+        Emp_Name1 = COALESCE(NULLIF(@Name1, N''), Emp_Name1),
+        Emp_Name2 = COALESCE(NULLIF(@Name2, N''), Emp_Name2),
+        Emp_Name3 = COALESCE(NULLIF(@Name3, N''), Emp_Name3),
+        Emp_Name4 = COALESCE(NULLIF(@Name4, N''), Emp_Name4),
+        Emp_Namee1 = COALESCE(NULLIF(@NameEnglish1, N''), Emp_Namee1),
+        Emp_Namee2 = COALESCE(NULLIF(@NameEnglish2, N''), Emp_Namee2),
+        Emp_Namee3 = COALESCE(NULLIF(@NameEnglish3, N''), Emp_Namee3),
+        Emp_Namee4 = COALESCE(NULLIF(@NameEnglish4, N''), Emp_Namee4),
+        Account_code = COALESCE(NULLIF(Account_code, N''), @AccountCode),
+        Account_code1 = COALESCE(NULLIF(Account_code1, N''), @AccountCode1),
+        Account_Code2 = COALESCE(NULLIF(Account_Code2, N''), @AccountCode2),
+        Account_Code3 = COALESCE(NULLIF(Account_Code3, N''), @AccountCode3),
+        Account_Code4 = COALESCE(NULLIF(Account_Code4, N''), @AccountCode4),
+        Account_Code5 = COALESCE(NULLIF(Account_Code5, N''), @AccountCode5),
+        BranchId = @BranchId
+    WHERE Emp_Code = @Code;
+END
 ELSE
 BEGIN
     INSERT INTO dbo.BanksData
@@ -832,6 +1118,112 @@ END", connection, transaction))
                 command.Parameters.AddWithValue("@ParentAccount", Limit(parentAccount, 400));
                 command.Parameters.AddWithValue("@BranchId", branch.BranchId);
                 command.Parameters.AddWithValue("@BranchText", branch.BranchId > 0 ? branch.BranchId.ToString() : string.Empty);
+                command.ExecuteNonQuery();
+            }
+        }
+
+        private void EnsureExpenseTypeData(SqlConnection connection, SqlTransaction transaction, MasterDataImportRowViewModel row, string accountCode, string directParentCode, string branchExpenseAccount)
+        {
+            if (!TableExists(connection, transaction, "ExpensesType"))
+            {
+                return;
+            }
+
+            var name = Limit(Clean(row.AccountName), 50);
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return;
+            }
+
+            var nameEnglish = Limit(string.IsNullOrWhiteSpace(row.AccountNameEnglish) ? name : Clean(row.AccountNameEnglish), 255);
+            var parentAccount = Limit(string.IsNullOrWhiteSpace(directParentCode) ? branchExpenseAccount : directParentCode, 500);
+
+            using (var command = new SqlCommand(@"IF EXISTS (SELECT 1 FROM dbo.ExpensesType WHERE Account_Code = @AccountCode)
+BEGIN
+    UPDATE dbo.ExpensesType
+    SET Name = COALESCE(NULLIF(@Name, N''), Name),
+        Namee = COALESCE(NULLIF(@NameEnglish, N''), Namee),
+        Remarks = COALESCE(NULLIF(@Remarks, N''), Remarks),
+        parent_account = COALESCE(NULLIF(@ParentAccount, N''), parent_account),
+        ManualEntrty = 0
+    WHERE Account_Code = @AccountCode;
+END
+ELSE IF EXISTS (SELECT 1 FROM dbo.ExpensesType WHERE Name = @Name)
+BEGIN
+    UPDATE dbo.ExpensesType
+    SET Namee = COALESCE(NULLIF(@NameEnglish, N''), Namee),
+        Remarks = COALESCE(NULLIF(@Remarks, N''), Remarks),
+        Account_Code = COALESCE(NULLIF(@AccountCode, N''), Account_Code),
+        parent_account = COALESCE(NULLIF(@ParentAccount, N''), parent_account),
+        ManualEntrty = 0
+    WHERE Name = @Name;
+END
+ELSE
+BEGIN
+    INSERT INTO dbo.ExpensesType
+    (ID, Name, Namee, Remarks, Account_Code, parent_account, TypicalProduction, IndirectCosts, ManualEntrty, ComposeExpenses, Transportation, DataTypeExchangeCode)
+    VALUES
+    ((SELECT ISNULL(MAX(ID), 0) + 1 FROM dbo.ExpensesType), @Name, @NameEnglish, @Remarks, @AccountCode, @ParentAccount, 0, 0, 0, 0, 0, NULL);
+END", connection, transaction))
+            {
+                command.Parameters.AddWithValue("@AccountCode", Limit(accountCode, 500));
+                command.Parameters.AddWithValue("@Name", name);
+                command.Parameters.AddWithValue("@NameEnglish", nameEnglish);
+                command.Parameters.AddWithValue("@Remarks", DBNull.Value);
+                command.Parameters.AddWithValue("@ParentAccount", (object)parentAccount ?? DBNull.Value);
+                command.ExecuteNonQuery();
+            }
+        }
+
+        private void EnsureRevenueTypeData(SqlConnection connection, SqlTransaction transaction, MasterDataImportRowViewModel row, string accountCode, string directParentCode, string branchRevenueAccount)
+        {
+            if (!TableExists(connection, transaction, "TblRevenuesTypes"))
+            {
+                return;
+            }
+
+            var name = Limit(Clean(row.AccountName), 50);
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return;
+            }
+
+            var nameEnglish = Limit(string.IsNullOrWhiteSpace(row.AccountNameEnglish) ? name : Clean(row.AccountNameEnglish), 255);
+            var parentAccount = Limit(string.IsNullOrWhiteSpace(directParentCode) ? branchRevenueAccount : directParentCode, 500);
+
+            using (var command = new SqlCommand(@"IF EXISTS (SELECT 1 FROM dbo.TblRevenuesTypes WHERE Account_Code = @AccountCode)
+BEGIN
+    UPDATE dbo.TblRevenuesTypes
+    SET RevenuesName = COALESCE(NULLIF(@Name, N''), RevenuesName),
+        RevenuesNamee = COALESCE(NULLIF(@NameEnglish, N''), RevenuesNamee),
+        Remarks = COALESCE(NULLIF(@Remarks, N''), Remarks),
+        parent_account = COALESCE(NULLIF(@ParentAccount, N''), parent_account),
+        ManualEntrty = 0
+    WHERE Account_Code = @AccountCode;
+END
+ELSE IF EXISTS (SELECT 1 FROM dbo.TblRevenuesTypes WHERE RevenuesName = @Name)
+BEGIN
+    UPDATE dbo.TblRevenuesTypes
+    SET RevenuesNamee = COALESCE(NULLIF(@NameEnglish, N''), RevenuesNamee),
+        Remarks = COALESCE(NULLIF(@Remarks, N''), Remarks),
+        Account_Code = COALESCE(NULLIF(@AccountCode, N''), Account_Code),
+        parent_account = COALESCE(NULLIF(@ParentAccount, N''), parent_account),
+        ManualEntrty = 0
+    WHERE RevenuesName = @Name;
+END
+ELSE
+BEGIN
+    INSERT INTO dbo.TblRevenuesTypes
+    (RevenuesID, RevenuesName, RevenuesNamee, Remarks, Account_Code, parent_account, ManualEntrty)
+    VALUES
+    ((SELECT ISNULL(MAX(RevenuesID), 0) + 1 FROM dbo.TblRevenuesTypes), @Name, @NameEnglish, @Remarks, @AccountCode, @ParentAccount, 0);
+END", connection, transaction))
+            {
+                command.Parameters.AddWithValue("@AccountCode", Limit(accountCode, 500));
+                command.Parameters.AddWithValue("@Name", name);
+                command.Parameters.AddWithValue("@NameEnglish", nameEnglish);
+                command.Parameters.AddWithValue("@Remarks", DBNull.Value);
+                command.Parameters.AddWithValue("@ParentAccount", (object)parentAccount ?? DBNull.Value);
                 command.ExecuteNonQuery();
             }
         }
@@ -1161,6 +1553,15 @@ END", connection, transaction))
                 return string.Empty;
             }
 
+            value = value
+                .Replace("\t", " ")
+                .Replace("/", " ")
+                .Replace("\\", " ")
+                .Replace("-", " ")
+                .Replace(":", " ")
+                .Replace("\u2013", " ")
+                .Replace("\u2014", " ");
+
             var prefixes = new[]
             {
                 "\u0630\u0645\u0645 \u0645\u062f\u064a\u0646\u0629",
@@ -1183,7 +1584,7 @@ END", connection, transaction))
                 }
             }
 
-            return value.Trim(' ', '/', '\\', '-', ':', '\u2013', '\u2014');
+            return string.Join(" ", value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
         }
 
         private static EmployeeNameParts SplitEmployeeName(string value, int partLength)
@@ -1705,6 +2106,11 @@ WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = @TableName AND COLUMN_NAME = @Column
             return reader[name] == DBNull.Value ? (int?)null : Convert.ToInt32(reader[name]);
         }
 
+        private static bool ReadBool(IDataRecord reader, string name)
+        {
+            return reader[name] != DBNull.Value && Convert.ToBoolean(reader[name]);
+        }
+
         private static string LookupScalar(SqlConnection connection, SqlTransaction transaction, string sql, string value)
         {
             using (var command = new SqlCommand(sql, connection, transaction))
@@ -1816,6 +2222,15 @@ IF COL_LENGTH('dbo.MasterDataImportBatchDetail', 'RowNumber') IS NULL
             }
         }
 
+        private static object Scalar(SqlConnection connection, SqlTransaction transaction, string sql)
+        {
+            using (var command = new SqlCommand(sql, connection, transaction))
+            {
+                var result = command.ExecuteScalar();
+                return result == null || result == DBNull.Value ? 0 : result;
+            }
+        }
+
         private static object Scalar(SqlConnection connection, SqlTransaction transaction, string sql, int batchId)
         {
             using (var command = new SqlCommand(sql, connection, transaction))
@@ -1900,6 +2315,8 @@ DELETE c FROM dbo.TblCustemers c INNER JOIN #RollbackAccounts r ON r.Account_Cod
 DELETE s FROM dbo.TblStore s INNER JOIN #RollbackAccounts r ON r.Account_Code = s.Account_Code;
 DELETE b FROM dbo.BanksData b INNER JOIN #RollbackAccounts r ON r.Account_Code = b.Account_Code;
 DELETE x FROM dbo.TblBoxesData x INNER JOIN #RollbackAccounts r ON r.Account_Code = x.Account_Code;
+DELETE ex FROM dbo.ExpensesType ex INNER JOIN #RollbackAccounts r ON r.Account_Code = ex.Account_Code;
+DELETE rv FROM dbo.TblRevenuesTypes rv INNER JOIN #RollbackAccounts r ON r.Account_Code = rv.Account_Code;
 DELETE f FROM dbo.FixedAssetsGroup f INNER JOIN #RollbackAccounts r ON r.Account_Code = f.Account_Code;
 DELETE e FROM dbo.TblEmployee e INNER JOIN #RollbackAccounts r ON r.Account_Code = e.Account_code;
 DELETE p FROM dbo.projects p INNER JOIN #RollbackAccounts r ON r.Account_Code = p.Project_account;

@@ -611,7 +611,11 @@
                         }
                         html += '<td>' + escapeHtml(formatCell(value)) + '</td>';
                     }
-                    addHiddenCrystalTotals(totals, data.rows[r], ["TotalSaleDay2Vat", "TotalRevvat", "TotalRevVat", "CashOutTotal"]);
+                    addHiddenCrystalTotals(totals, data.rows[r], [
+                        "TotalSaleDay2", "TotalSaleDay2Vat", "TotalRevvat", "TotalRevVat",
+                        "CountTransactionIn", "CountTransactionOut", "CashOutTotal", "WalletNet",
+                        "PosTotal", "TawqeefiTotal", "NetPosFinalProfit", "Bank9995", "Bank8846"
+                    ]);
                     html += '</tr>';
                 }
 
@@ -653,42 +657,55 @@
                 var cardValue = totalValue(totals, "CardValue");
                 var cardVat = totalValue(totals, "TotalSaleDay2Vat");
                 var cardBaseValue = cardValue - cardVat;
-                var rechargeCount = totalValue(totals, "CountTransaction");
+                var rechargeCount = totalValue(totals, "CountTransactionIn");
+                var walletCount = totalValue(totals, "CountTransactionOut");
                 var rechargeValue = totalValue(totals, "TotalRechargeValue");
                 var rechargeDiscount = totalValue(totals, "TotalRev2");
                 var rechargeFeesVat = totalValue(totals, "TotalRevWithVat");
-                var walletOut = totalValue(totals, "WalletSupply");
-                var totalDaily = totalValue(totals, "TotalSupply");
+                var rechargeVat = totalValue(totals, "TotalRevVat");
+                var walletOut = totalValue(totals, "WalletNet");
+                if (!walletOut) {
+                    walletOut = totalValue(totals, "WalletSupply") - totalValue(totals, "NetCashOut");
+                }
+                var posTotal = totalValue(totals, "PosTotal");
+                var tawqeefiTotal = totalValue(totals, "TawqeefiTotal");
+                var totalDaily = cardValue + rechargeFeesVat + walletOut + posTotal + tawqeefiTotal;
+                var totalDailyRevenue = cardBaseValue + rechargeDiscount + walletOut + posTotal + tawqeefiTotal;
+                var totalDailyVat = cardVat + rechargeVat;
+                var totalDailyCount = countCards + rechargeCount + walletCount;
                 var bankFees = totalValue(totals, "BankBalanceCharge");
                 var boxValue = totalValue(totals, "BoxValue");
-                var netCashOut = totalValue(totals, "NetCashOut");
-                var total3 = totalDaily + bankFees + boxValue;
+                var netPosFinalProfit = totalValue(totals, "NetPosFinalProfit");
+                var bank9995 = totalValue(totals, "Bank9995");
+                var bank8846 = totalValue(totals, "Bank8846");
+                var revenueTransfer = totalDaily - bankFees;
+                var total3 = rechargeValue + bankFees + revenueTransfer + bank9995 + bank8846 + netPosFinalProfit + boxValue;
 
                 return ''
                     + '<div class="crystal-summary">'
                     + '<div class="crystal-sales-total">'
                     + '<div class="total-caption"><span>إجمالي المبيعات</span><span>شاملة الضريبة</span></div>'
                     + '<table><tbody>'
-                    + '<tr><td>' + moneyCell(cardValue) + '</td><td class="summary-label">مبيعات كارت كيشني</td></tr>'
+                    + '<tr><td>' + moneyCell(cardBaseValue) + '</td><td class="summary-label">مبيعات كارت كيشني</td></tr>'
                     + '<tr><td>' + moneyCell(rechargeValue) + '</td><td class="summary-label">مبيعات شحن كاش <span class="summary-red">In</span></td></tr>'
                     + '<tr><td>' + moneyCell(walletOut) + '</td><td class="summary-label">مبيعات شحن كاش <span class="summary-red">OUT</span></td></tr>'
-                    + '<tr><td>0</td><td class="summary-label">مبيعات فواتير <span class="summary-red">POS</span></td></tr>'
-                    + '<tr><td>0</td><td class="summary-label">مبيعات توقيفي</td></tr>'
+                    + '<tr><td>' + moneyCell(posTotal) + '</td><td class="summary-label">مبيعات فواتير <span class="summary-red">POS</span></td></tr>'
+                    + '<tr><td>' + moneyCell(tawqeefiTotal) + '</td><td class="summary-label">مبيعات توقيفي</td></tr>'
                     + '</tbody></table></div>'
                     + '<table><thead><tr>'
                     + '<th>الإجمالي</th><th>ق م 14%</th><th>مبلغ الإيراد</th><th>العدد</th><th>البيان</th>'
                     + '</tr></thead><tbody>'
                     + '<tr><td>' + moneyCell(cardValue) + '</td><td>' + moneyCell(cardVat) + '</td><td>' + moneyCell(cardBaseValue) + '</td><td>' + moneyCell(countCards) + '</td><td class="summary-label">مبيعات كارت كيشني</td></tr>'
                     + '<tr><td>' + moneyCell(rechargeFeesVat) + '</td><td>' + moneyCell(rechargeFeesVat - rechargeDiscount) + '</td><td>' + moneyCell(rechargeDiscount) + '</td><td>' + moneyCell(rechargeCount) + '</td><td class="summary-label">عمليات شحن كاش <span class="summary-red">In</span></td></tr>'
-                    + '<tr><td>' + moneyCell(walletOut) + '</td><td></td><td>' + moneyCell(walletOut) + '</td><td></td><td class="summary-label">عمليات شحن كاش <span class="summary-red">OUT</span></td></tr>'
-                    + '<tr><td></td><td></td><td>0</td><td></td><td class="summary-label">مبيعات فواتير <span class="summary-red">POS</span></td></tr>'
-                    + '<tr><td></td><td></td><td>0</td><td></td><td class="summary-label">مبيعات توقيفي</td></tr>'
-                    + '<tr><td>' + moneyCell(totalDaily) + '</td><td>' + moneyCell(rechargeFeesVat - rechargeDiscount) + '</td><td>' + moneyCell(totalDaily) + '</td><td>' + moneyCell(rechargeCount + countCards) + '</td><td class="summary-label">إجمالي اليومية</td></tr>'
+                    + '<tr><td>' + moneyCell(walletOut) + '</td><td></td><td>' + moneyCell(walletOut) + '</td><td>' + moneyCell(walletCount) + '</td><td class="summary-label">عمليات شحن كاش <span class="summary-red">OUT</span></td></tr>'
+                    + '<tr><td></td><td></td><td>' + moneyCell(posTotal) + '</td><td></td><td class="summary-label">مبيعات فواتير <span class="summary-red">POS</span></td></tr>'
+                    + '<tr><td></td><td></td><td>' + moneyCell(tawqeefiTotal) + '</td><td></td><td class="summary-label">مبيعات توقيفي</td></tr>'
+                    + '<tr><td>' + moneyCell(totalDaily) + '</td><td>' + moneyCell(totalDailyVat) + '</td><td>' + moneyCell(totalDailyRevenue) + '</td><td>' + moneyCell(totalDailyCount) + '</td><td class="summary-label">إجمالي اليومية</td></tr>'
                     + '<tr><td></td><td></td><td>' + moneyCell(bankFees) + '</td><td></td><td class="summary-label">تكلفة رسوم شحن <span class="summary-red">BM</span></td></tr>'
-                    + '<tr><td class="summary-total" colspan="2">تفاصيل و إجمالي التوريد<br><span class="summary-red">قيد الإغلاق العام</span></td><td>' + moneyCell(totalDaily) + '</td><td></td><td class="summary-label">حوالة مجمع الإيراد</td></tr>'
-                    + '<tr><td class="summary-total" colspan="2" rowspan="4">' + moneyCell(total3) + '</td><td>0</td><td></td><td class="summary-label">حوالة بنك <span class="summary-red">9995</span></td></tr>'
-                    + '<tr><td>0</td><td></td><td class="summary-label">حوالة بنك <span class="summary-red">8846</span></td></tr>'
-                    + '<tr><td>' + moneyCell(netCashOut) + '</td><td></td><td class="summary-label">خزينة <span class="summary-red">POS</span> الرئيسية</td></tr>'
+                    + '<tr><td class="summary-total" colspan="2">تفاصيل و إجمالي التوريد<br><span class="summary-red">قيد الإغلاق العام</span></td><td>' + moneyCell(revenueTransfer) + '</td><td></td><td class="summary-label">حوالة مجمع الإيراد</td></tr>'
+                    + '<tr><td class="summary-total" colspan="2" rowspan="4">' + moneyCell(total3) + '</td><td>' + moneyCell(bank9995) + '</td><td></td><td class="summary-label">حوالة بنك <span class="summary-red">9995</span></td></tr>'
+                    + '<tr><td>' + moneyCell(bank8846) + '</td><td></td><td class="summary-label">حوالة بنك <span class="summary-red">8846</span></td></tr>'
+                    + '<tr><td>' + moneyCell(netPosFinalProfit) + '</td><td></td><td class="summary-label">خزينة <span class="summary-red">POS</span> الرئيسية</td></tr>'
                     + '<tr><td>' + moneyCell(boxValue) + '</td><td></td><td class="summary-label">حوالة بنك <span class="summary-red">19108</span> العهد</td></tr>'
                     + '</tbody></table></div>';
             }

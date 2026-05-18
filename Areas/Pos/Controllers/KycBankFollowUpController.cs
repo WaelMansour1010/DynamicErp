@@ -9,6 +9,7 @@ using System.Configuration;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Web;
 using System.Web.Mvc;
 
 namespace MyERP.Areas.Pos.Controllers
@@ -74,6 +75,85 @@ namespace MyERP.Areas.Pos.Controllers
                 Response.StatusCode = 500;
                 return Json(Fail("تعذر تحميل بيانات متابعة KYC والبنك", ex.Message));
             }
+        }
+
+        [HttpPost]
+        public JsonResult Report(PosKycReportRequest request)
+        {
+            try
+            {
+                var context = GetPosContext();
+                if (context == null)
+                {
+                    Response.StatusCode = 401;
+                    return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً"));
+                }
+
+                if (!CanOpen(context))
+                {
+                    Response.StatusCode = 403;
+                    return Json(Fail("ليست لديك صلاحية متابعة KYC"));
+                }
+
+                return Json(new { success = true, data = _repository.GetKycReport(request, context) });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(Fail("تعذر تحميل تقرير KYC", ex.Message));
+            }
+        }
+
+        [AcceptVerbs(HttpVerbs.Get | HttpVerbs.Post)]
+        public ActionResult ExportReport(PosKycReportRequest request)
+        {
+            try
+            {
+                var context = GetPosContext();
+                if (context == null)
+                {
+                    Response.StatusCode = 401;
+                    return Json(Fail("يجب تسجيل دخول نقطة البيع أولاً"), JsonRequestBehavior.AllowGet);
+                }
+
+                if (!CanOpen(context))
+                {
+                    Response.StatusCode = 403;
+                    return Json(Fail("ليست لديك صلاحية متابعة KYC"), JsonRequestBehavior.AllowGet);
+                }
+
+                request = request ?? new PosKycReportRequest();
+                request.Page = 1;
+                request.PageSize = 100000;
+                var report = _repository.GetKycReport(request, context);
+                var bytes = BuildExcel(BuildKycReportTable(report.Rows));
+                return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "KYC_Report_" + DateTime.Now.ToString("yyyyMMddHHmmss") + ".xlsx");
+            }
+            catch (Exception ex)
+            {
+                return Json(Fail("تعذر تصدير تقرير KYC: " + ex.Message, ex.ToString()), JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [AcceptVerbs(HttpVerbs.Get | HttpVerbs.Post)]
+        public ActionResult PrintReport(PosKycReportRequest request)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            if (!CanOpen(context))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية متابعة KYC");
+            }
+
+            request = request ?? new PosKycReportRequest();
+            request.Page = 1;
+            request.PageSize = 100000;
+            var report = _repository.GetKycReport(request, context);
+            return Content(BuildKycPrintHtml(report), "text/html", System.Text.Encoding.UTF8);
         }
 
         [AcceptVerbs(HttpVerbs.Get | HttpVerbs.Post)]
@@ -155,6 +235,93 @@ namespace MyERP.Areas.Pos.Controllers
             return _repository.RunKycBankExport(ResolveCardLength(request), from, to, branchId, IsAdmin(context));
         }
 
+        private static DataTable BuildKycReportTable(IEnumerable<PosKycReportRowDto> rows)
+        {
+            var table = new DataTable("KYC Reports");
+            table.Columns.Add("CustomerNameArabic");
+            table.Columns.Add("CustomerNameEnglish");
+            table.Columns.Add("NationalId");
+            table.Columns.Add("Phone");
+            table.Columns.Add("TokenCardNumber");
+            table.Columns.Add("BranchName");
+            table.Columns.Add("CreatedDate");
+            table.Columns.Add("LastUpdateDate");
+            table.Columns.Add("HasInvoice");
+            table.Columns.Add("InvoiceCount");
+            table.Columns.Add("LastInvoiceDate");
+            table.Columns.Add("KycStatus");
+            table.Columns.Add("HasAttachments");
+
+            foreach (var row in rows ?? Enumerable.Empty<PosKycReportRowDto>())
+            {
+                table.Rows.Add(
+                    row.ArabicName ?? string.Empty,
+                    row.EnglishName ?? string.Empty,
+                    row.NationalId ?? string.Empty,
+                    row.Phone ?? string.Empty,
+                    row.TokenCardNumber ?? string.Empty,
+                    row.BranchName ?? string.Empty,
+                    FormatDate(row.CreatedDate),
+                    FormatDate(row.LastUpdateDate),
+                    row.HasInvoice ? "نعم" : "لا",
+                    row.InvoiceCount.ToString(),
+                    FormatDate(row.LastInvoiceDate),
+                    row.KycStatus ?? string.Empty,
+                    row.HasAttachments ? "نعم" : "لا");
+            }
+
+            return table;
+        }
+
+        private static string BuildKycPrintHtml(PosKycReportResult result)
+        {
+            result = result ?? new PosKycReportResult { Summary = new PosKycReportSummaryDto(), Rows = new List<PosKycReportRowDto>() };
+            var rows = result.Rows ?? new List<PosKycReportRowDto>();
+            var html = new System.Text.StringBuilder();
+            html.Append("<!doctype html><html lang=\"ar\" dir=\"rtl\"><head><meta charset=\"utf-8\"><title>تقارير KYC</title>");
+            html.Append("<style>body{font-family:Tahoma,Arial,sans-serif;margin:20px;color:#172033}h1{font-size:22px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.card{border:1px solid #dbe5f2;border-radius:8px;padding:10px;background:#f8fbff}.card small{display:block;color:#64748b}.card strong{font-size:20px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #d8e1ee;padding:7px;text-align:right}th{background:#eef3fb}@media print{button{display:none}.card{box-shadow:none}}</style>");
+            html.Append("</head><body><button onclick=\"window.print()\">طباعة</button><h1>تقارير KYC</h1><div class=\"cards\">");
+            html.Append(Card("إجمالي العملاء", result.Summary.TotalCustomers));
+            html.Append(Card("لديهم فواتير", result.Summary.WithInvoices));
+            html.Append(Card("بدون فواتير", result.Summary.WithoutInvoices));
+            html.Append(Card("بيانات ناقصة", result.Summary.MissingRequiredData));
+            html.Append("</div><table><thead><tr><th>اسم العميل عربي</th><th>English</th><th>الرقم القومي</th><th>الهاتف</th><th>التوكن/الكارت</th><th>الفرع</th><th>تاريخ الإنشاء</th><th>آخر تحديث</th><th>له فاتورة</th><th>عدد الفواتير</th><th>آخر فاتورة</th><th>الحالة</th></tr></thead><tbody>");
+            foreach (var row in rows)
+            {
+                html.Append("<tr>");
+                html.Append(Td(row.ArabicName));
+                html.Append(Td(row.EnglishName));
+                html.Append(Td(row.NationalId));
+                html.Append(Td(row.Phone));
+                html.Append(Td(row.TokenCardNumber));
+                html.Append(Td(row.BranchName));
+                html.Append(Td(FormatDate(row.CreatedDate)));
+                html.Append(Td(FormatDate(row.LastUpdateDate)));
+                html.Append(Td(row.HasInvoice ? "نعم" : "لا"));
+                html.Append(Td(row.InvoiceCount.ToString()));
+                html.Append(Td(FormatDate(row.LastInvoiceDate)));
+                html.Append(Td(row.KycStatus));
+                html.Append("</tr>");
+            }
+            html.Append("</tbody></table><script>window.onload=function(){setTimeout(function(){window.print();},300);};</script></body></html>");
+            return html.ToString();
+        }
+
+        private static string Card(string title, int value)
+        {
+            return "<div class=\"card\"><small>" + HttpUtility.HtmlEncode(title) + "</small><strong>" + value.ToString() + "</strong></div>";
+        }
+
+        private static string Td(string value)
+        {
+            return "<td>" + HttpUtility.HtmlEncode(value ?? string.Empty) + "</td>";
+        }
+
+        private static string FormatDate(DateTime? value)
+        {
+            return value.HasValue ? value.Value.ToString("yyyy-MM-dd HH:mm") : string.Empty;
+        }
+
         private static int ResolveCardLength(KycBankFollowUpRequest request)
         {
             var value = request != null ? request.CardLength.GetValueOrDefault(18) : 18;
@@ -168,7 +335,7 @@ namespace MyERP.Areas.Pos.Controllers
 
         private static bool IsAdmin(PosUserContext context)
         {
-            return context != null && context.UserType.GetValueOrDefault(-1) == 0;
+            return context != null && (context.UserType.GetValueOrDefault(-1) == 0 || context.IsFullAccess);
         }
 
         private PosUserContext GetPosContext()
@@ -232,6 +399,25 @@ namespace MyERP.Areas.Pos.Controllers
                 { "OrderDate", "تاريخ الطلب" },
                 { "CardNo", "رقم الكارت" }
             };
+            var reportMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "CustomerNameArabic", "اسم العميل عربي" },
+                { "CustomerNameEnglish", "اسم العميل English" },
+                { "Phone", "الهاتف" },
+                { "TokenCardNumber", "رقم التوكن/الكارت" },
+                { "CreatedDate", "تاريخ الإنشاء" },
+                { "LastUpdateDate", "آخر تحديث" },
+                { "HasInvoice", "له فاتورة" },
+                { "InvoiceCount", "عدد الفواتير" },
+                { "LastInvoiceDate", "آخر فاتورة" },
+                { "KycStatus", "حالة KYC" },
+                { "HasAttachments", "له مرفقات" }
+            };
+            if (reportMap.ContainsKey(name))
+            {
+                return reportMap[name];
+            }
+
             return map.ContainsKey(name) ? map[name] : name;
         }
 

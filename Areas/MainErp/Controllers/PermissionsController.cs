@@ -1,6 +1,6 @@
 using System;
 using System.Data;
-using System.Data.SqlClient;
+using System.Text;
 using System.Web.Mvc;
 using MyERP.Areas.MainErp.Infrastructure;
 using MyERP.Areas.MainErp.ViewModels.Security;
@@ -9,169 +9,211 @@ namespace MyERP.Areas.MainErp.Controllers
 {
     public class PermissionsController : MainErpControllerBase
     {
-        private readonly MainErpDbConnectionFactory _connectionFactory;
+        private readonly WebScreenPermissionService _permissionService;
 
         public PermissionsController()
-            : this(new MainErpDbConnectionFactory())
+            : this(new WebScreenPermissionService())
         {
         }
 
-        public PermissionsController(MainErpDbConnectionFactory connectionFactory)
+        public PermissionsController(WebScreenPermissionService permissionService)
         {
-            _connectionFactory = connectionFactory;
+            _permissionService = permissionService;
         }
 
-        public ActionResult Index(string searchText = "")
+        public ActionResult Index(string host = "", bool showAllAreas = false)
         {
-            ViewBag.ActiveScreen = "permissions";
+            if (!_permissionService.Can(ResolvePermissionScreenKey(host), "View"))
+            {
+                return new HttpStatusCodeResult(403, "لا توجد صلاحية كافية لفتح شاشة صلاحيات الشاشات.");
+            }
+
+            ViewBag.ActiveScreen = string.Equals(host, "pos", StringComparison.OrdinalIgnoreCase)
+                ? "main-erp-permissions"
+                : "permissions";
+
+            var isAdmin = MainErpUserContext != null && (MainErpUserContext.IsAdmin || MainErpUserContext.UserType.GetValueOrDefault(-1) == 0);
+            var areaScope = string.Equals(host, "pos", StringComparison.OrdinalIgnoreCase) ? "POS" : "MainERP";
             var model = new MainErpPermissionsIndexViewModel
             {
-                SearchText = (searchText ?? string.Empty).Trim(),
-                IsAdminView = MainErpUserContext != null && MainErpUserContext.IsAdmin
+                IsAdminView = isAdmin,
+                Host = host,
+                DefaultAreaFilter = areaScope,
+                ActiveAreaScope = areaScope,
+                Users = _permissionService.GetUsers(),
+                Modules = _permissionService.GetModules(areaScope, false),
+                Templates = _permissionService.GetTemplates()
             };
-
-            using (var connection = _connectionFactory.CreateOpenConnection())
-            {
-                ReadTotals(connection, model);
-                ReadUserSummary(connection, model);
-                ReadScreenMatrix(connection, model);
-            }
 
             return View(model);
         }
 
-        private void ReadTotals(SqlConnection connection, MainErpPermissionsIndexViewModel model)
+        [HttpGet]
+        public JsonResult Matrix(WebPermissionMatrixRequest request)
         {
-            using (var command = new SqlCommand(@"
-SELECT
-    COUNT(1) AS PermissionRows,
-    COUNT(DISTINCT User_ID) AS UsersCount,
-    COUNT(DISTINCT ScreenName) AS ScreensCount
-FROM dbo.ScreenJuncUser
-WHERE (@IsAdmin = 1 OR User_ID = @UserId);", connection))
+            try
             {
-                AddScope(command, model);
-                using (var reader = command.ExecuteReader())
+                request = NormalizeRequest(request);
+                if (!_permissionService.Can(ResolvePermissionScreenKey(request.Host), "View"))
                 {
-                    if (reader.Read())
-                    {
-                        model.TotalPermissionRows = ReadInt(reader, "PermissionRows");
-                        model.TotalUsers = ReadInt(reader, "UsersCount");
-                        model.TotalScreens = ReadInt(reader, "ScreensCount");
-                    }
+                    Response.StatusCode = 403;
+                    return Json(new { success = false, message = "لا توجد صلاحية كافية لفتح شاشة صلاحيات الشاشات." }, JsonRequestBehavior.AllowGet);
                 }
+
+                return Json(_permissionService.Search(request), JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { success = false, message = "تعذر تحميل صلاحيات الشاشات.", technicalMessage = ex.Message }, JsonRequestBehavior.AllowGet);
             }
         }
 
-        private void ReadUserSummary(SqlConnection connection, MainErpPermissionsIndexViewModel model)
+        [HttpPost]
+        public JsonResult Save(WebPermissionSaveRequest request)
         {
-            using (var command = new SqlCommand(@"
-SELECT TOP (40)
-    u.UserID,
-    u.UserName,
-    COUNT(DISTINCT j.ScreenName) AS ScreenCount,
-    SUM(CASE WHEN ISNULL(j.FullAccess, 0) = 1 THEN 1 ELSE 0 END) AS FullAccessCount,
-    SUM(CASE WHEN ISNULL(j.CanShow, 0) = 0 THEN 1 ELSE 0 END) AS HiddenCount
-FROM dbo.ScreenJuncUser j
-LEFT JOIN dbo.TblUsers u ON u.UserID = j.User_ID
-WHERE (@IsAdmin = 1 OR j.User_ID = @UserId)
-  AND (@SearchText = N'' OR u.UserName LIKE N'%' + @SearchText + N'%' OR j.ScreenName LIKE N'%' + @SearchText + N'%')
-GROUP BY u.UserID, u.UserName
-ORDER BY u.UserID;", connection))
+            if (!IsAdmin())
             {
-                AddScope(command, model);
-                AddSearch(command, model.SearchText);
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        model.Users.Add(new MainErpPermissionUserSummary
-                        {
-                            UserId = ReadInt(reader, "UserID"),
-                            UserName = ReadString(reader, "UserName"),
-                            ScreenCount = ReadInt(reader, "ScreenCount"),
-                            FullAccessCount = ReadInt(reader, "FullAccessCount"),
-                            HiddenCount = ReadInt(reader, "HiddenCount")
-                        });
-                    }
-                }
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "هذه الشاشة للمدير فقط." });
+            }
+
+            if (request == null || request.UserId <= 0)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = "اختر المستخدم أولا." });
+            }
+
+            try
+            {
+                _permissionService.Save(request.UserId, request.Items);
+                return Json(new { success = true, message = "تم حفظ الصلاحيات دفعة واحدة." });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { success = false, message = "تعذر حفظ الصلاحيات.", technicalMessage = ex.Message });
             }
         }
 
-        private void ReadScreenMatrix(SqlConnection connection, MainErpPermissionsIndexViewModel model)
+        [HttpPost]
+        public JsonResult Copy(WebPermissionCopyRequest request)
         {
-            using (var command = new SqlCommand(@"
-SELECT TOP (120)
-    j.ScreenName,
-    MAX(s.Name) AS DisplayName,
-    MAX(s.Mdiol) AS ModuleName,
-    COUNT(DISTINCT j.User_ID) AS UsersCount,
-    MAX(CASE WHEN ISNULL(j.CanShow, 0) = 1 THEN 1 ELSE 0 END) AS CanShow,
-    MAX(CASE WHEN ISNULL(j.CanAdd, 0) = 1 THEN 1 ELSE 0 END) AS CanAdd,
-    MAX(CASE WHEN ISNULL(j.CanEdit, 0) = 1 THEN 1 ELSE 0 END) AS CanEdit,
-    MAX(CASE WHEN ISNULL(j.CanDelete, 0) = 1 THEN 1 ELSE 0 END) AS CanDelete,
-    MAX(CASE WHEN ISNULL(j.CanPrint, 0) = 1 THEN 1 ELSE 0 END) AS CanPrint,
-    MAX(CASE WHEN ISNULL(j.CanSearch, 0) = 1 THEN 1 ELSE 0 END) AS CanSearch,
-    MAX(CASE WHEN ISNULL(j.FullAccess, 0) = 1 THEN 1 ELSE 0 END) AS FullAccess
-FROM dbo.ScreenJuncUser j
-LEFT JOIN dbo.TblUserScreen s ON s.Name = j.ScreenName
-WHERE (@IsAdmin = 1 OR j.User_ID = @UserId)
-  AND (@SearchText = N'' OR j.ScreenName LIKE N'%' + @SearchText + N'%' OR s.Name LIKE N'%' + @SearchText + N'%' OR s.Mdiol LIKE N'%' + @SearchText + N'%')
-GROUP BY j.ScreenName
-ORDER BY COALESCE(MAX(s.Mdiol), N''), COALESCE(MAX(s.Name), j.ScreenName), j.ScreenName;", connection))
+            if (!IsAdmin())
             {
-                AddScope(command, model);
-                AddSearch(command, model.SearchText);
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        model.Screens.Add(new MainErpPermissionScreenRow
-                        {
-                            ScreenName = ReadString(reader, "ScreenName"),
-                            DisplayName = ReadString(reader, "DisplayName"),
-                            ModuleName = ReadString(reader, "ModuleName"),
-                            UsersCount = ReadInt(reader, "UsersCount"),
-                            CanShow = ReadBool(reader, "CanShow"),
-                            CanAdd = ReadBool(reader, "CanAdd"),
-                            CanEdit = ReadBool(reader, "CanEdit"),
-                            CanDelete = ReadBool(reader, "CanDelete"),
-                            CanPrint = ReadBool(reader, "CanPrint"),
-                            CanSearch = ReadBool(reader, "CanSearch"),
-                            FullAccess = ReadBool(reader, "FullAccess")
-                        });
-                    }
-                }
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "هذه الشاشة للمدير فقط." });
+            }
+
+            if (request == null || request.SourceUserId <= 0 || request.TargetUserId <= 0 || request.SourceUserId == request.TargetUserId)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = "اختر مستخدم مصدر ومستخدم هدف مختلفين." });
+            }
+
+            try
+            {
+                var rows = _permissionService.CopyPermissions(request.SourceUserId, request.TargetUserId, request.AreaName);
+                return Json(new { success = true, message = "تم نسخ الصلاحيات.", affectedRows = rows });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { success = false, message = "تعذر نسخ الصلاحيات.", technicalMessage = ex.Message });
             }
         }
 
-        private void AddScope(SqlCommand command, MainErpPermissionsIndexViewModel model)
+        [HttpPost]
+        public JsonResult ApplyTemplate(WebPermissionTemplateApplyRequest request)
         {
-            command.Parameters.Add("@IsAdmin", SqlDbType.Bit).Value = model.IsAdminView;
-            command.Parameters.Add("@UserId", SqlDbType.Int).Value = MainErpUserContext == null ? 0 : MainErpUserContext.UserId;
+            if (!IsAdmin())
+            {
+                Response.StatusCode = 403;
+                return Json(new { success = false, message = "هذه الشاشة للمدير فقط." });
+            }
+
+            if (request == null || request.TemplateId <= 0 || request.UserId <= 0)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = "اختر المستخدم والقالب." });
+            }
+
+            try
+            {
+                var rows = _permissionService.ApplyTemplate(request.TemplateId, request.UserId);
+                return Json(new { success = true, message = "تم تطبيق القالب على المستخدم.", affectedRows = rows });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { success = false, message = "تعذر تطبيق القالب.", technicalMessage = ex.Message });
+            }
         }
 
-        private static void AddSearch(SqlCommand command, string searchText)
+        [HttpGet]
+        public FileResult Export(int userId, string areaName = "", bool showAllAreas = false)
         {
-            command.Parameters.Add("@SearchText", SqlDbType.NVarChar, 100).Value = (searchText ?? string.Empty).Trim();
+            var table = _permissionService.ExportMatrix(userId, ResolveAreaScope(Request["host"]), false);
+            var content = BuildExcelFriendlyTsv(table);
+            var bytes = Encoding.UTF8.GetPreamble();
+            var data = Encoding.UTF8.GetBytes(content);
+            var output = new byte[bytes.Length + data.Length];
+            Buffer.BlockCopy(bytes, 0, output, 0, bytes.Length);
+            Buffer.BlockCopy(data, 0, output, bytes.Length, data.Length);
+            return File(output, "application/vnd.ms-excel", "web-screen-permissions.xls");
         }
 
-        private static string ReadString(IDataRecord record, string name)
+        private WebPermissionMatrixRequest NormalizeRequest(WebPermissionMatrixRequest request)
         {
-            var ordinal = record.GetOrdinal(name);
-            return record.IsDBNull(ordinal) ? null : Convert.ToString(record.GetValue(ordinal));
+            request = request ?? new WebPermissionMatrixRequest();
+            var isAdmin = IsAdmin();
+            request.AreaName = ResolveAreaScope(request.Host);
+            request.ShowAllAreas = false;
+            return request;
         }
 
-        private static int ReadInt(IDataRecord record, string name)
+        private bool IsAdmin()
         {
-            var ordinal = record.GetOrdinal(name);
-            return record.IsDBNull(ordinal) ? 0 : Convert.ToInt32(record.GetValue(ordinal));
+            return MainErpUserContext != null && (MainErpUserContext.IsAdmin || MainErpUserContext.UserType.GetValueOrDefault(-1) == 0);
         }
 
-        private static bool ReadBool(IDataRecord record, string name)
+        private static string ResolveAreaScope(string host)
         {
-            var ordinal = record.GetOrdinal(name);
-            return !record.IsDBNull(ordinal) && Convert.ToInt32(record.GetValue(ordinal)) != 0;
+            return string.Equals(host, "pos", StringComparison.OrdinalIgnoreCase) ? "POS" : "MainERP";
+        }
+
+        private static string ResolvePermissionScreenKey(string host)
+        {
+            return string.Equals(host, "pos", StringComparison.OrdinalIgnoreCase) ? "POS.Admin.WebPermissions" : "MainERP.Admin.WebPermissions";
+        }
+
+        private static string BuildExcelFriendlyTsv(DataTable table)
+        {
+            var builder = new StringBuilder();
+            for (var i = 0; i < table.Columns.Count; i++)
+            {
+                if (i > 0) builder.Append('\t');
+                builder.Append(EscapeTsv(table.Columns[i].ColumnName));
+            }
+
+            builder.AppendLine();
+            foreach (DataRow row in table.Rows)
+            {
+                for (var i = 0; i < table.Columns.Count; i++)
+                {
+                    if (i > 0) builder.Append('\t');
+                    builder.Append(EscapeTsv(Convert.ToString(row[i])));
+                }
+
+                builder.AppendLine();
+            }
+
+            return builder.ToString();
+        }
+
+        private static string EscapeTsv(string value)
+        {
+            return (value ?? string.Empty).Replace("\t", " ").Replace("\r", " ").Replace("\n", " ");
         }
     }
 }

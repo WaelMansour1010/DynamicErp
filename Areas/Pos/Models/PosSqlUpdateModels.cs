@@ -65,6 +65,7 @@ namespace MyERP.Areas.Pos.Models
     public class PosSqlUpdateRunRequest
     {
         public bool ConfirmBackup { get; set; }
+        public bool IgnoreHashMismatch { get; set; }
         public int UserId { get; set; }
         public string UserName { get; set; }
         public string ClientIp { get; set; }

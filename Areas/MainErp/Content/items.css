@@ -95,6 +95,40 @@
     margin-bottom: 14px;
 }
 
+.items-commission-layout {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.items-commission-layout label {
+    color: #344054;
+    display: grid;
+    font-size: 12px;
+    font-weight: 800;
+    gap: 6px;
+}
+
+.items-commission-layout input,
+.items-commission-layout select {
+    border: 1px solid #cfd9e6;
+    border-radius: 7px;
+    min-height: 38px;
+    padding: 8px 10px;
+    width: 100%;
+}
+
+.items-commission-note {
+    background: #f8fbff;
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
+    color: #475467;
+    font-weight: 700;
+    line-height: 1.8;
+    margin: 14px 0 0;
+    padding: 10px 12px;
+}
+
 .items-price-grid label {
     color: #344054;
     display: grid;

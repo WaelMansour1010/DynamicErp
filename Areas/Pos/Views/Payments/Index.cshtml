@@ -1,11 +1,12 @@
 ﻿@{
     Layout = null;
-    ViewBag.Title = "تمويل العهدة";
+    ViewBag.Title = "استعاضة العهدة وتمويل الخزينة";
     var context = ViewBag.Context as MyERP.Areas.Pos.Models.PosUserContext;
     var branches = ViewBag.Branches as IEnumerable<MyERP.Areas.Pos.Models.PosBranchDto>;
     var canExecute = context != null && (context.IsFullAccess || context.CanExecutePayments);
     var canEdit = context != null && (context.IsFullAccess || context.CanEditPayments);
     var canViewJournal = context != null && (context.IsFullAccess || context.CanViewJournalEntry);
+    var canChangeBranch = context != null && (context.IsFullAccess || context.CanChangeDefaults || context.UserType.GetValueOrDefault(-1) == 0);
 }
 
 <!DOCTYPE html>
@@ -41,6 +42,111 @@
         .is-hidden-ui {
             display: none !important;
         }
+
+        .payment-status-message {
+            color: #1769aa;
+            display: inline-flex;
+            font-weight: 800;
+            min-height: 24px;
+        }
+
+        .payment-status-message.error,
+        .payment-status-message.is-error {
+            color: #b42318;
+        }
+
+        .payment-status-message.success {
+            color: #16834f;
+        }
+
+        .payment-required {
+            color: #b42318;
+            font-weight: 800;
+        }
+
+        .payment-source-cell {
+            color: #475467;
+            display: block;
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        .payment-row-posted {
+            color: #16834f;
+            font-weight: 800;
+        }
+
+        .payment-row-unposted {
+            color: #b45309;
+            font-weight: 800;
+        }
+
+        .payment-report-summary {
+            display: grid;
+            gap: 8px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            margin: 12px 0;
+        }
+
+        .payment-report-summary span {
+            background: #f8fafc;
+            border: 1px solid #e4e7ec;
+            border-radius: 8px;
+            padding: 8px 10px;
+        }
+
+        .payment-detail-modal {
+            background: rgba(15, 23, 42, .48);
+            bottom: 0;
+            display: flex;
+            left: 0;
+            padding: 24px;
+            position: fixed;
+            right: 0;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .payment-detail-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, .22);
+            margin: auto;
+            max-height: 90vh;
+            max-width: 980px;
+            overflow: auto;
+            padding: 18px;
+            width: 100%;
+        }
+
+        .payment-detail-grid {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            margin: 12px 0;
+        }
+
+        .payment-detail-grid div {
+            border-bottom: 1px solid #eef2f6;
+            padding-bottom: 8px;
+        }
+
+        .payment-detail-grid strong {
+            color: #475467;
+            display: block;
+            font-size: 12px;
+        }
+
+        @@media print {
+            body.payment-print-list .pos-shell > *:not(#paymentIndexPanel),
+            body.payment-print-list .payment-search-panel .pos-grid,
+            body.payment-print-list .payments-index-actions,
+            body.payment-print-list #paymentMessage,
+            body.payment-print-list .load-payment-row,
+            body.payment-print-list .payment-detail-modal {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -58,8 +164,8 @@
         <div class="pos-shell">
             <section class="pos-panel" id="paymentIndexPanel">
                 <div class="panel-heading">
-                    <h2>تمويل العهدة</h2>
-                    <span>ابحث عن حركة سابقة أو ابدأ حركة تمويل عهدة جديدة.</span>
+                    <h2>استعاضة العهدة وتمويل الخزينة</h2>
+                    <span>ابحث عن حركة سابقة أو ابدأ حركة استعاضة عهدة جديدة.</span>
                 </div>
 
                 <div class="pos-panel soft-panel payment-search-panel">
@@ -73,7 +179,7 @@
                         <label>إلى تاريخ<input type="date" id="paymentSearchTo" /></label>
                         <label>
                             الفرع
-                            <select id="paymentSearchBranch" @(context != null && !context.IsFullAccess ? "disabled" : "")>
+                            <select id="paymentSearchBranch" @(context != null && !canChangeBranch ? "disabled" : "")>
                                 <option value="">كل الفروع</option>
                                 @if (branches != null)
                                 {
@@ -85,6 +191,15 @@
                             </select>
                         </label>
                         <label>
+                            صاحب العهدة
+                            <span class="smart-lookup" data-lookup-kind="name-account" data-target-id="paymentSearchCustodyAccount" data-text-id="paymentSearchCustodyText">
+                                <input type="hidden" id="paymentSearchCustodyAccount" />
+                                <input type="text" id="paymentSearchCustodyText" class="lookup-input" placeholder="اكتب كود أو اسم صاحب العهدة" autocomplete="off" />
+                                <button type="button" class="lookup-clear" aria-label="مسح">×</button>
+                                <span class="lookup-results" role="listbox"></span>
+                            </span>
+                        </label>
+                        <label>
                             الموظف
                             <span class="smart-lookup" data-lookup-kind="employee" data-target-id="paymentSearchEmpId" data-text-id="paymentSearchEmpText">
                                 <input type="hidden" id="paymentSearchEmpId" />
@@ -92,11 +207,21 @@
                                 <button type="button" class="lookup-clear" aria-label="مسح">×</button>
                                 <span class="lookup-results" role="listbox"></span>
                             </span>
-                            <small id="paymentNameBalance" class="field-hint"></small>
+                        </label>
+                        <label>مصدر الدفع<input type="text" id="paymentSearchSource" placeholder="الخزنة، البنك، رقم الشيك/الحوالة" /></label>
+                        <label>
+                            حالة الترحيل
+                            <select id="paymentSearchPosted">
+                                <option value="">الكل</option>
+                                <option value="1">مرحل</option>
+                                <option value="0">غير مرحل</option>
+                            </select>
                         </label>
                     </div>
                     <div class="payments-index-actions">
                         <button type="button" class="secondary-action" id="searchPaymentBtn">بحث</button>
+                        <button type="button" class="secondary-action" id="exportPaymentReportBtn">تصدير CSV</button>
+                        <button type="button" class="secondary-action" id="printPaymentReportBtn">طباعة</button>
                         <button type="button" class="secondary-action" id="newPaymentBtn">حركة جديدة</button>
                     </div>
                     <div id="paymentSearchResult" class="report-result compact-result"></div>
@@ -106,7 +231,7 @@
             <section class="pos-panel is-hidden-ui" id="paymentEntryPanel">
                 <div class="payments-entry-header">
                     <div>
-                        <h3>حركة تمويل العهدة</h3>
+                        <h3>حركة استعاضة العهدة</h3>
                         <span>بيانات الحركة والقيد المحاسبي</span>
                     </div>
                     <button type="button" class="secondary-action" id="backToPaymentIndexBtn">رجوع للبحث</button>
@@ -119,10 +244,11 @@
 
                 <div class="payments-tab-panel active payment-section" data-payment-panel="main">
                     <input type="hidden" id="paymentNoteId" />
+                    <input type="hidden" id="paymentClientRequestId" />
                     <div class="pos-grid four-cols">
                         <label>
                             الفرع
-                            <select id="paymentBranchId" @(context != null && !context.IsFullAccess ? "disabled" : "")>
+                            <select id="paymentBranchId" @(context != null && !canChangeBranch ? "disabled" : "")>
                                 @if (branches != null)
                                 {
                                     foreach (var branch in branches)
@@ -150,13 +276,14 @@
                     </div>
                     <div class="pos-grid two-cols">
                         <label>
-                            الاسم / الحساب
+                            صاحب العهدة <span class="payment-required">*</span>
                             <span class="smart-lookup" data-lookup-kind="name-account" data-target-id="paymentNameAccount" data-text-id="paymentNameAccountText">
                                 <input type="hidden" id="paymentNameAccount" />
-                                <input type="text" id="paymentNameAccountText" class="lookup-input" placeholder="اكتب كود أو اسم الحساب" autocomplete="off" />
+                                <input type="text" id="paymentNameAccountText" class="lookup-input" placeholder="اكتب كود أو اسم صاحب العهدة" autocomplete="off" />
                                 <button type="button" class="lookup-clear" aria-label="مسح">×</button>
                                 <span class="lookup-results" role="listbox"></span>
                             </span>
+                            <small id="paymentNameBalance" class="field-hint"></small>
                         </label>
                         <label>
                             البيان
@@ -218,17 +345,21 @@
 
                 <div class="payments-section-title">
                     <h3>الحسابات</h3>
-                    <span>ابحث عن الموظف عند وجود جزء عهدة في الحركة</span>
+                    <span>استعاضة العهدة تسجل بكامل قيمة الحركة من صاحب العهدة إلى الخزنة أو البنك</span>
                 </div>
 
                 <div class="payments-tab-panel active payment-section" data-payment-panel="accounts">
+                    <div class="empty-state">
+                        لا تدخل قيمة في هذا الجزء. اكتب المبلغ في خانة <strong>القيمة</strong> أعلى الشاشة فقط، وسيتم تكوين القيد تلقائياً: صاحب العهدة مدين والخزنة/البنك دائن.
+                    </div>
                     <div class="pos-grid four-cols">
                         <label>
                             قيمة الخزنة
-                            <input type="number" id="paymentBoxValue" min="0" step="0.01" />
+                            <input type="number" id="paymentBoxValue" min="0" step="0.01" value="0" readonly />
+                            <small class="field-hint">تستخدم خانة القيمة أعلى الشاشة بدلاً منها</small>
                         </label>
                         <label>
-                            الموظف
+                            الموظف / صاحب العهدة الفرعي
                             <span class="smart-lookup" data-lookup-kind="employee" data-target-id="paymentEmpId" data-text-id="paymentEmpText" data-extra-target-id="paymentEmpAccountCode">
                                 <input type="hidden" id="paymentEmpId" />
                                 <input type="text" id="paymentEmpText" class="lookup-input" placeholder="اكتب كود أو اسم الموظف" autocomplete="off" />
@@ -238,12 +369,14 @@
                         </label>
                         <label>
                             حساب العهدة
-                            <input type="text" id="paymentEmpAccountCode" readonly />
+                            <input type="hidden" id="paymentEmpAccountCode" />
+                            <input type="text" id="paymentEmpAccountDisplay" readonly />
                             <small id="paymentEmpWarning" class="field-hint"></small>
                         </label>
                         <label>
                             قيمة العهدة
-                            <input type="number" id="paymentEmpValue" min="0" step="0.01" />
+                            <input type="number" id="paymentEmpValue" min="0" step="0.01" value="0" readonly />
+                            <small class="field-hint">تظل صفر في استعاضة العهدة</small>
                         </label>
                     </div>
                 </div>
@@ -269,11 +402,24 @@
 
                 <div class="pos-actions">
                     <button type="button" class="primary-action" id="savePaymentBtn" @(canExecute ? "" : "disabled")>تنفيذ العملية</button>
-                    <span id="paymentMessage" class="pos-validation"></span>
+                    <span id="paymentMessage" class="payment-status-message" role="status" aria-live="polite"></span>
                 </div>
             </section>
         </div>
 
+    </div>
+
+    <div id="paymentDetailModal" class="payment-detail-modal is-hidden-ui" role="dialog" aria-modal="true" aria-labelledby="paymentDetailTitle">
+        <div class="payment-detail-card">
+            <div class="payments-entry-header">
+                <div>
+                    <h3 id="paymentDetailTitle">تفاصيل حركة استعاضة العهدة</h3>
+                    <span id="paymentDetailSubtitle"></span>
+                </div>
+                <button type="button" class="secondary-action" id="closePaymentDetailBtn">إغلاق</button>
+            </div>
+            <div id="paymentDetailContent"></div>
+        </div>
     </div>
 
     <script>
@@ -284,8 +430,17 @@
             var paymentPreviewTimer = null;
             var paymentPreviewValid = false;
             var paymentSearchRunning = false;
+            var paymentSaveRunning = false;
+            var paymentReadOnly = false;
+            var paymentLastSearchRows = [];
+            var paymentLastSearchTotals = null;
             function byId(id) { return document.getElementById(id); }
-            function setMessage(text, error) { message.innerText = text || ""; message.classList.toggle("error", !!error); }
+            function setMessage(text, error, success) {
+                message.innerText = text || "";
+                message.classList.toggle("error", !!error);
+                message.classList.toggle("is-error", !!error);
+                message.classList.toggle("success", !!success && !error);
+            }
             function todayText(offsetDays) {
                 var date = new Date();
                 date.setDate(date.getDate() + (offsetDays || 0));
@@ -327,7 +482,7 @@
                 return url;
             }
             function currentLookupBranchId(kind) {
-                if (kind === "employee" && document.activeElement && document.activeElement.id === "paymentSearchEmpText") {
+                if (document.activeElement && document.activeElement.id && document.activeElement.id.indexOf("paymentSearch") === 0) {
                     return byId("paymentSearchBranch").value || byId("paymentBranchId").value || "";
                 }
                 return byId("paymentBranchId").value || byId("paymentSearchBranch").value || "";
@@ -374,6 +529,19 @@
                 var clearButton = wrapper.querySelector(".lookup-clear");
                 var timer = null;
                 if (!input) { return; }
+                function runLookup(term) {
+                    var results = wrapper.querySelector(".lookup-results");
+                    if (results) { results.innerHTML = "<button type='button' class='lookup-row empty' disabled>جاري البحث...</button>"; results.classList.add("is-open"); }
+                    var xhr = new XMLHttpRequest();
+                    xhr.open("GET", lookupUrl(wrapper.getAttribute("data-lookup-kind"), term), true);
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState !== 4) { return; }
+                        var data = null;
+                        try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
+                        renderLookupRows(wrapper, data && data.success ? (data.rows || []) : []);
+                    };
+                    xhr.send();
+                }
                 input.addEventListener("input", function () {
                     var term = input.value.trim();
                     byId(wrapper.getAttribute("data-target-id")).value = "";
@@ -384,18 +552,13 @@
                         return;
                     }
                     timer = window.setTimeout(function () {
-                        var results = wrapper.querySelector(".lookup-results");
-                        if (results) { results.innerHTML = "<button type='button' class='lookup-row empty' disabled>جاري البحث...</button>"; results.classList.add("is-open"); }
-                        var xhr = new XMLHttpRequest();
-                        xhr.open("GET", lookupUrl(wrapper.getAttribute("data-lookup-kind"), term), true);
-                        xhr.onreadystatechange = function () {
-                            if (xhr.readyState !== 4) { return; }
-                            var data = null;
-                            try { data = xhr.responseText ? JSON.parse(xhr.responseText) : null; } catch (ignore) { }
-                            renderLookupRows(wrapper, data && data.success ? (data.rows || []) : []);
-                        };
-                        xhr.send();
+                        runLookup(term);
                     }, 250);
+                });
+                input.addEventListener("focus", function () {
+                    if (input.value.trim().length === 0) {
+                        runLookup("");
+                    }
                 });
                 input.addEventListener("keydown", function (event) {
                     var results = wrapper.querySelector(".lookup-results");
@@ -420,6 +583,7 @@
             }
             function requestPayload() {
                 return {
+                    ClientRequestId: byId("paymentClientRequestId").value,
                     NoteId: parseInt(byId("paymentNoteId").value, 10) || null,
                     BranchId: parseInt(byId("paymentBranchId").value, 10) || 0,
                     PaymentDate: byId("paymentDate").value,
@@ -434,8 +598,8 @@
                     ReferenceDate: byId("paymentReferenceDate").value,
                     EmpId: parseInt(byId("paymentEmpId").value, 10) || null,
                     EmpAccountCode: byId("paymentEmpAccountCode").value,
-                    BoxValue: parseFloat(byId("paymentBoxValue").value || "0"),
-                    EmpValue: parseFloat(byId("paymentEmpValue").value || "0"),
+                    BoxValue: 0,
+                    EmpValue: 0,
                     Remarks: byId("paymentRemarks").value,
                     GeneralDescription: byId("paymentGeneralDescription").value
                 };
@@ -446,7 +610,11 @@
                     FromDate: byId("paymentSearchFrom").value || null,
                     ToDate: byId("paymentSearchTo").value || null,
                     BranchId: parseInt(byId("paymentSearchBranch").value, 10) || null,
-                    EmpId: parseInt(byId("paymentSearchEmpId").value, 10) || null
+                    EmpId: parseInt(byId("paymentSearchEmpId").value, 10) || null,
+                    CustodyHolderCode: byId("paymentSearchCustodyAccount").value || "",
+                    CustodyHolderText: byId("paymentSearchCustodyText").value || "",
+                    PaymentSourceText: byId("paymentSearchSource").value || "",
+                    PostedStatus: byId("paymentSearchPosted").value === "" ? null : parseInt(byId("paymentSearchPosted").value, 10)
                 };
             }
             function showIndex() {
@@ -477,7 +645,7 @@
                 var debit = 0, credit = 0;
                 lines.forEach(function (line) {
                     debit += parseFloat(line.Debit || 0); credit += parseFloat(line.Credit || 0);
-                    html += "<tr><td>" + escapeHtml(line.AccountCode || "") + "</td><td>" + escapeHtml(line.AccountName || "") + "</td><td>" + escapeHtml(line.Description || "") + "</td><td>" + escapeHtml((line.Debit || 0).toFixed(2)) + "</td><td>" + escapeHtml((line.Credit || 0).toFixed(2)) + "</td></tr>";
+                    html += "<tr><td>" + escapeHtml(line.AccountSerial || "") + "</td><td>" + escapeHtml(accountDisplayName(line)) + "</td><td>" + escapeHtml(line.Description || "") + "</td><td>" + escapeHtml((line.Debit || 0).toFixed(2)) + "</td><td>" + escapeHtml((line.Credit || 0).toFixed(2)) + "</td></tr>";
                 });
                 html += "<tr class='journal-total-row'><td colspan='3'>الإجمالي</td><td>" + debit.toFixed(2) + "</td><td>" + credit.toFixed(2) + "</td></tr></tbody></table>";
                 target.innerHTML = html;
@@ -485,7 +653,7 @@
             function updateSaveButton() {
                 var button = byId("savePaymentBtn");
                 if (!button) { return; }
-                button.disabled = !canExecutePayment || !paymentPreviewValid;
+                button.disabled = paymentSaveRunning || paymentReadOnly || !canExecutePayment;
             }
             function setPreviewValid(value) {
                 paymentPreviewValid = !!value;
@@ -502,9 +670,43 @@
                 };
                 xhr.send();
             }
+            function accountDisplayName(item) {
+                if (!item) { return ""; }
+                if (item.NameAccountDisplayName) { return item.NameAccountDisplayName; }
+                var serial = item.AccountSerial || item.NameAccountSerial || "";
+                var name = item.AccountName || item.NameAccountName || item.NameText || "";
+                return serial && name ? serial + " - " + name : (name || serial || "");
+            }
             function formatMoney(value) {
                 var amount = parseFloat(value || 0);
                 return isNaN(amount) ? "0.00" : amount.toFixed(2);
+            }
+            function validatePaymentForm(payload) {
+                if (!payload.BranchId) { return "اختر الفرع قبل الحفظ."; }
+                if (!payload.PaymentDate) { return "حدد تاريخ الحركة."; }
+                if (!payload.CashingType) { return "اختر نوع الحركة."; }
+                if (!payload.NameAccountCode) { return "اختر صاحب العهدة / الحساب."; }
+                if (!payload.Value || payload.Value <= 0) { return "أدخل قيمة أكبر من صفر."; }
+                if (payload.PaymentMethod === 0 && !payload.BoxId) { return "اختر الخزنة في الدفع النقدي."; }
+                if (payload.PaymentMethod !== 0 && !payload.BankId) { return "اختر البنك لطريقة الدفع المحددة."; }
+                if (payload.PaymentMethod !== 0 && !payload.ReferenceNo) { return "أدخل رقم الشيك أو الحوالة."; }
+                if (payload.PaymentMethod !== 0 && !payload.ReferenceDate) { return "حدد تاريخ الشيك أو الحوالة."; }
+                if ((payload.BoxValue || 0) > 0 || (payload.EmpValue || 0) > 0) {
+                    return "اكتب مبلغ الاستعاضة في خانة القيمة أعلى الشاشة فقط، واترك قيم الحسابات صفر.";
+                }
+                if ((payload.BoxValue || payload.EmpValue) && Math.abs(((payload.BoxValue || 0) + (payload.EmpValue || 0)) - payload.Value) > 0.01) {
+                    return "مجموع قيمة الخزنة وقيمة العهدة يجب أن يساوي إجمالي الحركة.";
+                }
+                if ((payload.EmpValue || 0) > 0 && !payload.EmpId) { return "اختر الموظف عند إدخال قيمة عهدة موظف."; }
+                return "";
+            }
+            function setSaveBusy(value) {
+                paymentSaveRunning = !!value;
+                var button = byId("savePaymentBtn");
+                if (button) {
+                    button.disabled = paymentSaveRunning || paymentReadOnly || !canExecutePayment;
+                    button.innerText = paymentSaveRunning ? "جاري الحفظ..." : (byId("paymentNoteId").value ? "حفظ التعديل" : "تنفيذ العملية");
+                }
             }
             function clearPaymentLookup(targetId) {
                 clearLookup(document.querySelector('[data-target-id="' + targetId + '"]'));
@@ -547,6 +749,7 @@
                 var employeeId = parseInt(byId("paymentEmpId").value, 10) || 0;
                 if (!employeeId) {
                     byId("paymentEmpAccountCode").value = "";
+                    byId("paymentEmpAccountDisplay").value = "";
                     schedulePaymentPreview();
                     return;
                 }
@@ -561,6 +764,7 @@
                     var account = data && data.success ? data.account : null;
                     if (account && account.CustodyAccountCode) {
                         byId("paymentEmpAccountCode").value = account.CustodyAccountCode;
+                        byId("paymentEmpAccountDisplay").value = account.DisplayName || "";
                     }
                     if (warning && account && account.HasWarning) {
                         warning.innerText = account.WarningMessage || "لا يوجد حساب عهدة لهذا الموظف";
@@ -586,7 +790,7 @@
                     if (!validity.mainAccount) { clearPaymentLookup("paymentNameAccount"); if (byId("paymentNameBalance")) { byId("paymentNameBalance").innerText = ""; } }
                     if (!validity.box) { clearPaymentLookup("paymentBoxId"); }
                     if (!validity.bank) { clearPaymentLookup("paymentBankId"); }
-                    if (!validity.employee) { clearPaymentLookup("paymentEmpId"); byId("paymentEmpAccountCode").value = ""; }
+                    if (!validity.employee) { clearPaymentLookup("paymentEmpId"); byId("paymentEmpAccountCode").value = ""; byId("paymentEmpAccountDisplay").value = ""; }
                     schedulePaymentPreview();
                 });
             }
@@ -635,19 +839,87 @@
                     }
                 });
             }
-            function renderSearch(rows) {
+            function renderSearch(rows, totals) {
                 var target = byId("paymentSearchResult");
                 if (!target) { return; }
+                paymentLastSearchRows = rows || [];
+                paymentLastSearchTotals = totals || null;
                 if (!rows || !rows.length) {
                     target.innerHTML = "<div class='empty-state'>لا توجد حركات مطابقة</div>";
                     return;
                 }
-                var html = "<table class='pos-table'><thead><tr><th>رقم الحركة</th><th>رقم السند</th><th>التاريخ</th><th>الفرع</th><th>النوع</th><th>الاسم</th><th>القيمة</th><th></th></tr></thead><tbody>";
+                var html = "";
+                if (totals) {
+                    html += "<div class='payment-report-summary'>"
+                        + "<span><strong>عدد الحركات</strong><br>" + escapeHtml(totals.TotalCount || 0) + "</span>"
+                        + "<span><strong>إجمالي القيمة</strong><br>" + escapeHtml(formatMoney(totals.TotalAmount || 0)) + "</span>"
+                        + "<span><strong>مرحل</strong><br>" + escapeHtml(totals.PostedCount || 0) + " / " + escapeHtml(formatMoney(totals.PostedAmount || 0)) + "</span>"
+                        + "<span><strong>غير مرحل</strong><br>" + escapeHtml(totals.UnpostedCount || 0) + " / " + escapeHtml(formatMoney(totals.UnpostedAmount || 0)) + "</span>"
+                        + "</div>";
+                }
+                html += "<table class='pos-table'><thead><tr><th>رقم الحركة</th><th>رقم السند</th><th>التاريخ</th><th>الفرع</th><th>صاحب العهدة</th><th>مصدر الدفع</th><th>القيمة</th><th>الترحيل</th><th>القيد</th><th>بواسطة</th><th></th></tr></thead><tbody>";
                 rows.forEach(function (row) {
-                    html += "<tr><td>" + escapeHtml(row.NoteId || "") + "</td><td>" + escapeHtml(row.NoteSerial1 || row.NoteSerial || "") + "</td><td>" + escapeHtml(displayDateText(row.NoteDate)) + "</td><td>" + escapeHtml(row.BranchName || "") + "</td><td>" + escapeHtml(row.CashingTypeName || "") + "</td><td>" + escapeHtml(row.NameText || "") + "</td><td>" + escapeHtml((parseFloat(row.Value || 0)).toFixed(2)) + "</td><td><button type='button' class='secondary-action load-payment-row' data-note-id='" + escapeHtml(row.NoteId || "") + "'>فتح</button></td></tr>";
+                    var postedClass = row.IsPosted ? "payment-row-posted" : "payment-row-unposted";
+                    html += "<tr><td>" + escapeHtml(row.NoteId || "") + "</td><td>" + escapeHtml(row.NoteSerial1 || row.NoteSerial || "") + "</td><td>" + escapeHtml(displayDateText(row.NoteDate)) + "</td><td>" + escapeHtml(row.BranchName || "") + "</td><td>" + escapeHtml(accountDisplayName(row)) + "</td><td>" + escapeHtml(row.PaymentSourceName || "") + "<span class='payment-source-cell'>" + escapeHtml(row.PaymentSourceType || "") + "</span></td><td>" + escapeHtml(formatMoney(row.Value || 0)) + "</td><td><span class='" + postedClass + "'>" + escapeHtml(row.PostedStatusText || (row.IsPosted ? "مرحل" : "غير مرحل")) + "</span></td><td>" + escapeHtml(row.JournalNumber || "") + "</td><td>" + escapeHtml(row.CreatedUserName || "") + "<span class='payment-source-cell'>" + escapeHtml(displayDateText(row.CreatedDate)) + "</span></td><td><button type='button' class='secondary-action show-payment-detail' data-note-id='" + escapeHtml(row.NoteId || "") + "'>تفاصيل</button> <button type='button' class='secondary-action load-payment-row' data-note-id='" + escapeHtml(row.NoteId || "") + "'>فتح</button></td></tr>";
                 });
                 html += "</tbody></table>";
                 target.innerHTML = html;
+            }
+            function renderPaymentDetail(movement, canEdit, editMessage) {
+                var modal = byId("paymentDetailModal");
+                var content = byId("paymentDetailContent");
+                if (!modal || !content || !movement) { return; }
+                byId("paymentDetailSubtitle").innerText = "رقم السند: " + (movement.NoteSerial1 || movement.NoteSerial || movement.NoteId || "");
+                var paymentSource = movement.PaymentMethod === 0 ? (movement.BoxName || movement.PaymentSourceName || "") : (movement.BankName || movement.PaymentSourceName || "");
+                var html = "<div class='payment-detail-grid'>"
+                    + "<div><strong>رقم الحركة</strong>" + escapeHtml(movement.NoteId || "") + "</div>"
+                    + "<div><strong>رقم السند</strong>" + escapeHtml(movement.NoteSerial1 || movement.NoteSerial || "") + "</div>"
+                    + "<div><strong>التاريخ</strong>" + escapeHtml(displayDateText(movement.NoteDate)) + "</div>"
+                    + "<div><strong>الفرع</strong>" + escapeHtml(movement.BranchName || "") + "</div>"
+                    + "<div><strong>صاحب العهدة</strong>" + escapeHtml(accountDisplayName(movement)) + "</div>"
+                    + "<div><strong>كود الحساب</strong>" + escapeHtml(movement.NameAccountSerial || "") + "</div>"
+                    + "<div><strong>مصدر الدفع</strong>" + escapeHtml(paymentSource) + "</div>"
+                    + "<div><strong>القيمة</strong>" + escapeHtml(formatMoney(movement.Value || 0)) + "</div>"
+                    + "<div><strong>حالة الترحيل</strong>" + escapeHtml(movement.PostedStatusText || (movement.IsPosted ? "مرحل" : "غير مرحل")) + "</div>"
+                    + "<div><strong>رقم القيد المرتبط</strong>" + escapeHtml(movement.JournalNumber || "") + "</div>"
+                    + "<div><strong>أنشأ بواسطة</strong>" + escapeHtml(movement.CreatedUserName || "") + "</div>"
+                    + "<div><strong>تاريخ الإنشاء</strong>" + escapeHtml(displayDateText(movement.CreatedDate)) + "</div>"
+                    + "<div><strong>رحل بواسطة</strong>" + escapeHtml(movement.PostedByUserName || "") + "</div>"
+                    + "<div><strong>تاريخ الترحيل</strong>" + escapeHtml(displayDateText(movement.PostedDate)) + "</div>"
+                    + "</div>"
+                    + "<div class='payment-detail-grid'><div><strong>البيان</strong>" + escapeHtml(movement.Remarks || "") + "</div><div><strong>الوصف العام</strong>" + escapeHtml(movement.GeneralDescription || "") + "</div></div>";
+                html += "<table class='pos-table'><thead><tr><th>الحساب</th><th>اسم الحساب</th><th>البيان</th><th>مدين</th><th>دائن</th></tr></thead><tbody>";
+                var debit = 0, credit = 0;
+                (movement.Lines || []).forEach(function (line) {
+                    debit += parseFloat(line.Debit || 0);
+                    credit += parseFloat(line.Credit || 0);
+                    html += "<tr><td>" + escapeHtml(line.AccountSerial || "") + "</td><td>" + escapeHtml(accountDisplayName(line)) + "</td><td>" + escapeHtml(line.Description || "") + "</td><td>" + escapeHtml(formatMoney(line.Debit || 0)) + "</td><td>" + escapeHtml(formatMoney(line.Credit || 0)) + "</td></tr>";
+                });
+                html += "<tr class='journal-total-row'><td colspan='3'>الإجمالي</td><td>" + escapeHtml(formatMoney(debit)) + "</td><td>" + escapeHtml(formatMoney(credit)) + "</td></tr></tbody></table>";
+                content.innerHTML = html;
+                modal.classList.remove("is-hidden-ui");
+            }
+            function exportPaymentReportCsv() {
+                if (!paymentLastSearchRows.length) { setMessage("لا توجد نتائج للتصدير", true); return; }
+                var headers = ["رقم الحركة","رقم السند","التاريخ","الفرع","صاحب العهدة","كود الحساب","مصدر الدفع","القيمة","الترحيل","رقم القيد","أنشأ بواسطة"];
+                var csv = "\uFEFF" + headers.join(",") + "\r\n";
+                paymentLastSearchRows.forEach(function (row) {
+                    var values = [row.NoteId, row.NoteSerial1 || row.NoteSerial, displayDateText(row.NoteDate), row.BranchName, accountDisplayName(row), row.NameAccountSerial, row.PaymentSourceName, formatMoney(row.Value || 0), row.PostedStatusText || (row.IsPosted ? "مرحل" : "غير مرحل"), row.JournalNumber, row.CreatedUserName];
+                    csv += values.map(function (value) { return "\"" + String(value || "").replace(/"/g, "\"\"") + "\""; }).join(",") + "\r\n";
+                });
+                var blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                var link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "custody-replenishment-report.csv";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            function printPaymentReport() {
+                if (!paymentLastSearchRows.length) { setMessage("لا توجد نتائج للطباعة", true); return; }
+                document.body.classList.add("payment-print-list");
+                window.print();
+                window.setTimeout(function () { document.body.classList.remove("payment-print-list"); }, 250);
             }
             function setSelectValue(id, value) {
                 var element = byId(id);
@@ -673,6 +945,26 @@
                 if (!date) { return ""; }
                 return date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2) + "-" + ("0" + date.getDate()).slice(-2);
             }
+            function createClientRequestId() {
+                function hex4(value) {
+                    var text = value.toString(16);
+                    return ("0000" + text).slice(-4);
+                }
+                if (window.crypto && window.crypto.getRandomValues) {
+                    var data = new Uint16Array(8);
+                    window.crypto.getRandomValues(data);
+                    return hex4(data[0]) + hex4(data[1]) + "-" +
+                        hex4(data[2]) + "-" +
+                        hex4(data[3]) + "-" +
+                        hex4(data[4]) + "-" +
+                        hex4(data[5]) + hex4(data[6]) + hex4(data[7]);
+                }
+                return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+                    var r = Math.random() * 16 | 0;
+                    var v = c === "x" ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
             function displayDateText(value) {
                 var date = parseDateValue(value);
                 if (!date) { return ""; }
@@ -680,7 +972,8 @@
             }
             function resetPaymentForm() {
                 byId("paymentNoteId").value = "";
-                ["paymentValue", "paymentReferenceNo", "paymentEmpAccountCode", "paymentBoxValue", "paymentEmpValue", "paymentRemarks", "paymentGeneralDescription"].forEach(function (id) { byId(id).value = ""; });
+                byId("paymentClientRequestId").value = createClientRequestId();
+                ["paymentValue", "paymentReferenceNo", "paymentEmpAccountCode", "paymentEmpAccountDisplay", "paymentBoxValue", "paymentEmpValue", "paymentRemarks", "paymentGeneralDescription"].forEach(function (id) { byId(id).value = ""; });
                 byId("paymentDate").value = new Date().toISOString().substring(0, 10);
                 byId("paymentReferenceDate").value = new Date().toISOString().substring(0, 10);
                 setSelectValue("paymentCashingType", "5");
@@ -692,6 +985,7 @@
                 clearLookup(document.querySelector('[data-target-id="paymentSearchEmpId"]'));
                 renderLines([]);
                 setPreviewValid(false);
+                paymentReadOnly = false;
                 byId("savePaymentBtn").innerText = "تنفيذ العملية";
                 setMessage("");
                 applyPaymentMethodRules();
@@ -701,10 +995,11 @@
             function applyMovement(movement, canEdit, editMessage) {
                 if (!movement) { return; }
                 byId("paymentNoteId").value = movement.NoteId || "";
+                byId("paymentClientRequestId").value = createClientRequestId();
                 setSelectValue("paymentBranchId", movement.BranchId);
                 byId("paymentDate").value = dateText(movement.NoteDate);
                 setSelectValue("paymentCashingType", movement.CashingType);
-                setLookupValue("paymentNameAccount", "paymentNameAccountText", movement.NameAccountCode || "", movement.NameText || "", "");
+                setLookupValue("paymentNameAccount", "paymentNameAccountText", movement.NameAccountCode || "", accountDisplayName(movement), "");
                 setSelectValue("paymentMethod", movement.PaymentMethod);
                 byId("paymentValue").value = movement.Value || 0;
                 setLookupValue("paymentBoxId", "paymentBoxText", movement.BoxId || "", movement.BoxName || "", "");
@@ -713,11 +1008,13 @@
                 byId("paymentReferenceDate").value = dateText(movement.ReferenceDate);
                 setLookupValue("paymentEmpId", "paymentEmpText", movement.EmpId || "", movement.EmpName || "", movement.EmpAccountCode || "");
                 byId("paymentEmpAccountCode").value = movement.EmpAccountCode || "";
-                byId("paymentBoxValue").value = movement.BoxValue || 0;
-                byId("paymentEmpValue").value = movement.EmpValue || 0;
+                byId("paymentEmpAccountDisplay").value = "";
+                byId("paymentBoxValue").value = 0;
+                byId("paymentEmpValue").value = 0;
                 byId("paymentRemarks").value = movement.Remarks || "";
                 byId("paymentGeneralDescription").value = movement.GeneralDescription || "";
                 renderLines(movement.Lines || []);
+                paymentReadOnly = !canEdit;
                 paymentPreviewValid = !!canEdit;
                 byId("savePaymentBtn").disabled = !canEdit;
                 byId("savePaymentBtn").innerText = canEdit ? "حفظ التعديل" : "عرض فقط";
@@ -735,19 +1032,46 @@
                     document.querySelectorAll("[data-payment-panel]").forEach(function (x) { x.classList.toggle("active", x.getAttribute("data-payment-panel") === tab); });
                 }
                 if (event.target.id === "previewPaymentBtn") {
-                    post(page.getAttribute("data-preview-url"), requestPayload(), function (status, data) {
+                    var previewPayload = requestPayload();
+                    var previewValidation = validatePaymentForm(previewPayload);
+                    if (previewValidation) {
+                        setPreviewValid(false);
+                        renderLines([]);
+                        setMessage(previewValidation, true);
+                        return;
+                    }
+                    setMessage("جاري استعراض القيد...");
+                    post(page.getAttribute("data-preview-url"), previewPayload, function (status, data) {
                         if (data && data.success) { renderLines(data.lines || []); setPreviewValid(true); setMessage(""); } else { setPreviewValid(false); setMessage((data && data.message) || "تعذر استعراض القيد", true); }
                     });
                 }
                 if (event.target.id === "savePaymentBtn") {
+                    if (paymentReadOnly) { return; }
+                    if (paymentSaveRunning) { return; }
+                    var payload = requestPayload();
+                    var validation = validatePaymentForm(payload);
+                    if (validation) {
+                        setMessage(validation, true);
+                        setPreviewValid(false);
+                        refreshPaymentPreview();
+                        return;
+                    }
                     if (!paymentPreviewValid) {
                         refreshPaymentPreview();
                         setMessage("راجع القيد المحاسبي قبل الحفظ", true);
                         return;
                     }
                     setMessage("جاري الحفظ...");
-                    post(page.getAttribute("data-save-url"), requestPayload(), function (status, data) {
-                        if (data && data.success) { renderLines(data.result && data.result.Lines); setPreviewValid(true); setMessage(data.message + " - رقم السند: " + (data.result.NoteSerial1 || data.result.NoteSerial || data.result.NoteId), false); }
+                    setSaveBusy(true);
+                    post(page.getAttribute("data-save-url"), payload, function (status, data) {
+                        setSaveBusy(false);
+                        if (data && data.success) {
+                            if (data.result && data.result.NoteId) { byId("paymentNoteId").value = data.result.NoteId; }
+                            renderLines(data.result && data.result.Lines);
+                            setPreviewValid(true);
+                            byId("savePaymentBtn").innerText = "حفظ التعديل";
+                            setMessage((data.message || "تم الحفظ بنجاح") + " - رقم السند: " + ((data.result && (data.result.NoteSerial1 || data.result.NoteSerial || data.result.NoteId)) || ""), false, true);
+                        }
                         else { setPreviewValid(false); setMessage((data && data.message) || "تعذر حفظ العملية", true); }
                     });
                 }
@@ -764,15 +1088,40 @@
                     post(page.getAttribute("data-search-url"), searchPayload(), function (status, data) {
                         paymentSearchRunning = false;
                         setSearchButtonBusy(false);
-                        if (data && data.success) { renderSearch(data.rows || []); setMessage("تم البحث", false); }
+                        if (data && data.success) { renderSearch(data.rows || [], data.totals || null); setMessage("تم البحث", false); }
                         else { setMessage((data && data.message) || "تعذر البحث", true); }
                     });
+                }
+                if (event.target.id === "exportPaymentReportBtn") {
+                    exportPaymentReportCsv();
+                }
+                if (event.target.id === "printPaymentReportBtn") {
+                    printPaymentReport();
                 }
                 if (event.target.id === "newPaymentBtn") {
                     resetPaymentForm();
                 }
+                if (event.target.id === "closePaymentDetailBtn" || event.target.id === "paymentDetailModal") {
+                    byId("paymentDetailModal").classList.add("is-hidden-ui");
+                }
                 if (event.target.id === "backToPaymentIndexBtn") {
                     showIndex();
+                }
+                if (event.target.classList && event.target.classList.contains("show-payment-detail")) {
+                    var detailId = event.target.getAttribute("data-note-id");
+                    var detailXhr = new XMLHttpRequest();
+                    detailXhr.open("GET", page.getAttribute("data-get-url").replace(/\/$/, "") + "/" + encodeURIComponent(detailId), true);
+                    detailXhr.onreadystatechange = function () {
+                        if (detailXhr.readyState !== 4) { return; }
+                        var detailData = null;
+                        try { detailData = detailXhr.responseText ? JSON.parse(detailXhr.responseText) : null; } catch (ignore) { }
+                        if (detailXhr.status >= 200 && detailXhr.status < 300 && detailData && detailData.success) {
+                            renderPaymentDetail(detailData.movement, detailData.canEdit, detailData.editMessage);
+                        } else {
+                            setMessage((detailData && detailData.message) || "تعذر تحميل تفاصيل الحركة", true);
+                        }
+                    };
+                    detailXhr.send();
                 }
                 if (event.target.classList && event.target.classList.contains("load-payment-row")) {
                     var id = event.target.getAttribute("data-note-id");
@@ -813,6 +1162,7 @@
             });
             document.querySelectorAll(".smart-lookup").forEach(setupLookup);
             initPaymentSearchDefaults();
+            byId("paymentClientRequestId").value = createClientRequestId();
             applyPaymentMethodRules();
             updateSaveButton();
         })();

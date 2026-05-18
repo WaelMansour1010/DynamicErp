@@ -54,6 +54,21 @@ namespace MyERP.Areas.MainErp.Services.Items
             return _repository.LoadUnits();
         }
 
+        public IList<ItemLookupViewModel> LoadSalesEmployees()
+        {
+            return _repository.LoadSalesEmployees();
+        }
+
+        public IList<ItemLookupViewModel> LoadCustomers()
+        {
+            return _repository.LoadCustomers(2);
+        }
+
+        public IList<ItemLookupViewModel> LoadSuppliers()
+        {
+            return _repository.LoadCustomers(1);
+        }
+
         public ItemSaveResult Save(ItemSaveRequest request, MainErpUserContext user)
         {
             return _repository.Save(request, user);

@@ -1,10 +1,12 @@
 ﻿@{ var hrArea = (ViewBag.SharedHrArea as string) ?? (ViewContext.RouteData.DataTokens["area"] as string) ?? string.Empty; Func<string, string> hrUrl = action => Url.Action(action, "EmployeePayroll", new { area = hrArea }); }
-<main class="ep-page" data-screen="insurance-reports"
+<main class="ep-page ep-insurance-reports-command" data-screen="insurance-reports"
       data-lookups-url="@hrUrl("Lookups")"
       data-subscriptions-url="@hrUrl("InsuranceSubscriptionReport")"
-      data-deductions-url="@hrUrl("InsuranceDeductionReport")">
-    <header class="ep-header">
+      data-deductions-url="@hrUrl("InsuranceDeductionReport")"
+      data-report-bundle-url="@hrUrl("MedicalInsuranceReportBundle")">
+    <header class="ep-report-hero">
         <div>
+            <span class="ep-eyebrow">تقارير التأمين الطبي</span>
             <h1>تقارير التأمين الطبي</h1>
             <p>متابعة الموظفين المشتركين وخصومات التأمين وتكلفة الشركة حسب الفترة.</p>
         </div>
@@ -14,36 +16,87 @@
                     </div>
     </header>
 
-    <section class="ep-toolbar">
+    <section class="ep-report-filter-card">
         <label>من<input id="epReportFrom" type="date" /></label>
         <label>إلى<input id="epReportTo" type="date" /></label>
+        <label>الفرع<select id="epReportBranch"><option value="">كل الفروع</option></select></label>
+        <label>الإدارة<select id="epReportDepartment"><option value="">كل الإدارات</option></select></label>
+        <label>الموظف<input id="epReportEmployee" type="number" min="1" placeholder="رقم الموظف" /></label>
         <label>شركة التأمين<select id="epReportProvider"><option value="">كل الشركات</option></select></label>
         <label>الخطة<select id="epReportPlan"><option value="">كل الخطط</option></select></label>
-        <label class="ep-check"><input id="epReportActiveOnly" type="checkbox" checked /> النشط فقط</label>
+        <label>حالة التأمين<select id="epReportStatus"><option value="">كل الحالات</option><option value="Active">نشط</option><option value="Expired">منتهي</option><option value="Cancelled">ملغي/متوقف</option></select></label>
+        <label>حالة المسير<select id="epReportPostingStatus"><option value="">كل الحالات</option><option value="Posted">مرحل</option><option value="Unposted">غير مرحل</option></select></label>
+        <label class="ep-check"><input id="epReportActiveOnly" type="checkbox" /> النشط فقط</label>
         <button type="button" class="ep-primary" id="epLoadReports"><i class="fas fa-search"></i> عرض</button>
+        <button type="button" id="epPrintReports"><i class="fas fa-print"></i> طباعة</button>
+        <button type="button" id="epExportReports"><i class="fas fa-file-export"></i> تصدير CSV</button>
     </section>
 
-    <section class="ep-kpis">
-        <div><span>عدد الاشتراكات</span><strong id="epReportSubscriptionCount">0</strong></div>
-        <div><span>إجمالي خصم الموظفين</span><strong id="epReportEmployeeTotal">0.00</strong></div>
-        <div><span>إجمالي تكلفة الشركة</span><strong id="epReportCompanyTotal">0.00</strong></div>
+    <section class="ep-report-params">
+        <strong>معايير التقرير</strong>
+        <span id="epReportParamsText">كل الفترات</span>
     </section>
 
-    <section class="ep-grid-wrap">
-        <h2>الموظفون المشتركون</h2>
+    <section class="ep-report-kpis">
+        <article><span>عدد الاشتراكات</span><strong id="epReportSubscriptionCount">0</strong></article>
+        <article class="success"><span>نشط</span><strong id="epReportActiveCount">0</strong></article>
+        <article class="warning"><span>منتهي</span><strong id="epReportExpiredCount">0</strong></article>
+        <article class="danger"><span>ملغي/متوقف</span><strong id="epReportCancelledCount">0</strong></article>
+        <article><span>خصم الموظفين</span><strong id="epReportEmployeeTotal">0.00</strong></article>
+        <article><span>تكلفة الشركة</span><strong id="epReportCompanyTotal">0.00</strong></article>
+        <article class="net"><span>مستحق شركة التأمين</span><strong id="epReportPayableTotal">0.00</strong></article>
+    </section>
+
+    <section class="ep-report-card">
+        <h2>1. اشتراكات التأمين الطبي للموظفين</h2>
         <table class="ep-table">
-            <thead><tr><th>الموظف</th><th>الشركة</th><th>الخطة</th><th>البداية</th><th>النهاية</th><th>التكلفة</th><th>خصم الموظف</th><th>تكلفة الشركة</th><th>الحالة</th></tr></thead>
+            <thead><tr><th>الموظف</th><th>الفرع</th><th>الإدارة</th><th>الشركة</th><th>الخطة</th><th>الوثيقة</th><th>البطاقة</th><th>البداية</th><th>النهاية</th><th>التكلفة</th><th>خصم الموظف</th><th>تكلفة الشركة</th><th>الحالة</th></tr></thead>
             <tbody id="epSubscriptionsReportRows"></tbody>
         </table>
     </section>
 
-    <section class="ep-grid-wrap">
-        <h2>خصومات التأمين المحفوظة في المسير</h2>
+    <section class="ep-report-card">
+        <h2>2. حالات التأمين النشط والمنتهي والملغي</h2>
         <table class="ep-table">
-            <thead><tr><th>الموظف</th><th>الخطة</th><th>من</th><th>إلى</th><th>خصم الموظف</th><th>تكلفة الشركة</th></tr></thead>
+            <thead><tr><th>الحالة</th><th>العدد</th><th>إجمالي التكلفة الشهرية</th><th>خصم الموظفين</th><th>تكلفة الشركة</th></tr></thead>
+            <tbody id="epStatusReportRows"></tbody>
+        </table>
+    </section>
+
+    <section class="ep-report-card">
+        <h2>3. خصومات التأمين الشهرية في المسير</h2>
+        <table class="ep-table">
+            <thead><tr><th>الموظف</th><th>الفرع</th><th>الإدارة</th><th>الشركة</th><th>الخطة</th><th>الفترة</th><th>خصم الموظف</th><th>تكلفة الشركة</th><th>حالة المسير</th></tr></thead>
             <tbody id="epDeductionsReportRows"></tbody>
         </table>
     </section>
+
+    <section class="ep-report-card">
+        <h2>4. ملخص مساهمة الشركة</h2>
+        <table class="ep-table">
+            <thead><tr><th>شركة التأمين</th><th>عدد الموظفين</th><th>خصم الموظفين</th><th>مساهمة الشركة</th><th>الإجمالي المستحق</th></tr></thead>
+            <tbody id="epCompanyContributionRows"></tbody>
+        </table>
+    </section>
+
+    <section class="ep-report-card">
+        <h2>5. ملخص مستحق شركات التأمين</h2>
+        <table class="ep-table">
+            <thead><tr><th>شركة التأمين</th><th>حساب الاستحقاق</th><th>خصم الموظفين</th><th>مساهمة الشركة</th><th>مستحق المسير</th><th>صافي القيد المرحل</th><th>الفرق</th></tr></thead>
+            <tbody id="epPayableSummaryRows"></tbody>
+        </table>
+    </section>
+
+    <section class="ep-report-card">
+        <h2>6. تكامل التأمين الطبي مع فترة المسير والقيد</h2>
+        <table class="ep-table">
+            <thead><tr><th>الموظف</th><th>الفترة</th><th>الشركة</th><th>خصم الموظف</th><th>تكلفة الشركة</th><th>صافي الراتب</th><th>حالة المسير</th><th>رقم القيد</th><th>مدين القيد</th><th>دائن القيد</th><th>فرق القيد</th></tr></thead>
+            <tbody id="epPayrollIntegrationRows"></tbody>
+        </table>
+    </section>
     <div class="ep-message" id="epMessage"></div>
+    <div class="ep-loading-shade" id="epLoadingShade" hidden>
+        <div><i class="fas fa-spinner fa-spin"></i><span id="epLoadingText">جار تحميل التقرير...</span></div>
+    </div>
 </main>
 

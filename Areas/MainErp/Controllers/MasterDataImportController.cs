@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Web;
 using System.Web.Mvc;
 using MyERP.Areas.MainErp.Infrastructure;
@@ -13,10 +15,12 @@ namespace MyERP.Areas.MainErp.Controllers
     public class MasterDataImportController : MainErpControllerBase
     {
         private const string PreviewSessionKey = "MainErp.MasterDataImport.Preview";
+        private const string LastImportReviewSessionKey = "MainErp.MasterDataImport.LastReview";
         private readonly ExcelImportReader _reader = new ExcelImportReader();
 
         public ActionResult Index(string entityType)
         {
+            ApplySafeMasterImportCulture(entityType);
             if (!CanUseImport())
             {
                 return new HttpStatusCodeResult(403, "Only MainERP administrators can use master data import.");
@@ -26,7 +30,8 @@ namespace MyERP.Areas.MainErp.Controllers
             ViewBag.CurrentDatabase = MainErpDebugDatabaseOverride.GetDisplayDatabaseName();
             ViewBag.Title = "Master Data Import / استيراد الملفات الأساسية";
             var preview = Session[PreviewSessionKey] as MasterDataImportPreview;
-            var model = BuildIndexModel(preview);
+            ApplySafeMasterImportCulture(preview == null ? entityType : preview.EntityType);
+            var model = BuildIndexModel(preview, Session[LastImportReviewSessionKey] as JournalImportReviewSnapshotViewModel);
             if (preview == null && IsSupportedEntity(entityType))
             {
                 model.EntityType = entityType;
@@ -39,6 +44,7 @@ namespace MyERP.Areas.MainErp.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Preview(string entityType, HttpPostedFileBase excelFile, bool stopOnAnyError = true, string importMode = MasterDataImportMode.Merge, bool autoBalanceOpening = false)
         {
+            ApplySafeMasterImportCulture(entityType);
             if (!CanUseImport())
             {
                 return new HttpStatusCodeResult(403, "Only MainERP administrators can use master data import.");
@@ -86,16 +92,20 @@ namespace MyERP.Areas.MainErp.Controllers
                     var journalPreview = new MasterDataImportPreview
                     {
                         EntityType = entityType,
-                        FileName = string.Join(", ", tempFiles.Keys),
+                        FileName = BuildPreviewFileName(tempFiles.Keys),
                         ImportMode = importMode,
                         JournalRows = journalRows,
                         FileHashes = fileHashes,
+                        WorksheetDiagnostics = _reader.LastWorksheetDiagnostics == null
+                            ? new List<MasterDataImportWorksheetDiagnosticViewModel>()
+                            : _reader.LastWorksheetDiagnostics.ToList(),
                         AutoBalanceOpening = autoBalanceOpening
                     };
 
                     journalPreview.JournalRows = CreateJournalEntryService().Validate(journalPreview);
                     Session[PreviewSessionKey] = journalPreview;
-                    var journalModel = BuildIndexModel(journalPreview);
+                    TempData["ImportMessage"] = "تمت المعاينة بنجاح. الملفات: " + tempFiles.Count + "، الصفوف: " + journalPreview.JournalRows.Count + ".";
+                    var journalModel = BuildIndexModel(journalPreview, Session[LastImportReviewSessionKey] as JournalImportReviewSnapshotViewModel);
                     journalModel.StopOnAnyError = stopOnAnyError;
                     journalModel.AutoBalanceOpening = autoBalanceOpening;
                     ViewBag.ActiveScreen = "master-data-import";
@@ -114,11 +124,15 @@ namespace MyERP.Areas.MainErp.Controllers
                     EntityType = entityType,
                     FileName = tempFiles.First().Key,
                     ImportMode = importMode,
-                    Rows = rows
+                    Rows = rows,
+                    WorksheetDiagnostics = _reader.LastWorksheetDiagnostics == null
+                        ? new List<MasterDataImportWorksheetDiagnosticViewModel>()
+                        : _reader.LastWorksheetDiagnostics.ToList()
                 };
 
                 Session[PreviewSessionKey] = masterPreview;
-                var masterModel = BuildIndexModel(masterPreview);
+                TempData["ImportMessage"] = "تمت المعاينة بنجاح. الملفات: " + tempFiles.Count + "، الصفوف: " + masterPreview.Rows.Count + ".";
+                var masterModel = BuildIndexModel(masterPreview, Session[LastImportReviewSessionKey] as JournalImportReviewSnapshotViewModel);
                 masterModel.StopOnAnyError = stopOnAnyError;
                 masterModel.ImportMode = importMode;
                 ViewBag.ActiveScreen = "master-data-import";
@@ -128,8 +142,8 @@ namespace MyERP.Areas.MainErp.Controllers
             }
             catch (Exception ex)
             {
-                TempData["ImportError"] = ex.Message;
-                return RedirectToAction("Index");
+                TempData["ImportError"] = "Preview failed: " + ex.Message;
+                return RedirectToAction("Index", new { entityType = entityType });
             }
             finally
             {
@@ -147,12 +161,14 @@ namespace MyERP.Areas.MainErp.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Import(bool stopOnAnyError = true, bool autoBalanceOpening = false)
         {
+            ApplySafeMasterImportCulture(null);
             if (!CanUseImport())
             {
                 return new HttpStatusCodeResult(403, "Only MainERP administrators can use master data import.");
             }
 
             var preview = Session[PreviewSessionKey] as MasterDataImportPreview;
+            ApplySafeMasterImportCulture(preview == null ? null : preview.EntityType);
             if (preview == null)
             {
                 TempData["ImportError"] = "Preview the Excel file before importing.";
@@ -169,6 +185,10 @@ namespace MyERP.Areas.MainErp.Controllers
                         ? CreateChartOfAccountsService().Import(preview, userName, stopOnAnyError, preview.ImportMode)
                         : CreateAccountLinkedMasterImportService().Import(preview, MainErpUserContext, stopOnAnyError);
                 TempData["ImportMessage"] = result.Message + " Batch #" + result.BatchId + ". Success: " + result.SuccessRows + ", Failed: " + result.FailedRows + ".";
+                if (result.ReviewSnapshot != null && result.ReviewSnapshot.Items.Count > 0)
+                {
+                    Session[LastImportReviewSessionKey] = result.ReviewSnapshot;
+                }
                 if (result.SuccessRows > 0)
                 {
                     Session.Remove(PreviewSessionKey);
@@ -186,6 +206,7 @@ namespace MyERP.Areas.MainErp.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult RollbackBatch(int batchId)
         {
+            ApplySafeMasterImportCulture(null);
             if (!CanUseImport())
             {
                 return new HttpStatusCodeResult(403, "Only MainERP administrators can rollback master data imports.");
@@ -205,8 +226,65 @@ namespace MyERP.Areas.MainErp.Controllers
             return RedirectToAction("Index");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ReviewBatch(int batchId)
+        {
+            ApplySafeMasterImportCulture(null);
+            if (!CanUseImport())
+            {
+                return new HttpStatusCodeResult(403, "Only MainERP administrators can review import batches.");
+            }
+
+            try
+            {
+                var review = CreateJournalEntryService().GetReviewSnapshot(batchId);
+                if (review == null || review.Items == null || review.Items.Count == 0)
+                {
+                    TempData["ImportError"] = "لا توجد مراجعة محفوظة لهذه الدفعة. المراجعة الدائمة متاحة للدفعات الجديدة بعد هذا التحديث.";
+                    Session.Remove(LastImportReviewSessionKey);
+                }
+                else
+                {
+                    Session[LastImportReviewSessionKey] = review;
+                    TempData["ImportMessage"] = "تم تحميل مراجعة الدفعة #" + batchId + ".";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["ImportError"] = "تعذر تحميل مراجعة الدفعة. " + ex.Message;
+            }
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult SyncOperationalMasters()
+        {
+            ApplySafeMasterImportCulture(null);
+            if (!CanUseImport())
+            {
+                return new HttpStatusCodeResult(403, "Only MainERP administrators can synchronize operational master records.");
+            }
+
+            try
+            {
+                var result = CreateChartOfAccountsService().SyncOperationalMasterRecordsFromExistingChart(MainErpUserContext == null ? string.Empty : MainErpUserContext.UserName);
+                TempData["ImportMessage"] = result.Message + " Batch #" + result.BatchId + ".";
+                Session.Remove(PreviewSessionKey);
+            }
+            catch (Exception ex)
+            {
+                TempData["ImportError"] = "Operational master sync failed and was rolled back. " + ex.Message;
+            }
+
+            return RedirectToAction("Index", new { entityType = MasterDataImportEntityType.ChartOfAccounts });
+        }
+
         public ActionResult DownloadTemplate(string entityType)
         {
+            ApplySafeMasterImportCulture(entityType);
             if (!CanUseImport())
             {
                 return new HttpStatusCodeResult(403, "Only MainERP administrators can use master data import.");
@@ -230,6 +308,7 @@ namespace MyERP.Areas.MainErp.Controllers
 
         public ActionResult DownloadErrors()
         {
+            ApplySafeMasterImportCulture(null);
             if (!CanUseImport())
             {
                 return new HttpStatusCodeResult(403, "Only MainERP administrators can use master data import.");
@@ -254,10 +333,11 @@ namespace MyERP.Areas.MainErp.Controllers
             return MainErpUserContext != null && MainErpUserContext.IsAdmin;
         }
 
-        private static MasterDataImportIndexViewModel BuildIndexModel(MasterDataImportPreview preview)
+        private static MasterDataImportIndexViewModel BuildIndexModel(MasterDataImportPreview preview, JournalImportReviewSnapshotViewModel lastImportReview)
         {
             var model = new MasterDataImportIndexViewModel();
             model.ImportBatches = CreateChartOfAccountsService().GetRecentBatches(8);
+            model.LastImportReview = lastImportReview;
             if (preview != null)
             {
                 model.EntityType = preview.EntityType;
@@ -266,9 +346,45 @@ namespace MyERP.Areas.MainErp.Controllers
                 model.AutoBalanceOpening = preview.AutoBalanceOpening;
                 model.Rows = preview.Rows;
                 model.JournalRows = preview.JournalRows;
+                model.WorksheetDiagnostics = preview.WorksheetDiagnostics;
+                model.CurrentReviewItems = BuildCurrentReviewItems(preview);
             }
 
             return model;
+        }
+
+        private static IList<JournalImportReviewItemViewModel> BuildCurrentReviewItems(MasterDataImportPreview preview)
+        {
+            if (preview == null || preview.JournalRows == null || preview.JournalRows.Count == 0)
+            {
+                return new List<JournalImportReviewItemViewModel>();
+            }
+
+            return preview.JournalRows
+                .GroupBy(r => new
+                {
+                    FileName = r.FileName ?? string.Empty,
+                    SheetName = r.SheetName ?? string.Empty,
+                    GroupKey = r.GroupKey ?? string.Empty
+                })
+                .Select(group => new JournalImportReviewItemViewModel
+                {
+                    FileName = group.Key.FileName,
+                    SheetName = group.Key.SheetName,
+                    GroupKey = group.Key.GroupKey,
+                    RowCount = group.Count(),
+                    TotalDebit = group.Sum(x => x.Debit),
+                    TotalCredit = group.Sum(x => x.Credit),
+                    Difference = group.Sum(x => x.Debit) - group.Sum(x => x.Credit),
+                    FirstAccountSerial = group.Select(x => x.AccountSerial).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? string.Empty,
+                    LastAccountSerial = group.Select(x => x.AccountSerial).LastOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? string.Empty,
+                    ReviewStatus = group.All(x => x.IsValid) ? "Ready" : "Has errors",
+                    ReviewSource = "Preview"
+                })
+                .OrderBy(x => x.FileName)
+                .ThenBy(x => x.SheetName)
+                .ThenBy(x => x.GroupKey)
+                .ToList();
         }
 
         private static ChartOfAccountsImportService CreateChartOfAccountsService()
@@ -328,11 +444,48 @@ namespace MyERP.Areas.MainErp.Controllers
             return files;
         }
 
+        private static string BuildPreviewFileName(IEnumerable<string> fileNames)
+        {
+            var names = (fileNames ?? Enumerable.Empty<string>())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(Path.GetFileName)
+                .ToList();
+
+            if (names.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            if (names.Count == 1)
+            {
+                return names[0];
+            }
+
+            var first = names[0];
+            var second = names.Count > 1 ? names[1] : null;
+            var remaining = names.Count - (second == null ? 1 : 2);
+            var summary = remaining > 0
+                ? string.Format("{0}, {1} (+{2} more)", first, second, remaining)
+                : string.Format("{0}, {1}", first, second);
+
+            return summary.Length <= 260 ? summary : summary.Substring(0, 260);
+        }
+
         private static bool IsExcelFile(string fileName)
         {
             var extension = Path.GetExtension(fileName);
             return string.Equals(extension, ".xls", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(extension, ".xlsx", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void ApplySafeMasterImportCulture(string entityType)
+        {
+            var culture = (CultureInfo)new CultureInfo("ar-SA").Clone();
+            culture.DateTimeFormat.Calendar = new GregorianCalendar();
+            culture.DateTimeFormat.ShortDatePattern = "yyyy-MM-dd";
+            culture.DateTimeFormat.LongDatePattern = "yyyy-MM-dd";
+            Thread.CurrentThread.CurrentCulture = culture;
+            Thread.CurrentThread.CurrentUICulture = culture;
         }
     }
 }

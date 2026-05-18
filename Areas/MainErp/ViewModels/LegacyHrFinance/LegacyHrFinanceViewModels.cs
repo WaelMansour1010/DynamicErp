@@ -20,6 +20,7 @@ namespace MyERP.Areas.MainErp.ViewModels.LegacyHrFinance
         public string LegacyTable { get; set; }
         public string Warning { get; set; }
         public string SearchText { get; set; }
+        public string EmployeeStatus { get; set; }
         public int Page { get; set; }
         public int PageSize { get; set; }
         public IList<LegacyHrFinanceMetricViewModel> Metrics { get; set; }
@@ -78,6 +79,8 @@ namespace MyERP.Areas.MainErp.ViewModels.LegacyHrFinance
         public bool CanAdd { get; set; }
         public bool CanEdit { get; set; }
         public bool CanDelete { get; set; }
+        public bool CanPrint { get; set; }
+        public bool CanExport { get; set; }
     }
 
     public class LegacyHrFinanceSaveResult

@@ -13,9 +13,11 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
     public class ExcelImportReader
     {
         private static readonly string[] EmptyValues = new[] { null, "" };
+        public IList<MasterDataImportWorksheetDiagnosticViewModel> LastWorksheetDiagnostics { get; private set; }
 
         public IList<MasterDataImportRowViewModel> ReadChartOfAccounts(string filePath)
         {
+            LastWorksheetDiagnostics = new List<MasterDataImportWorksheetDiagnosticViewModel>();
             var table = ReadFirstWorksheet(filePath);
             var rows = new List<MasterDataImportRowViewModel>();
 
@@ -75,6 +77,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
 
         public IList<MasterDataImportRowViewModel> ReadAccountBalanceMasterFile(string filePath, string entityType)
         {
+            LastWorksheetDiagnostics = new List<MasterDataImportWorksheetDiagnosticViewModel>();
             var table = ReadFirstWorksheet(filePath);
             var rows = new List<MasterDataImportRowViewModel>();
             var accountBalanceLayout = LooksLikeLegacyAccountBalanceReport(table);
@@ -149,12 +152,20 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
         public IList<JournalEntryImportRowViewModel> ReadJournalEntries(IDictionary<string, string> filePathsByOriginalName, IDictionary<string, string> fileHashes)
         {
             var rows = new List<JournalEntryImportRowViewModel>();
+            LastWorksheetDiagnostics = new List<MasterDataImportWorksheetDiagnosticViewModel>();
             foreach (var file in filePathsByOriginalName)
             {
                 var fileHash = ComputeFileHash(file.Value);
                 fileHashes[file.Key] = fileHash;
                 foreach (var sheet in ReadWorksheets(file.Value))
                 {
+                    LastWorksheetDiagnostics.Add(BuildWorksheetDiagnostic(file.Key, sheet));
+
+                    if (sheet.IsSkipped)
+                    {
+                        continue;
+                    }
+
                     var hasGroupingColumn = HasAnyColumn(sheet.Table, "Reference No", "ReferenceNo", "Ref No", "Entry No", "EntryNo", "Voucher No", "VoucherNo");
                     for (var i = 0; i < sheet.Table.Rows.Count; i++)
                     {
@@ -174,7 +185,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                         {
                             FileName = file.Key,
                             SheetName = sheet.Name,
-                            RowNumber = i + 2,
+                            RowNumber = sheet.DataStartRowNumber + i,
                             FileHash = fileHash,
                             EntryDateText = entryDateText,
                             EntryDate = ParseDate(entryDateText),
@@ -204,15 +215,24 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
         public IList<JournalEntryImportRowViewModel> ReadOpeningBalances(IDictionary<string, string> filePathsByOriginalName, IDictionary<string, string> fileHashes)
         {
             var rows = new List<JournalEntryImportRowViewModel>();
+            LastWorksheetDiagnostics = new List<MasterDataImportWorksheetDiagnosticViewModel>();
             foreach (var file in filePathsByOriginalName)
             {
                 var fileHash = ComputeFileHash(file.Value);
                 fileHashes[file.Key] = fileHash;
                 foreach (var sheet in ReadWorksheets(file.Value))
                 {
-                    if (LooksLikeLegacyAccountBalanceReport(sheet.Table))
+                    LastWorksheetDiagnostics.Add(BuildWorksheetDiagnostic(file.Key, sheet));
+
+                    if (sheet.IsSkipped)
                     {
-                        ReadLegacyOpeningBalanceSheet(rows, file.Key, fileHash, sheet);
+                        continue;
+                    }
+
+                    var layout = AnalyzeWorksheetLayout(sheet.Table);
+                    if (LooksLikeLegacyAccountBalanceReport(sheet.Table) || (layout.AccountSerialColumnIndex.HasValue && layout.AccountNameColumnIndex.HasValue))
+                    {
+                        ReadLegacyOpeningBalanceSheet(rows, file.Key, fileHash, sheet, layout);
                         continue;
                     }
 
@@ -227,15 +247,17 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                         var debitText = Get(dataRow, "Debit", "ظ…ط¯ظٹظ†");
                         var creditText = Get(dataRow, "Credit", "ط¯ط§ط¦ظ†");
                         var balanceText = Get(dataRow, "Opening Balance", "OpeningBalance", "Balance", "ط§ظ„ط±طµظٹط¯ ط§ظ„ط§ظپطھطھط§ط­ظٹ", "ط±طµظٹط¯ ط§ظپطھطھط§ط­ظٹ", "ط§ظ„ط±طµظٹط¯");
+                        var defaultOpeningDate = GetDefaultOpeningBalanceDate();
                         var row = new JournalEntryImportRowViewModel
                         {
                             FileName = file.Key,
                             SheetName = sheet.Name,
-                            RowNumber = i + 2,
+                            RowNumber = sheet.DataStartRowNumber + i,
                             FileHash = fileHash,
                             IsOpeningBalance = true,
                             GroupKey = "OPENING|" + string.Join(",", filePathsByOriginalName.Keys),
-                            EntryDateText = Get(dataRow, "Entry Date", "Date", "Opening Date", "طھط§ط±ظٹط® ط§ظ„ظ‚ظٹط¯", "طھط§ط±ظٹط® ط§ظ„ط±طµظٹط¯", "طھط§ط±ظٹط®"),
+                            EntryDateText = defaultOpeningDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                            EntryDate = defaultOpeningDate,
                             AccountSerial = Get(dataRow, "Account Serial", "Account_Serial", "ظ…ط³ظ„ط³ظ„ ط§ظ„ط­ط³ط§ط¨", "ط±ظ‚ظ… ط§ظ„ط­ط³ط§ط¨", "ظƒظˆط¯ ط§ظ„ط­ط³ط§ط¨"),
                             AccountName = Get(dataRow, "Account Name", "ط§ط³ظ… ط§ظ„ط­ط³ط§ط¨", "ط§ظ„ط­ط³ط§ط¨"),
                             DebitText = debitText,
@@ -247,7 +269,6 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                             CostCenter = Get(dataRow, "Cost Center", "CostCenter", "ظ…ط±ظƒط² ط§ظ„طھظƒظ„ظپط©")
                         };
 
-                        row.EntryDate = ParseDate(row.EntryDateText) ?? GetDefaultOpeningBalanceDate();
                         row.Debit = ParseDecimal(debitText).GetValueOrDefault();
                         row.Credit = ParseDecimal(creditText).GetValueOrDefault();
                         if (row.Debit == 0m && row.Credit == 0m)
@@ -260,10 +281,12 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                 }
             }
 
+            AttachParsedRowPreviews(rows);
+
             return rows;
         }
 
-        private static void ReadLegacyOpeningBalanceSheet(IList<JournalEntryImportRowViewModel> rows, string fileName, string fileHash, WorksheetData sheet)
+        private static void ReadLegacyOpeningBalanceSheet(IList<JournalEntryImportRowViewModel> rows, string fileName, string fileHash, WorksheetData sheet, DetectedWorksheetLayout layout)
         {
             for (var i = 0; i < sheet.Table.Rows.Count; i++)
             {
@@ -274,7 +297,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                 }
 
                 LegacyOpeningBalanceRow legacyRow;
-                if (!TryReadLegacyOpeningBalanceRow(dataRow, out legacyRow))
+                if (!TryReadLegacyOpeningBalanceRow(dataRow, layout, out legacyRow))
                 {
                     continue;
                 }
@@ -283,7 +306,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                 {
                     FileName = fileName,
                     SheetName = sheet.Name,
-                    RowNumber = i + 2,
+                    RowNumber = sheet.DataStartRowNumber + i,
                     FileHash = fileHash,
                     IsOpeningBalance = true,
                     GroupKey = "OPENING|" + fileName,
@@ -301,17 +324,18 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
             }
         }
 
-        private static bool TryReadLegacyOpeningBalanceRow(DataRow dataRow, out LegacyOpeningBalanceRow result)
+        private static bool TryReadLegacyOpeningBalanceRow(DataRow dataRow, DetectedWorksheetLayout layout, out LegacyOpeningBalanceRow result)
         {
             result = null;
             var cells = dataRow.ItemArray.Select((value, index) => new
             {
                 Index = index,
-                Text = Clean(Convert.ToString(value))
+                Text = Clean(SafeCellText(value))
             }).Where(c => !string.IsNullOrWhiteSpace(c.Text)).ToList();
 
             var serialCandidates = cells.Where(c => LooksLikeAccountSerial(c.Text)).ToList();
             var nameCandidates = cells.Where(c => LooksLikeAccountName(c.Text)).ToList();
+
             if (serialCandidates.Count == 0 || nameCandidates.Count == 0)
             {
                 return false;
@@ -321,10 +345,19 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                 .Select(s => new
                 {
                     Serial = s,
-                    Name = nameCandidates.OrderBy(n => Math.Abs(n.Index - s.Index)).ThenBy(n => n.Index).FirstOrDefault()
+                    Name = nameCandidates
+                        .OrderBy(n => Math.Abs(n.Index - s.Index))
+                        .ThenBy(n => layout == null || !layout.AccountNameColumnIndex.HasValue ? 99 : Math.Abs(n.Index - layout.AccountNameColumnIndex.Value))
+                        .ThenBy(n => n.Index)
+                        .FirstOrDefault(),
+                    Score =
+                        (layout != null && layout.AccountSerialColumnIndex.HasValue ? Math.Max(0, 8 - Math.Abs(s.Index - layout.AccountSerialColumnIndex.Value)) : 0)
                 })
                 .Where(x => x.Name != null)
                 .OrderBy(x => Math.Abs(x.Name.Index - x.Serial.Index))
+                .ThenByDescending(x => x.Score)
+                .ThenBy(x => layout == null || !layout.AccountSerialColumnIndex.HasValue ? 99 : Math.Abs(x.Serial.Index - layout.AccountSerialColumnIndex.Value))
+                .ThenBy(x => layout == null || !layout.AccountNameColumnIndex.HasValue ? 99 : Math.Abs(x.Name.Index - layout.AccountNameColumnIndex.Value))
                 .ThenByDescending(x => x.Serial.Text.Length)
                 .FirstOrDefault();
 
@@ -333,7 +366,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                 return false;
             }
 
-            var balance = FindLegacyBalance(dataRow, best.Serial.Index, best.Name.Index);
+            var balance = FindLegacyBalance(dataRow, best.Serial.Index, best.Name.Index, layout);
             if (balance == null || balance.Value == 0m)
             {
                 return false;
@@ -350,8 +383,23 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
             return true;
         }
 
-        private static LegacyBalanceCandidate FindLegacyBalance(DataRow row, int serialIndex, int nameIndex)
+        private static LegacyBalanceCandidate FindLegacyBalance(DataRow row, int serialIndex, int nameIndex, DetectedWorksheetLayout layout)
         {
+            if (layout != null && layout.BalanceColumnIndex.HasValue)
+            {
+                var balanceText = GetByIndex(row, layout.BalanceColumnIndex.Value);
+                var balanceValue = ParseSignedBalance(balanceText);
+                if (balanceValue.HasValue && balanceValue.Value != 0m)
+                {
+                    return new LegacyBalanceCandidate
+                    {
+                        Text = balanceText,
+                        Value = balanceValue.Value,
+                        Label = FindNearestBalanceLabel(row, layout.BalanceColumnIndex.Value)
+                    };
+                }
+            }
+
             for (var i = 0; i < row.Table.Columns.Count; i++)
             {
                 var label = GetByIndex(row, i);
@@ -370,7 +418,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
 
                     var text = GetByIndex(row, index);
                     var value = ParseSignedBalance(text);
-                    if (value.HasValue && value.Value != 0m && !LooksLikeAccountSerial(text))
+                    if (value.HasValue && value.Value != 0m)
                     {
                         return new LegacyBalanceCandidate { Text = text, Value = value.Value, Label = label };
                     }
@@ -392,7 +440,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
 
                 var text = GetByIndex(row, i);
                 var value = ParseSignedBalance(text);
-                if (value.HasValue && value.Value != 0m && !LooksLikeAccountSerial(text))
+                if (value.HasValue && value.Value != 0m)
                 {
                     return new LegacyBalanceCandidate { Text = text, Value = value.Value, Label = FindNearestBalanceLabel(row, i) };
                 }
@@ -400,7 +448,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
 
             return row.Table.Columns.Cast<DataColumn>()
                 .Select((column, index) => new { Index = index, Text = GetByIndex(row, index), Value = ParseSignedBalance(GetByIndex(row, index)) })
-                .Where(x => x.Index != serialIndex && x.Index != nameIndex && x.Value.HasValue && x.Value.Value != 0m && !LooksLikeAccountSerial(x.Text))
+                .Where(x => x.Index != serialIndex && x.Index != nameIndex && x.Value.HasValue && x.Value.Value != 0m)
                 .OrderBy(x => Math.Abs(x.Index - nameIndex))
                 .Select(x => new LegacyBalanceCandidate { Text = x.Text, Value = x.Value.Value, Label = FindNearestBalanceLabel(row, x.Index) })
                 .FirstOrDefault();
@@ -468,49 +516,42 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
             using (var stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (var reader = ExcelReaderFactory.CreateReader(stream))
             {
-                do
+                var dataSet = reader.AsDataSet(new ExcelDataSetConfiguration
                 {
-                    var table = new DataTable();
-                    var headersReady = false;
-                    var columnCount = reader.FieldCount;
-                    while (reader.Read())
+                    ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = false }
+                });
+
+                foreach (DataTable rawSheet in dataSet.Tables)
+                {
+                    var rawUsedRows = CountNonEmptyRows(rawSheet);
+                    var rawUsedColumns = CountUsedColumns(rawSheet);
+                    var headerRowIndex = DetectHeaderRow(rawSheet);
+                    var promoted = PromoteWorksheet(rawSheet, headerRowIndex);
+                    var layout = AnalyzeWorksheetLayout(promoted ?? rawSheet);
+
+                    if (promoted == null)
                     {
-                        if (!headersReady)
-                        {
-                            for (var i = 0; i < columnCount; i++)
-                            {
-                                var header = SafeCellText(reader.GetValue(i));
-                                if (string.IsNullOrWhiteSpace(header))
-                                {
-                                    header = "Column" + (i + 1).ToString(CultureInfo.InvariantCulture);
-                                }
-
-                                if (table.Columns.Contains(header))
-                                {
-                                    header = header + "_" + (i + 1).ToString(CultureInfo.InvariantCulture);
-                                }
-
-                                table.Columns.Add(header, typeof(string));
-                            }
-
-                            headersReady = true;
-                            continue;
-                        }
-
-                        var row = table.NewRow();
-                        for (var i = 0; i < columnCount; i++)
-                        {
-                            row[i] = SafeCellText(reader.GetValue(i));
-                        }
-
-                        table.Rows.Add(row);
+                        continue;
                     }
 
-                    if (headersReady)
+                    worksheets.Add(new WorksheetData
                     {
-                        worksheets.Add(new WorksheetData { Name = reader.Name, Table = table });
-                    }
-                } while (reader.NextResult());
+                        Name = rawSheet.TableName,
+                        Table = promoted,
+                        UsedRange = BuildUsedRange(rawUsedRows, rawUsedColumns),
+                        HeaderRowNumber = headerRowIndex >= 0 ? headerRowIndex + 1 : 1,
+                        DataStartRowNumber = headerRowIndex >= 0 ? headerRowIndex + 2 : 2,
+                        DataRowsCount = promoted.Rows.Count,
+                        SkipReason = promoted.Rows.Count == 0 ? "No data rows detected after the header row." : string.Empty,
+                        DetectedAccountSerialColumn = layout.AccountSerialColumnIndex.HasValue ? "Column " + (layout.AccountSerialColumnIndex.Value + 1).ToString(CultureInfo.InvariantCulture) : string.Empty,
+                        DetectedAccountNameColumn = layout.AccountNameColumnIndex.HasValue ? "Column " + (layout.AccountNameColumnIndex.Value + 1).ToString(CultureInfo.InvariantCulture) : string.Empty,
+                        DetectedBalanceColumn = layout.BalanceColumnIndex.HasValue ? "Column " + (layout.BalanceColumnIndex.Value + 1).ToString(CultureInfo.InvariantCulture) : string.Empty,
+                        DetectedDebitColumn = layout.DebitColumnIndex.HasValue ? "Column " + (layout.DebitColumnIndex.Value + 1).ToString(CultureInfo.InvariantCulture) : string.Empty,
+                        DetectedCreditColumn = layout.CreditColumnIndex.HasValue ? "Column " + (layout.CreditColumnIndex.Value + 1).ToString(CultureInfo.InvariantCulture) : string.Empty,
+                        DetectedAmountColumns = BuildDetectedAmountColumns(layout),
+                        ColumnDiagnostics = layout.ColumnDiagnostics
+                    });
+                }
 
                 if (worksheets.Count == 0)
                 {
@@ -553,7 +594,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                     continue;
                 }
 
-                return Clean(Convert.ToString(row[column]));
+                return Clean(SafeCellText(row[column]));
             }
 
             return string.Empty;
@@ -572,7 +613,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                 ParentAccountSerial = level.HasValue && level.Value > 1 && lastSerialByLevel.ContainsKey(level.Value - 1)
                     ? lastSerialByLevel[level.Value - 1]
                     : string.Empty,
-                IsFinalAccount = accountKind.IndexOf("ظپط±ط¹ظٹ", StringComparison.OrdinalIgnoreCase) >= 0,
+                IsFinalAccount = IsFinalLegacyTawjerAccountKind(accountKind),
                 Level = level,
                 CurrencyCode = "1"
             };
@@ -598,7 +639,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
                 var kind = GetByIndex(row, 3);
                 var name = GetByIndex(row, 5);
                 var serial = GetByIndex(row, 6);
-                if ((kind == "ط±ط¦ظٹط³ظٹ" || kind == "ظپط±ط¹ظٹ") && !string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(serial))
+                if (IsLegacyTawjerAccountKind(kind) && !string.IsNullOrWhiteSpace(name) && LooksLikeAccountSerial(serial))
                 {
                     hits++;
                 }
@@ -626,9 +667,28 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
             return hits >= 2;
         }
 
+        private static bool IsLegacyTawjerAccountKind(string value)
+        {
+            value = Clean(value);
+            return value == "\u0631\u0626\u064a\u0633\u064a"
+                || value == "\u0641\u0631\u0639\u064a"
+                || value.IndexOf("\u0631\u0626\u064a\u0633", StringComparison.OrdinalIgnoreCase) >= 0
+                || value.IndexOf("\u0641\u0631\u0639", StringComparison.OrdinalIgnoreCase) >= 0
+                || value.IndexOf("main", StringComparison.OrdinalIgnoreCase) >= 0
+                || value.IndexOf("sub", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool IsFinalLegacyTawjerAccountKind(string value)
+        {
+            value = Clean(value);
+            return value == "\u0641\u0631\u0639\u064a"
+                || value.IndexOf("\u0641\u0631\u0639", StringComparison.OrdinalIgnoreCase) >= 0
+                || value.IndexOf("sub", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         private static bool LooksLikeLegacyBalanceDataRow(DataRow row)
         {
-            var cells = row.ItemArray.Select((value, index) => new { Index = index, Text = Clean(Convert.ToString(value)) })
+            var cells = row.ItemArray.Select((value, index) => new { Index = index, Text = Clean(SafeCellText(value)) })
                 .Where(c => !string.IsNullOrWhiteSpace(c.Text))
                 .ToList();
             var serials = cells.Where(c => LooksLikeAccountSerial(c.Text)).ToList();
@@ -643,14 +703,666 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
             return hasNearbyName && hasAmount;
         }
 
+        private static MasterDataImportWorksheetDiagnosticViewModel BuildWorksheetDiagnostic(string fileName, WorksheetData sheet)
+        {
+            return new MasterDataImportWorksheetDiagnosticViewModel
+            {
+                FileName = fileName,
+                SheetName = sheet.Name,
+                UsedRange = sheet.UsedRange,
+                HeaderRowNumber = sheet.HeaderRowNumber,
+                DataRowsCount = sheet.DataRowsCount,
+                SkipReason = sheet.SkipReason,
+                DetectedAccountSerialColumn = sheet.DetectedAccountSerialColumn,
+                DetectedAccountNameColumn = sheet.DetectedAccountNameColumn,
+                DetectedBalanceColumn = sheet.DetectedBalanceColumn,
+                DetectedDebitColumn = sheet.DetectedDebitColumn,
+                DetectedCreditColumn = sheet.DetectedCreditColumn,
+                DetectedAmountColumns = sheet.DetectedAmountColumns,
+                ColumnDiagnostics = sheet.ColumnDiagnostics,
+                ParsedRowPreview = new List<string>()
+            };
+        }
+
+        private static DetectedWorksheetLayout AnalyzeWorksheetLayout(DataTable table)
+        {
+            var profiles = new List<DetectedColumnProfile>();
+            for (var i = 0; i < table.Columns.Count; i++)
+            {
+                profiles.Add(BuildColumnProfile(table, i));
+            }
+
+            var serialProfile = profiles
+                .Where(p => p.SerialScore >= 40m)
+                .OrderByDescending(p => p.SerialScore)
+                .ThenBy(p => p.DecimalOrCommaRatio)
+                .ThenBy(p => p.ZeroRatio)
+                .FirstOrDefault();
+
+            var nameProfile = profiles
+                .Where(p => serialProfile == null || p.ColumnIndex != serialProfile.ColumnIndex)
+                .Select(p => new { Profile = p, Score = p.NameScore + GetNameProximityBoost(serialProfile, p) })
+                .Where(x => x.Score >= 20m)
+                .OrderByDescending(x => x.Score)
+                .ThenBy(x => serialProfile == null ? 99 : Math.Abs(x.Profile.ColumnIndex - serialProfile.ColumnIndex))
+                .Select(x => x.Profile)
+                .FirstOrDefault();
+
+            var amountProfiles = profiles
+                .Where(p => (serialProfile == null || p.ColumnIndex != serialProfile.ColumnIndex)
+                    && (nameProfile == null || p.ColumnIndex != nameProfile.ColumnIndex))
+                .ToList();
+
+            var debitProfile = amountProfiles
+                .OrderByDescending(p => p.DebitScore + (ContainsAnyNormalized(p.HeaderText, "debit", "مدين") ? 30m : 0m))
+                .FirstOrDefault(p => p.DebitScore >= 20m);
+
+            var creditProfile = amountProfiles
+                .Where(p => debitProfile == null || p.ColumnIndex != debitProfile.ColumnIndex)
+                .OrderByDescending(p => p.CreditScore + (ContainsAnyNormalized(p.HeaderText, "credit", "دائن") ? 30m : 0m))
+                .FirstOrDefault(p => p.CreditScore >= 20m);
+
+            var balanceProfile = amountProfiles
+                .Where(p => (debitProfile == null || p.ColumnIndex != debitProfile.ColumnIndex)
+                    && (creditProfile == null || p.ColumnIndex != creditProfile.ColumnIndex))
+                .OrderByDescending(p => p.BalanceScore + (ContainsAnyNormalized(p.HeaderText, "balance", "رصيد") ? 30m : 0m))
+                .FirstOrDefault(p => p.BalanceScore >= 20m);
+
+            ApplyFinalColumnDecisions(profiles, serialProfile, nameProfile, balanceProfile, debitProfile, creditProfile);
+
+            return new DetectedWorksheetLayout
+            {
+                AccountSerialColumnIndex = serialProfile == null ? (int?)null : serialProfile.ColumnIndex,
+                AccountNameColumnIndex = nameProfile == null ? (int?)null : nameProfile.ColumnIndex,
+                BalanceColumnIndex = balanceProfile == null ? (int?)null : balanceProfile.ColumnIndex,
+                DebitColumnIndex = debitProfile == null ? (int?)null : debitProfile.ColumnIndex,
+                CreditColumnIndex = creditProfile == null ? (int?)null : creditProfile.ColumnIndex,
+                ColumnDiagnostics = profiles.Select(p => p.ToDiagnosticViewModel()).ToList()
+            };
+        }
+
+        private static DetectedColumnProfile BuildColumnProfile(DataTable table, int columnIndex)
+        {
+            var values = new List<string>();
+            foreach (DataRow row in table.Rows)
+            {
+                var text = GetByIndex(row, columnIndex);
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    continue;
+                }
+
+                values.Add(text);
+            }
+
+            var sampleValues = values.Take(5).ToList();
+            var nonEmptyCount = values.Count;
+            var distinctCount = values.Distinct(StringComparer.OrdinalIgnoreCase).Count();
+            var digitOnlyCount = values.Count(IsIntegerLikeCode);
+            var decimalOrCommaCount = values.Count(IsAmountLike);
+            var zeroCount = values.Count(IsZeroLike);
+            var serialCandidates = values.Where(IsIntegerLikeCode).ToList();
+            var serialLengthHits = serialCandidates.Count(v => v.Length >= 6 && v.Length <= 12);
+            var lengthConsistency = serialCandidates.Count == 0 ? 0m : serialCandidates.GroupBy(v => v.Length).Max(g => g.Count()) / (decimal)serialCandidates.Count;
+            var digitOnlyRatio = nonEmptyCount == 0 ? 0m : digitOnlyCount / (decimal)nonEmptyCount;
+            var decimalOrCommaRatio = nonEmptyCount == 0 ? 0m : decimalOrCommaCount / (decimal)nonEmptyCount;
+            var zeroRatio = nonEmptyCount == 0 ? 0m : zeroCount / (decimal)nonEmptyCount;
+            var avgLength = values.Count == 0 ? 0m : (decimal)values.Average(v => v.Length);
+            var hasArabic = values.Any(ContainsArabicLetters);
+            var hasLatinText = values.Any(ContainsLatinLetters);
+
+            var serialScore = 0m;
+            serialScore += digitOnlyRatio * 50m;
+            serialScore += lengthConsistency * 15m;
+            serialScore += serialLengthHits > 0 ? 15m : 0m;
+            serialScore += distinctCount >= 4 ? 10m : 0m;
+            serialScore -= decimalOrCommaRatio * 60m;
+            serialScore -= zeroRatio * 35m;
+            serialScore -= avgLength < 4m ? 10m : 0m;
+            serialScore -= hasArabic ? 5m : 0m;
+
+            var textRatio = nonEmptyCount == 0 ? 0m : values.Count(v => !IsIntegerLikeCode(v) && ContainsLetters(v)) / (decimal)nonEmptyCount;
+            var arabicRatio = nonEmptyCount == 0 ? 0m : values.Count(ContainsArabicLetters) / (decimal)nonEmptyCount;
+            var balanceLabelRatio = nonEmptyCount == 0 ? 0m : values.Count(v => IsDebitLabel(v) || IsCreditLabel(v)) / (decimal)nonEmptyCount;
+            var nameScore = 0m;
+            nameScore += textRatio * 50m;
+            nameScore += arabicRatio * 30m;
+            nameScore += distinctCount >= 4 ? 10m : 0m;
+            nameScore -= digitOnlyRatio * 40m;
+            nameScore -= decimalOrCommaRatio * 10m;
+            nameScore -= balanceLabelRatio * 80m;
+            nameScore += hasLatinText && !hasArabic ? 5m : 0m;
+
+            var amountRatio = nonEmptyCount == 0 ? 0m : values.Count(IsAmountLike) / (decimal)nonEmptyCount;
+            var balanceScore = amountRatio * 60m + decimalOrCommaRatio * 10m + zeroRatio * 5m;
+            var debitScore = balanceScore + (table.Rows.Cast<DataRow>().Any(r => IsDebitLabel(GetByIndex(r, columnIndex - 1)) || IsDebitLabel(GetByIndex(r, columnIndex + 1))) ? 15m : 0m);
+            var creditScore = balanceScore + (table.Rows.Cast<DataRow>().Any(r => IsCreditLabel(GetByIndex(r, columnIndex - 1)) || IsCreditLabel(GetByIndex(r, columnIndex + 1))) ? 15m : 0m);
+
+            var header = Clean(table.Columns[columnIndex].ColumnName);
+            var hasSerialLookingHeader = false;
+            if (!string.IsNullOrWhiteSpace(header))
+            {
+                if (ContainsAnyNormalized(header, "account", "serial", "رقم", "حساب", "سلسل"))
+                {
+                    hasSerialLookingHeader = true;
+                    serialScore += 20m;
+                }
+
+                if (ContainsAnyNormalized(header, "name", "اسم", "account"))
+                {
+                    nameScore += 20m;
+                }
+
+                if (ContainsAnyNormalized(header, "balance", "رصيد"))
+                {
+                    balanceScore += 20m;
+                }
+
+                if (ContainsAnyNormalized(header, "debit", "مدين"))
+                {
+                    debitScore += 20m;
+                }
+
+                if (ContainsAnyNormalized(header, "credit", "دائن"))
+                {
+                    creditScore += 20m;
+                }
+            }
+
+            if (hasSerialLookingHeader && (decimalOrCommaRatio > 0.45m || zeroRatio > 0.6m || digitOnlyRatio < 0.35m))
+            {
+                serialScore -= 35m;
+            }
+
+            return new DetectedColumnProfile
+            {
+                ColumnIndex = columnIndex,
+                HeaderText = header,
+                SampleValues = string.Join(" | ", sampleValues),
+                DigitOnlyRatio = digitOnlyRatio,
+                DecimalOrCommaRatio = decimalOrCommaRatio,
+                ZeroRatio = zeroRatio,
+                DistinctCount = distinctCount,
+                NonEmptyCount = nonEmptyCount,
+                FinalScore = Math.Max(Math.Max(serialScore, nameScore), Math.Max(Math.Max(balanceScore, debitScore), creditScore)),
+                AcceptedRole = string.Empty,
+                Decision = "Rejected",
+                Reason = string.Empty,
+                SerialScore = serialScore,
+                NameScore = nameScore,
+                BalanceScore = balanceScore,
+                DebitScore = debitScore,
+                CreditScore = creditScore
+            };
+        }
+
+        private static decimal GetNameProximityBoost(DetectedColumnProfile serialProfile, DetectedColumnProfile profile)
+        {
+            if (serialProfile == null)
+            {
+                return 0m;
+            }
+
+            var distance = Math.Abs(profile.ColumnIndex - serialProfile.ColumnIndex);
+            if (distance == 0)
+            {
+                return -100m;
+            }
+
+            if (distance == 1)
+            {
+                return 25m;
+            }
+
+            if (distance == 2)
+            {
+                return 15m;
+            }
+
+            if (distance == 3)
+            {
+                return 8m;
+            }
+
+            return -Math.Min(20m, distance * 2m);
+        }
+
+        private static void ApplyFinalColumnDecisions(
+            IList<DetectedColumnProfile> profiles,
+            DetectedColumnProfile serialProfile,
+            DetectedColumnProfile nameProfile,
+            DetectedColumnProfile balanceProfile,
+            DetectedColumnProfile debitProfile,
+            DetectedColumnProfile creditProfile)
+        {
+            foreach (var profile in profiles)
+            {
+                profile.Decision = "Rejected";
+                profile.AcceptedRole = string.Empty;
+                profile.Reason = BuildDiagnosticReason(profile, serialProfile, nameProfile, balanceProfile, debitProfile, creditProfile);
+
+                if (serialProfile != null && profile.ColumnIndex == serialProfile.ColumnIndex)
+                {
+                    profile.Decision = "Accepted";
+                    profile.AcceptedRole = "AccountSerial";
+                }
+                else if (nameProfile != null && profile.ColumnIndex == nameProfile.ColumnIndex)
+                {
+                    profile.Decision = "Accepted";
+                    profile.AcceptedRole = "AccountName";
+                }
+                else if (debitProfile != null && profile.ColumnIndex == debitProfile.ColumnIndex)
+                {
+                    profile.Decision = "Accepted";
+                    profile.AcceptedRole = "Debit";
+                }
+                else if (creditProfile != null && profile.ColumnIndex == creditProfile.ColumnIndex)
+                {
+                    profile.Decision = "Accepted";
+                    profile.AcceptedRole = "Credit";
+                }
+                else if (balanceProfile != null && profile.ColumnIndex == balanceProfile.ColumnIndex)
+                {
+                    profile.Decision = "Accepted";
+                    profile.AcceptedRole = "Balance";
+                }
+            }
+        }
+
+        private static string BuildDiagnosticReason(
+            DetectedColumnProfile profile,
+            DetectedColumnProfile serialProfile,
+            DetectedColumnProfile nameProfile,
+            DetectedColumnProfile balanceProfile,
+            DetectedColumnProfile debitProfile,
+            DetectedColumnProfile creditProfile)
+        {
+            var notes = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(profile.HeaderText)
+                && ContainsAnyNormalized(profile.HeaderText, "account", "serial", "رقم", "حساب", "سلسل")
+                && (profile.DecimalOrCommaRatio > 0.45m || profile.ZeroRatio > 0.6m || profile.DigitOnlyRatio < 0.35m))
+            {
+                notes.Add("Rejected false account header because values look like amounts or zeros.");
+            }
+
+            if (serialProfile != null && profile.ColumnIndex == serialProfile.ColumnIndex)
+            {
+                notes.Add("Detected as account serial by repeated digit-only code pattern.");
+            }
+            else if (nameProfile != null && profile.ColumnIndex == nameProfile.ColumnIndex)
+            {
+                notes.Add("Detected as account name by nearest Arabic/text column beside the serial.");
+            }
+            else if (debitProfile != null && profile.ColumnIndex == debitProfile.ColumnIndex)
+            {
+                notes.Add("Detected as debit amount column.");
+            }
+            else if (creditProfile != null && profile.ColumnIndex == creditProfile.ColumnIndex)
+            {
+                notes.Add("Detected as credit amount column.");
+            }
+            else if (balanceProfile != null && profile.ColumnIndex == balanceProfile.ColumnIndex)
+            {
+                notes.Add("Detected as balance amount column.");
+            }
+
+            notes.Add(string.Format(
+                CultureInfo.InvariantCulture,
+                "Scores serial={0:0.##}, name={1:0.##}, balance={2:0.##}, debit={3:0.##}, credit={4:0.##}.",
+                profile.SerialScore,
+                profile.NameScore,
+                profile.BalanceScore,
+                profile.DebitScore,
+                profile.CreditScore));
+
+            notes.Add(string.Format(
+                CultureInfo.InvariantCulture,
+                "digit={0:0.##}, decimal/comma={1:0.##}, zero={2:0.##}, distinct={3}.",
+                profile.DigitOnlyRatio,
+                profile.DecimalOrCommaRatio,
+                profile.ZeroRatio,
+                profile.DistinctCount));
+
+            if (!string.IsNullOrWhiteSpace(profile.SampleValues))
+            {
+                notes.Add("Samples: " + profile.SampleValues);
+            }
+
+            return string.Join(" ", notes);
+        }
+
+        private static bool ContainsArabicLetters(string value)
+        {
+            return !string.IsNullOrWhiteSpace(value) && value.Any(c => c >= '\u0600' && c <= '\u06FF');
+        }
+
+        private static bool ContainsLatinLetters(string value)
+        {
+            return !string.IsNullOrWhiteSpace(value) && value.Any(char.IsLetter) && value.Any(c => c < '\u0600' || c > '\u06FF');
+        }
+
+        private static bool ContainsLetters(string value)
+        {
+            return !string.IsNullOrWhiteSpace(value) && value.Any(char.IsLetter);
+        }
+
+        private static bool IsIntegerLikeCode(string value)
+        {
+            value = Clean(value);
+            return value.Length >= 6
+                && value.Length <= 12
+                && value.All(char.IsDigit)
+                && value.Trim('0').Length > 0
+                && value.IndexOf('.') < 0
+                && value.IndexOf(',') < 0
+                && value.IndexOf('(') < 0
+                && value.IndexOf(')') < 0
+                && value.IndexOf('-') < 0;
+        }
+
+        private static bool IsAmountLike(string value)
+        {
+            value = Clean(value);
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            var hasDigit = value.Any(char.IsDigit);
+            if (!hasDigit)
+            {
+                return false;
+            }
+
+            if (value.IndexOf('-') >= 0)
+            {
+                return true;
+            }
+
+            if ((value.IndexOf('(') >= 0 || value.IndexOf(')') >= 0) && ParseSignedBalance(value).HasValue)
+            {
+                return true;
+            }
+
+            return value.IndexOf('.') >= 0 || value.IndexOf(',') >= 0;
+        }
+
+        private static bool IsZeroLike(string value)
+        {
+            var parsed = ParseSignedBalance(value);
+            return parsed.HasValue && parsed.Value == 0m;
+        }
+
+        private static bool ContainsAnyNormalized(string value, params string[] terms)
+        {
+            var normalized = Normalize(value).ToLowerInvariant();
+            return terms.Any(term => normalized.IndexOf(Normalize(term).ToLowerInvariant(), StringComparison.OrdinalIgnoreCase) >= 0);
+        }
+
+        private static string BuildDetectedAmountColumns(DetectedWorksheetLayout layout)
+        {
+            var parts = new List<string>();
+            if (layout.DebitColumnIndex.HasValue)
+            {
+                parts.Add("Debit=Column " + (layout.DebitColumnIndex.Value + 1).ToString(CultureInfo.InvariantCulture));
+            }
+
+            if (layout.CreditColumnIndex.HasValue)
+            {
+                parts.Add("Credit=Column " + (layout.CreditColumnIndex.Value + 1).ToString(CultureInfo.InvariantCulture));
+            }
+
+            if (layout.BalanceColumnIndex.HasValue)
+            {
+                parts.Add("Balance=Column " + (layout.BalanceColumnIndex.Value + 1).ToString(CultureInfo.InvariantCulture));
+            }
+
+            return string.Join(" / ", parts);
+        }
+
+        private void AttachParsedRowPreviews(IEnumerable<JournalEntryImportRowViewModel> rows)
+        {
+            if (LastWorksheetDiagnostics == null)
+            {
+                return;
+            }
+
+            var bySheet = rows
+                .GroupBy(r => (r.FileName ?? string.Empty) + "|" + (r.SheetName ?? string.Empty), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Take(10).Select(r => string.Format(
+                        CultureInfo.InvariantCulture,
+                        "Row {0}: Serial={1}, Name={2}, Debit={3:0.##}, Credit={4:0.##}, Balance={5}",
+                        r.RowNumber,
+                        r.AccountSerial,
+                        r.AccountName,
+                        r.Debit,
+                        r.Credit,
+                        r.OpeningBalanceText)).ToList(),
+                    StringComparer.OrdinalIgnoreCase);
+
+            foreach (var sheet in LastWorksheetDiagnostics)
+            {
+                List<string> preview;
+                if (bySheet.TryGetValue((sheet.FileName ?? string.Empty) + "|" + (sheet.SheetName ?? string.Empty), out preview))
+                {
+                    sheet.ParsedRowPreview = preview;
+                }
+            }
+        }
+
+        private class DetectedWorksheetLayout
+        {
+            public int? AccountSerialColumnIndex { get; set; }
+            public int? AccountNameColumnIndex { get; set; }
+            public int? BalanceColumnIndex { get; set; }
+            public int? DebitColumnIndex { get; set; }
+            public int? CreditColumnIndex { get; set; }
+            public IList<MasterDataImportColumnDiagnosticViewModel> ColumnDiagnostics { get; set; }
+        }
+
+        private class DetectedColumnProfile
+        {
+            public int ColumnIndex { get; set; }
+            public string HeaderText { get; set; }
+            public string SampleValues { get; set; }
+            public decimal DigitOnlyRatio { get; set; }
+            public decimal DecimalOrCommaRatio { get; set; }
+            public decimal ZeroRatio { get; set; }
+            public int DistinctCount { get; set; }
+            public int NonEmptyCount { get; set; }
+            public decimal FinalScore { get; set; }
+            public string AcceptedRole { get; set; }
+            public string Decision { get; set; }
+            public string Reason { get; set; }
+            public decimal SerialScore { get; set; }
+            public decimal NameScore { get; set; }
+            public decimal BalanceScore { get; set; }
+            public decimal DebitScore { get; set; }
+            public decimal CreditScore { get; set; }
+
+            public MasterDataImportColumnDiagnosticViewModel ToDiagnosticViewModel()
+            {
+                return new MasterDataImportColumnDiagnosticViewModel
+                {
+                    ColumnIndex = ColumnIndex,
+                    HeaderText = HeaderText,
+                    SampleValues = SampleValues,
+                    DigitOnlyRatio = DigitOnlyRatio,
+                    DecimalOrCommaRatio = DecimalOrCommaRatio,
+                    ZeroRatio = ZeroRatio,
+                    DistinctCount = DistinctCount,
+                    NonEmptyCount = NonEmptyCount,
+                    FinalScore = FinalScore,
+                    AcceptedRole = AcceptedRole,
+                    Decision = Decision,
+                    Reason = Reason
+                };
+            }
+        }
+
         private static string GetByIndex(DataRow row, int index)
         {
-            return row.Table.Columns.Count > index ? Clean(Convert.ToString(row[index])) : string.Empty;
+            return index >= 0 && row.Table.Columns.Count > index ? Clean(SafeCellText(row[index])) : string.Empty;
+        }
+
+        private static int CountNonEmptyRows(DataTable table)
+        {
+            return table.Rows.Cast<DataRow>().Count(row => !IsEmptyRow(row));
+        }
+
+        private static int CountUsedColumns(DataTable table)
+        {
+            var lastUsedColumn = -1;
+            for (var columnIndex = 0; columnIndex < table.Columns.Count; columnIndex++)
+            {
+                if (table.Rows.Cast<DataRow>().Any(row => !string.IsNullOrWhiteSpace(GetByIndex(row, columnIndex))))
+                {
+                    lastUsedColumn = columnIndex;
+                }
+            }
+
+            return lastUsedColumn + 1;
+        }
+
+        private static string BuildUsedRange(int usedRows, int usedColumns)
+        {
+            if (usedRows <= 0 || usedColumns <= 0)
+            {
+                return string.Empty;
+            }
+
+            return "A1:" + ToExcelColumnName(usedColumns) + usedRows.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static string ToExcelColumnName(int columnNumber)
+        {
+            if (columnNumber <= 0)
+            {
+                return string.Empty;
+            }
+
+            var dividend = columnNumber;
+            var columnName = string.Empty;
+            while (dividend > 0)
+            {
+                var modulo = (dividend - 1) % 26;
+                columnName = Convert.ToChar(65 + modulo) + columnName;
+                dividend = (dividend - modulo - 1) / 26;
+            }
+
+            return columnName;
+        }
+
+        private static int DetectHeaderRow(DataTable table)
+        {
+            var maxRows = Math.Min(table.Rows.Count, 15);
+            var bestRow = -1;
+            var bestScore = 0;
+            for (var i = 0; i < maxRows; i++)
+            {
+                var score = ScoreHeaderRow(table.Rows[i]);
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    bestRow = i;
+                }
+            }
+
+            return bestScore >= 2 ? bestRow : -1;
+        }
+
+        private static int ScoreHeaderRow(DataRow row)
+        {
+            var score = 0;
+            foreach (var cell in row.ItemArray)
+            {
+                score += ScoreHeaderCell(Clean(SafeCellText(cell)));
+            }
+
+            return score;
+        }
+
+        private static int ScoreHeaderCell(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return 0;
+            }
+
+            var normalized = Normalize(value).ToLowerInvariant();
+            var score = 0;
+
+            if (normalized.IndexOf("account", StringComparison.OrdinalIgnoreCase) >= 0 || normalized.IndexOf("\u0627\u0644\u062d\u0633\u0627\u0628", StringComparison.OrdinalIgnoreCase) >= 0) score++;
+            if (normalized.IndexOf("serial", StringComparison.OrdinalIgnoreCase) >= 0 || normalized.IndexOf("\u0633\u0644\u0633\u0644", StringComparison.OrdinalIgnoreCase) >= 0 || normalized.IndexOf("\u0631\u0642\u0645", StringComparison.OrdinalIgnoreCase) >= 0) score++;
+            if (normalized.IndexOf("name", StringComparison.OrdinalIgnoreCase) >= 0 || normalized.IndexOf("\u0627\u0633\u0645", StringComparison.OrdinalIgnoreCase) >= 0) score++;
+            if (normalized.IndexOf("debit", StringComparison.OrdinalIgnoreCase) >= 0 || normalized.IndexOf("\u0645\u062f\u064a\u0646", StringComparison.OrdinalIgnoreCase) >= 0) score++;
+            if (normalized.IndexOf("credit", StringComparison.OrdinalIgnoreCase) >= 0 || normalized.IndexOf("\u062f\u0627\u0626\u0646", StringComparison.OrdinalIgnoreCase) >= 0) score++;
+            if (normalized.IndexOf("balance", StringComparison.OrdinalIgnoreCase) >= 0 || normalized.IndexOf("\u0631\u0635\u064a\u062f", StringComparison.OrdinalIgnoreCase) >= 0) score++;
+            if (normalized.IndexOf("date", StringComparison.OrdinalIgnoreCase) >= 0 || normalized.IndexOf("\u062a\u0627\u0631\u064a\u062e", StringComparison.OrdinalIgnoreCase) >= 0) score++;
+            if (normalized.IndexOf("branch", StringComparison.OrdinalIgnoreCase) >= 0 || normalized.IndexOf("\u0627\u0644\u0641\u0631\u0639", StringComparison.OrdinalIgnoreCase) >= 0) score++;
+            if (normalized.IndexOf("cost", StringComparison.OrdinalIgnoreCase) >= 0 || normalized.IndexOf("\u0627\u0644\u062a\u0643\u0644\u0641\u0629", StringComparison.OrdinalIgnoreCase) >= 0) score++;
+            if (normalized.IndexOf("reference", StringComparison.OrdinalIgnoreCase) >= 0 || normalized.IndexOf("voucher", StringComparison.OrdinalIgnoreCase) >= 0 || normalized.IndexOf("\u0645\u0631\u062c\u0639", StringComparison.OrdinalIgnoreCase) >= 0) score++;
+
+            return score;
+        }
+
+        private static DataTable PromoteWorksheet(DataTable rawSheet, int headerRowIndex)
+        {
+            if (rawSheet == null || rawSheet.Rows.Count == 0)
+            {
+                return null;
+            }
+
+            if (headerRowIndex < 0 || headerRowIndex >= rawSheet.Rows.Count)
+            {
+                headerRowIndex = 0;
+            }
+
+            var table = new DataTable(rawSheet.TableName);
+            var headers = new List<string>();
+            for (var i = 0; i < rawSheet.Columns.Count; i++)
+            {
+                var header = Clean(SafeCellText(rawSheet.Rows[headerRowIndex][i]));
+                if (string.IsNullOrWhiteSpace(header))
+                {
+                    header = "Column" + (i + 1).ToString(CultureInfo.InvariantCulture);
+                }
+
+                if (table.Columns.Contains(header))
+                {
+                    header = header + "_" + (i + 1).ToString(CultureInfo.InvariantCulture);
+                }
+
+                table.Columns.Add(header, typeof(string));
+                headers.Add(header);
+            }
+
+            for (var rowIndex = headerRowIndex + 1; rowIndex < rawSheet.Rows.Count; rowIndex++)
+            {
+                var sourceRow = rawSheet.Rows[rowIndex];
+                if (IsEmptyRow(sourceRow))
+                {
+                    continue;
+                }
+
+                var row = table.NewRow();
+                for (var i = 0; i < rawSheet.Columns.Count; i++)
+                {
+                    row[i] = SafeCellText(sourceRow[i]);
+                }
+
+                table.Rows.Add(row);
+            }
+
+            return table;
         }
 
         private static bool IsEmptyRow(DataRow row)
         {
-            return row.ItemArray.All(v => EmptyValues.Contains(Clean(Convert.ToString(v))));
+            return row.ItemArray.All(v => EmptyValues.Contains(Clean(SafeCellText(v))));
         }
 
         private static bool IsBlankChartRow(MasterDataImportRowViewModel row)
@@ -791,7 +1503,7 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
         private static string ComputeFileHash(string filePath)
         {
             using (var sha = System.Security.Cryptography.SHA256.Create())
-            using (var stream = File.OpenRead(filePath))
+            using (var stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
                 return BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", string.Empty);
             }
@@ -1106,6 +1818,19 @@ namespace MyERP.Areas.MainErp.Services.MasterDataImport
         {
             public string Name { get; set; }
             public DataTable Table { get; set; }
+            public string UsedRange { get; set; }
+            public int HeaderRowNumber { get; set; }
+            public int DataStartRowNumber { get; set; }
+            public int DataRowsCount { get; set; }
+            public string SkipReason { get; set; }
+            public string DetectedAccountSerialColumn { get; set; }
+            public string DetectedAccountNameColumn { get; set; }
+            public string DetectedBalanceColumn { get; set; }
+            public string DetectedDebitColumn { get; set; }
+            public string DetectedCreditColumn { get; set; }
+            public string DetectedAmountColumns { get; set; }
+            public IList<MasterDataImportColumnDiagnosticViewModel> ColumnDiagnostics { get; set; }
+            public bool IsSkipped { get { return !string.IsNullOrWhiteSpace(SkipReason); } }
         }
 
         private class LegacyOpeningBalanceRow

@@ -28,6 +28,7 @@
     { "order": 49, "file": "49_POS_SalesRepresentativeTargets.sql", "autoApply": true, "purpose": "Sales representative targets table/procedures." },
     { "order": 50, "file": "50_POS_ExcelImportCommitAudit.sql", "autoApply": true, "purpose": "Excel import commit audit constraints/indexes." },
     { "order": 51, "file": "51_POS_PaymentCashing_ReadProcedures.sql", "autoApply": true, "purpose": "Payment/cashing read procedures." },
+    { "order": 52, "file": "52_POS_EmployeePayroll_MedicalInsurance.sql", "autoApply": true, "purpose": "POS Web medical insurance setup, employee subscriptions, payroll deduction audit, and deduction procedure." },
     { "order": 54, "file": "54_POS_DoubleEntryVoucherSequence_Fix.sql", "autoApply": true, "purpose": "Safe double-entry voucher sequence repair." },
     { "order": 62, "file": "62_POS_SalesInvoice_LimitedEditPermissions.sql", "autoApply": true, "purpose": "Limited POS sales invoice edit permissions and audit log table." },
     { "order": 63, "file": "63_POS_MigrateViolationWalletNumber.sql", "autoApply": true, "purpose": "Move old violation wallet numbers from Tet_NumPoket to AccountTypeName1." },
@@ -49,13 +50,16 @@
     { "order": 85, "file": "85_POS_Save_Idempotency.sql", "autoApply": true, "purpose": "POS invoice save idempotency table to prevent duplicate invoices from repeated client submissions." },
     { "order": 99, "file": "99_POS_VoucherSerialScope.sql", "autoApply": true, "purpose": "Configurable POS voucher serial scope for Company, Branch, or BranchStore numbering." },
     { "order": 101, "file": "101_POS_TransactionIdAllocator_Hotfix.sql", "autoApply": true, "purpose": "SQL Server compatible POS Transaction_ID allocator hotfix for save deadlocks." },
-    { "order": 102, "file": "102_POS_TransactionIdAllocator_DuplicateGuard.sql", "autoApply": true, "purpose": "Guard Transaction_ID allocator against stale seeds and duplicate PK candidates." }
+    { "order": 102, "file": "102_POS_TransactionIdAllocator_DuplicateGuard.sql", "autoApply": true, "purpose": "Guard Transaction_ID allocator against stale seeds and duplicate PK candidates." },
+    { "order": 103, "file": "103_POS_CustodyPayment_Idempotency.sql", "autoApply": true, "purpose": "Custody replenishment and treasury funding save idempotency table." },
+    { "order": 104, "file": "104_POS_CustodyPayment_AccountingValidation.sql", "autoApply": true, "purpose": "Custody replenishment accounting validation and preview procedures." },
+    { "order": 105, "file": "105_POS_KycFollowUp_ReportIndexes.sql", "autoApply": true, "purpose": "KYC follow-up report indexes and optimized stored procedure." },
+    { "order": 106, "file": "106_WebScreenPermissions_Catalog.sql", "autoApply": true, "purpose": "Area-isolated web screen permission catalog, role templates, and POS/MainERP seed data." }
   ],
   "manualScripts": [
     { "file": "35_POS_SystemHealthPermissions.sql", "reason": "Requires sysadmin/master login and replacing the app SQL login placeholder." },
     { "file": "36_POS_PerformanceIndexRollback.sql", "reason": "Rollback-only script for previously deployed experimental indexes." },
     { "file": "39_POS_Deadlock_Diagnostics.sql", "reason": "Read-only diagnostic script, not an updater." },
-    { "file": "52_POS_EmployeePayroll_MedicalInsurance.sql", "reason": "Pointer to MainErp canonical script, not executable POS DDL." },
     { "file": "53_POS_DoubleEntryVoucherSequence_Diagnostics.sql", "reason": "Read-only diagnostic script." },
     { "file": "55_POS_SaveTransaction_Allocator_Hardening.sql", "reason": "Legacy sequence-based allocator script. Do not auto-apply on older customer SQL Server versions that do not support CREATE SEQUENCE." },
     { "file": "56_POS_RechargeValue_Validation.sql", "reason": "Read-only diagnostic helper." },

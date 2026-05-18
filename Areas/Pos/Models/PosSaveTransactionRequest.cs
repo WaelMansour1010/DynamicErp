@@ -378,6 +378,57 @@ namespace MyERP.Areas.Pos.Models
         public string ExistingBranchName { get; set; }
     }
 
+    public class PosKycReportRequest
+    {
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+        public string FromDateText { get; set; }
+        public string ToDateText { get; set; }
+        public int? BranchId { get; set; }
+        public string InvoiceStatus { get; set; }
+        public string SearchTerm { get; set; }
+        public string SmartFilter { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+    }
+
+    public class PosKycReportResult
+    {
+        public PosKycReportSummaryDto Summary { get; set; }
+        public IList<PosKycReportRowDto> Rows { get; set; }
+        public int TotalRows { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+    }
+
+    public class PosKycReportSummaryDto
+    {
+        public int TotalCustomers { get; set; }
+        public int WithInvoices { get; set; }
+        public int WithoutInvoices { get; set; }
+        public int IncompleteCustomers { get; set; }
+        public int MissingRequiredData { get; set; }
+        public int WithAttachments { get; set; }
+    }
+
+    public class PosKycReportRowDto
+    {
+        public int CustomerID { get; set; }
+        public string ArabicName { get; set; }
+        public string EnglishName { get; set; }
+        public string NationalId { get; set; }
+        public string Phone { get; set; }
+        public string TokenCardNumber { get; set; }
+        public string BranchName { get; set; }
+        public DateTime? CreatedDate { get; set; }
+        public DateTime? LastUpdateDate { get; set; }
+        public bool HasInvoice { get; set; }
+        public int InvoiceCount { get; set; }
+        public DateTime? LastInvoiceDate { get; set; }
+        public string KycStatus { get; set; }
+        public bool HasAttachments { get; set; }
+    }
+
     public class PosAvailableKeshniCardDto
     {
         public string Token { get; set; }
@@ -981,6 +1032,7 @@ namespace MyERP.Areas.Pos.Models
 
     public class PosPaymentRequestDto
     {
+        public string ClientRequestId { get; set; }
         public int? NoteId { get; set; }
         public int BranchId { get; set; }
         public DateTime PaymentDate { get; set; }
@@ -1004,6 +1056,7 @@ namespace MyERP.Areas.Pos.Models
     public class PosPaymentLineDto
     {
         public string AccountCode { get; set; }
+        public string AccountSerial { get; set; }
         public string AccountName { get; set; }
         public decimal Debit { get; set; }
         public decimal Credit { get; set; }
@@ -1263,6 +1316,26 @@ namespace MyERP.Areas.Pos.Models
         public DateTime? ToDate { get; set; }
         public int? BranchId { get; set; }
         public int? EmpId { get; set; }
+        public string CustodyHolderCode { get; set; }
+        public string CustodyHolderText { get; set; }
+        public string PaymentSourceText { get; set; }
+        public int? PostedStatus { get; set; }
+    }
+
+    public class PosPaymentSearchResultDto
+    {
+        public IList<PosPaymentMovementDto> Rows { get; set; }
+        public int TotalCount { get; set; }
+        public decimal TotalAmount { get; set; }
+        public int PostedCount { get; set; }
+        public decimal PostedAmount { get; set; }
+        public int UnpostedCount { get; set; }
+        public decimal UnpostedAmount { get; set; }
+
+        public PosPaymentSearchResultDto()
+        {
+            Rows = new List<PosPaymentMovementDto>();
+        }
     }
 
     public class PosPaymentMovementDto
@@ -1276,6 +1349,9 @@ namespace MyERP.Areas.Pos.Models
         public int CashingType { get; set; }
         public string CashingTypeName { get; set; }
         public string NameAccountCode { get; set; }
+        public string NameAccountSerial { get; set; }
+        public string NameAccountName { get; set; }
+        public string NameAccountDisplayName { get; set; }
         public string NameText { get; set; }
         public int PaymentMethod { get; set; }
         public decimal Value { get; set; }
@@ -1283,6 +1359,8 @@ namespace MyERP.Areas.Pos.Models
         public string BoxName { get; set; }
         public int? BankId { get; set; }
         public string BankName { get; set; }
+        public string PaymentSourceName { get; set; }
+        public string PaymentSourceType { get; set; }
         public string ReferenceNo { get; set; }
         public DateTime? ReferenceDate { get; set; }
         public int? EmpId { get; set; }
@@ -1294,9 +1372,17 @@ namespace MyERP.Areas.Pos.Models
         public string GeneralDescription { get; set; }
         public int? CreatedUserId { get; set; }
         public string CreatedUserName { get; set; }
+        public DateTime? CreatedDate { get; set; }
         public int? LastModifiedByUserId { get; set; }
         public string LastModifiedByUserName { get; set; }
         public DateTime? LastModifiedDate { get; set; }
+        public bool IsPosted { get; set; }
+        public string PostedStatusText { get; set; }
+        public int? PostedByUserId { get; set; }
+        public string PostedByUserName { get; set; }
+        public DateTime? PostedDate { get; set; }
+        public int? JournalVoucherId { get; set; }
+        public string JournalNumber { get; set; }
         public IList<PosPaymentLineDto> Lines { get; set; }
 
         public PosPaymentMovementDto()

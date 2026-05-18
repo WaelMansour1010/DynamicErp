@@ -2833,8 +2833,24 @@
             calculateTotals();
             if (initialMode === "card") {
                 openKycModal();
+                loadKycCustomerFromQuery();
             }
             setCommissionStatus(commissionsReady ? "تم تحميل إعدادات العمولات" : "تعذر تحميل إعدادات العمولات. لا يمكن الحفظ قبل إعادة تحميل الشاشة.", !commissionsReady);
+        });
+    }
+
+    function loadKycCustomerFromQuery() {
+        var customerId = parseInt(queryValue("customerId"), 10) || 0;
+        if (customerId <= 0) { return; }
+
+        requestJson("GET", getUrl("data-kyc-customer-url") + "?customerId=" + encodeURIComponent(customerId), null, function (status, data) {
+            if (status >= 200 && status < 300 && data && data.success && data.customer) {
+                applyKeshniCustomer(data.customer);
+                openKycModal();
+                return;
+            }
+
+            setKycMessage((data && data.message) || "تعذر تحميل بيانات KYC المطلوبة", true);
         });
     }
 

@@ -10,10 +10,14 @@ namespace MyERP.Areas.MainErp.ViewModels.Items
             Groups = new List<ItemLookupViewModel>();
             GroupTree = new List<GroupListItemViewModel>();
             Units = new List<ItemLookupViewModel>();
+            SalesEmployees = new List<ItemLookupViewModel>();
+            Customers = new List<ItemLookupViewModel>();
+            Suppliers = new List<ItemLookupViewModel>();
             Selected = new ItemDetailsViewModel();
             Permissions = new ItemsPermissionsViewModel();
         }
 
+        public bool IsPosHosted { get; set; }
         public string SearchText { get; set; }
         public int? GroupId { get; set; }
         public int Page { get; set; }
@@ -24,6 +28,9 @@ namespace MyERP.Areas.MainErp.ViewModels.Items
         public IList<ItemLookupViewModel> Groups { get; set; }
         public IList<GroupListItemViewModel> GroupTree { get; set; }
         public IList<ItemLookupViewModel> Units { get; set; }
+        public IList<ItemLookupViewModel> SalesEmployees { get; set; }
+        public IList<ItemLookupViewModel> Customers { get; set; }
+        public IList<ItemLookupViewModel> Suppliers { get; set; }
         public ItemDetailsViewModel Selected { get; set; }
         public ItemsPermissionsViewModel Permissions { get; set; }
     }
@@ -83,6 +90,13 @@ namespace MyERP.Areas.MainErp.ViewModels.Items
         public string ShortName { get; set; }
         public string BinLocation { get; set; }
         public string Notes { get; set; }
+        public int? DefaultSupplierId { get; set; }
+        public decimal? PercentVisa { get; set; }
+        public decimal? MinVisa { get; set; }
+        public decimal? MaxVisa { get; set; }
+        public decimal? PercentVisaPur { get; set; }
+        public decimal? MinVisaPur { get; set; }
+        public decimal? MaxVisaPur { get; set; }
         public IList<ItemUnitLineViewModel> Units { get; set; }
     }
 
@@ -186,6 +200,13 @@ namespace MyERP.Areas.MainErp.ViewModels.Items
         public string ShortName { get; set; }
         public string BinLocation { get; set; }
         public string Notes { get; set; }
+        public int? DefaultSupplierId { get; set; }
+        public decimal? PercentVisa { get; set; }
+        public decimal? MinVisa { get; set; }
+        public decimal? MaxVisa { get; set; }
+        public decimal? PercentVisaPur { get; set; }
+        public decimal? MinVisaPur { get; set; }
+        public decimal? MaxVisaPur { get; set; }
         public IList<ItemUnitLineViewModel> Units { get; set; }
     }
 

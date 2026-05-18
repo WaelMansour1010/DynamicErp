@@ -1,0 +1,288 @@
+@model MyERP.Areas.Shared.CriticalRecovery.CriticalRecoveryIndexViewModel
+@{
+    Layout = null;
+    var title = "Controlled Invoice Reversal & Recovery Center";
+    var areaName = Model.AreaName ?? "MainErp";
+}
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@title</title>
+    <style>
+        body { margin:0; background:#15171c; color:#f4f1ed; font-family:Tahoma,Arial,sans-serif; }
+        .shell { display:grid; grid-template-columns:250px 1fr; min-height:100vh; }
+        .side { background:#0d0f14; border-left:1px solid #3a2022; padding:24px 18px; }
+        .brand strong { display:block; color:#fff; font-size:20px; }
+        .brand span { color:#e25858; font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+        .side a { display:block; color:#d7d0cb; text-decoration:none; margin-top:18px; padding:10px 12px; border-radius:6px; background:#1b1e25; }
+        .main { padding:24px; }
+        .top { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
+        h1,h2,h3 { margin:0; letter-spacing:0; }
+        h1 { font-size:28px; }
+        h2 { font-size:18px; margin-bottom:14px; }
+        .badge { display:inline-block; color:#ff9c9c; font-size:12px; margin-bottom:6px; }
+        .banner { border:1px solid #8d2a2a; background:#3a1417; color:#ffe5e5; padding:14px 16px; border-radius:6px; margin-bottom:18px; }
+        .alert { padding:12px 14px; border-radius:6px; margin-bottom:14px; }
+        .success { background:#143a2a; border:1px solid #28704f; }
+        .error { background:#461619; border:1px solid #b33a3a; }
+        .grid { display:grid; grid-template-columns:repeat(4,minmax(160px,1fr)); gap:12px; }
+        .panel { background:#1d2028; border:1px solid #343844; border-radius:8px; padding:16px; margin-bottom:16px; }
+        label { display:block; color:#cfc7c1; font-size:12px; margin-bottom:5px; }
+        input,select,textarea { width:100%; box-sizing:border-box; border:1px solid #4b4f5d; background:#111318; color:#fff; border-radius:6px; padding:9px 10px; min-height:38px; }
+        textarea { min-height:74px; resize:vertical; }
+        .checks { display:grid; grid-template-columns:repeat(4,minmax(180px,1fr)); gap:10px; margin-top:12px; }
+        .check { display:flex; align-items:center; gap:8px; background:#151821; border:1px solid #343844; padding:9px; border-radius:6px; }
+        .check input { width:auto; min-height:auto; }
+        .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+        button,.button { border:0; background:#a5282f; color:#fff; padding:10px 14px; border-radius:6px; cursor:pointer; text-decoration:none; font-weight:bold; }
+        button.secondary { background:#333945; }
+        button.warning { background:#d94c1a; }
+        button.safe { background:#28634c; }
+        .counters { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+        .counter { background:#101217; border:1px solid #343844; padding:14px; border-radius:8px; }
+        .counter strong { display:block; font-size:24px; color:#fff; }
+        .counter span { color:#c9c0ba; font-size:12px; }
+        table { width:100%; border-collapse:collapse; }
+        th,td { border-bottom:1px solid #333845; padding:10px; text-align:right; vertical-align:top; }
+        th { color:#ffb6b6; font-size:12px; background:#171a21; position:sticky; top:0; }
+        .scroll { overflow:auto; max-height:360px; border:1px solid #333845; border-radius:6px; }
+        .danger-note { color:#ffb6b6; font-size:12px; line-height:1.7; }
+        .ltr { direction:ltr; text-align:left; }
+        @@media (max-width: 900px) {
+            .shell { grid-template-columns:1fr; }
+            .side { border-left:0; border-bottom:1px solid #3a2022; }
+            .grid,.checks,.counters { grid-template-columns:1fr; }
+            .top { display:block; }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <aside class="side">
+            <div class="brand">
+                <strong>@areaName</strong>
+                <span>Critical operations</span>
+            </div>
+            @Html.ActionLink("البحث والتحليل", "Index", "CriticalRecovery", new { area = areaName }, null)
+            @Html.ActionLink("القيود اليومية", "Index", "JournalEntries", new { area = areaName }, null)
+            <p class="danger-note">Admin-only. Snapshot first. Dual approval before execution. KYC master records are protected.</p>
+        </aside>
+        <main class="main">
+            <header class="top">
+                <div>
+                    <span class="badge">SECURE RECOVERY MODULE</span>
+                    <h1>@title</h1>
+                </div>
+                <div>@User.Identity.Name</div>
+            </header>
+
+            <div class="banner">
+                This is not a delete screen. Every destructive action requires preview, archive snapshot, secondary password, explicit danger confirmation, and a second authorized approver. KYC customer/card/attachment master data is never deleted by default.
+            </div>
+
+            @if (TempData["CriticalRecoveryMessage"] != null)
+            {
+                <div class="alert success">@TempData["CriticalRecoveryMessage"]</div>
+            }
+            @if (TempData["CriticalRecoveryError"] != null)
+            {
+                <div class="alert error">@TempData["CriticalRecoveryError"]</div>
+            }
+
+            @using (Html.BeginForm("Analyze", "CriticalRecovery", new { area = areaName }, FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <section class="panel">
+                    <h2>البحث والتحليل</h2>
+                    <div class="grid">
+                        <div><label>Branch</label>@Html.TextBoxFor(m => m.Filter.BranchId, new { type = "number" })</div>
+                        <div><label>Date from</label>@Html.TextBoxFor(m => m.Filter.DateFrom, "{0:yyyy-MM-dd}", new { type = "date" })</div>
+                        <div><label>Date to</label>@Html.TextBoxFor(m => m.Filter.DateTo, "{0:yyyy-MM-dd}", new { type = "date" })</div>
+                        <div><label>Invoice type</label>@Html.TextBoxFor(m => m.Filter.InvoiceType, new { type = "number" })</div>
+                        <div><label>Invoice number</label>@Html.TextBoxFor(m => m.Filter.InvoiceNo)</div>
+                        <div><label>User / cashier</label>@Html.TextBoxFor(m => m.Filter.CashierUserId)</div>
+                        <div><label>Phone / token / customer</label>@Html.TextBoxFor(m => m.Filter.CustomerSearch)</div>
+                        <div><label>Selected transaction IDs</label>@Html.TextBoxFor(m => m.Filter.SelectedTransactionIds, new { placeholder = "10235,10236" })</div>
+                    </div>
+                    <div class="checks">
+                        <label class="check">@Html.CheckBoxFor(m => m.Filter.HasAccountingEntry) Has accounting entry</label>
+                        <label class="check">@Html.CheckBoxFor(m => m.Filter.HasStockMovement) Has stock movement</label>
+                        <label class="check">@Html.CheckBoxFor(m => m.Filter.HasKycLink) Has KYC link</label>
+                        <label class="check">@Html.CheckBoxFor(m => m.Filter.HasGeneratedVoucher) Has generated voucher</label>
+                    </div>
+                    <div class="actions">
+                        <button type="submit" class="safe">Preview / Dry-run</button>
+                        <button type="submit" formaction="@Url.Action("Export", "CriticalRecovery", new { area = areaName })" class="secondary">Export affected rows to Excel</button>
+                    </div>
+                </section>
+            }
+
+            <section class="counters">
+                <div class="counter"><strong>@Model.Impact.InvoiceCount</strong><span>Invoices in preview</span></div>
+                <div class="counter"><strong>@Model.Impact.DependencyCount</strong><span>Dependent rows</span></div>
+                <div class="counter"><strong>@Model.Impact.TotalValue.ToString("0.00")</strong><span>Total invoice value</span></div>
+            </section>
+
+            <section class="panel">
+                <h2>التأثيرات المرتبطة</h2>
+                @foreach (var warning in Model.Impact.Warnings)
+                {
+                    <div class="alert error">@warning</div>
+                }
+                <div class="scroll">
+                    <table>
+                        <thead><tr><th>Invoice</th><th>Transaction</th><th>Date</th><th>Branch</th><th>Customer</th><th>Value</th><th>Status</th><th>KYC refs</th></tr></thead>
+                        <tbody>
+                        @foreach (var invoice in Model.Impact.Invoices)
+                        {
+                            <tr>
+                                <td>@invoice.InvoiceNo</td>
+                                <td>@invoice.TransactionId</td>
+                                <td>@invoice.TransactionDate.ToString("yyyy-MM-dd")</td>
+                                <td>@invoice.BranchId</td>
+                                <td>@invoice.CustomerName</td>
+                                <td>@invoice.Value.ToString("0.00")</td>
+                                <td>@(invoice.IsClosed ? "Closed" : "Open") / @(invoice.IsPosted ? "Posted" : "Unposted")</td>
+                                <td>@invoice.KycReferenceIds</td>
+                            </tr>
+                        }
+                        @if (Model.Impact.Invoices.Count == 0)
+                        {
+                            <tr><td colspan="8">No preview rows. Run search first.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="scroll" style="margin-top:12px">
+                    <table>
+                        <thead><tr><th>Transaction</th><th>Module</th><th>Table</th><th>Rows</th><th>Policy</th><th>Protected</th></tr></thead>
+                        <tbody>
+                        @foreach (var item in Model.Impact.Dependencies)
+                        {
+                            <tr>
+                                <td>@item.TransactionId</td>
+                                <td>@item.ModuleName</td>
+                                <td>@item.TableName</td>
+                                <td>@item.RowCount</td>
+                                <td>@item.ActionPolicy</td>
+                                <td>@item.IsProtected</td>
+                            </tr>
+                        }
+                        @if (Model.Impact.Dependencies.Count == 0)
+                        {
+                            <tr><td colspan="6">No dependency analysis yet.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            @using (Html.BeginForm("Initiate", "CriticalRecovery", new { area = areaName }, FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.Filter.BranchId)
+                @Html.HiddenFor(m => m.Filter.DateFrom)
+                @Html.HiddenFor(m => m.Filter.DateTo)
+                @Html.HiddenFor(m => m.Filter.InvoiceType)
+                @Html.HiddenFor(m => m.Filter.InvoiceNo)
+                @Html.HiddenFor(m => m.Filter.CashierUserId)
+                @Html.HiddenFor(m => m.Filter.CustomerSearch)
+                @Html.HiddenFor(m => m.Filter.SelectedTransactionIds)
+                <section class="panel">
+                    <h2>المعالجة الحرجة</h2>
+                    <div class="grid">
+                        <div><label>Mode</label>@Html.DropDownListFor(m => m.Request.Mode, new SelectList(new[] { "CancelOnly", "ReverseAccountingOnly", "ReverseInventoryOnly", "FullRollback", "PeriodCleanup", "BranchCleanup" }))</div>
+                        <div><label>Secondary password</label>@Html.PasswordFor(m => m.Request.SecondaryPassword)</div>
+                        <div><label>Danger confirmation</label>@Html.TextBoxFor(m => m.Request.DangerConfirmation, new { @class = "ltr", placeholder = "I UNDERSTAND" })</div>
+                        <div><label>Request ID for approval</label>@Html.TextBoxFor(m => m.Request.RequestId, new { type = "number" })</div>
+                    </div>
+                    <label>Mandatory reason</label>
+                    @Html.TextAreaFor(m => m.Request.Reason)
+                    <div class="checks">
+                        <label class="check">@Html.CheckBoxFor(m => m.Request.DryRun) Dry-run only</label>
+                        <label class="check">@Html.CheckBoxFor(m => m.Request.RequestHigherApprovalForClosedPeriod) Higher approval for closed period</label>
+                        <label class="check">@Html.CheckBoxFor(m => m.Request.AllowPhysicalDelete) Explicit physical delete</label>
+                        <label class="check">@Html.CheckBoxFor(m => m.Request.DeleteOrphanKycRecords) Delete orphan KYC records</label>
+                    </div>
+                    <p class="danger-note">Orphan KYC cleanup is off by default and remains blocked unless the database validates no other invoice, card/token, audit, history, closure, report, or compliance references exist.</p>
+                    <div class="actions">
+                        <button type="submit" class="warning">Initiate request + snapshot</button>
+                        <button type="submit" formaction="@Url.Action("ApproveAndExecute", "CriticalRecovery", new { area = areaName })">Second admin approve + execute</button>
+                    </div>
+                </section>
+            }
+
+            @using (Html.BeginForm("Restore", "CriticalRecovery", new { area = areaName }, FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <section class="panel">
+                    <h2>الأرشيف والاسترجاع</h2>
+                    <div class="grid">
+                        <div><label>Snapshot batch</label>@Html.TextBoxFor(m => m.Restore.SnapshotBatchId, new { type = "number" })</div>
+                        <div><label>Single transaction ID</label>@Html.TextBoxFor(m => m.Restore.TransactionId, new { type = "number" })</div>
+                        <div><label>Restore scope</label>@Html.DropDownListFor(m => m.Restore.RestoreScope, new SelectList(new[] { "Full", "AccountingOnly", "InventoryOnly", "InvoiceOnly" }))</div>
+                        <div><label>Secondary password</label>@Html.PasswordFor(m => m.Restore.SecondaryPassword)</div>
+                    </div>
+                    <label>Restore reason</label>
+                    @Html.TextAreaFor(m => m.Restore.Reason)
+                    <div class="actions">
+                        <button type="submit" class="safe">Restore archived transactions</button>
+                    </div>
+                </section>
+            }
+
+            <section class="panel">
+                <h2>سجل العمليات الحرجة</h2>
+                <div class="scroll">
+                    <table>
+                        <thead><tr><th>Batch</th><th>Date</th><th>Requested</th><th>Approved</th><th>Mode</th><th>Status</th><th>Invoices</th><th>Rows</th></tr></thead>
+                        <tbody>
+                        @foreach (var batch in Model.SnapshotBatches)
+                        {
+                            <tr>
+                                <td>@batch.SnapshotBatchId</td>
+                                <td>@batch.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>@batch.RequestedBy</td>
+                                <td>@batch.ApprovedBy</td>
+                                <td>@batch.Mode</td>
+                                <td>@batch.Status</td>
+                                <td>@batch.InvoiceCount</td>
+                                <td>@batch.SnapshotRowCount</td>
+                            </tr>
+                        }
+                        @if (Model.SnapshotBatches.Count == 0)
+                        {
+                            <tr><td colspan="8">No snapshot batches found.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="scroll" style="margin-top:12px">
+                    <table>
+                        <thead><tr><th>Time</th><th>Action</th><th>Operator</th><th>Approver</th><th>Result</th><th>Message</th></tr></thead>
+                        <tbody>
+                        @foreach (var item in Model.AuditItems)
+                        {
+                            <tr>
+                                <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>@item.ActionName</td>
+                                <td>@item.OperatorName</td>
+                                <td>@item.ApproverName</td>
+                                <td>@item.Result</td>
+                                <td>@item.Message</td>
+                            </tr>
+                        }
+                        @if (Model.AuditItems.Count == 0)
+                        {
+                            <tr><td colspan="6">No audit events found.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

@@ -219,7 +219,7 @@
     <script>
         (function () {
             var rows = [];
-            var paging = { totalTokens: 0, loadedTokens: 0, batchSize: 200, nextSkip: 0, hasMore: false };
+            var paging = { totalTokens: 0, loadedTokens: 0, batchSize: 500, nextSkip: 0, hasMore: false };
             var currentPage = 0;
             var pageSize = 50;
             var backgroundLoading = false;
@@ -373,7 +373,7 @@
                 paging = {
                     totalTokens: newPaging.totalTokens || newPaging.TotalTokens || 0,
                     loadedTokens: newPaging.loadedTokens || newPaging.LoadedTokens || 0,
-                    batchSize: newPaging.batchSize || newPaging.BatchSize || 200,
+                    batchSize: newPaging.batchSize || newPaging.BatchSize || 500,
                     nextSkip: newPaging.nextSkip || newPaging.NextSkip || 0,
                     hasMore: !!(newPaging.hasMore || newPaging.HasMore)
                 };
@@ -396,7 +396,7 @@
                         }
                         return;
                     }
-                    message("lookupMessage", (data && data.message) || "تعذر تحميل دفعة إضافية من النتائج");
+                    message("lookupMessage", ((data && data.message) || "تعذر تحميل دفعة إضافية من النتائج") + (data && data.technicalMessage ? " - التفاصيل: " + data.technicalMessage : ""));
                 });
             }
             function analyze() {
@@ -405,7 +405,7 @@
                 var form = new FormData();
                 form.append("file", file);
                 rows = [];
-                paging = { totalTokens: 0, loadedTokens: 0, batchSize: 200, nextSkip: 0, hasMore: false };
+                paging = { totalTokens: 0, loadedTokens: 0, batchSize: 500, nextSkip: 0, hasMore: false };
                 currentPage = 0;
                 renderSummary({});
                 renderRows();
@@ -427,7 +427,7 @@
                         }
                         return;
                     }
-                    message("lookupMessage", (data && data.message) || "تعذر إكمال البحث في التوكنات");
+                    message("lookupMessage", ((data && data.message) || "تعذر إكمال البحث في التوكنات") + (data && data.technicalMessage ? " - التفاصيل: " + data.technicalMessage : ""));
                 });
             }
             function htmlList(items, renderer, empty) {
@@ -486,7 +486,7 @@
                         message("storyMessage", "");
                         return;
                     }
-                    message("storyMessage", (data && data.message) || "تعذر تحميل حركة التوكن");
+                    message("storyMessage", ((data && data.message) || "تعذر تحميل حركة التوكن") + (data && data.technicalMessage ? " - التفاصيل: " + data.technicalMessage : ""));
                 });
             }
             Array.prototype.forEach.call(document.querySelectorAll("[data-tab-target]"), function (button) {

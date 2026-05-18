@@ -26,16 +26,18 @@ namespace MyERP.Areas.MainErp.Controllers
         public ActionResult Index(string searchText, int? groupId, int? id, int page = 1, int pageSize = 20)
         {
             var user = MainErpUserContext;
+            var isPosHosted = MainErpHostContext.IsPosHosted(Request, Session);
             if (!_permissionService.CanView(user, ScreenName))
             {
                 return new HttpUnauthorizedResult("الصلاحية غير كافية لعرض شاشة الأصناف.");
             }
 
             var model = _service.LoadIndex(searchText, groupId, page, pageSize, user);
+            model.IsPosHosted = isPosHosted;
             model.Permissions.CanView = true;
             model.Permissions.CanAdd = _permissionService.CanAdd(user, ScreenName);
             model.Permissions.CanEdit = _permissionService.CanEdit(user, ScreenName);
-            model.Permissions.CanDelete = _permissionService.CanDelete(user, ScreenName);
+            model.Permissions.CanDelete = !isPosHosted && _permissionService.CanDelete(user, ScreenName);
 
             if (id.HasValue && id.Value > 0)
             {

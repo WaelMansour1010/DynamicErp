@@ -8,12 +8,7 @@
     if (string.IsNullOrWhiteSpace(initialScreenUrl)) { initialScreenUrl = "about:blank"; }
     var canViewReports = posContext != null && posContext.CanViewReports;
     var isAdmin = posContext != null && (posContext.UserType.GetValueOrDefault(-1) == 0 || posContext.IsFullAccess);
-    var isTellerOnly = posContext != null
-        && !isAdmin
-        && (posContext.UserType.GetValueOrDefault(-1) == 2
-            || posContext.CanTeller
-            || string.Equals((posContext.UserCategory ?? string.Empty).Trim(), "تلر", StringComparison.OrdinalIgnoreCase)
-            || string.Equals((posContext.UserCategory ?? string.Empty).Trim(), "Teller", StringComparison.OrdinalIgnoreCase));
+    var isTellerOnly = posContext != null && posContext.CanTeller;
     var currentBranchName = posContext != null && !string.IsNullOrWhiteSpace(posContext.BranchName) ? posContext.BranchName : "غير محدد";
     var currentBoxName = posContext != null && !string.IsNullOrWhiteSpace(posContext.BoxName) ? posContext.BoxName : "غير محدد";
     var logoPath = "~/Areas/Pos/assets/images/company-logo.png";

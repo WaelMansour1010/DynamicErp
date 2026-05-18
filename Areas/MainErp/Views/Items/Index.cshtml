@@ -1,5 +1,6 @@
 @model MyERP.Areas.MainErp.ViewModels.Items.ItemsIndexViewModel
 @using System.Linq
+@using System.Web.Routing
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
     ViewBag.Title = "الأصناف";
@@ -7,17 +8,26 @@
     var canEdit = Model != null && Model.Permissions != null && Model.Permissions.CanEdit;
     var canDelete = Model != null && Model.Permissions != null && Model.Permissions.CanDelete;
     var selected = Model.Selected ?? new MyERP.Areas.MainErp.ViewModels.Items.ItemDetailsViewModel();
+    var isPosHosted = Model != null && Model.IsPosHosted;
+    var itemRoute = new RouteValueDictionary { { "area", "MainErp" } };
+    if (isPosHosted)
+    {
+        itemRoute["fromPos"] = "1";
+        itemRoute["host"] = "pos";
+    }
+    var posRouteInfo = isPosHosted ? "1" : "0";
 }
 
-<link href="~/Areas/MainErp/Content/items.css" rel="stylesheet" />
+<link href="~/Areas/MainErp/Content/items.css?v=20260518-pos-items" rel="stylesheet" />
 
 <section class="main-erp-panel items-page" dir="rtl" id="itemsPage"
-         data-save-url="@Url.Action("Save", "Items", new { area = "MainErp" })"
-         data-details-url="@Url.Action("Details", "Items", new { area = "MainErp" })"
-         data-delete-url="@Url.Action("Delete", "Items", new { area = "MainErp" })"
-         data-group-details-url="@Url.Action("GroupDetails", "Items", new { area = "MainErp" })"
-         data-group-save-url="@Url.Action("SaveGroup", "Items", new { area = "MainErp" })"
-         data-group-delete-url="@Url.Action("DeleteGroup", "Items", new { area = "MainErp" })">
+         data-pos-hosted="@posRouteInfo"
+         data-save-url="@Url.Action("Save", "Items", itemRoute)"
+         data-details-url="@Url.Action("Details", "Items", itemRoute)"
+         data-delete-url="@Url.Action("Delete", "Items", itemRoute)"
+         data-group-details-url="@Url.Action("GroupDetails", "Items", itemRoute)"
+         data-group-save-url="@Url.Action("SaveGroup", "Items", itemRoute)"
+         data-group-delete-url="@Url.Action("DeleteGroup", "Items", itemRoute)">
     <header class="main-erp-cockpit-header">
         <div>
             <span class="main-erp-kicker">بطاقة الصنف</span>
@@ -137,6 +147,10 @@
                 <button type="button" data-target="#itemBarcodeSection">الباركود</button>
                 <button type="button" data-target="#itemInventorySection">المخزون</button>
                 <button type="button" data-target="#itemSalePurchaseSection">إعدادات البيع/الشراء</button>
+                @if (isPosHosted)
+                {
+                    <button type="button" data-target="#itemPosCommissionSection">عمولات POS</button>
+                }
                 <button type="button" data-target="#itemNotesSection">ملاحظات/إضافي</button>
                 <button type="button" data-target="#itemGroupsSection">المجموعات</button>
             </nav>
@@ -286,7 +300,56 @@
                 </div>
             </section>
 
-            <section class="main-erp-premium-card items-section" id="itemGroupsSection">
+            @if (isPosHosted)
+            {
+                <section class="main-erp-premium-card items-section items-pos-commission-section" id="itemPosCommissionSection">
+                    <div class="erp-section-title"><h2>افتراضات عمولات POS</h2></div>
+                    <div class="items-commission-layout">
+                        <label class="items-check"><input type="checkbox" id="posCommissionEnabled" @(selected.PosCommissionEnabled ? "checked" : "") /> تفعيل افتراضات العمولة للصنف</label>
+                        <label>موظف البيع الافتراضي
+                            <select id="posDefaultSalesEmployeeId">
+                                <option value="">بدون افتراضي</option>
+                                @foreach (var emp in Model.SalesEmployees)
+                                {
+                                    <option value="@emp.Id" @(selected.PosDefaultSalesEmployeeId.HasValue && selected.PosDefaultSalesEmployeeId.Value.ToString() == emp.Id ? "selected" : "")>@emp.Text</option>
+                                }
+                            </select>
+                        </label>
+                        <label>عميل العمولة الافتراضي
+                            <select id="posDefaultCommissionCustomerId">
+                                <option value="">بدون افتراضي</option>
+                                @foreach (var customer in Model.Customers)
+                                {
+                                    <option value="@customer.Id" @(selected.PosDefaultCommissionCustomerId.HasValue && selected.PosDefaultCommissionCustomerId.Value.ToString() == customer.Id ? "selected" : "")>@customer.Text</option>
+                                }
+                            </select>
+                        </label>
+                        <label>المورد الافتراضي للسطر
+                            <select id="defaultSupplierId">
+                                <option value="">بدون افتراضي</option>
+                                @foreach (var supplier in Model.Suppliers)
+                                {
+                                    <option value="@supplier.Id" @(selected.DefaultSupplierId.HasValue && selected.DefaultSupplierId.Value.ToString() == supplier.Id ? "selected" : "")>@supplier.Text</option>
+                                }
+                            </select>
+                        </label>
+                        <label>طريقة الحساب
+                            <select id="posCommissionType">
+                                <option value="" @(String.IsNullOrWhiteSpace(selected.PosCommissionType) ? "selected" : "")>حسب إعداد الفاتورة / الموظف</option>
+                                <option value="Percentage" @(selected.PosCommissionType == "Percentage" ? "selected" : "")>نسبة</option>
+                                <option value="Value" @(selected.PosCommissionType == "Value" ? "selected" : "")>قيمة ثابتة</option>
+                                <option value="None" @(selected.PosCommissionType == "None" ? "selected" : "")>بدون عمولة</option>
+                            </select>
+                        </label>
+                        <label>نسبة العمولة %<input type="number" step="0.01" min="0" id="posCommissionPercent" value="@selected.PosCommissionPercent" /></label>
+                        <label>قيمة العمولة<input type="number" step="0.01" min="0" id="posCommissionValue" value="@selected.PosCommissionValue" /></label>
+                        <label>صافي العمولة<input type="number" step="0.01" min="0" id="posCommissionNetValue" value="@selected.PosCommissionNetValue" /></label>
+                        <label class="items-check"><input type="checkbox" id="posExcludeCommission" @(selected.PosExcludeCommission ? "checked" : "") /> استبعاد الصنف من العمولة</label>
+                    </div>
+                    <p class="items-commission-note">هذه التابة تظهر في POS فقط. المورد الافتراضي يحفظ في TblItems.DefaultSupplier، وباقي حقول العمولة تحفظ فقط إذا كانت أعمدتها موجودة بدون إنشاء جداول أو أعمدة جديدة.</p>
+                </section>
+            }
+<section class="main-erp-premium-card items-section" id="itemGroupsSection">
                 <div class="erp-section-title">
                     <h2>مجموعات الأصناف</h2>
                     <div>
@@ -385,5 +448,5 @@
 </template>
 
 @section scripts {
-    <script src="~/Areas/MainErp/Scripts/items.js"></script>
+    <script src="~/Areas/MainErp/Scripts/items.js?v=20260518-pos-items"></script>
 }

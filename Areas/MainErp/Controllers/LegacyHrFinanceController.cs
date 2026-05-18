@@ -103,6 +103,8 @@ namespace MyERP.Areas.MainErp.Controllers
                 CanDelete = _permissionService.CanDelete(MainErpUserContext, screenName)
             };
             ViewBag.ActiveScreen = activeScreen;
+            ViewBag.ComponentDetailsUrl = Url.Action("ComponentDetails", "LegacyHrFinance", new { area = "MainErp" });
+            ViewBag.SaveComponentUrl = Url.Action("SaveComponent", "LegacyHrFinance", new { area = "MainErp" });
             return View("Index", model);
         }
     }
