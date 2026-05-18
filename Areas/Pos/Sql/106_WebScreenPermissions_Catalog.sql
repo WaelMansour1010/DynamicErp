@@ -244,19 +244,22 @@ BEGIN
     (N'MainERP.Excel', N'MainERP', N'Excel والاستيراد', N'MainERP Excel', N'fas fa-file-excel', 60),
     (N'MainERP.Admin', N'MainERP', N'النظام', N'MainERP Admin', N'fas fa-shield-alt', 70);
 
-    MERGE dbo.WebModules AS target
-    USING @Modules AS source ON target.ModuleKey = source.ModuleKey
-    WHEN MATCHED THEN UPDATE SET
-        AreaName = source.AreaName,
-        ArabicCaption = source.ArabicCaption,
-        EnglishCaption = source.EnglishCaption,
-        IconCss = source.IconCss,
-        DisplayOrder = source.DisplayOrder,
-        IsActive = 1,
-        UpdatedAt = GETDATE()
-    WHEN NOT MATCHED THEN INSERT
+    UPDATE target
+       SET AreaName = source.AreaName,
+           ArabicCaption = source.ArabicCaption,
+           EnglishCaption = source.EnglishCaption,
+           IconCss = source.IconCss,
+           DisplayOrder = source.DisplayOrder,
+           IsActive = 1,
+           UpdatedAt = GETDATE()
+      FROM dbo.WebModules target
+      INNER JOIN @Modules source ON target.ModuleKey = source.ModuleKey;
+
+    INSERT INTO dbo.WebModules
         (ModuleKey, AreaName, ArabicCaption, EnglishCaption, IconCss, DisplayOrder, IsActive, CreatedAt, UpdatedAt)
-        VALUES (source.ModuleKey, source.AreaName, source.ArabicCaption, source.EnglishCaption, source.IconCss, source.DisplayOrder, 1, GETDATE(), GETDATE());
+    SELECT source.ModuleKey, source.AreaName, source.ArabicCaption, source.EnglishCaption, source.IconCss, source.DisplayOrder, 1, GETDATE(), GETDATE()
+      FROM @Modules source
+     WHERE NOT EXISTS (SELECT 1 FROM dbo.WebModules target WHERE target.ModuleKey = source.ModuleKey);
 
     UPDATE dbo.WebModules
        SET IsActive = 0, UpdatedAt = GETDATE()
@@ -350,32 +353,38 @@ BEGIN
     (N'MainERP.Admin', N'MainERP.DatabaseMigration.Index', N'تحديثات قاعدة البيانات', N'Database Updates', N'MainErp', N'DatabaseMigration', N'Index', N'/MainErp/DatabaseMigration', N'fas fa-database', 50, 1),
     (N'MainERP.Admin', N'MainERP.Dashboard.Index', N'لوحة التحكم', N'MainERP Dashboard', N'MainErp', N'Dashboard', N'Index', N'/MainErp/Dashboard', N'fas fa-tachometer-alt', 60, 1);
 
-    MERGE dbo.WebScreens AS target
-    USING (SELECT m.WebModuleId, s.* FROM @Screens s INNER JOIN dbo.WebModules m ON m.ModuleKey = s.ModuleKey) AS source
-    ON target.ScreenKey = source.ScreenKey
-    WHEN MATCHED THEN UPDATE SET
-        WebModuleId = source.WebModuleId,
-        ArabicCaption = source.ArabicCaption,
-        EnglishCaption = source.EnglishCaption,
-        AreaName = source.AreaName,
-        ControllerName = source.ControllerName,
-        ActionName = source.ActionName,
-        RouteUrl = source.RouteUrl,
-        IconCss = source.IconCss,
-        DisplayOrder = source.DisplayOrder,
-        IsActive = 1,
-        IsMenuVisible = source.IsMenuVisible,
-        UpdatedAt = GETDATE()
-    WHEN NOT MATCHED THEN INSERT
+    UPDATE target
+       SET WebModuleId = source.WebModuleId,
+           ArabicCaption = source.ArabicCaption,
+           EnglishCaption = source.EnglishCaption,
+           AreaName = source.AreaName,
+           ControllerName = source.ControllerName,
+           ActionName = source.ActionName,
+           RouteUrl = source.RouteUrl,
+           IconCss = source.IconCss,
+           DisplayOrder = source.DisplayOrder,
+           IsActive = 1,
+           IsMenuVisible = source.IsMenuVisible,
+           UpdatedAt = GETDATE()
+      FROM dbo.WebScreens target
+      INNER JOIN (SELECT m.WebModuleId, s.* FROM @Screens s INNER JOIN dbo.WebModules m ON m.ModuleKey = s.ModuleKey) source
+              ON target.ScreenKey = source.ScreenKey;
+
+    INSERT INTO dbo.WebScreens
         (WebModuleId, ScreenKey, ArabicCaption, EnglishCaption, AreaName, ControllerName, ActionName, RouteUrl, IconCss, DisplayOrder, IsActive, IsMenuVisible, CreatedAt, UpdatedAt)
-        VALUES (source.WebModuleId, source.ScreenKey, source.ArabicCaption, source.EnglishCaption, source.AreaName, source.ControllerName, source.ActionName, source.RouteUrl, source.IconCss, source.DisplayOrder, 1, source.IsMenuVisible, GETDATE(), GETDATE());
+    SELECT source.WebModuleId, source.ScreenKey, source.ArabicCaption, source.EnglishCaption, source.AreaName, source.ControllerName, source.ActionName, source.RouteUrl, source.IconCss, source.DisplayOrder, 1, source.IsMenuVisible, GETDATE(), GETDATE()
+      FROM (SELECT m.WebModuleId, s.* FROM @Screens s INNER JOIN dbo.WebModules m ON m.ModuleKey = s.ModuleKey) source
+     WHERE NOT EXISTS (SELECT 1 FROM dbo.WebScreens target WHERE target.ScreenKey = source.ScreenKey);
 
     UPDATE dbo.WebScreens
        SET IsActive = 0, IsMenuVisible = 0, UpdatedAt = GETDATE()
      WHERE ScreenKey LIKE N'Shared.%';
 
-    MERGE dbo.WebScreenLegacyMap AS target
-    USING
+    DECLARE @LegacyMap TABLE (LegacyScreenName NVARCHAR(255), ScreenKey NVARCHAR(160), Notes NVARCHAR(400));
+
+    INSERT INTO @LegacyMap
+    SELECT *
+    FROM
     (
         SELECT N'FrmSaleBill6' LegacyScreenName, N'POS.Sales.Index' ScreenKey, N'فاتورة POS القديمة' Notes
         UNION ALL SELECT N'FrmCashing', N'POS.Cashing.Index', N'سندات قبض POS'
@@ -388,17 +397,39 @@ BEGIN
         UNION ALL SELECT N'FrmCustemers', N'MainERP.Customers.Index', N'العملاء MainERP'
         UNION ALL SELECT N'FrmBanksData', N'MainERP.Finance.Banks', N'البنوك MainERP'
         UNION ALL SELECT N'FrmBoxesData', N'MainERP.Finance.Boxes', N'الخزن MainERP'
-    ) AS source
-    ON target.LegacyScreenName = source.LegacyScreenName AND target.ScreenKey = source.ScreenKey
-    WHEN MATCHED THEN UPDATE SET Notes = source.Notes, IsActive = 1
-    WHEN NOT MATCHED THEN INSERT (LegacyScreenName, ScreenKey, Notes, IsActive)
-        VALUES (source.LegacyScreenName, source.ScreenKey, source.Notes, 1);
+    ) source;
+
+    UPDATE target
+       SET Notes = source.Notes,
+           IsActive = 1
+      FROM dbo.WebScreenLegacyMap target
+      INNER JOIN @LegacyMap source ON target.LegacyScreenName = source.LegacyScreenName AND target.ScreenKey = source.ScreenKey;
+
+    INSERT INTO dbo.WebScreenLegacyMap (LegacyScreenName, ScreenKey, Notes, IsActive)
+    SELECT source.LegacyScreenName, source.ScreenKey, source.Notes, 1
+      FROM @LegacyMap source
+     WHERE NOT EXISTS
+     (
+         SELECT 1
+           FROM dbo.WebScreenLegacyMap target
+          WHERE target.LegacyScreenName = source.LegacyScreenName
+            AND target.ScreenKey = source.ScreenKey
+     );
 
     IF OBJECT_ID(N'dbo.ScreenJuncUser', N'U') IS NOT NULL
     BEGIN
-        MERGE dbo.WebScreenPermissions AS target
-        USING
+        DECLARE @LegacyPermissions TABLE
         (
+            UserId INT,
+            WebScreenId INT,
+            CanView INT,
+            CanAdd INT,
+            CanEdit INT,
+            CanDelete INT,
+            CanPrint INT
+        );
+
+        INSERT INTO @LegacyPermissions
             SELECT
                 j.User_ID AS UserId,
                 s.WebScreenId,
@@ -410,20 +441,30 @@ BEGIN
             FROM dbo.ScreenJuncUser j
             INNER JOIN dbo.WebScreenLegacyMap map ON map.LegacyScreenName = j.ScreenName AND map.IsActive = 1
             INNER JOIN dbo.WebScreens s ON s.ScreenKey = map.ScreenKey AND s.IsActive = 1
-            GROUP BY j.User_ID, s.WebScreenId
-        ) AS source
-        ON target.UserId = source.UserId AND target.WebScreenId = source.WebScreenId
-        WHEN MATCHED THEN UPDATE SET
-            CanView = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions') THEN source.CanView ELSE target.CanView END,
+            GROUP BY j.User_ID, s.WebScreenId;
+
+        UPDATE target
+           SET CanView = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions') THEN source.CanView ELSE target.CanView END,
             CanAdd = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions') THEN source.CanAdd ELSE target.CanAdd END,
             CanEdit = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions') THEN source.CanEdit ELSE target.CanEdit END,
             CanDelete = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions') THEN source.CanDelete ELSE target.CanDelete END,
             CanPrint = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions') THEN source.CanPrint ELSE target.CanPrint END,
             SeedSource = ISNULL(target.SeedSource, N'LegacyScreenJuncUser'),
             UpdatedAt = GETDATE()
-        WHEN NOT MATCHED THEN INSERT
+          FROM dbo.WebScreenPermissions target
+          INNER JOIN @LegacyPermissions source ON target.UserId = source.UserId AND target.WebScreenId = source.WebScreenId;
+
+        INSERT INTO dbo.WebScreenPermissions
             (UserId, WebScreenId, CanView, CanAdd, CanEdit, CanDelete, CanPrint, CanExport, CanApprove, SeedSource, CreatedAt, UpdatedAt)
-            VALUES (source.UserId, source.WebScreenId, source.CanView, source.CanAdd, source.CanEdit, source.CanDelete, source.CanPrint, 0, 0, N'LegacyScreenJuncUser', GETDATE(), GETDATE());
+        SELECT source.UserId, source.WebScreenId, source.CanView, source.CanAdd, source.CanEdit, source.CanDelete, source.CanPrint, 0, 0, N'LegacyScreenJuncUser', GETDATE(), GETDATE()
+          FROM @LegacyPermissions source
+         WHERE NOT EXISTS
+         (
+             SELECT 1
+               FROM dbo.WebScreenPermissions target
+              WHERE target.UserId = source.UserId
+                AND target.WebScreenId = source.WebScreenId
+         );
     END
 
     IF OBJECT_ID(N'dbo.POS_UserPermissions', N'U') IS NOT NULL
@@ -475,9 +516,20 @@ BEGIN
         (N'CanImportExcel', N'POS.ExcelImport.Index', 1, 1, 0, 0, 0, 1, 0),
         (N'CanDeleteExcelReconciliationInvoices', N'POS.InvoiceReconciliation.Index', 1, 0, 0, 1, 0, 0, 0);
 
-        MERGE dbo.WebScreenPermissions AS target
-        USING
+        DECLARE @PosPermissions TABLE
         (
+            UserId INT,
+            WebScreenId INT,
+            CanView INT,
+            CanAdd INT,
+            CanEdit INT,
+            CanDelete INT,
+            CanPrint INT,
+            CanExport INT,
+            CanApprove INT
+        );
+
+        INSERT INTO @PosPermissions
             SELECT
                 p.UserID AS UserId,
                 s.WebScreenId,
@@ -492,11 +544,10 @@ BEGIN
             INNER JOIN @PosPermissionMap m ON m.PermissionKey = p.PermissionKey
             INNER JOIN dbo.WebScreens s ON s.ScreenKey = m.ScreenKey AND s.IsActive = 1
             WHERE p.IsAllowed = 1
-            GROUP BY p.UserID, s.WebScreenId
-        ) AS source
-        ON target.UserId = source.UserId AND target.WebScreenId = source.WebScreenId
-        WHEN MATCHED THEN UPDATE SET
-            CanView = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions') THEN CONVERT(BIT, source.CanView) ELSE target.CanView END,
+            GROUP BY p.UserID, s.WebScreenId;
+
+        UPDATE target
+           SET CanView = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions') THEN CONVERT(BIT, source.CanView) ELSE target.CanView END,
             CanAdd = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions') THEN CONVERT(BIT, source.CanAdd) ELSE target.CanAdd END,
             CanEdit = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions') THEN CONVERT(BIT, source.CanEdit) ELSE target.CanEdit END,
             CanDelete = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions') THEN CONVERT(BIT, source.CanDelete) ELSE target.CanDelete END,
@@ -505,47 +556,95 @@ BEGIN
             CanApprove = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions') THEN CONVERT(BIT, source.CanApprove) ELSE target.CanApprove END,
             SeedSource = ISNULL(target.SeedSource, N'POS_UserPermissions'),
             UpdatedAt = GETDATE()
-        WHEN NOT MATCHED THEN INSERT
+          FROM dbo.WebScreenPermissions target
+          INNER JOIN @PosPermissions source ON target.UserId = source.UserId AND target.WebScreenId = source.WebScreenId;
+
+        INSERT INTO dbo.WebScreenPermissions
             (UserId, WebScreenId, CanView, CanAdd, CanEdit, CanDelete, CanPrint, CanExport, CanApprove, SeedSource, CreatedAt, UpdatedAt)
-            VALUES (source.UserId, source.WebScreenId, CONVERT(BIT, source.CanView), CONVERT(BIT, source.CanAdd), CONVERT(BIT, source.CanEdit), CONVERT(BIT, source.CanDelete), CONVERT(BIT, source.CanPrint), CONVERT(BIT, source.CanExport), CONVERT(BIT, source.CanApprove), N'POS_UserPermissions', GETDATE(), GETDATE());
+        SELECT source.UserId, source.WebScreenId, CONVERT(BIT, source.CanView), CONVERT(BIT, source.CanAdd), CONVERT(BIT, source.CanEdit), CONVERT(BIT, source.CanDelete), CONVERT(BIT, source.CanPrint), CONVERT(BIT, source.CanExport), CONVERT(BIT, source.CanApprove), N'POS_UserPermissions', GETDATE(), GETDATE()
+          FROM @PosPermissions source
+         WHERE NOT EXISTS
+         (
+             SELECT 1
+               FROM dbo.WebScreenPermissions target
+              WHERE target.UserId = source.UserId
+                AND target.WebScreenId = source.WebScreenId
+         );
     END
 
     IF COL_LENGTH(N'dbo.TblUsers', N'UserCategory') IS NOT NULL
     BEGIN
-        MERGE dbo.WebScreenPermissions AS target
-        USING
-        (
+        DECLARE @TellerPermissions TABLE (UserId INT, WebScreenId INT);
+
+        INSERT INTO @TellerPermissions
             SELECT u.UserID AS UserId, s.WebScreenId
             FROM dbo.TblUsers u
             CROSS JOIN dbo.WebScreens s
             WHERE s.ScreenKey IN (N'POS.Sales.Index')
-              AND LTRIM(RTRIM(ISNULL(u.UserCategory, N''))) IN (N'تلر', N'Teller', N'teller')
-        ) AS source
-        ON target.UserId = source.UserId AND target.WebScreenId = source.WebScreenId
-        WHEN MATCHED THEN UPDATE SET
-            CanView = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions', N'POS_Teller_Default') THEN 1 ELSE target.CanView END,
+              AND LTRIM(RTRIM(ISNULL(u.UserCategory, N''))) IN (N'تلر', N'Teller', N'teller');
+
+        UPDATE target
+           SET CanView = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions', N'POS_Teller_Default') THEN 1 ELSE target.CanView END,
             CanAdd = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions', N'POS_Teller_Default') THEN 1 ELSE target.CanAdd END,
             CanEdit = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions', N'POS_Teller_Default') THEN 1 ELSE target.CanEdit END,
             CanPrint = CASE WHEN target.SeedSource IS NULL OR target.SeedSource IN (N'LegacyScreenJuncUser', N'POS_UserPermissions', N'POS_Teller_Default') THEN 1 ELSE target.CanPrint END,
             SeedSource = ISNULL(target.SeedSource, N'POS_Teller_Default'),
             UpdatedAt = GETDATE()
-        WHEN NOT MATCHED THEN INSERT
+          FROM dbo.WebScreenPermissions target
+          INNER JOIN @TellerPermissions source ON target.UserId = source.UserId AND target.WebScreenId = source.WebScreenId;
+
+        INSERT INTO dbo.WebScreenPermissions
             (UserId, WebScreenId, CanView, CanAdd, CanEdit, CanDelete, CanPrint, CanExport, CanApprove, SeedSource, CreatedAt, UpdatedAt)
-            VALUES (source.UserId, source.WebScreenId, 1, 1, 1, 0, 1, 0, 0, N'POS_Teller_Default', GETDATE(), GETDATE());
+        SELECT source.UserId, source.WebScreenId, 1, 1, 1, 0, 1, 0, 0, N'POS_Teller_Default', GETDATE(), GETDATE()
+          FROM @TellerPermissions source
+         WHERE NOT EXISTS
+         (
+             SELECT 1
+               FROM dbo.WebScreenPermissions target
+              WHERE target.UserId = source.UserId
+                AND target.WebScreenId = source.WebScreenId
+         );
     END
 
-    MERGE dbo.WebPermissionRoleTemplates AS target
-    USING
+    DECLARE @RoleTemplates TABLE
+    (
+        TemplateKey NVARCHAR(120),
+        AreaName NVARCHAR(50),
+        ArabicCaption NVARCHAR(200),
+        EnglishCaption NVARCHAR(200),
+        DisplayOrder INT
+    );
+
+    INSERT INTO @RoleTemplates
+    SELECT *
+    FROM
     (
         SELECT N'POS.Teller' TemplateKey, N'POS' AreaName, N'تلر POS' ArabicCaption, N'POS Teller' EnglishCaption, 10 DisplayOrder
         UNION ALL SELECT N'POS.KYC', N'POS', N'موظف KYC', N'KYC Officer', 20
         UNION ALL SELECT N'POS.Accountant', N'POS', N'حسابات POS', N'POS Accountant', 30
         UNION ALL SELECT N'MainERP.Accountant', N'MainERP', N'محاسب MainERP', N'MainERP Accountant', 40
-    ) AS source
-    ON target.TemplateKey = source.TemplateKey
-    WHEN MATCHED THEN UPDATE SET AreaName = source.AreaName, ArabicCaption = source.ArabicCaption, EnglishCaption = source.EnglishCaption, DisplayOrder = source.DisplayOrder, IsActive = 1, UpdatedAt = GETDATE()
-    WHEN NOT MATCHED THEN INSERT (TemplateKey, AreaName, ArabicCaption, EnglishCaption, DisplayOrder, IsActive, CreatedAt, UpdatedAt)
-        VALUES (source.TemplateKey, source.AreaName, source.ArabicCaption, source.EnglishCaption, source.DisplayOrder, 1, GETDATE(), GETDATE());
+    ) source;
+
+    UPDATE target
+       SET AreaName = source.AreaName,
+           ArabicCaption = source.ArabicCaption,
+           EnglishCaption = source.EnglishCaption,
+           DisplayOrder = source.DisplayOrder,
+           IsActive = 1,
+           UpdatedAt = GETDATE()
+      FROM dbo.WebPermissionRoleTemplates target
+      INNER JOIN @RoleTemplates source ON target.TemplateKey = source.TemplateKey;
+
+    INSERT INTO dbo.WebPermissionRoleTemplates
+        (TemplateKey, AreaName, ArabicCaption, EnglishCaption, DisplayOrder, IsActive, CreatedAt, UpdatedAt)
+    SELECT source.TemplateKey, source.AreaName, source.ArabicCaption, source.EnglishCaption, source.DisplayOrder, 1, GETDATE(), GETDATE()
+      FROM @RoleTemplates source
+     WHERE NOT EXISTS
+     (
+         SELECT 1
+           FROM dbo.WebPermissionRoleTemplates target
+          WHERE target.TemplateKey = source.TemplateKey
+     );
 
     UPDATE dbo.WebPermissionRoleTemplates
        SET IsActive = 0, UpdatedAt = GETDATE()

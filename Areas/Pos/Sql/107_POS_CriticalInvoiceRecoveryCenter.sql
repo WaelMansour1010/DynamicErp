@@ -312,14 +312,18 @@ BEGIN
         RETURN;
     END
 
-    MERGE dbo.CriticalRecoverySecondaryCredential AS target
-    USING (SELECT @UserName UserName) AS source
-    ON target.UserName = source.UserName
-    WHEN MATCHED THEN
-        UPDATE SET PasswordHash=HASHBYTES('SHA2_256', CONVERT(varbinary(4000), @UserName + N':' + @NewSecondaryPassword)), IsActive=1, UpdatedAt=GETDATE(), UpdatedBy=@UpdatedBy
-    WHEN NOT MATCHED THEN
-        INSERT(UserName, PasswordHash, IsActive, UpdatedBy)
+    UPDATE dbo.CriticalRecoverySecondaryCredential
+       SET PasswordHash=HASHBYTES('SHA2_256', CONVERT(varbinary(4000), @UserName + N':' + @NewSecondaryPassword)),
+           IsActive=1,
+           UpdatedAt=GETDATE(),
+           UpdatedBy=@UpdatedBy
+     WHERE UserName=@UserName;
+
+    IF @@ROWCOUNT = 0
+    BEGIN
+        INSERT dbo.CriticalRecoverySecondaryCredential(UserName, PasswordHash, IsActive, UpdatedBy)
         VALUES(@UserName, HASHBYTES('SHA2_256', CONVERT(varbinary(4000), @UserName + N':' + @NewSecondaryPassword)), 1, @UpdatedBy);
+    END
 END
 GO
 
@@ -329,9 +333,21 @@ IF NOT EXISTS (SELECT 1 FROM dbo.CriticalRecoveryPolicy WHERE PolicyKey='KycDefa
     INSERT dbo.CriticalRecoveryPolicy(PolicyKey, PolicyValue, Description) VALUES('KycDefaultPolicy', 'PreserveMasterData', 'KYC customer/card/token/attachment data is preserved by default.');
 GO
 
-MERGE dbo.CriticalRecoveryTableMap AS target
-USING
+DECLARE @CriticalRecoveryMap TABLE
 (
+    ModuleName nvarchar(100),
+    TableName sysname,
+    PrimaryKeyColumn sysname,
+    RelationColumn sysname NULL,
+    RelationType nvarchar(30),
+    SnapshotOrder int,
+    ReverseOrder int,
+    ActionPolicy nvarchar(30),
+    IsKycMaster bit,
+    IsProtected bit
+);
+
+INSERT @CriticalRecoveryMap(ModuleName, TableName, PrimaryKeyColumn, RelationColumn, RelationType, SnapshotOrder, ReverseOrder, ActionPolicy, IsKycMaster, IsProtected)
     SELECT N'Sales invoice' ModuleName, N'Transactions' TableName, N'Transaction_ID' PrimaryKeyColumn, N'Transaction_ID' RelationColumn, N'TransactionId' RelationType, 10 SnapshotOrder, 900 ReverseOrder, N'ArchiveAndSoftMark' ActionPolicy, 0 IsKycMaster, 0 IsProtected
     UNION ALL SELECT N'Sales invoice lines', N'Transaction_Details', N'ID', N'Transaction_ID', N'TransactionId', 20, 100, N'ArchiveAndReverse', 0, 0
     UNION ALL SELECT N'Accounting notes', N'Notes', N'NoteID', N'Transaction_ID', N'TransactionId', 25, 210, N'ArchiveAndReverse', 0, 0
@@ -349,15 +365,30 @@ USING
     UNION ALL SELECT N'KYC links only', N'TransactionKycLinks', N'ID', N'Transaction_ID', N'TransactionId', 90, 700, N'ArchiveLinkOnly', 0, 0
     UNION ALL SELECT N'KYC protected master', N'KycCustomers', N'KycCustomerId', N'KycCustomerId', N'KycMaster', 1000, 1000, N'ProtectNeverDelete', 1, 1
     UNION ALL SELECT N'KYC protected master', N'KycAttachments', N'KycAttachmentId', N'KycCustomerId', N'KycMaster', 1001, 1001, N'ProtectNeverDelete', 1, 1
-    UNION ALL SELECT N'KYC protected master', N'KycCards', N'KycCardId', N'KycCustomerId', N'KycMaster', 1002, 1002, N'ProtectNeverDelete', 1, 1
-) AS source
-ON target.TableName = source.TableName
-WHEN NOT MATCHED THEN
-    INSERT(ModuleName, TableName, PrimaryKeyColumn, RelationColumn, RelationType, SnapshotOrder, ReverseOrder, ActionPolicy, IsKycMaster, IsProtected)
-    VALUES(source.ModuleName, source.TableName, source.PrimaryKeyColumn, source.RelationColumn, source.RelationType, source.SnapshotOrder, source.ReverseOrder, source.ActionPolicy, source.IsKycMaster, source.IsProtected)
-WHEN MATCHED THEN
-    UPDATE SET ModuleName=source.ModuleName, PrimaryKeyColumn=source.PrimaryKeyColumn, RelationColumn=source.RelationColumn, RelationType=source.RelationType,
-        SnapshotOrder=source.SnapshotOrder, ReverseOrder=source.ReverseOrder, ActionPolicy=source.ActionPolicy, IsKycMaster=source.IsKycMaster, IsProtected=source.IsProtected;
+    UNION ALL SELECT N'KYC protected master', N'KycCards', N'KycCardId', N'KycCustomerId', N'KycMaster', 1002, 1002, N'ProtectNeverDelete', 1, 1;
+
+UPDATE target
+   SET ModuleName=source.ModuleName,
+       PrimaryKeyColumn=source.PrimaryKeyColumn,
+       RelationColumn=source.RelationColumn,
+       RelationType=source.RelationType,
+       SnapshotOrder=source.SnapshotOrder,
+       ReverseOrder=source.ReverseOrder,
+       ActionPolicy=source.ActionPolicy,
+       IsKycMaster=source.IsKycMaster,
+       IsProtected=source.IsProtected
+  FROM dbo.CriticalRecoveryTableMap target
+  INNER JOIN @CriticalRecoveryMap source ON target.TableName = source.TableName;
+
+INSERT dbo.CriticalRecoveryTableMap(ModuleName, TableName, PrimaryKeyColumn, RelationColumn, RelationType, SnapshotOrder, ReverseOrder, ActionPolicy, IsKycMaster, IsProtected)
+SELECT source.ModuleName, source.TableName, source.PrimaryKeyColumn, source.RelationColumn, source.RelationType, source.SnapshotOrder, source.ReverseOrder, source.ActionPolicy, source.IsKycMaster, source.IsProtected
+  FROM @CriticalRecoveryMap source
+ WHERE NOT EXISTS
+ (
+     SELECT 1
+       FROM dbo.CriticalRecoveryTableMap target
+      WHERE target.TableName = source.TableName
+ );
 GO
 
 IF OBJECT_ID('dbo.usp_CriticalRecovery_AnalyzeInvoices','P') IS NOT NULL

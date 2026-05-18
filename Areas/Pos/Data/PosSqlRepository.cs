@@ -5300,6 +5300,18 @@ WHERE ClientRequestId = @ClientRequestId
                 return true;
             }
 
+            if (message.IndexOf("Unable to acquire numbering lock for GetNextID_FromSequence", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+
+            if (message.IndexOf("Unable to allocate", StringComparison.OrdinalIgnoreCase) >= 0
+                && message.IndexOf("Source=dbo.GetNextID_FromSequence", StringComparison.OrdinalIgnoreCase) >= 0
+                && message.IndexOf("Unable to acquire numbering lock", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+
             if (message.IndexOf("sys.sp_getapplock", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 return false;
