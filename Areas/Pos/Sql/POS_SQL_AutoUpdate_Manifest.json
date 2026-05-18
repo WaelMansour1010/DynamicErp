@@ -55,7 +55,10 @@
     { "order": 104, "file": "104_POS_CustodyPayment_AccountingValidation.sql", "autoApply": true, "purpose": "Custody replenishment accounting validation and preview procedures." },
     { "order": 105, "file": "105_POS_KycFollowUp_ReportIndexes.sql", "autoApply": true, "purpose": "KYC follow-up report indexes and optimized stored procedure." },
     { "order": 106, "file": "106_WebScreenPermissions_Catalog.sql", "autoApply": true, "purpose": "Area-isolated web screen permission catalog, role templates, and POS/MainERP seed data." },
-    { "order": 107, "file": "107_POS_CriticalInvoiceRecoveryCenter.sql", "autoApply": true, "purpose": "Critical invoice recovery center archive, audit, workflow, restore, and POS menu registration." }
+    { "order": 107, "file": "107_POS_CriticalInvoiceRecoveryCenter.sql", "autoApply": true, "purpose": "Critical invoice recovery center archive, audit, workflow, restore, and POS menu registration." },
+    { "order": 108, "file": "108_POS_PayrollRunSnapshot.sql", "autoApply": true, "purpose": "Payroll run snapshot headers, employees, and journal links for shared POS/MainERP salary runs." },
+    { "order": 109, "file": "109_POS_WebPermissions_TellerInvoiceSafety.sql", "autoApply": true, "purpose": "Safety seed that carries legacy POS teller and invoice permissions into POS.Sales.Index web permissions without revoking existing grants." },
+    { "order": 110, "file": "110_POS_EmployeePhoto_PrintCards.sql", "autoApply": true, "purpose": "Employee photo data column used by shared HR printable employee and medical insurance cards." }
   ],
   "manualScripts": [
     { "file": "35_POS_SystemHealthPermissions.sql", "reason": "Requires sysadmin/master login and replacing the app SQL login placeholder." },

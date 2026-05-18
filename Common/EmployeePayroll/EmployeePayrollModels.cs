@@ -58,6 +58,7 @@ namespace MyERP.Common.EmployeePayroll
         public string Phone { get; set; }
         public string Mobile { get; set; }
         public string Email { get; set; }
+        public string PhotoDataUrl { get; set; }
         public string Notes { get; set; }
         public EmployeeMedicalInsurance MedicalInsurance { get; set; }
         public IList<EmployeeMedicalInsurance> MedicalInsuranceHistory { get; set; }
@@ -84,6 +85,7 @@ namespace MyERP.Common.EmployeePayroll
         public string Phone { get; set; }
         public string Mobile { get; set; }
         public string Email { get; set; }
+        public string PhotoDataUrl { get; set; }
         public string Notes { get; set; }
         public EmployeeMedicalInsurance MedicalInsurance { get; set; }
     }
@@ -201,6 +203,8 @@ namespace MyERP.Common.EmployeePayroll
 
     public class SalaryRunRequest
     {
+        public int? PayrollRunId { get; set; }
+        public string RunName { get; set; }
         public int Year { get; set; }
         public int Month { get; set; }
         public int? BranchId { get; set; }
@@ -208,6 +212,11 @@ namespace MyERP.Common.EmployeePayroll
         public int? EmployeeId { get; set; }
         public string PostingStatus { get; set; }
         public bool IncludeSavedDrafts { get; set; }
+        public bool RebuildEmployees { get; set; }
+        public bool ExcludeAlreadyIncluded { get; set; }
+        public bool OnlyUnincluded { get; set; }
+        public bool AllowDuplicateEmployees { get; set; }
+        public string ManualEmployeeIds { get; set; }
         public int RowLimit { get; set; }
         public int JournalPreviewLimit { get; set; }
     }
@@ -218,6 +227,10 @@ namespace MyERP.Common.EmployeePayroll
         public IList<SalaryRunEmployeeRow> Rows { get; set; }
         public IList<SalaryRunJournalLine> JournalPreview { get; set; }
         public IList<PayrollCompatibilityWarning> CompatibilityWarnings { get; set; }
+        public int? PayrollRunId { get; set; }
+        public string RunName { get; set; }
+        public bool IsSnapshotRun { get; set; }
+        public int ExcludedDuplicateEmployees { get; set; }
         public decimal TotalBasic { get; set; }
         public decimal TotalAdditions { get; set; }
         public decimal TotalDeductions { get; set; }
@@ -241,6 +254,8 @@ namespace MyERP.Common.EmployeePayroll
 
     public class SalaryRunEmployeeRow
     {
+        public int? PayrollRunId { get; set; }
+        public int? PayrollRunEmployeeId { get; set; }
         public bool Selected { get; set; }
         public int EmployeeId { get; set; }
         public string EmployeeCode { get; set; }
@@ -274,6 +289,7 @@ namespace MyERP.Common.EmployeePayroll
         public string AdvancePaymentAccountCode { get; set; }
         public string VacationProvisionAccountCode { get; set; }
         public bool IsLegacySnapshot { get; set; }
+        public string EmployeeStatusAtRunTime { get; set; }
         public decimal CountDays { get; set; }
         public decimal AbsentDays { get; set; }
         public decimal RemainingDays { get; set; }
@@ -719,6 +735,7 @@ namespace MyERP.Common.EmployeePayroll
 
     public class PayrollPostingResult
     {
+        public int? PayrollRunId { get; set; }
         public bool IsDryRun { get; set; }
         public bool IsPosted { get; set; }
         public bool AlreadyPosted { get; set; }
@@ -819,6 +836,7 @@ namespace MyERP.Common.EmployeePayroll
 
     public class SalaryRunJournalLine
     {
+        public int? PayrollRunId { get; set; }
         public string AccountCode { get; set; }
         public string AccountSerial { get; set; }
         public string AccountName { get; set; }
@@ -832,11 +850,59 @@ namespace MyERP.Common.EmployeePayroll
 
     public class SalaryRunSaveResult
     {
+        public int? PayrollRunId { get; set; }
+        public int SnapshotRows { get; set; }
+        public int ExcludedDuplicateEmployees { get; set; }
         public int InsertedRows { get; set; }
         public int UpdatedRows { get; set; }
         public int SkippedRows { get; set; }
         public decimal TotalNet { get; set; }
         public string Message { get; set; }
+    }
+
+    public class PayrollRunSummary
+    {
+        public int PayrollRunId { get; set; }
+        public string RunName { get; set; }
+        public int PeriodYear { get; set; }
+        public int PeriodMonth { get; set; }
+        public int EmployeesCount { get; set; }
+        public decimal TotalBasic { get; set; }
+        public decimal TotalAllowances { get; set; }
+        public decimal TotalDeductions { get; set; }
+        public decimal TotalNet { get; set; }
+        public bool IsPosted { get; set; }
+        public int? NoteId { get; set; }
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class PayrollRunCompareRequest
+    {
+        public int FirstPayrollRunId { get; set; }
+        public int SecondPayrollRunId { get; set; }
+    }
+
+    public class PayrollRunCompareResult
+    {
+        public int FirstPayrollRunId { get; set; }
+        public int SecondPayrollRunId { get; set; }
+        public int CommonEmployees { get; set; }
+        public int FirstOnlyEmployees { get; set; }
+        public int SecondOnlyEmployees { get; set; }
+        public decimal BasicDifference { get; set; }
+        public decimal AllowancesDifference { get; set; }
+        public decimal DeductionsDifference { get; set; }
+        public decimal NetDifference { get; set; }
+        public decimal JournalDebitDifference { get; set; }
+        public decimal JournalCreditDifference { get; set; }
+        public IList<SalaryRunEmployeeRow> EmployeesInFirstOnly { get; set; }
+        public IList<SalaryRunEmployeeRow> EmployeesInSecondOnly { get; set; }
+
+        public PayrollRunCompareResult()
+        {
+            EmployeesInFirstOnly = new List<SalaryRunEmployeeRow>();
+            EmployeesInSecondOnly = new List<SalaryRunEmployeeRow>();
+        }
     }
 
     public class PayrollSalarySheetReport
@@ -952,6 +1018,9 @@ namespace MyERP.Common.EmployeePayroll
         public int? ProviderId { get; set; }
         public string ProviderName { get; set; }
         public string AccountCode { get; set; }
+        public string AccountSerial { get; set; }
+        public string AccountName { get; set; }
+        public string AccountDisplay { get; set; }
         public decimal EmployeeDeduction { get; set; }
         public decimal CompanyCost { get; set; }
         public decimal PayrollPayable { get; set; }
@@ -1062,6 +1131,7 @@ namespace MyERP.Common.EmployeePayroll
         public string PlanName { get; set; }
         public string MembershipNumber { get; set; }
         public string AvatarText { get; set; }
+        public string PhotoDataUrl { get; set; }
         public string Status { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }

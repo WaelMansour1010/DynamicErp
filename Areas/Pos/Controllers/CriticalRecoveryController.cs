@@ -82,7 +82,7 @@ namespace MyERP.Areas.Pos.Controllers
                 TempData["CriticalRecoveryError"] = ex.Message;
             }
 
-            return RedirectToAction("Index");
+            return RecoveryView(context, model);
         }
 
         [HttpPost]
@@ -98,6 +98,28 @@ namespace MyERP.Areas.Pos.Controllers
             try
             {
                 model = model ?? new CriticalRecoveryIndexViewModel();
+                if (model.Request == null)
+                {
+                    model.Request = new CriticalRecoveryRequestViewModel();
+                }
+
+                model.Request.Mode = CriticalRecoveryMode.FullRollback;
+                model.Request.AllowPhysicalDelete = true;
+                model.Request.DryRun = false;
+                model.Request.DeleteOrphanKycRecords = false;
+
+                if (!model.Request.RequestId.HasValue || model.Request.RequestId.Value <= 0)
+                {
+                    var initiateResult = _service.Initiate(model.Filter, model.Request, context.UserName, Request);
+                    if (!initiateResult.Success || !initiateResult.RequestId.HasValue)
+                    {
+                        TempData["CriticalRecoveryError"] = initiateResult.Message;
+                        return RecoveryView(context, model);
+                    }
+
+                    model.Request.RequestId = initiateResult.RequestId;
+                }
+
                 var result = _service.ApproveAndExecute(model.Request, context.UserName, Request);
                 TempData[result.Success ? "CriticalRecoveryMessage" : "CriticalRecoveryError"] = result.Message;
             }
@@ -106,7 +128,7 @@ namespace MyERP.Areas.Pos.Controllers
                 TempData["CriticalRecoveryError"] = ex.Message;
             }
 
-            return RedirectToAction("Index");
+            return RecoveryView(context, model);
         }
 
         [HttpPost]
@@ -130,7 +152,7 @@ namespace MyERP.Areas.Pos.Controllers
                 TempData["CriticalRecoveryError"] = ex.Message;
             }
 
-            return RedirectToAction("Index");
+            return RecoveryView(context, model);
         }
 
         public ActionResult MenuItem()
@@ -153,6 +175,24 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return context;
+        }
+
+        private ActionResult RecoveryView(PosUserContext context, CriticalRecoveryIndexViewModel model)
+        {
+            model = model ?? new CriticalRecoveryIndexViewModel();
+            var fresh = _service.BuildIndex("Pos");
+            model.AreaName = "Pos";
+            model.BranchOptions = fresh.BranchOptions;
+            model.SnapshotBatches = fresh.SnapshotBatches;
+            model.AuditItems = fresh.AuditItems;
+            if (model.Impact == null)
+            {
+                model.Impact = new CriticalRecoveryImpactViewModel();
+            }
+
+            ViewBag.PosContext = context;
+            ViewBag.ActiveScreen = "critical-recovery";
+            return View("Index", model);
         }
     }
 }

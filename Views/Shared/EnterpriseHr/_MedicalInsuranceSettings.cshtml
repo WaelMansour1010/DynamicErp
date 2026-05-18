@@ -251,9 +251,17 @@
                 </section>
 
                 <section class="ep-drawer-panel" data-drawer-panel="accounting">
+                    <div class="ep-accounting-auto-card">
+                        <i class="fas fa-shield-alt"></i>
+                        <div>
+                            <h3>تهيئة محاسبية تلقائية</h3>
+                            <p>عند حفظ خطة نشطة تظهر في المسير، سيقوم النظام بإنشاء أو استخدام حساب مستحق شركة التأمين وحساب مصروف التأمين الطبي تلقائيا. لا يتم عرض الأكواد الداخلية للمستخدم.</p>
+                            <small id="epPlanAccountingState">سيتم التحقق من الحسابات عند الحفظ وقبل ترحيل قيد الرواتب.</small>
+                        </div>
+                    </div>
                     <div class="ep-form-grid rescue-grid-2">
-                        <label class="ep-field"><span>حساب استحقاق/ذمم شركة التأمين</span><input id="epPlanEmployeeAccount" maxlength="110" placeholder="MedicalInsurancePlans.EmployeeDeductionAccountCode" /></label>
-                        <label class="ep-field"><span>حساب مصروف التأمين الطبي للشركة</span><input id="epPlanCompanyAccount" maxlength="110" placeholder="MedicalInsurancePlans.CompanyCostAccountCode" /></label>
+                        <input id="epPlanEmployeeAccount" type="hidden" />
+                        <input id="epPlanCompanyAccount" type="hidden" />
                         <label class="ep-field"><span>مركز التكلفة</span><input id="epPlanCostCenter" maxlength="110" placeholder="Cost Center" /></label>
                         <label class="ep-field"><span>نوع الخصم</span><select id="epPlanPayrollDeductionType"><option value="Fixed">مبلغ ثابت</option><option value="Percentage">نسبة</option></select></label>
                         <label class="ep-field"><span>المعالجة الضريبية</span><select id="epPlanTaxMode"><option value="AfterTax">بعد الضريبة</option><option value="BeforeTax">قبل الضريبة</option></select></label>

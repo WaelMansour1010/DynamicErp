@@ -94,6 +94,7 @@
         <form id="epEmployeeForm" class="ep-employee-drawer-content">
             <input type="hidden" id="epEmployeeId" />
             <input type="hidden" id="epInsuranceId" />
+            <input type="hidden" id="epPhotoDataUrl" />
             <header class="ep-drawer-header">
                 <div>
                     <span>Employee Profile</span>
@@ -101,6 +102,8 @@
                     <p>بيانات العمل والراتب والتأمين الطبي في ملف واحد قابل للمراجعة.</p>
                 </div>
                 <div class="ep-drawer-header-actions">
+                    <button type="button" class="ep-secondary" id="epPrintEmployeeCard"><i class="fas fa-id-badge"></i> طباعة كارت الموظف</button>
+                    <button type="button" class="ep-secondary" id="epPrintEmployeeInsuranceCard"><i class="fas fa-briefcase-medical"></i> طباعة كارت التأمين</button>
                     <button type="button" class="ep-secondary" id="epCloseEditor">إغلاق</button>
                     <button type="submit" class="ep-primary" @(hrReadOnly ? "hidden disabled" : "")><i class="fas fa-save"></i> حفظ الملف</button>
                 </div>
@@ -116,6 +119,18 @@
 
             <div class="ep-drawer-body">
                 <section class="ep-tab active ep-form-grid three" data-tab-panel="basic">
+                    <div class="ep-photo-editor ep-span-all">
+                        <div class="ep-photo-preview" id="epPhotoPreview"><i class="fas fa-user"></i></div>
+                        <div class="ep-photo-tools">
+                            <strong>صورة الموظف</strong>
+                            <span>تظهر في ملف الموظف وكارت الموظف وكارت التأمين الطبي. يفضل صورة واضحة بخلفية هادئة.</span>
+                            <div>
+                                <label class="ep-secondary ep-photo-upload" for="epPhotoInput"><i class="fas fa-camera"></i> اختيار صورة</label>
+                                <input id="epPhotoInput" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+                                <button type="button" class="ep-secondary" id="epRemovePhoto"><i class="fas fa-trash-alt"></i> حذف الصورة</button>
+                            </div>
+                        </div>
+                    </div>
                     <label class="ep-field"><span>كود الموظف</span><input id="epCode" required maxlength="50" /></label>
                     <label class="ep-field"><span>اسم الموظف</span><input id="epName" required maxlength="255" /></label>
                     <label class="ep-field"><span>الجوال</span><input id="epMobile" /></label>
@@ -133,9 +148,9 @@
 
                 <section class="ep-tab ep-form-grid three" data-tab-panel="finance">
                     <label class="ep-field"><span>الراتب الأساسي</span><input id="epSalary" type="number" step="0.01" min="0" /></label>
-                    <label class="ep-field"><span>حساب ذمة الموظف</span><input id="epAccountCode" /></label>
-                    <label class="ep-field"><span>حساب الأجور المستحقة</span><input id="epAccruedAccountCode" /></label>
-                    <div class="ep-span-all ep-inline-hint"><i class="fas fa-lock"></i> الحسابات هنا للربط والمراجعة. إنشاء القيود يتم من مسير الرواتب فقط بعد فحص الحسابات واتزان القيد.</div>
+                    <input id="epAccountCode" type="hidden" />
+                    <input id="epAccruedAccountCode" type="hidden" />
+                    <div class="ep-span-all ep-inline-hint"><i class="fas fa-lock"></i> الحسابات الداخلية محفوظة للنظام ولا تعرض للمستخدم. مراجعة الحسابات تتم من معاينة القيد في مسير الرواتب بأسماء حسابات واضحة.</div>
                 </section>
 
                 <section class="ep-tab ep-form-grid three" data-tab-panel="insurance">
@@ -183,6 +198,8 @@
             </div>
         </form>
     </section>
+
+    <section class="ep-card-print-stage" id="epCardPrintStage" aria-hidden="true"></section>
 
     <div class="ep-message" id="epMessage" role="status" aria-live="polite"></div>
     <div class="ep-loading-shade" id="epLoadingShade" hidden>

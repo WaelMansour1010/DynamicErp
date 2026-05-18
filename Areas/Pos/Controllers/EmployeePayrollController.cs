@@ -79,14 +79,33 @@ namespace MyERP.Areas.Pos.Controllers
         public JsonResult Search(EmployeeSearchFilter filter)
         {
             if (!CanUseJson()) return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشات الموظفين والرواتب" }, JsonRequestBehavior.AllowGet);
-            return Json(new { success = true, rows = _repository.SearchEmployees(filter) }, JsonRequestBehavior.AllowGet);
+            var rows = _repository.SearchEmployees(filter);
+            foreach (var row in rows)
+            {
+                HideInternalEmployeeAccounts(row);
+            }
+
+            return Json(new { success = true, rows = rows }, JsonRequestBehavior.AllowGet);
         }
 
         [HttpGet]
         public JsonResult Get(int id)
         {
             if (!CanUseJson()) return Json(new { success = false, message = "ليست لديك صلاحية فتح شاشات الموظفين والرواتب" }, JsonRequestBehavior.AllowGet);
-            return Json(new { success = true, employee = _repository.GetEmployee(id) }, JsonRequestBehavior.AllowGet);
+            var employee = _repository.GetEmployee(id);
+            HideInternalEmployeeAccounts(employee);
+            return Json(new { success = true, employee = employee }, JsonRequestBehavior.AllowGet);
+        }
+
+        private static void HideInternalEmployeeAccounts(EmployeeSummary employee)
+        {
+            if (employee == null) return;
+            employee.AccountCode = null;
+            employee.AccruedSalaryAccountCode = null;
+            employee.VacationProvisionAccountCode = null;
+            employee.AdvancePaymentAccountCode = null;
+            employee.EndOfServiceAccountCode = null;
+            employee.TicketProvisionAccountCode = null;
         }
 
         [HttpGet]
@@ -108,7 +127,7 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (Exception ex)
             {
-                Response.StatusCode = 400;
+                Response.TrySkipIisCustomErrors = true;
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -140,7 +159,7 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (Exception ex)
             {
-                Response.StatusCode = 400;
+                Response.TrySkipIisCustomErrors = true;
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -157,7 +176,7 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (Exception ex)
             {
-                Response.StatusCode = 400;
+                Response.TrySkipIisCustomErrors = true;
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -174,7 +193,7 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (Exception ex)
             {
-                Response.StatusCode = 400;
+                Response.TrySkipIisCustomErrors = true;
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -206,7 +225,7 @@ namespace MyERP.Areas.Pos.Controllers
             }
             catch (Exception ex)
             {
-                Response.StatusCode = 400;
+                Response.TrySkipIisCustomErrors = true;
                 return Json(new { success = false, message = ex.Message });
             }
         }
@@ -238,6 +257,36 @@ namespace MyERP.Areas.Pos.Controllers
             {
                 Response.StatusCode = 400;
                 return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult PayrollRuns(SalaryRunRequest request)
+        {
+            if (!CanUseJson()) return Json(new { success = false, message = "ليست لديك صلاحية عرض مسيرات الرواتب" }, JsonRequestBehavior.AllowGet);
+            try
+            {
+                return LargeJson(new { success = true, runs = _repository.GetPayrollRuns(request) }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult ComparePayrollRuns(PayrollRunCompareRequest request)
+        {
+            if (!CanUseJson()) return Json(new { success = false, message = "ليست لديك صلاحية مقارنة مسيرات الرواتب" });
+            try
+            {
+                return LargeJson(new { success = true, result = _repository.ComparePayrollRuns(request) }, JsonRequestBehavior.DenyGet);
+            }
+            catch (Exception ex)
+            {
+                Response.TrySkipIisCustomErrors = true;
+                return Json(new { success = false, message = ex.Message });
             }
         }
 

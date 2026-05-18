@@ -10,6 +10,8 @@
       data-lookups-url="@hrUrl("Lookups")"
       data-preview-url="@hrUrl("PreviewSalaryRun")"
       data-save-url="@(salaryWriteEnabled ? hrUrl("SaveSalaryRun") : string.Empty)"
+      data-runs-url="@hrUrl("PayrollRuns")"
+      data-compare-runs-url="@hrUrl("ComparePayrollRuns")"
       data-parity-url="@(hrAdvancedPayroll ? hrUrl("PayrollCompatibilityParity") : string.Empty)"
       data-explain-url="@(hrAdvancedPayroll ? hrUrl("PayrollCompatibilityExplain") : string.Empty)"
       data-replay-url="@((hrAdvancedPayroll || salaryWriteEnabled) ? hrUrl("PayrollAccountingReplay") : string.Empty)"
@@ -22,7 +24,7 @@
 
     <header class="ep-payroll-hero">
         <div class="ep-payroll-title">
-            <span class="ep-eyebrow">Payroll Command Center</span>
+            <span class="ep-eyebrow">مركز إدارة مسير الرواتب</span>
             <h1>مسير الرواتب</h1>
             <p>مساحة عمل واحدة لمراجعة الموظفين، المتغيرات، التأمين، صافي الرواتب، والقيد المحاسبي قبل الاعتماد والترحيل.</p>
         </div>
@@ -69,6 +71,25 @@
             <button type="button" id="epNextMonth" title="الشهر التالي"><i class="fas fa-chevron-left"></i></button>
             <button type="button" class="ep-primary" id="epPreviewRun" data-busy-text="جار حساب المعاينة..."><i class="fas fa-calculator"></i> معاينة المسير</button>
         </div>
+        <details class="ep-run-snapshot-options">
+            <summary>إعدادات المسير المحفوظ</summary>
+            <div class="ep-filter-grid">
+                <label>رقم المسير
+                    <input id="epPayrollRunId" type="number" min="1" placeholder="اتركه فارغا لإنشاء مسير جديد" />
+                </label>
+                <label>اسم المسير
+                    <input id="epRunName" type="text" placeholder="مثال: مسير فرع القاهرة - مايو" />
+                </label>
+                <label class="ep-filter-search">اختيار موظفين يدويا
+                    <input id="epManualEmployeeIds" type="text" placeholder="أرقام الموظفين مفصولة بفواصل" />
+                </label>
+                <label class="ep-checkline"><input id="epExcludeAlreadyIncluded" type="checkbox" checked /> استبعاد من سبق إدراجه في نفس الشهر</label>
+                <label class="ep-checkline"><input id="epOnlyUnincluded" type="checkbox" /> عرض غير المدرجين فقط</label>
+                <label class="ep-checkline danger"><input id="epAllowDuplicateEmployees" type="checkbox" /> السماح بتكرار الموظف بتحذير</label>
+                <label class="ep-checkline danger"><input id="epRebuildEmployees" type="checkbox" /> إعادة تكوين الموظفين من الشروط الحالية</label>
+            </div>
+            <p class="ep-help-text" id="epSnapshotHint">إعادة حفظ مسير برقم موجود تستخدم نفس Snapshot ولا تعيد جلب الموظفين إلا عند اختيار إعادة التكوين.</p>
+        </details>
     </section>
 
     <section class="ep-payroll-kpis" aria-label="ملخص المسير">
@@ -78,6 +99,29 @@
         <article><i class="fas fa-minus-circle"></i><span>الخصومات</span><strong id="epTopTotalDeductions">0.00</strong><small>خصومات وسلف وتأمين</small></article>
         <article class="net"><i class="fas fa-hand-holding-usd"></i><span>صافي الرواتب</span><strong id="epTopTotalNet">0.00</strong><small>المبلغ المستحق للموظفين</small></article>
         <article class="issues"><i class="fas fa-exclamation-triangle"></i><span>أخطاء المراجعة</span><strong id="epIssueCount">0</strong><small id="epIssueHint">لا توجد ملاحظات حتى الآن</small></article>
+    </section>
+
+    <section class="ep-readiness-strip" aria-label="جاهزية المسير">
+        <article id="epReadinessEmployees" class="waiting">
+            <span><i class="fas fa-user-check"></i> الموظفون</span>
+            <strong>لم تتم المعاينة</strong>
+            <small>اضغط معاينة لتحميل الموظفين المؤهلين فقط.</small>
+        </article>
+        <article id="epReadinessSnapshot" class="waiting">
+            <span><i class="fas fa-camera-retro"></i> الحفظ</span>
+            <strong>لم يحفظ بعد</strong>
+            <small>بعد الحفظ يتم تثبيت Snapshot الموظفين.</small>
+        </article>
+        <article id="epReadinessJournal" class="waiting">
+            <span><i class="fas fa-scale-balanced"></i> القيد</span>
+            <strong>بانتظار المراجعة</strong>
+            <small>راجع المدين والدائن قبل الترحيل.</small>
+        </article>
+        <article id="epReadinessIssues" class="waiting">
+            <span><i class="fas fa-shield-alt"></i> الملاحظات</span>
+            <strong>لا توجد بيانات</strong>
+            <small>سيظهر هنا أي مانع قبل الاعتماد.</small>
+        </article>
     </section>
 
     <section class="ep-payroll-process">
@@ -190,15 +234,16 @@
             <table class="ep-table ep-journal-table">
                 <thead>
                     <tr>
-                        <th>Account_Serial</th>
-                        <th>Account_Name</th>
+                        <th>رقم الحساب</th>
+                        <th>اسم الحساب</th>
                         <th>البيان</th>
+                        <th>رقم المسير</th>
                         <th>مدين</th>
                         <th>دائن</th>
                     </tr>
                 </thead>
                 <tbody id="epJournalRows">
-                    <tr><td colspan="5" class="ep-empty-row">ستظهر معاينة القيد بعد حساب المسير.</td></tr>
+                    <tr><td colspan="6" class="ep-empty-row">ستظهر معاينة القيد بعد حساب المسير.</td></tr>
                 </tbody>
             </table>
         </div>
@@ -207,7 +252,7 @@
     <section class="ep-payroll-panel" data-run-panel="issues" hidden>
         <div class="ep-panel-head">
             <div>
-                <h2>Payroll Issues Center</h2>
+                <h2>مركز ملاحظات المسير</h2>
                 <p>مكان واحد لمراجعة الحسابات الناقصة، القيود غير المتوازنة، الموظفين المستبعدين، أو أي إعداد غير مكتمل.</p>
             </div>
             <span class="ep-status-badge active" id="epIssuesStatus">لا توجد ملاحظات</span>
@@ -255,6 +300,19 @@
             <span id="epSheetPeriodRange">الفترة: --</span>
             <span id="epSheetGeneratedAt">وقت الإنشاء: --</span>
             <span id="epSheetPostingFilter">حالة الترحيل: الكل</span>
+        </div>
+        <div class="ep-run-compare-box">
+            <label>المسير الأول <input id="epCompareRunA" type="number" min="1" /></label>
+            <label>المسير الثاني <input id="epCompareRunB" type="number" min="1" /></label>
+            <button type="button" id="epCompareRuns"><i class="fas fa-code-compare"></i> مقارنة مسيرين</button>
+            <div class="ep-compare-summary" aria-label="ملخص مقارنة مسيرين">
+                <article><span>المشتركون</span><strong id="epCompareCommon">--</strong></article>
+                <article><span>في الأول فقط</span><strong id="epCompareFirstOnly">--</strong></article>
+                <article><span>في الثاني فقط</span><strong id="epCompareSecondOnly">--</strong></article>
+                <article><span>فرق الصافي</span><strong id="epCompareNetDiff">--</strong></article>
+                <article><span>فرق القيد</span><strong id="epCompareJournalDiff">--</strong></article>
+            </div>
+            <div id="epCompareResult" class="ep-help-text">اختر رقمين لمسيرين محفوظين لعرض فروق الموظفين والمبالغ والقيد.</div>
         </div>
         <div class="ep-table-shell">
             <table class="ep-table ep-sheet-table">

@@ -21,6 +21,20 @@
         new SelectListItem { Value = "SalesOnly", Text = "فواتير فقط", Selected = Model.Filter == null || string.IsNullOrWhiteSpace(Model.Filter.InvoiceScope) || Model.Filter.InvoiceScope == "SalesOnly" },
         new SelectListItem { Value = "SalesAndReturns", Text = "فواتير ومرتجعات", Selected = Model.Filter != null && Model.Filter.InvoiceScope == "SalesAndReturns" }
     };
+    var invoiceSourceItems = new[]
+    {
+        new SelectListItem { Value = "Both", Text = "يدوي و Excel", Selected = Model.Filter == null || string.IsNullOrWhiteSpace(Model.Filter.InvoiceSource) || Model.Filter.InvoiceSource == "Both" },
+        new SelectListItem { Value = "ManualOnly", Text = "يدوي فقط", Selected = Model.Filter != null && Model.Filter.InvoiceSource == "ManualOnly" },
+        new SelectListItem { Value = "ExcelOnly", Text = "Excel فقط", Selected = Model.Filter != null && Model.Filter.InvoiceSource == "ExcelOnly" }
+    };
+    var operationKindItems = new[]
+    {
+        new SelectListItem { Value = "All", Text = "الكل", Selected = Model.Filter == null || string.IsNullOrWhiteSpace(Model.Filter.OperationKind) || Model.Filter.OperationKind == "All" },
+        new SelectListItem { Value = "CashInOnly", Text = "كاش إن فقط", Selected = Model.Filter != null && Model.Filter.OperationKind == "CashInOnly" },
+        new SelectListItem { Value = "CashOutOnly", Text = "كاش أوت فقط", Selected = Model.Filter != null && Model.Filter.OperationKind == "CashOutOnly" },
+        new SelectListItem { Value = "CardsOnly", Text = "كروت فقط", Selected = Model.Filter != null && Model.Filter.OperationKind == "CardsOnly" },
+        new SelectListItem { Value = "ViolationsOnly", Text = "مخالفات فقط", Selected = Model.Filter != null && Model.Filter.OperationKind == "ViolationsOnly" }
+    };
     var modeItems = new[]
     {
         new SelectListItem { Value = "CancelOnly", Text = "إلغاء فقط" },
@@ -113,7 +127,7 @@
             </header>
 
             <div class="banner">
-                هذه ليست شاشة حذف عادية. أي إجراء حرج يتطلب معاينة، أرشفة كاملة، كلمة مرور ثانوية، تأكيد خطر صريح، واعتماد مدير ثانٍ. بيانات KYC الأساسية لا يتم حذفها افتراضيًا.
+                هذه شاشة إدارة حرجة للأدمن فقط. التنفيذ يحتاج كلمة مرور الأدمن الحالي فقط، مع Snapshot كامل قبل أي تعديل. بيانات KYC الأساسية لا يتم حذفها افتراضيًا.
             </div>
 
             @if (TempData["CriticalRecoveryMessage"] != null)
@@ -135,6 +149,8 @@
                         <div><label>من تاريخ</label>@Html.TextBoxFor(m => m.Filter.DateFrom, "{0:yyyy-MM-dd}", new { type = "date" })</div>
                         <div><label>إلى تاريخ</label>@Html.TextBoxFor(m => m.Filter.DateTo, "{0:yyyy-MM-dd}", new { type = "date" })</div>
                         <div><label>نطاق الفواتير</label>@Html.DropDownListFor(m => m.Filter.InvoiceScope, invoiceScopeItems)</div>
+                        <div><label>مصدر الفاتورة</label>@Html.DropDownListFor(m => m.Filter.InvoiceSource, invoiceSourceItems)</div>
+                        <div><label>نوع العملية</label>@Html.DropDownListFor(m => m.Filter.OperationKind, operationKindItems)</div>
                         <div><label>رقم الفاتورة</label>@Html.TextBoxFor(m => m.Filter.InvoiceNo)</div>
                         <div><label>المستخدم / الكاشير</label>@Html.TextBoxFor(m => m.Filter.CashierUserId)</div>
                         <div><label>الهاتف / التوكن / العميل</label>@Html.TextBoxFor(m => m.Filter.CustomerSearch)</div>
@@ -167,13 +183,14 @@
                 }
                 <div class="scroll">
                     <table>
-                        <thead><tr><th>الفاتورة</th><th>الحركة</th><th>التاريخ</th><th>الفرع</th><th>العميل</th><th>القيمة</th><th>الحالة</th><th>KYC</th><th>مراجعة</th></tr></thead>
+                        <thead><tr><th>الفاتورة</th><th>الحركة</th><th>نوع الفاتورة</th><th>التاريخ</th><th>الفرع</th><th>العميل</th><th>القيمة</th><th>الحالة</th><th>KYC</th><th>مراجعة</th></tr></thead>
                         <tbody>
                         @foreach (var invoice in Model.Impact.Invoices)
                         {
                             <tr>
                                 <td>@invoice.InvoiceNo</td>
                                 <td>@invoice.TransactionId</td>
+                                <td>@invoice.OperationTypeName</td>
                                 <td>@invoice.TransactionDate.ToString("yyyy-MM-dd")</td>
                                 <td>@invoice.BranchId</td>
                                 <td>@invoice.CustomerName</td>
@@ -185,7 +202,7 @@
                         }
                         @if (Model.Impact.Invoices.Count == 0)
                         {
-                            <tr><td colspan="9">لا توجد نتائج معاينة. نفذ البحث أولًا.</td></tr>
+                            <tr><td colspan="10">لا توجد نتائج معاينة. نفذ البحث أولًا.</td></tr>
                         }
                         </tbody>
                     </table>
@@ -222,6 +239,8 @@
                 @Html.HiddenFor(m => m.Filter.DateTo)
                 @Html.HiddenFor(m => m.Filter.InvoiceType)
                 @Html.HiddenFor(m => m.Filter.InvoiceScope)
+                @Html.HiddenFor(m => m.Filter.InvoiceSource)
+                @Html.HiddenFor(m => m.Filter.OperationKind)
                 @Html.HiddenFor(m => m.Filter.InvoiceNo)
                 @Html.HiddenFor(m => m.Filter.CashierUserId)
                 @Html.HiddenFor(m => m.Filter.CustomerSearch)
@@ -230,22 +249,21 @@
                     <h2>المعالجة الحرجة</h2>
                     <div class="grid">
                         <div><label>نوع المعالجة</label>@Html.DropDownListFor(m => m.Request.Mode, modeItems)</div>
-                        <div><label>كلمة المرور الثانوية</label>@Html.PasswordFor(m => m.Request.SecondaryPassword)</div>
-                        <div><label>تأكيد الخطر</label>@Html.TextBoxFor(m => m.Request.DangerConfirmation, new { @class = "ltr", placeholder = "I UNDERSTAND" })</div>
+                        <div><label>كلمة مرور الأدمن الحالي</label>@Html.PasswordFor(m => m.Request.SecondaryPassword)</div>
                         <div><label>رقم الطلب للاعتماد</label>@Html.TextBoxFor(m => m.Request.RequestId, new { type = "number" })</div>
                     </div>
-                    <label>سبب إلزامي</label>
-                    @Html.TextAreaFor(m => m.Request.Reason)
+                    @Html.HiddenFor(m => m.Request.DangerConfirmation)
+                    @Html.HiddenFor(m => m.Request.Reason)
                     <div class="checks">
                         <label class="check">@Html.CheckBoxFor(m => m.Request.DryRun) معاينة بدون تنفيذ</label>
                         <label class="check">@Html.CheckBoxFor(m => m.Request.RequestHigherApprovalForClosedPeriod) اعتماد أعلى للفترات المغلقة</label>
                         <label class="check">@Html.CheckBoxFor(m => m.Request.AllowPhysicalDelete) سماح حذف فعلي صريح</label>
                         <label class="check">@Html.CheckBoxFor(m => m.Request.DeleteOrphanKycRecords) حذف KYC يتيم</label>
                     </div>
-                    <p class="danger-note">حذف KYC اليتيم مغلق افتراضيًا ويظل محظورًا إلا بعد التحقق من عدم وجود أي فاتورة أو كارت/توكن أو سجل تدقيق أو إقفال أو تقرير أو مرجع امتثال.</p>
+                    <p class="danger-note">زر تنفيذ بالباسورد يقوم تلقائيًا بعمل Snapshot ثم حذف فعلي للتأثيرات المرتبطة. بيانات KYC الأساسية لا يتم حذفها.</p>
                     <div class="actions">
-                        <button type="submit" class="warning">إنشاء طلب + Snapshot</button>
-                        <button type="submit" formaction="@Url.Action("ApproveAndExecute", "CriticalRecovery", new { area = areaName })">اعتماد مدير ثانٍ + تنفيذ</button>
+                        <button type="submit" class="warning">تجهيز Snapshot فقط</button>
+                        <button type="submit" formaction="@Url.Action("ApproveAndExecute", "CriticalRecovery", new { area = areaName })">تنفيذ بالباسورد</button>
                     </div>
                 </section>
             }
@@ -259,10 +277,9 @@
                         <div><label>دفعة الأرشيف</label>@Html.TextBoxFor(m => m.Restore.SnapshotBatchId, new { type = "number" })</div>
                         <div><label>رقم حركة محدد</label>@Html.TextBoxFor(m => m.Restore.TransactionId, new { type = "number" })</div>
                         <div><label>نطاق الاسترجاع</label>@Html.DropDownListFor(m => m.Restore.RestoreScope, restoreScopeItems)</div>
-                        <div><label>كلمة المرور الثانوية</label>@Html.PasswordFor(m => m.Restore.SecondaryPassword)</div>
+                        <div><label>كلمة مرور الأدمن الحالي</label>@Html.PasswordFor(m => m.Restore.SecondaryPassword)</div>
                     </div>
-                    <label>سبب الاسترجاع</label>
-                    @Html.TextAreaFor(m => m.Restore.Reason)
+                    @Html.HiddenFor(m => m.Restore.Reason)
                     <div class="actions">
                         <button type="submit" class="safe">استرجاع العمليات المؤرشفة</button>
                     </div>

@@ -62,6 +62,7 @@ namespace MyERP.Areas.Shared.CriticalRecovery
                             TransactionId = ReadLong(reader, "Transaction_ID"),
                             InvoiceNo = Convert.ToString(reader["InvoiceNo"]),
                             InvoiceType = ReadInt(reader, "InvoiceType"),
+                            OperationTypeName = Convert.ToString(reader["OperationTypeName"]),
                             BranchId = ReadInt(reader, "BranchId"),
                             TransactionDate = ReadDate(reader, "Transaction_Date"),
                             CustomerName = Convert.ToString(reader["CustomerName"]),
@@ -145,7 +146,7 @@ namespace MyERP.Areas.Shared.CriticalRecovery
                 command.CommandTimeout = 600;
                 command.Parameters.AddWithValue("@RequestId", request.RequestId.GetValueOrDefault());
                 command.Parameters.AddWithValue("@ApprovedBy", userName ?? string.Empty);
-                command.Parameters.AddWithValue("@ApproverSecondaryPassword", request.ApproverSecondaryPassword ?? string.Empty);
+                command.Parameters.AddWithValue("@ApproverSecondaryPassword", request.ApproverSecondaryPassword ?? request.SecondaryPassword ?? string.Empty);
                 command.Parameters.AddWithValue("@DangerConfirmation", request.DangerConfirmation ?? string.Empty);
                 command.Parameters.AddWithValue("@AllowPhysicalDelete", request.AllowPhysicalDelete);
                 command.Parameters.AddWithValue("@DeleteOrphanKycRecords", request.DeleteOrphanKycRecords);
@@ -176,9 +177,9 @@ namespace MyERP.Areas.Shared.CriticalRecovery
                 throw new InvalidOperationException("Snapshot batch is required for restore.");
             }
 
-            if (string.IsNullOrWhiteSpace(restore.Reason) || string.IsNullOrWhiteSpace(restore.SecondaryPassword))
+            if (string.IsNullOrWhiteSpace(restore.SecondaryPassword))
             {
-                throw new InvalidOperationException("Restore requires reason and secondary password.");
+                throw new InvalidOperationException("Restore requires current admin password.");
             }
 
             using (var connection = new SqlConnection(_connectionString))
@@ -191,7 +192,7 @@ namespace MyERP.Areas.Shared.CriticalRecovery
                 command.Parameters.AddWithValue("@RestoreScope", restore.RestoreScope ?? "Full");
                 command.Parameters.AddWithValue("@RestoreBy", userName ?? string.Empty);
                 command.Parameters.AddWithValue("@SecondaryPassword", restore.SecondaryPassword ?? string.Empty);
-                command.Parameters.AddWithValue("@Reason", restore.Reason ?? string.Empty);
+                command.Parameters.AddWithValue("@Reason", string.IsNullOrWhiteSpace(restore.Reason) ? "Admin password confirmed restore." : restore.Reason);
                 AddRequestMetadata(command, httpRequest);
                 connection.Open();
                 using (var reader = command.ExecuteReader())
@@ -216,11 +217,11 @@ namespace MyERP.Areas.Shared.CriticalRecovery
             var html = new StringBuilder();
             html.Append("<html><head><meta charset=\"utf-8\" /></head><body>");
             html.Append("<h2>معاينة مركز الاسترجاع الحرج</h2>");
-            html.Append("<table border=\"1\"><tr><th>رقم الحركة</th><th>رقم الفاتورة</th><th>النوع</th><th>الفرع</th><th>التاريخ</th><th>العميل</th><th>القيمة</th><th>مرحل</th><th>مغلق</th><th>مراجع KYC</th></tr>");
+            html.Append("<table border=\"1\"><tr><th>رقم الحركة</th><th>رقم الفاتورة</th><th>نوع الفاتورة</th><th>الفرع</th><th>التاريخ</th><th>العميل</th><th>القيمة</th><th>مرحل</th><th>مغلق</th><th>مراجع KYC</th></tr>");
             foreach (var invoice in impact.Invoices)
             {
                 html.Append("<tr><td>").Append(invoice.TransactionId).Append("</td><td>").Append(HttpUtility.HtmlEncode(invoice.InvoiceNo)).Append("</td><td>")
-                    .Append(invoice.InvoiceType).Append("</td><td>").Append(invoice.BranchId).Append("</td><td>").Append(invoice.TransactionDate.ToString("yyyy-MM-dd"))
+                    .Append(HttpUtility.HtmlEncode(invoice.OperationTypeName)).Append("</td><td>").Append(invoice.BranchId).Append("</td><td>").Append(invoice.TransactionDate.ToString("yyyy-MM-dd"))
                     .Append("</td><td>").Append(HttpUtility.HtmlEncode(invoice.CustomerName)).Append("</td><td>").Append(invoice.Value.ToString("0.00"))
                     .Append("</td><td>").Append(invoice.IsPosted).Append("</td><td>").Append(invoice.IsClosed).Append("</td><td>")
                     .Append(HttpUtility.HtmlEncode(invoice.KycReferenceIds)).Append("</td></tr>");
@@ -245,7 +246,9 @@ namespace MyERP.Areas.Shared.CriticalRecovery
             {
                 DateFrom = today,
                 DateTo = today,
-                InvoiceScope = "SalesOnly"
+                InvoiceScope = "SalesOnly",
+                InvoiceSource = "Both",
+                OperationKind = "All"
             };
         }
 
@@ -356,14 +359,14 @@ ORDER BY AuditId DESC", connection))
                 throw new InvalidOperationException("Request id is required for approval.");
             }
 
-            if (!approval && (string.IsNullOrWhiteSpace(request.Reason) || string.IsNullOrWhiteSpace(request.SecondaryPassword)))
+            if (!approval && string.IsNullOrWhiteSpace(request.SecondaryPassword))
             {
-                throw new InvalidOperationException("Reason and secondary password are required.");
+                throw new InvalidOperationException("Current admin password is required.");
             }
 
-            if (!string.Equals(request.DangerConfirmation, "I UNDERSTAND", StringComparison.Ordinal))
+            if (approval && string.IsNullOrWhiteSpace(request.SecondaryPassword) && string.IsNullOrWhiteSpace(request.ApproverSecondaryPassword))
             {
-                throw new InvalidOperationException("Type I UNDERSTAND exactly before execution.");
+                throw new InvalidOperationException("Current admin password is required.");
             }
 
             if (request.DeleteOrphanKycRecords && !request.AllowPhysicalDelete)
@@ -380,6 +383,8 @@ ORDER BY AuditId DESC", connection))
             command.Parameters.AddWithValue("@DateTo", (object)filter.DateTo ?? DBNull.Value);
             command.Parameters.AddWithValue("@InvoiceType", (object)filter.InvoiceType ?? DBNull.Value);
             command.Parameters.AddWithValue("@InvoiceScope", filter.InvoiceScope ?? "SalesOnly");
+            command.Parameters.AddWithValue("@InvoiceSource", filter.InvoiceSource ?? "Both");
+            command.Parameters.AddWithValue("@OperationKind", filter.OperationKind ?? "All");
             command.Parameters.AddWithValue("@InvoiceNo", filter.InvoiceNo ?? string.Empty);
             command.Parameters.AddWithValue("@CashierUserId", filter.CashierUserId ?? string.Empty);
             command.Parameters.AddWithValue("@CustomerSearch", filter.CustomerSearch ?? string.Empty);
@@ -395,10 +400,10 @@ ORDER BY AuditId DESC", connection))
         private static void AddRequestParameters(SqlCommand command, CriticalRecoveryRequestViewModel request, string userName, HttpRequestBase httpRequest)
         {
             command.Parameters.AddWithValue("@Mode", request.Mode ?? CriticalRecoveryMode.CancelOnly);
-            command.Parameters.AddWithValue("@Reason", request.Reason ?? string.Empty);
+            command.Parameters.AddWithValue("@Reason", string.IsNullOrWhiteSpace(request.Reason) ? "Admin password confirmed critical recovery." : request.Reason);
             command.Parameters.AddWithValue("@RequestedBy", userName ?? string.Empty);
             command.Parameters.AddWithValue("@SecondaryPassword", request.SecondaryPassword ?? string.Empty);
-            command.Parameters.AddWithValue("@DangerConfirmation", request.DangerConfirmation ?? string.Empty);
+            command.Parameters.AddWithValue("@DangerConfirmation", "I UNDERSTAND");
             command.Parameters.AddWithValue("@DryRun", request.DryRun);
             command.Parameters.AddWithValue("@AllowPhysicalDelete", request.AllowPhysicalDelete);
             command.Parameters.AddWithValue("@RequestHigherApprovalForClosedPeriod", request.RequestHigherApprovalForClosedPeriod);

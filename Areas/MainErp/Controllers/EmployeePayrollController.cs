@@ -294,6 +294,36 @@ namespace MyERP.Areas.MainErp.Controllers
         }
 
         [HttpGet]
+        public JsonResult PayrollRuns(SalaryRunRequest request)
+        {
+            if (!CanUseJson()) return Json(new { success = false, message = "ليست لديك صلاحية عرض مسيرات الرواتب" }, JsonRequestBehavior.AllowGet);
+            try
+            {
+                return LargeJson(new { success = true, runs = _repository.GetPayrollRuns(request) }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult ComparePayrollRuns(PayrollRunCompareRequest request)
+        {
+            if (!CanUseJson()) return Json(new { success = false, message = "ليست لديك صلاحية مقارنة مسيرات الرواتب" });
+            try
+            {
+                return LargeJson(new { success = true, result = _repository.ComparePayrollRuns(request) }, JsonRequestBehavior.DenyGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
         public JsonResult InsuranceSubscriptionReport(MedicalInsuranceReportFilter filter)
         {
             if (!CanUseJson()) return Json(new { success = false, message = "ظ„ظٹط³طھ ظ„ط¯ظٹظƒ طµظ„ط§ط­ظٹط©" }, JsonRequestBehavior.AllowGet);

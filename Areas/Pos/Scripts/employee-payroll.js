@@ -8,11 +8,62 @@
     var enterpriseRules = [];
     var enterpriseCoverageRows = [];
     var actionLocks = {};
+    var currentEmployee = null;
 
     function byId(id) { return document.getElementById(id); }
     function money(v) { var n = parseFloat(v || 0); return isNaN(n) ? "0.00" : n.toFixed(2); }
     function number(v) { var n = parseFloat(v || 0); return isNaN(n) ? 0 : n; }
     function html(v) { return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+    function initials(name) {
+        name = String(name || "").trim();
+        if (!name) { return "HR"; }
+        return name.split(/\s+/).slice(0, 2).map(function (x) { return x.charAt(0); }).join("").toUpperCase();
+    }
+    function photoMarkup(dataUrl, name, cssClass) {
+        if (dataUrl) {
+            return '<img class="' + html(cssClass || "") + '" src="' + html(dataUrl) + '" alt="' + html(name || "Employee") + '" />';
+        }
+        return '<span class="' + html(cssClass || "") + '">' + html(initials(name)) + '</span>';
+    }
+    function setEmployeePhoto(dataUrl, name) {
+        var input = byId("epPhotoDataUrl");
+        var preview = byId("epPhotoPreview");
+        if (input) { input.value = dataUrl || ""; }
+        if (preview) { preview.innerHTML = dataUrl ? '<img src="' + html(dataUrl) + '" alt="' + html(name || "") + '" />' : '<i class="fas fa-user"></i>'; }
+        if (currentEmployee) {
+            currentEmployee.PhotoDataUrl = dataUrl || "";
+        }
+    }
+    function resizeEmployeePhoto(file) {
+        return new Promise(function (resolve, reject) {
+            if (!file || !/^image\/(png|jpeg|jpg|webp)$/i.test(file.type || "")) {
+                reject(new Error("صيغة الصورة غير مدعومة. استخدم PNG أو JPG أو WebP."));
+                return;
+            }
+            if (file.size > 4 * 1024 * 1024) {
+                reject(new Error("حجم الصورة كبير. اختر صورة أقل من 4 ميجابايت."));
+                return;
+            }
+            var reader = new FileReader();
+            reader.onerror = function () { reject(new Error("تعذر قراءة الصورة.")); };
+            reader.onload = function () {
+                var image = new Image();
+                image.onerror = function () { reject(new Error("تعذر تجهيز الصورة للطباعة.")); };
+                image.onload = function () {
+                    var max = 360;
+                    var scale = Math.min(1, max / Math.max(image.width, image.height));
+                    var canvas = document.createElement("canvas");
+                    canvas.width = Math.max(1, Math.round(image.width * scale));
+                    canvas.height = Math.max(1, Math.round(image.height * scale));
+                    var ctx = canvas.getContext("2d");
+                    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL("image/jpeg", 0.86));
+                };
+                image.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
     function dateInput(v) {
         if (!v) { return ""; }
         if (typeof v === "string" && v.indexOf("/Date(") === 0) {
@@ -129,6 +180,7 @@
         if (!url) { return Promise.resolve({}); }
         return getJson(url).then(function (res) {
             var data = res.data || {};
+            root._lookups = data;
             ["epBranchFilter", "epBranch", "epRunBranch", "epMedBranch", "epReportBranch"].forEach(function (id) { fillSelect(byId(id), data.Branches, id === "epBranch" ? "غير محدد" : "كل الفروع"); });
             ["epDepartmentFilter", "epDepartment", "epRunDepartment", "epMedDepartment", "epReportDepartment"].forEach(function (id) { fillSelect(byId(id), data.Departments, id === "epDepartment" ? "غير محدد" : "كل الإدارات"); });
             fillSelect(byId("epJob"), data.Jobs, "غير محدد");
@@ -187,6 +239,81 @@
         }).length);
         setText("epProfileSalaryTotal", money(salaryTotal));
     }
+    function buildEmployeePremiumCard(employee) {
+        employee = employee || {};
+        var insurance = employee.MedicalInsurance || {};
+        var insured = insurance.IsActive || insurance.PlanId;
+        return '<article class="ep-premium-id-card employee-card">' +
+            '<div class="ep-premium-card-bg"></div>' +
+            '<header><div><span>بطاقة موظف</span><strong>DynamicErp HR</strong></div><b>' + html(employee.EmployeeCode || "") + '</b></header>' +
+            '<section class="ep-premium-card-main"><div class="ep-premium-card-photo">' + photoMarkup(employee.PhotoDataUrl, employee.EmployeeName, "ep-card-photo-img") + '</div><div><h3>' + html(employee.EmployeeName || "موظف") + '</h3><p>' + html(employee.JobTypeName || "الوظيفة غير محددة") + '</p><em class="' + (employee.IsActive ? "active" : "inactive") + '">' + (employee.IsActive ? "نشط" : "غير نشط") + '</em></div></section>' +
+            '<dl><div><dt>الفرع</dt><dd>' + html(employee.BranchName || "غير محدد") + '</dd></div><div><dt>الإدارة</dt><dd>' + html(employee.DepartmentName || "غير محدد") + '</dd></div><div><dt>الراتب الأساسي</dt><dd>' + (number(employee.BasicSalary) > 0 ? money(employee.BasicSalary) : "غير محدد") + '</dd></div><div><dt>التأمين</dt><dd>' + (insured ? "مشترك" : "غير مشترك") + '</dd></div></dl>' +
+            '<footer><span>تاريخ الإصدار: ' + html(dateInput(new Date())) + '</span><strong>HR</strong></footer>' +
+            '</article>';
+    }
+    function buildEmployeeInsurancePremiumCard(employee) {
+        employee = employee || {};
+        var insurance = employee.MedicalInsurance || {};
+        var planName = "";
+        var plans = root._lookups && root._lookups.MedicalInsurancePlans ? root._lookups.MedicalInsurancePlans : [];
+        plans.forEach(function (p) { if (String(p.Id) === String(insurance.PlanId)) { planName = p.Name; } });
+        return '<article class="ep-premium-id-card insurance-card">' +
+            '<div class="ep-premium-card-bg"></div>' +
+            '<header><div><span>بطاقة التأمين الطبي</span><strong>' + html(planName || "Medical Insurance") + '</strong></div><b>' + html(insurance.CardNumber || employee.EmployeeCode || "") + '</b></header>' +
+            '<section class="ep-premium-card-main"><div class="ep-premium-card-photo">' + photoMarkup(employee.PhotoDataUrl, employee.EmployeeName, "ep-card-photo-img") + '</div><div><h3>' + html(employee.EmployeeName || "موظف") + '</h3><p>' + html(insurance.PolicyNumber || "وثيقة غير محددة") + '</p><em class="' + (insurance.IsActive ? "active" : "inactive") + '">' + (insurance.IsActive ? "تأمين نشط" : "تأمين غير نشط") + '</em></div></section>' +
+            '<dl><div><dt>بداية الاشتراك</dt><dd>' + html(dateInput(insurance.StartDate) || "غير محدد") + '</dd></div><div><dt>نهاية الاشتراك</dt><dd>' + html(dateInput(insurance.EndDate) || "مفتوح") + '</dd></div><div><dt>خصم الموظف</dt><dd>' + money(insurance.EmployeeMonthlyDeduction || 0) + '</dd></div><div><dt>تحمل الشركة</dt><dd>' + money(insurance.CompanyMonthlyCost || 0) + '</dd></div></dl>' +
+            '<footer><span>يستخدم لأغراض التعريف الداخلي والمراجعة</span><strong>MI</strong></footer>' +
+            '</article>';
+    }
+    function renderPrintCards(employee) {
+        var host = byId("epCardPrintStage");
+        if (!host) { return; }
+        host.innerHTML = buildEmployeePremiumCard(employee) + buildEmployeeInsurancePremiumCard(employee);
+    }
+    function printEmployeeCard(kind) {
+        var employee = currentEmployee || collectEmployee();
+        if (!employee || !employee.EmployeeName) {
+            message("اختر موظفا أولا قبل طباعة الكارت.", true);
+            return;
+        }
+        renderPrintCards(employee);
+        document.body.classList.remove("ep-print-employee-card", "ep-print-employee-insurance-card", "ep-print-medical-card");
+        document.body.classList.add(kind === "insurance" ? "ep-print-employee-insurance-card" : "ep-print-employee-card");
+        setTimeout(function () {
+            window.print();
+            setTimeout(function () {
+                document.body.classList.remove("ep-print-employee-card", "ep-print-employee-insurance-card");
+            }, 300);
+        }, 50);
+    }
+    function renderEmployeeProfile(employee) {
+        var host = byId("epProfileSummary");
+        if (!host) { return; }
+        if (!employee) {
+            currentEmployee = null;
+            host.innerHTML = '<div class="ep-profile-empty"><i class="fas fa-user-circle"></i><strong>اختر موظفا</strong><span>سيظهر هنا ملخص الفرع، الإدارة، الراتب، التأمين، وحالة الملف بدون عرض أي أكواد حسابات داخلية.</span></div>';
+            return;
+        }
+        var salary = number(employee.BasicSalary);
+        var insurance = employee.MedicalInsurance || {};
+        var insured = insurance.IsActive || insurance.PlanId;
+        currentEmployee = employee;
+        host.innerHTML =
+            '<div class="ep-profile-card">' +
+            '<div class="ep-profile-avatar">' + photoMarkup(employee.PhotoDataUrl, employee.EmployeeName, "ep-profile-photo-img") + '</div>' +
+            '<h3>' + html(employee.EmployeeName || "موظف") + '</h3>' +
+            '<p>' + html(employee.EmployeeCode || "") + '</p>' +
+            '<div class="ep-profile-badges"><span class="ep-status-badge ' + (employee.IsActive ? "active" : "cancelled") + '">' + (employee.IsActive ? "نشط" : "غير نشط") + '</span><span class="ep-status-badge ' + (insured ? "active" : "pending-approval") + '">' + (insured ? "مؤمن" : "بدون تأمين") + '</span></div>' +
+            '<dl class="ep-profile-facts">' +
+            '<div><dt>الفرع</dt><dd>' + html(employee.BranchName || "غير محدد") + '</dd></div>' +
+            '<div><dt>الإدارة</dt><dd>' + html(employee.DepartmentName || "غير محدد") + '</dd></div>' +
+            '<div><dt>الوظيفة</dt><dd>' + html(employee.JobTypeName || "غير محدد") + '</dd></div>' +
+            '<div><dt>الراتب الأساسي</dt><dd>' + (salary > 0 ? money(salary) : "غير محدد") + '</dd></div>' +
+            '</dl>' +
+            '<div class="ep-profile-actions"><button type="button" class="ep-secondary" id="epProfilePrintEmployeeCard"><i class="fas fa-id-badge"></i> طباعة كارت الموظف</button><button type="button" class="ep-secondary" id="epProfilePrintInsuranceCard"><i class="fas fa-briefcase-medical"></i> طباعة كارت التأمين</button></div>' +
+            '<div class="ep-profile-note"><i class="fas fa-lock"></i><span>الحسابات الداخلية محفوظة للنظام ولا تعرض في شاشة المراجعة.</span></div>' +
+            '</div>';
+    }
     function loadEmployees() {
         var filter = employeeFilter();
         if (!hasEmployeeSearchCriteria(filter)) {
@@ -203,18 +330,20 @@
         var url = root.getAttribute("data-search-url") + "?" + queryString(employeeFilter());
         return getJson(url).then(function (res) {
             var rows = res.rows || [];
+            root._employeeRows = rows;
             updateEmployeeDashboard(rows);
             var tbody = byId("epEmployeesRows");
             tbody.innerHTML = "";
-            rows.forEach(function (x) {
+            rows.forEach(function (x, index) {
                 tbody.insertAdjacentHTML("beforeend",
-                    '<tr><td>' + html(x.EmployeeCode) + '</td><td>' + html(x.EmployeeName) + '</td><td>' + html(x.BranchName) + '</td><td>' + html(x.DepartmentName) + '</td><td>' + html(x.JobTypeName) + '</td><td>' + money(x.BasicSalary) + '</td><td><span class="ep-status-badge pending-approval">يفتح من الملف</span></td><td><span class="ep-status-badge ' + (x.IsActive ? "active" : "cancelled") + '">' + (x.IsActive ? "نشط" : "غير نشط") + '</span></td><td><div class="ep-row-actions"><button type="button" title="فتح الملف" data-edit="' + x.EmployeeId + '"><i class="fas fa-edit"></i></button><button type="button" title="' + (x.IsActive ? "تعطيل آمن" : "تفعيل") + '" data-active="' + x.EmployeeId + '" data-state="' + (!x.IsActive) + '">' + (x.IsActive ? "تعطيل" : "تفعيل") + '</button></div></td></tr>');
+                    '<tr data-employee-row="' + index + '"><td>' + html(x.EmployeeCode) + '</td><td><div class="ep-employee-name-cell"><span class="ep-avatar-thumb">' + photoMarkup(x.PhotoDataUrl, x.EmployeeName, "ep-avatar-thumb-img") + '</span><strong>' + html(x.EmployeeName) + '</strong></div></td><td>' + html(x.BranchName) + '</td><td>' + html(x.DepartmentName) + '</td><td>' + html(x.JobTypeName) + '</td><td>' + (number(x.BasicSalary) > 0 ? money(x.BasicSalary) : "غير محدد") + '</td><td><span class="ep-status-badge pending-approval">يفتح من الملف</span></td><td><span class="ep-status-badge ' + (x.IsActive ? "active" : "cancelled") + '">' + (x.IsActive ? "نشط" : "غير نشط") + '</span></td><td><div class="ep-row-actions"><button type="button" title="فتح الملف" data-edit="' + x.EmployeeId + '"><i class="fas fa-edit"></i></button><button type="button" title="' + (x.IsActive ? "تعطيل آمن" : "تفعيل") + '" data-active="' + x.EmployeeId + '" data-state="' + (!x.IsActive) + '">' + (x.IsActive ? "تعطيل" : "تفعيل") + '</button></div></td></tr>');
             });
             if (!rows.length) {
                 tbody.innerHTML = '<tr><td colspan="9" class="ep-empty-row">لا توجد نتائج مطابقة.</td></tr>';
             }
             setText("epEmployeeLoadState", "تم التحميل");
             message("تم تحميل " + (res.rows || []).length + " موظف");
+            renderEmployeeProfile(rows[0]);
         });
     }
     function enforceReadOnlyRows() {
@@ -225,20 +354,22 @@
     }
     function openEditor(employee) {
         employee = employee || { IsActive: true, MedicalInsurance: { IsMonthly: true, EmployeeShareType: "Amount", CompanyShareType: "AutoBalance" }, MedicalInsuranceHistory: [] };
+        currentEmployee = employee;
         byId("epEmployeeId").value = employee.EmployeeId || "";
         byId("epCode").value = employee.EmployeeCode || "";
         byId("epName").value = employee.EmployeeName || "";
         byId("epMobile").value = employee.Mobile || "";
         byId("epPhone").value = employee.Phone || "";
         byId("epEmail").value = employee.Email || "";
+        setEmployeePhoto(employee.PhotoDataUrl || "", employee.EmployeeName || "");
         byId("epIsActive").checked = employee.IsActive !== false;
         byId("epBranch").value = employee.BranchId || "";
         byId("epDepartment").value = employee.DepartmentId || "";
         byId("epJob").value = employee.JobTypeId || "";
         byId("epHiringDate").value = dateInput(employee.HiringDate);
         byId("epSalary").value = employee.BasicSalary || 0;
-        byId("epAccountCode").value = employee.AccountCode || "";
-        byId("epAccruedAccountCode").value = employee.AccruedSalaryAccountCode || "";
+        byId("epAccountCode").value = "";
+        byId("epAccruedAccountCode").value = "";
         byId("epNotes").value = employee.Notes || "";
         var mi = employee.MedicalInsurance || {};
         byId("epInsuranceId").value = mi.Id || "";
@@ -257,6 +388,7 @@
         byId("epInsuranceMonthly").checked = mi.IsMonthly !== false;
         byId("epInsuranceNotes").value = mi.Notes || "";
         renderInsuranceHistory(employee.MedicalInsuranceHistory || []);
+        renderEmployeeProfile(employee);
         updateInsurancePreview();
         byId("epEmployeeEditor").hidden = false;
         if (readOnly) {
@@ -290,6 +422,7 @@
             Phone: byId("epPhone").value,
             Mobile: byId("epMobile").value,
             Email: byId("epEmail").value,
+            PhotoDataUrl: byId("epPhotoDataUrl") ? byId("epPhotoDataUrl").value : "",
             Notes: byId("epNotes").value,
             MedicalInsurance: {
                 Id: byId("epInsuranceId").value ? parseInt(byId("epInsuranceId").value, 10) : null,
@@ -332,6 +465,8 @@
 
     function salaryRequest() {
         return {
+            PayrollRunId: byId("epPayrollRunId") && byId("epPayrollRunId").value ? parseInt(byId("epPayrollRunId").value, 10) : null,
+            RunName: byId("epRunName") ? byId("epRunName").value : "",
             Year: parseInt(byId("epRunYear").value, 10),
             Month: parseInt(byId("epRunMonth").value, 10),
             BranchId: byId("epRunBranch").value ? parseInt(byId("epRunBranch").value, 10) : null,
@@ -339,6 +474,11 @@
             EmployeeId: byId("epRunEmployee").value ? parseInt(byId("epRunEmployee").value, 10) : null,
             PostingStatus: byId("epPostingStatus") ? byId("epPostingStatus").value : "",
             IncludeSavedDrafts: true,
+            RebuildEmployees: byId("epRebuildEmployees") ? !!byId("epRebuildEmployees").checked : false,
+            ExcludeAlreadyIncluded: byId("epExcludeAlreadyIncluded") ? !!byId("epExcludeAlreadyIncluded").checked : true,
+            OnlyUnincluded: byId("epOnlyUnincluded") ? !!byId("epOnlyUnincluded").checked : false,
+            AllowDuplicateEmployees: byId("epAllowDuplicateEmployees") ? !!byId("epAllowDuplicateEmployees").checked : false,
+            ManualEmployeeIds: byId("epManualEmployeeIds") ? byId("epManualEmployeeIds").value : "",
             RowLimit: 300,
             JournalPreviewLimit: 500
         };
@@ -386,10 +526,10 @@
         }
         byId("epJournalRows").innerHTML = "";
         (preview.JournalPreview || []).forEach(function (x) {
-            byId("epJournalRows").insertAdjacentHTML("beforeend", '<tr><td>' + html(x.AccountCode || "غير محدد") + '</td><td>' + money(x.Debit) + '</td><td>' + money(x.Credit) + '</td><td>' + html(x.Description) + '</td><td>' + html(x.EmployeeId || "") + '</td></tr>');
+            byId("epJournalRows").insertAdjacentHTML("beforeend", '<tr><td>' + html(x.AccountSerial || "غير محدد") + '</td><td>' + html(x.AccountName || "حساب غير محدد") + '</td><td>' + html(x.Description) + '</td><td>' + html(x.PayrollRunId || preview.PayrollRunId || "") + '</td><td>' + money(x.Debit) + '</td><td>' + money(x.Credit) + '</td></tr>');
         });
         if (!(preview.JournalPreview || []).length) {
-            byId("epJournalRows").innerHTML = '<tr><td colspan="5" class="ep-empty-row">لا توجد سطور قيد للمعاينة الحالية.</td></tr>';
+            byId("epJournalRows").innerHTML = '<tr><td colspan="6" class="ep-empty-row">لا توجد سطور قيد للمعاينة الحالية.</td></tr>';
         }
         message(preview.Message || "تم حساب المسير");
     }
@@ -418,10 +558,54 @@
         if (byId("epIssuesStatus")) { byId("epIssuesStatus").className = "ep-status-badge cancelled"; }
     }
 
+    function setReadinessCard(id, state, title, hint) {
+        var card = byId(id);
+        if (!card) { return; }
+        card.className = state || "waiting";
+        var strong = card.querySelector("strong");
+        var small = card.querySelector("small");
+        if (strong) { strong.textContent = title || ""; }
+        if (small) { small.textContent = hint || ""; }
+    }
+
+    function updatePayrollReadiness(preview, rows, debit, credit, issuesCount) {
+        rows = rows || [];
+        var runId = preview && preview.PayrollRunId;
+        var diff = number(debit) - number(credit);
+        var hasJournal = (preview && preview.JournalPreview && preview.JournalPreview.length) || debit || credit;
+        var isPartialJournal = preview && preview._JournalPreviewLimited;
+        setReadinessCard(
+            "epReadinessEmployees",
+            rows.length ? "ready" : "waiting",
+            rows.length ? rows.length + " موظف داخل المسير" : "لم تتم المعاينة",
+            rows.length ? "تم تطبيق الفلاتر وقواعد الاستحقاق على الموظفين." : "اضغط معاينة لتحميل الموظفين المؤهلين فقط."
+        );
+        setReadinessCard(
+            "epReadinessSnapshot",
+            runId ? "ready" : "waiting",
+            runId ? "Snapshot محفوظ #" + runId : "لم يحفظ بعد",
+            runId ? "إعادة الحفظ لن تغيّر الموظفين إلا عند اختيار إعادة التكوين." : "بعد الحفظ يتم تثبيت Snapshot الموظفين."
+        );
+        setReadinessCard(
+            "epReadinessJournal",
+            hasJournal ? (isPartialJournal ? "waiting" : (Math.abs(diff) <= 0.01 ? "ready" : "blocked")) : "waiting",
+            hasJournal ? (isPartialJournal ? "معاينة مبدئية للقيد" : (Math.abs(diff) <= 0.01 ? "القيد متوازن" : "القيد غير متوازن")) : "بانتظار المراجعة",
+            hasJournal ? (isPartialJournal ? "اضغط مراجعة القيد لإظهار الحكم النهائي." : ("المدين " + money(debit) + " / الدائن " + money(credit))) : "راجع المدين والدائن قبل الترحيل."
+        );
+        setReadinessCard(
+            "epReadinessIssues",
+            issuesCount ? "blocked" : (rows.length ? "ready" : "waiting"),
+            issuesCount ? issuesCount + " ملاحظة تحتاج مراجعة" : (rows.length ? "لا توجد موانع ظاهرة" : "لا توجد بيانات"),
+            issuesCount ? "افتح تبويب الأخطاء والتحذيرات قبل الاعتماد." : "سيظهر هنا أي مانع قبل الاعتماد."
+        );
+    }
+
     function renderSalary(preview) {
         preview = preview || {};
         root._salaryPreview = preview;
         root._salaryRows = preview.Rows || [];
+        if (preview.PayrollRunId && byId("epPayrollRunId")) { byId("epPayrollRunId").value = preview.PayrollRunId; }
+        if (preview.RunName && byId("epRunName")) { byId("epRunName").value = preview.RunName; }
         var rows = root._salaryRows;
         var totalAdditions = number(preview.TotalAdditions);
         var totalDeductions = number(preview.TotalDeductions);
@@ -474,22 +658,27 @@
         byId("epJournalRows").innerHTML = "";
         var journalDebit = 0;
         var journalCredit = 0;
-        (preview.JournalPreview || []).forEach(function (x) {
+        var journalRows = preview.JournalPreview || [];
+        var journalPreviewLimited = true;
+        preview._JournalPreviewLimited = journalPreviewLimited;
+        journalRows.forEach(function (x) {
             journalDebit += number(x.Debit);
             journalCredit += number(x.Credit);
             byId("epJournalRows").insertAdjacentHTML("beforeend",
-                '<tr><td>' + html(x.AccountSerial || x.AccountCode || "غير محدد") + '</td><td>' + html(x.AccountName || "حساب غير محدد") + '</td><td>' + html(x.Description || "") + '</td><td>' + money(x.Debit) + '</td><td>' + money(x.Credit) + '</td></tr>');
+                '<tr><td>' + html(x.AccountSerial || "غير محدد") + '</td><td>' + html(x.AccountName || "حساب غير محدد") + '</td><td>' + html(x.Description || "") + '</td><td>' + html(x.PayrollRunId || preview.PayrollRunId || "") + '</td><td>' + money(x.Debit) + '</td><td>' + money(x.Credit) + '</td></tr>');
         });
-        if (!(preview.JournalPreview || []).length) {
-            byId("epJournalRows").innerHTML = '<tr><td colspan="5" class="ep-empty-row">لا توجد سطور قيد للمعاينة الحالية.</td></tr>';
+        if (!journalRows.length) {
+            byId("epJournalRows").innerHTML = '<tr><td colspan="6" class="ep-empty-row">لا توجد سطور قيد للمعاينة الحالية.</td></tr>';
         }
         setText("epJournalDebitTotal", money(journalDebit));
         setText("epJournalCreditTotal", money(journalCredit));
         setText("epJournalBalanceDiff", money(journalDebit - journalCredit));
         var balanced = Math.abs(journalDebit - journalCredit) <= 0.01;
-        setText("epJournalBalanceStatus", balanced ? "القيد متوازن" : "القيد غير متوازن");
-        if (byId("epJournalBalanceStatus")) { byId("epJournalBalanceStatus").className = "ep-status-badge " + (balanced ? "active" : "cancelled"); }
-        renderPayrollIssues([], journalDebit, journalCredit);
+        setText("epJournalBalanceStatus", journalPreviewLimited ? "معاينة مبدئية للقيد" : (balanced ? "القيد متوازن" : "القيد غير متوازن"));
+        if (byId("epJournalBalanceStatus")) { byId("epJournalBalanceStatus").className = "ep-status-badge " + (journalPreviewLimited ? "pending-approval" : (balanced ? "active" : "cancelled")); }
+        var previewIssues = (preview.AccountIssues || preview.ValidationIssues || preview.Issues || preview.CompatibilityWarnings || []);
+        renderPayrollIssues(previewIssues, journalPreviewLimited ? 0 : journalDebit, journalPreviewLimited ? 0 : journalCredit);
+        updatePayrollReadiness(preview, rows, journalDebit, journalCredit, previewIssues.length + (!journalPreviewLimited && Math.abs(journalDebit - journalCredit) > 0.01 ? 1 : 0));
         message(preview.Message || "تم حساب المسير");
     }
 
@@ -532,7 +721,7 @@
         }
         byId("epJournalRows").innerHTML = "";
         (result.AccountIssues || []).forEach(function (x) {
-            byId("epJournalRows").insertAdjacentHTML("beforeend", '<tr><td>' + html(x.AccountCode || "غير محدد") + '</td><td>' + money(x.Direction === "Debit" ? x.Amount : 0) + '</td><td>' + money(x.Direction === "Credit" ? x.Amount : 0) + '</td><td>' + html(x.ArabicMessage || "") + '</td><td>' + html(x.EmployeeId || "") + '</td></tr>');
+            byId("epJournalRows").insertAdjacentHTML("beforeend", '<tr><td>' + html(x.AccountSerial || "غير محدد") + '</td><td>' + html(x.AccountName || x.AccountSource || "مصدر الحساب غير محدد") + '</td><td>' + html(x.ArabicMessage || "") + '</td><td>' + html(result.PayrollRunId || "") + '</td><td>' + money(x.Direction === "Debit" ? x.Amount : 0) + '</td><td>' + money(x.Direction === "Credit" ? x.Amount : 0) + '</td></tr>');
         });
         (result.AffectedAccounts || []).forEach(function (x) {
             byId("epJournalRows").insertAdjacentHTML("beforeend", '<tr><td>' + html(x.Key) + '</td><td>' + money(x.Debit) + '</td><td>' + money(x.Credit) + '</td><td>' + html(result.Message || "") + '</td><td>' + html(x.Lines) + '</td></tr>');
@@ -559,15 +748,15 @@
             var c = x.Direction === "Credit" ? number(x.Amount) : 0;
             debit += d;
             credit += c;
-            byId("epJournalRows").insertAdjacentHTML("beforeend", '<tr class="ep-row-error"><td>' + html(x.AccountSerial || x.AccountCode || "غير محدد") + '</td><td>' + html(x.AccountName || x.AccountSource || "مصدر الحساب غير محدد") + '</td><td>' + html(x.ArabicMessage || "") + '</td><td>' + money(d) + '</td><td>' + money(c) + '</td></tr>');
+            byId("epJournalRows").insertAdjacentHTML("beforeend", '<tr class="ep-row-error"><td>' + html(x.AccountSerial || "غير محدد") + '</td><td>' + html(x.AccountName || x.AccountSource || "مصدر الحساب غير محدد") + '</td><td>' + html(x.ArabicMessage || "") + '</td><td>' + html(result.PayrollRunId || "") + '</td><td>' + money(d) + '</td><td>' + money(c) + '</td></tr>');
         });
         (result.AffectedAccounts || []).forEach(function (x) {
             debit += number(x.Debit);
             credit += number(x.Credit);
-            byId("epJournalRows").insertAdjacentHTML("beforeend", '<tr><td>' + html(x.AccountSerial || x.Key || "") + '</td><td>' + html(x.AccountName || x.Key || "") + '</td><td>' + html(result.Message || "معاينة القيد قبل الترحيل") + '</td><td>' + money(x.Debit) + '</td><td>' + money(x.Credit) + '</td></tr>');
+            byId("epJournalRows").insertAdjacentHTML("beforeend", '<tr><td>' + html(x.AccountSerial || "غير محدد") + '</td><td>' + html(x.AccountName || "حساب غير محدد") + '</td><td>' + html(result.Message || "معاينة القيد قبل الترحيل") + '</td><td>' + html(result.PayrollRunId || "") + '</td><td>' + money(x.Debit) + '</td><td>' + money(x.Credit) + '</td></tr>');
         });
         if (!(result.AffectedAccounts || []).length && !(result.AccountIssues || []).length) {
-            byId("epJournalRows").innerHTML = '<tr><td colspan="5" class="ep-empty-row">' + html(result.Message || "لا توجد سطور ترحيل.") + "</td></tr>";
+            byId("epJournalRows").innerHTML = '<tr><td colspan="6" class="ep-empty-row">' + html(result.Message || "لا توجد سطور ترحيل.") + "</td></tr>";
         }
         setText("epJournalDebitTotal", money(result.DebitTotal || result.TotalDebit || debit));
         setText("epJournalCreditTotal", money(result.CreditTotal || result.TotalCredit || credit));
@@ -576,7 +765,9 @@
         var hasIssues = (result.AccountIssues || []).length > 0 || Math.abs(balance) > 0.01;
         setText("epJournalBalanceStatus", hasIssues ? "يوجد خطأ يمنع الترحيل" : "القيد متوازن");
         if (byId("epJournalBalanceStatus")) { byId("epJournalBalanceStatus").className = "ep-status-badge " + (hasIssues ? "cancelled" : "active"); }
+        var issueCount = (result.AccountIssues || []).length + (hasIssues && !(result.AccountIssues || []).length ? 1 : 0);
         renderPayrollIssues(result.AccountIssues || [], result.DebitTotal || result.TotalDebit || debit, result.CreditTotal || result.TotalCredit || credit);
+        updatePayrollReadiness(root._salaryPreview || { PayrollRunId: result.PayrollRunId }, root._salaryRows || [], result.DebitTotal || result.TotalDebit || debit, result.CreditTotal || result.TotalCredit || credit, issueCount);
         message((result.Message || "") + " المدين: " + money(result.DebitTotal || result.TotalDebit || debit) + " الدائن: " + money(result.CreditTotal || result.TotalCredit || credit) + " الفرق: " + money(balance), hasIssues);
     }
 
@@ -587,6 +778,36 @@
             if (!res.success) { message(res.message || "تعذرت معاينة الترحيل", true); return null; }
             renderPostingSummary(res.result);
             return res.result;
+        });
+    }
+    function comparePayrollRuns() {
+        var url = root.getAttribute("data-compare-runs-url");
+        var a = byId("epCompareRunA") && byId("epCompareRunA").value ? parseInt(byId("epCompareRunA").value, 10) : 0;
+        var b = byId("epCompareRunB") && byId("epCompareRunB").value ? parseInt(byId("epCompareRunB").value, 10) : 0;
+        if (!url || !a || !b) {
+            message("اختر رقم المسير الأول والثاني قبل المقارنة.", true);
+            return Promise.resolve(null);
+        }
+        return postJson(url, { FirstPayrollRunId: a, SecondPayrollRunId: b }).then(function (res) {
+            if (!res.success) { message(res.message || "تعذرت مقارنة المسيرين", true); return null; }
+            var r = res.result || {};
+            var htmlResult = "المشترك: " + (r.CommonEmployees || 0) +
+                " | في الأول فقط: " + (r.FirstOnlyEmployees || 0) +
+                " | في الثاني فقط: " + (r.SecondOnlyEmployees || 0) +
+                " | فرق الأساسي: " + money(r.BasicDifference) +
+                " | فرق البدلات: " + money(r.AllowancesDifference) +
+                " | فرق الخصومات: " + money(r.DeductionsDifference) +
+                " | فرق الصافي: " + money(r.NetDifference) +
+                " | فرق مدين القيد: " + money(r.JournalDebitDifference) +
+                " | فرق دائن القيد: " + money(r.JournalCreditDifference);
+            setText("epCompareCommon", r.CommonEmployees || 0);
+            setText("epCompareFirstOnly", r.FirstOnlyEmployees || 0);
+            setText("epCompareSecondOnly", r.SecondOnlyEmployees || 0);
+            setText("epCompareNetDiff", money(r.NetDifference));
+            setText("epCompareJournalDiff", money(number(r.JournalDebitDifference) - number(r.JournalCreditDifference)));
+            setText("epCompareResult", htmlResult);
+            message("تمت مقارنة المسيرين");
+            return r;
         });
     }
     function postPayroll() {
@@ -762,14 +983,13 @@
         companyShare = Math.max(0, Math.min(cost, companyShare || 0));
         if (employeeShare + companyShare > cost) { companyShare = Math.max(0, cost - employeeShare); }
         var showInPayroll = !byId("epPlanShowInPayroll") || byId("epPlanShowInPayroll").checked;
-        var employeeAccount = byId("epPlanEmployeeAccount") ? (byId("epPlanEmployeeAccount").value || "").trim() : "";
-        var companyAccount = byId("epPlanCompanyAccount") ? (byId("epPlanCompanyAccount").value || "").trim() : "";
         if (start && end && new Date(end) < new Date(start)) { errors.push("لا يمكن أن ينتهي التأمين قبل تاريخ البداية."); }
         if (enterpriseDependents.length > maxDependents) { errors.push("عدد التابعين يتجاوز الحد الأقصى المحدد للخطة."); }
         if (status === "Active" && (!byId("epPlanProvider").value || !byId("epPlanNameAr").value)) { errors.push("تفعيل الخطة يتطلب شركة تأمين واسم خطة."); }
         if (number(byId("epPlanMonthlyCost") ? byId("epPlanMonthlyCost").value : 0) <= 0 && status === "Active") { errors.push("تفعيل الخطة يتطلب تكلفة شهرية أكبر من صفر."); }
-        if (status === "Active" && showInPayroll && employeeShare > 0 && !employeeAccount) { errors.push("تفعيل خطة التأمين في المسير يتطلب حساب استحقاق/ذمم شركة التأمين (MedicalInsurancePlans.EmployeeDeductionAccountCode)."); }
-        if (status === "Active" && showInPayroll && companyShare > 0 && !companyAccount) { errors.push("تفعيل خطة التأمين في المسير يتطلب حساب مصروف التأمين الطبي للشركة (MedicalInsurancePlans.CompanyCostAccountCode)."); }
+        if (status === "Active" && showInPayroll && (employeeShare > 0 || companyShare > 0)) {
+            setText("epPlanAccountingState", "سيقوم النظام بتهيئة حسابات التأمين تلقائيا عند الحفظ، ثم يعرضها بأسماء واضحة في معاينة قيد الرواتب.");
+        }
         box.innerHTML = errors.map(function (x) { return "<div>" + html(x) + "</div>"; }).join("");
         return errors.length === 0;
     }
@@ -998,6 +1218,9 @@
         byId("epPlanCompanyShareValue").value = x.DefaultCompanyShareValue || 0;
         byId("epPlanEmployeeAccount").value = x.EmployeeDeductionAccountCode || "";
         byId("epPlanCompanyAccount").value = x.CompanyCostAccountCode || "";
+        setText("epPlanAccountingState", (x.EmployeeDeductionAccountCode || x.CompanyCostAccountCode)
+            ? "الحسابات المحاسبية مهيأة لهذه الخطة وسيتم عرضها في معاينة قيد الرواتب بأسماء الحسابات."
+            : "سيتم إنشاء الحسابات المطلوبة تلقائيا عند حفظ الخطة إذا كانت نشطة وتظهر في المسير.");
         if (byId("epPlanLifecycleStatus")) { byId("epPlanLifecycleStatus").value = x.LifecycleStatus || (x.IsActive ? "Active" : "Draft"); }
         if (byId("epPlanStartDate")) { byId("epPlanStartDate").value = dateInput(x.StartDate); }
         if (byId("epPlanEndDate")) { byId("epPlanEndDate").value = dateInput(x.EndDate); }
@@ -1168,7 +1391,7 @@
             '<article class="ep-med-id-card ' + status + '">' +
             '<div class="ep-med-id-bg"></div>' +
             '<div class="ep-med-id-top"><div class="ep-med-brand"><span>التأمين الطبي</span><strong>بطاقة الاشتراك</strong></div><div class="ep-med-provider-logo">' + html((row.ProviderName || "MI").substring(0, 2)) + '</div></div>' +
-            '<div class="ep-med-id-main"><div class="ep-med-avatar">' + html(row.AvatarText || "MI") + '</div><div><h3>' + html(row.EmployeeName || "موظف") + '</h3><p>' + html(row.EmployeeCode || "") + ' - ' + html(row.MembershipNumber || "") + '</p><b class="ep-med-badge ' + status + '">' + medStatusLabel(row.Status) + '</b></div></div>' +
+            '<div class="ep-med-id-main"><div class="ep-med-avatar">' + photoMarkup(row.PhotoDataUrl, row.EmployeeName, "ep-med-avatar-img") + '</div><div><h3>' + html(row.EmployeeName || "موظف") + '</h3><p>' + html(row.EmployeeCode || "") + ' - ' + html(row.MembershipNumber || "") + '</p><b class="ep-med-badge ' + status + '">' + medStatusLabel(row.Status) + '</b></div></div>' +
             '<div class="ep-med-id-plan"><span>' + html(row.ProviderName || "شركة التأمين") + '</span><strong>' + html(row.PlanName || "الخطة") + '</strong></div>' +
             '<dl class="ep-med-id-metrics"><div><dt>التجديد</dt><dd>' + html(dateInput(row.RenewalDate || row.EndDate) || "مفتوح") + '</dd></div><div><dt>المسير</dt><dd>' + (row.PayrollLinked ? "مرتبط" : "تحت المراجعة") + '</dd></div><div><dt>التابعون</dt><dd>' + html(row.DependentsCount || 0) + '</dd></div></dl>' +
             '<div class="ep-med-id-footer"><span>الخصم: الموظف ' + formatMoney(row.EmployeeMonthlyDeduction) + ' / الشركة ' + formatMoney(row.CompanyMonthlyCost) + '</span><em>QR</em></div>' +
@@ -1339,7 +1562,7 @@
         renderEmpty("epCompanyContributionRows", 5);
         byId("epPayableSummaryRows").innerHTML = "";
         (report.Payables || []).forEach(function (x) {
-            byId("epPayableSummaryRows").insertAdjacentHTML("beforeend", '<tr><td>' + html(x.ProviderName) + '</td><td>' + html(x.AccountCode) + '</td><td>' + money(x.EmployeeDeduction) + '</td><td>' + money(x.CompanyCost) + '</td><td>' + money(x.PayrollPayable) + '</td><td>' + money(x.PostedNetCredit) + '</td><td>' + money(x.Difference) + '</td></tr>');
+            byId("epPayableSummaryRows").insertAdjacentHTML("beforeend", '<tr><td>' + html(x.ProviderName) + '</td><td>' + html(x.AccountDisplay || x.AccountName || x.AccountSerial || "غير محدد") + '</td><td>' + money(x.EmployeeDeduction) + '</td><td>' + money(x.CompanyCost) + '</td><td>' + money(x.PayrollPayable) + '</td><td>' + money(x.PostedNetCredit) + '</td><td>' + money(x.Difference) + '</td></tr>');
         });
         renderEmpty("epPayableSummaryRows", 7);
         byId("epPayrollIntegrationRows").innerHTML = "";
@@ -1413,6 +1636,13 @@
             renderMedMembershipCard((root._medRows || [])[index]);
             return;
         }
+        var employeeRow = e.target.closest("[data-employee-row]");
+        if (screen === "employees" && employeeRow && !btn) {
+            var employeeIndex = parseInt(employeeRow.getAttribute("data-employee-row"), 10);
+            root.querySelectorAll("[data-employee-row]").forEach(function (x) { x.classList.toggle("selected", x === employeeRow); });
+            renderEmployeeProfile((root._employeeRows || [])[employeeIndex]);
+            return;
+        }
         if (!btn) { return; }
         if (btn.hasAttribute("data-run-tab")) {
             var tab = btn.getAttribute("data-run-tab");
@@ -1445,6 +1675,9 @@
             if (readOnly) { message("POS operational view only. Manage employees from MainErp.", true); return; }
             openEditor();
         }
+        if (btn.id === "epPrintEmployeeCard" || btn.id === "epProfilePrintEmployeeCard") { printEmployeeCard("employee"); return; }
+        if (btn.id === "epPrintEmployeeInsuranceCard" || btn.id === "epProfilePrintInsuranceCard") { printEmployeeCard("insurance"); return; }
+        if (btn.id === "epRemovePhoto") { setEmployeePhoto("", byId("epName") ? byId("epName").value : ""); return; }
         if (btn.id === "epCloseEditor") { byId("epEmployeeEditor").hidden = true; }
         if (btn.id === "epEndInsuranceSubscription") {
             if (!byId("epInsuranceActive") || !byId("epInsuranceEnd")) { return; }
@@ -1458,6 +1691,7 @@
         if (btn.id === "epLoadParity") { message("فحص التوافق التفصيلي متاح من شاشة الإدارة الرئيسية، ويمكن استخدام فحص قبل الترحيل هنا لمراجعة الحسابات.", false); return; }
         if (btn.id === "epLoadReplay") { guardedAction("postingDryRun", btn, btn.getAttribute("data-busy-text") || "جار المراجعة...", postingDryRun); return; }
         if (btn.id === "epPostingDryRun") { guardedAction("postingDryRun", btn, btn.getAttribute("data-busy-text") || "جار الفحص...", postingDryRun); return; }
+        if (btn.id === "epCompareRuns") { guardedAction("comparePayrollRuns", btn, "جار المقارنة...", comparePayrollRuns); return; }
         if (btn.id === "epPostPayroll") { guardedAction("postPayroll", btn, btn.getAttribute("data-busy-text") || "جار الترحيل...", postPayroll); return; }
         if (btn.id === "epPrevMonth") { setRunMonth(-1); guardedAction("previewSalary", btn, "جار الحساب...", previewSalary); return; }
         if (btn.id === "epCurrentMonth") { setRunMonth("current"); guardedAction("previewSalary", btn, "جار الحساب...", previewSalary); return; }
@@ -1468,6 +1702,7 @@
             if (readOnly || !root.getAttribute("data-save-url")) { message("حفظ مسير الرواتب غير متاح في هذه الشاشة.", true); return; }
             guardedAction("saveSalary", btn, btn.getAttribute("data-busy-text") || "جار الحفظ...", function () {
                 return postJson(root.getAttribute("data-save-url"), salaryRequest()).then(function (res) {
+                    if (res.success && res.result && res.result.PayrollRunId && byId("epPayrollRunId")) { byId("epPayrollRunId").value = res.result.PayrollRunId; }
                     message(res.success ? res.result.Message : res.message, !res.success);
                     return previewSalary();
                 });
@@ -1478,7 +1713,14 @@
         if (btn.id === "epPrintReports") { guardedAction("printReports", btn, "جار تجهيز الطباعة...", function () { window.print(); }); return; }
         if (btn.id === "epExportReports") { guardedAction("exportReports", btn, "جار تجهيز التصدير...", exportMedicalReportCsv); return; }
         if (btn.id === "epMedRefresh" || btn.id === "epMedSearch") { guardedAction("medicalDashboard", btn, "جار تحميل التأمين...", loadMedOperationalDashboard); return; }
-        if (btn.id === "epMedPrintCard") { window.print(); }
+        if (btn.id === "epMedPrintCard") {
+            document.body.classList.add("ep-print-medical-card");
+            setTimeout(function () {
+                window.print();
+                setTimeout(function () { document.body.classList.remove("ep-print-medical-card"); }, 300);
+            }, 50);
+            return;
+        }
         if (screen === "insurance-operational" && btn.hasAttribute("data-card-mode")) {
             root.setAttribute("data-card-mode", btn.getAttribute("data-card-mode"));
             root.querySelectorAll("[data-card-mode]").forEach(function (x) { x.classList.toggle("active", x === btn); });
@@ -1589,6 +1831,18 @@
             });
         }
         if (e.target && e.target.closest("[data-tab-panel='insurance']")) { updateInsurancePreview(); }
+        if (screen === "employees" && e.target && e.target.id === "epPhotoInput") {
+            var file = e.target.files && e.target.files[0];
+            if (!file) { return; }
+            guardedAction("employeePhoto", null, "جاري تجهيز صورة الموظف...", function () {
+                return resizeEmployeePhoto(file).then(function (dataUrl) {
+                    setEmployeePhoto(dataUrl, byId("epName") ? byId("epName").value : "");
+                    message("تم تجهيز صورة الموظف. اضغط حفظ الملف لتثبيتها.");
+                }, function (err) {
+                    message(err.message || "تعذر تجهيز الصورة.", true);
+                });
+            });
+        }
         if (screen === "insurance-settings" && e.target && e.target.closest("#epPlanForm")) {
             updateLifecycleBadge();
             calculatePlanPreview();

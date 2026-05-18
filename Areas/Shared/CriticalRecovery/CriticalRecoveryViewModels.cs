@@ -43,6 +43,8 @@ namespace MyERP.Areas.Shared.CriticalRecovery
         public CriticalRecoveryFilterViewModel()
         {
             InvoiceScope = "SalesOnly";
+            InvoiceSource = "Both";
+            OperationKind = "All";
         }
 
         public int? BranchId { get; set; }
@@ -50,6 +52,8 @@ namespace MyERP.Areas.Shared.CriticalRecovery
         public DateTime? DateTo { get; set; }
         public int? InvoiceType { get; set; }
         public string InvoiceScope { get; set; }
+        public string InvoiceSource { get; set; }
+        public string OperationKind { get; set; }
         public string InvoiceNo { get; set; }
         public string CashierUserId { get; set; }
         public string CustomerSearch { get; set; }
@@ -115,6 +119,7 @@ namespace MyERP.Areas.Shared.CriticalRecovery
         public long TransactionId { get; set; }
         public string InvoiceNo { get; set; }
         public int InvoiceType { get; set; }
+        public string OperationTypeName { get; set; }
         public int BranchId { get; set; }
         public DateTime TransactionDate { get; set; }
         public string CustomerName { get; set; }

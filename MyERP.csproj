@@ -4501,6 +4501,7 @@
     <Content Include="Areas\Pos\Sql\77_POS_SalesAndKycSearch_Performance.sql" />
     <Content Include="Areas\Pos\Sql\106_WebScreenPermissions_Catalog.sql" />
     <Content Include="Areas\Pos\Sql\107_POS_CriticalInvoiceRecoveryCenter.sql" />
+    <Content Include="Areas\Pos\Sql\109_POS_WebPermissions_TellerInvoiceSafety.sql" />
     <Content Include="Areas\Pos\Sql\README_POS_Dashboard_DailySnapshots.md" />
     <Content Include="Areas\Pos\Sql\README_POS_FinancialIntelligenceReports.md" />
     <Content Include="Areas\Pos\Sql\POS_SQL_AutoUpdate_Manifest.json" />
