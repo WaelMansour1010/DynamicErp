@@ -422,6 +422,7 @@
     <Compile Include="Areas\MainErp\Controllers\DynamicReportsController.cs" />
     <Compile Include="Areas\MainErp\Controllers\FinancialExpensesController.cs" />
     <Compile Include="Areas\MainErp\Controllers\FinancialAdministrationController.cs" />
+    <Compile Include="Areas\MainErp\Controllers\FinanceController.cs" />
     <Compile Include="Areas\MainErp\Controllers\LegacyHrFinanceController.cs" />
     <Compile Include="Areas\MainErp\Controllers\HomeController.cs" />
     <Compile Include="Areas\MainErp\Controllers\HrController.cs" />
@@ -604,6 +605,7 @@
     <Compile Include="Common\EnterpriseHr\EnterpriseHrRepository.cs" />
     <Compile Include="Common\EnterpriseHr\EnterpriseHrService.cs" />
     <Compile Include="Common\EnterpriseHr\EnterpriseHrViewModels.cs" />
+    <Compile Include="Common\FinanceVouchers\FinanceVoucherDbConnectionFactory.cs" />
     <Compile Include="Common\JournalEntries\SharedJournalEntryCore.cs" />
     <Compile Include="Common\JournalEntries\SharedJournalEntryModels.cs" />
     <Compile Include="Common\JournalEntries\SharedJournalService.cs" />
@@ -671,6 +673,7 @@
     <Compile Include="Areas\Pos\Models\PosSystemErrorLogModels.cs" />
     <Compile Include="Areas\Pos\Models\PosSystemHealthModels.cs" />
     <Compile Include="Areas\Pos\Models\PosSqlUpdateModels.cs" />
+    <Compile Include="Areas\Pos\Controllers\FinanceController.cs" />
     <Compile Include="Areas\Pos\Repositories\Payments\PaymentVoucherReadRepository.cs" />
     <Compile Include="Areas\Pos\Repositories\Payments\PaymentVoucherWriteRepository.cs" />
     <Compile Include="Areas\Pos\Repositories\Cashing\CashingVoucherReadRepository.cs" />

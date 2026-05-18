@@ -147,6 +147,82 @@
             });
             return;
         }
+        var disburseAdvance = event.target.closest("[data-disburse-advance]");
+        if (disburseAdvance) {
+            if (!confirm("هل تريد صرف السلفة وإنشاء السلفة الفعلية؟ لن يتم إنشاء قيد محاسبي من هذه الشاشة.")) { return; }
+            disburseAdvance.disabled = true;
+            fetch(root.getAttribute("data-disburse-advance-url"), {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+                body: new URLSearchParams({ id: disburseAdvance.getAttribute("data-disburse-advance"), __RequestVerificationToken: token() }).toString()
+            }).then(function (r) {
+                return r.json().then(function (j) { j._ok = r.ok; return j; });
+            }).then(function (res) {
+                if (!res.Success && !res.success) {
+                    alert(res.Message || res.message || "تعذر صرف السلفة");
+                    disburseAdvance.disabled = false;
+                    return;
+                }
+                alert(res.Message || "تم صرف السلفة");
+                window.location.reload();
+            }).catch(function () {
+                alert("تعذر الاتصال بالخادم.");
+                disburseAdvance.disabled = false;
+            });
+            return;
+        }
+        var approveAdvance = event.target.closest("[data-approve-advance]");
+        if (approveAdvance) {
+            if (!confirm("هل تريد اعتماد طلب السلفة؟")) { return; }
+            approveAdvance.disabled = true;
+            fetch(root.getAttribute("data-approve-advance-url"), {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+                body: new URLSearchParams({ id: approveAdvance.getAttribute("data-approve-advance"), remarks: "اعتماد من شاشة السلف", __RequestVerificationToken: token() }).toString()
+            }).then(function (r) {
+                return r.json().then(function (j) { j._ok = r.ok; return j; });
+            }).then(function (res) {
+                if (!res.Success && !res.success) {
+                    alert(res.Message || res.message || "تعذر اعتماد طلب السلفة");
+                    approveAdvance.disabled = false;
+                    return;
+                }
+                alert(res.Message || "تم اعتماد طلب السلفة");
+                window.location.reload();
+            }).catch(function () {
+                alert("تعذر الاتصال بالخادم.");
+                approveAdvance.disabled = false;
+            });
+            return;
+        }
+        var cancelAdvance = event.target.closest("[data-cancel-advance]");
+        if (cancelAdvance) {
+            var reason = prompt("سبب إلغاء طلب السلفة");
+            if (reason === null) { return; }
+            cancelAdvance.disabled = true;
+            fetch(root.getAttribute("data-cancel-advance-url"), {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+                body: new URLSearchParams({ id: cancelAdvance.getAttribute("data-cancel-advance"), remarks: reason || "إلغاء من شاشة السلف", __RequestVerificationToken: token() }).toString()
+            }).then(function (r) {
+                return r.json().then(function (j) { j._ok = r.ok; return j; });
+            }).then(function (res) {
+                if (!res.Success && !res.success) {
+                    alert(res.Message || res.message || "تعذر إلغاء طلب السلفة");
+                    cancelAdvance.disabled = false;
+                    return;
+                }
+                alert(res.Message || "تم إلغاء طلب السلفة");
+                window.location.reload();
+            }).catch(function () {
+                alert("تعذر الاتصال بالخادم.");
+                cancelAdvance.disabled = false;
+            });
+            return;
+        }
         var row = event.target.closest("[data-component-id]");
         if (row) {
             fetch(root.getAttribute("data-component-details-url") + "?id=" + encodeURIComponent(row.getAttribute("data-component-id")), { credentials: "same-origin" })

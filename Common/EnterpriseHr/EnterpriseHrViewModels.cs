@@ -30,6 +30,9 @@ namespace MyERP.Common.EnterpriseHr
         public string AdvanceDetailsUrl { get; set; }
         public string SaveAdvanceUrl { get; set; }
         public string DeleteAdvanceUrl { get; set; }
+        public string DisburseAdvanceUrl { get; set; }
+        public string ApproveAdvanceUrl { get; set; }
+        public string CancelAdvanceUrl { get; set; }
         public string EmployeeLookupUrl { get; set; }
         public int? EmployeeId { get; set; }
         public string DateFrom { get; set; }
@@ -118,14 +121,21 @@ namespace MyERP.Common.EnterpriseHr
         public int PartsCount { get; set; }
         public decimal PaidAmount { get; set; }
         public decimal RemainingAmount { get; set; }
+        public int? ActualAdvanceId { get; set; }
+        public bool IsDisbursed { get; set; }
         public bool CanEdit { get; set; }
         public bool CanDelete { get; set; }
+        public bool CanDisburse { get; set; }
+        public bool CanApprove { get; set; }
+        public bool CanCancel { get; set; }
         public string LockReason { get; set; }
         public IList<EmployeeAdvancePartViewModel> Parts { get; set; }
+        public IList<EmployeeAdvanceApprovalHistoryViewModel> ApprovalHistory { get; set; }
 
         public EmployeeAdvanceViewModel()
         {
             Parts = new List<EmployeeAdvancePartViewModel>();
+            ApprovalHistory = new List<EmployeeAdvanceApprovalHistoryViewModel>();
         }
     }
 
@@ -136,6 +146,20 @@ namespace MyERP.Common.EnterpriseHr
         public string PartDate { get; set; }
         public bool Payed { get; set; }
         public string Remark { get; set; }
+    }
+
+    public class EmployeeAdvanceApprovalHistoryViewModel
+    {
+        public int Id { get; set; }
+        public string ScreenName { get; set; }
+        public int? Level { get; set; }
+        public int? EmployeeId { get; set; }
+        public string EmployeeName { get; set; }
+        public string ApprovedAt { get; set; }
+        public string CancelledAt { get; set; }
+        public string Remarks { get; set; }
+        public string FromUser { get; set; }
+        public bool IsCurrentCursor { get; set; }
     }
 
     public class EnterpriseHrEmployeeLookupViewModel

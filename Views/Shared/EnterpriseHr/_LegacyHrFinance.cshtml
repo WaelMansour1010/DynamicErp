@@ -10,6 +10,9 @@
          data-advance-details-url="@Model.AdvanceDetailsUrl"
          data-save-advance-url="@Model.SaveAdvanceUrl"
          data-delete-advance-url="@Model.DeleteAdvanceUrl"
+         data-disburse-advance-url="@Model.DisburseAdvanceUrl"
+         data-approve-advance-url="@Model.ApproveAdvanceUrl"
+         data-cancel-advance-url="@Model.CancelAdvanceUrl"
          data-employee-lookup-url="@Model.EmployeeLookupUrl">
     @Html.AntiForgeryToken()
     <header class="lhf-hero">
@@ -67,7 +70,7 @@
             <header>
                 <div>
                     <h3>طلبات السلف</h3>
-                    <span>هذه الشاشة تحفظ طلب السلفة وأقساطها. القيد المحاسبي الفعلي يظل ضمن شاشة صرف السلفة حسب منطق VB6.</span>
+                    <span>هذه الشاشة تحفظ طلب السلفة وأقساطها، ويمكن منها إنشاء السلفة الفعلية بعد الاعتماد. لا يتم إنشاء قيد محاسبي تلقائياً من هذا المسار لأن منطق VB6 الرئيسي لا يرحل قيداً مؤكداً هنا.</span>
                 </div>
                 @if (Model.Permissions.CanAdd)
                 {
@@ -107,6 +110,7 @@
                                     else if (row.Posted) { <span class="lhf-badge warning">مرسلة</span> }
                                     else if (row.Approved) { <span class="lhf-badge success">معتمدة</span> }
                                     else { <span class="lhf-badge info">مسودة</span> }
+                                    @if (row.IsDisbursed) { <span class="lhf-badge success">مصروفة: @row.ActualAdvanceId</span> }
                                     @if (row.PaidPartsCount > 0) { <span class="lhf-badge warning">به أقساط مسددة</span> }
                                 </td>
                                 <td><span>@row.Reason</span><small>@row.LockReason</small></td>
@@ -118,6 +122,18 @@
                                     @if (Model.Permissions.CanDelete && row.CanDelete)
                                     {
                                         <button type="button" data-delete-advance="@row.Id">حذف</button>
+                                    }
+                                    @if (Model.Permissions.CanEdit && row.CanApprove)
+                                    {
+                                        <button type="button" data-approve-advance="@row.Id">اعتماد</button>
+                                    }
+                                    @if (Model.Permissions.CanDelete && row.CanCancel)
+                                    {
+                                        <button type="button" data-cancel-advance="@row.Id">إلغاء آمن</button>
+                                    }
+                                    @if (Model.Permissions.CanEdit && row.CanDisburse)
+                                    {
+                                        <button type="button" data-disburse-advance="@row.Id">صرف السلفة</button>
                                     }
                                 </td>
                             </tr>

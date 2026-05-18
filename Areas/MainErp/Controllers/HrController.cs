@@ -129,6 +129,51 @@ namespace MyERP.Areas.MainErp.Controllers
             return Json(result);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult DisburseAdvance(int id)
+        {
+            if (!Can("HR.Advances", "Edit"))
+            {
+                Response.StatusCode = 403;
+                return Json(new LegacyHrFinanceSaveResult { Success = false, Message = "ليست لديك صلاحية صرف السلف." });
+            }
+
+            var result = _service.DisburseAdvanceRequest(id, MainErpUserContext == null ? (int?)null : MainErpUserContext.UserId);
+            if (!result.Success) { Response.StatusCode = 400; }
+            return Json(result);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult ApproveAdvance(int id, string remarks)
+        {
+            if (!Can("HR.Advances", "Edit"))
+            {
+                Response.StatusCode = 403;
+                return Json(new LegacyHrFinanceSaveResult { Success = false, Message = "ليست لديك صلاحية اعتماد السلف." });
+            }
+
+            var result = _service.ApproveAdvanceRequest(id, MainErpUserContext == null ? (int?)null : MainErpUserContext.UserId, MainErpUserContext == null ? null : MainErpUserContext.UserName, remarks);
+            if (!result.Success) { Response.StatusCode = 400; }
+            return Json(result);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult CancelAdvance(int id, string remarks)
+        {
+            if (!Can("HR.Advances", "Delete"))
+            {
+                Response.StatusCode = 403;
+                return Json(new LegacyHrFinanceSaveResult { Success = false, Message = "ليست لديك صلاحية إلغاء السلف." });
+            }
+
+            var result = _service.CancelAdvanceRequest(id, MainErpUserContext == null ? (int?)null : MainErpUserContext.UserId, MainErpUserContext == null ? null : MainErpUserContext.UserName, remarks);
+            if (!result.Success) { Response.StatusCode = 400; }
+            return Json(result);
+        }
+
         [HttpGet]
         public JsonResult EmployeesLookup(string term, string employeeStatus = "active")
         {
@@ -157,6 +202,9 @@ namespace MyERP.Areas.MainErp.Controllers
             model.AdvanceDetailsUrl = Url.Action("AdvanceDetails", "Hr", new { area = "MainErp" });
             model.SaveAdvanceUrl = Url.Action("SaveAdvance", "Hr", new { area = "MainErp" });
             model.DeleteAdvanceUrl = Url.Action("DeleteAdvance", "Hr", new { area = "MainErp" });
+            model.DisburseAdvanceUrl = Url.Action("DisburseAdvance", "Hr", new { area = "MainErp" });
+            model.ApproveAdvanceUrl = Url.Action("ApproveAdvance", "Hr", new { area = "MainErp" });
+            model.CancelAdvanceUrl = Url.Action("CancelAdvance", "Hr", new { area = "MainErp" });
             model.EmployeeLookupUrl = Url.Action("EmployeesLookup", "Hr", new { area = "MainErp" });
             model.Permissions = new LegacyHrFinancePermissionsViewModel
             {

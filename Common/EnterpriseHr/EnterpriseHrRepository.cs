@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Globalization;
+using System.Linq;
 using MyERP.Common.EnterpriseHr;
 
 namespace MyERP.Common.EnterpriseHr
@@ -56,6 +57,7 @@ namespace MyERP.Common.EnterpriseHr
                 if (advance != null)
                 {
                     LoadAdvanceParts(connection, null, advance);
+                    LoadAdvanceApprovalHistory(connection, null, advance);
                 }
                 return advance;
             }
@@ -170,6 +172,168 @@ DELETE FROM dbo.TblEmpAdvanceRequest WHERE AdvanceID = @AdvanceID;", connection,
 
                 transaction.Commit();
                 return new LegacyHrFinanceSaveResult { Success = true, Id = id, Message = "تم حذف طلب السلفة بنجاح." };
+            }
+        }
+
+        public LegacyHrFinanceSaveResult DisburseAdvanceRequest(int requestId, int? userId)
+        {
+            if (requestId <= 0) { return Fail("رقم طلب السلفة غير صحيح."); }
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var transaction = connection.BeginTransaction())
+            {
+                try
+                {
+                    var request = LoadAdvanceById(connection, transaction, requestId);
+                    if (request == null) { transaction.Rollback(); return Fail("لم يتم العثور على طلب السلفة."); }
+                    if (!request.Approved) { transaction.Rollback(); return Fail("لا يمكن صرف السلفة قبل اعتماد طلب السلفة."); }
+
+                    var existingActualId = GetActualAdvanceIdForRequest(connection, transaction, requestId);
+                    if (existingActualId.HasValue)
+                    {
+                        transaction.Rollback();
+                        return Fail("تم صرف هذا الطلب من قبل برقم سلفة فعلية " + existingActualId.Value + ". لا يمكن تكرار الصرف.");
+                    }
+
+                    var employee = GetEmployee(connection, transaction, request.EmployeeId.GetValueOrDefault(), true);
+                    if (employee == null) { transaction.Rollback(); return Fail("الموظف غير موجود أو موقوف. لا يمكن صرف السلفة."); }
+
+                    LoadAdvanceParts(connection, transaction, request);
+                    if (!request.Parts.Any()) { transaction.Rollback(); return Fail("لا توجد أقساط في طلب السلفة يمكن صرفها."); }
+
+                    var actualId = NextId(connection, transaction, "TblEmpAdvance", "AdvanceID");
+                    using (var command = new SqlCommand(@"
+INSERT INTO dbo.TblEmpAdvance
+(AdvanceID, AdvanceDate, Emp_ID, AdvanceValue, BoxID, PaymentCounts, AutoDiscount, FirstMonthPayment, FirstYearPayment, UserID, AdvanceType, RetrunID, branch_no, orderNO, MethodDeci, DifValue)
+VALUES
+(@AdvanceID, @AdvanceDate, @EmployeeId, @AdvanceValue, NULL, @PaymentCounts, @AutoDiscount, @FirstMonthPayment, @FirstYearPayment, @UserID, 0, NULL, @BranchNo, @RequestId, @MethodDeci, @DiffValue);", connection, transaction))
+                    {
+                        command.Parameters.Add("@AdvanceID", SqlDbType.Int).Value = actualId;
+                        command.Parameters.Add("@AdvanceDate", SqlDbType.DateTime).Value = ParseDate(request.AdvanceDate).GetValueOrDefault(DateTime.Today);
+                        command.Parameters.Add("@EmployeeId", SqlDbType.Int).Value = request.EmployeeId.GetValueOrDefault();
+                        command.Parameters.Add("@AdvanceValue", SqlDbType.Money).Value = request.AdvanceValue;
+                        command.Parameters.Add("@PaymentCounts", SqlDbType.Int).Value = request.PaymentCounts;
+                        command.Parameters.Add("@AutoDiscount", SqlDbType.Bit).Value = request.AutoDiscount;
+                        command.Parameters.Add("@FirstMonthPayment", SqlDbType.Int).Value = request.FirstMonthPayment.GetValueOrDefault();
+                        command.Parameters.Add("@FirstYearPayment", SqlDbType.Int).Value = request.FirstYearPayment.GetValueOrDefault();
+                        command.Parameters.Add("@UserID", SqlDbType.Int).Value = userId.HasValue ? (object)userId.Value : DBNull.Value;
+                        command.Parameters.Add("@BranchNo", SqlDbType.Int).Value = request.BranchId.HasValue ? (object)request.BranchId.Value : DBNull.Value;
+                        command.Parameters.Add("@RequestId", SqlDbType.Float).Value = requestId;
+                        command.Parameters.Add("@MethodDeci", SqlDbType.Int).Value = 2;
+                        command.Parameters.Add("@DiffValue", SqlDbType.Float).Value = 0;
+                        command.ExecuteNonQuery();
+                    }
+
+                    using (var command = new SqlCommand(@"
+INSERT INTO dbo.TblEmpAdvanceDetails (AdvanceID, PartNO, PartValue, PartDate)
+VALUES (@AdvanceID, @PartNo, @PartValue, @PartDate);", connection, transaction))
+                    {
+                        command.Parameters.Add("@AdvanceID", SqlDbType.Int);
+                        command.Parameters.Add("@PartNo", SqlDbType.Int);
+                        command.Parameters.Add("@PartValue", SqlDbType.Money);
+                        command.Parameters.Add("@PartDate", SqlDbType.DateTime);
+                        foreach (var part in request.Parts)
+                        {
+                            command.Parameters["@AdvanceID"].Value = actualId;
+                            command.Parameters["@PartNo"].Value = part.PartNo;
+                            command.Parameters["@PartValue"].Value = part.PartValue;
+                            command.Parameters["@PartDate"].Value = ParseDate(part.PartDate).GetValueOrDefault(DateTime.Today);
+                            command.ExecuteNonQuery();
+                        }
+                    }
+
+                    transaction.Commit();
+                    return new LegacyHrFinanceSaveResult
+                    {
+                        Success = true,
+                        Message = "تم صرف السلفة وإنشاء السلفة الفعلية رقم " + actualId + ". لم يتم إنشاء قيد محاسبي لأن منطق VB6 الرئيسي لا ينشئ قيداً من شاشة صرف السلفة.",
+                        Id = actualId
+                    };
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        public LegacyHrFinanceSaveResult ApproveAdvanceRequest(int requestId, int? userId, string userName, string remarks)
+        {
+            if (requestId <= 0) { return Fail("رقم طلب السلفة غير صحيح."); }
+
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var transaction = connection.BeginTransaction())
+            {
+                try
+                {
+                    var request = LoadAdvanceById(connection, transaction, requestId);
+                    if (request == null) { transaction.Rollback(); return Fail("لم يتم العثور على طلب السلفة."); }
+                    if (request.Rejected) { transaction.Rollback(); return Fail("لا يمكن اعتماد طلب سلفة ملغى أو مرفوض."); }
+                    if (request.IsDisbursed) { transaction.Rollback(); return Fail("تم صرف الطلب بالفعل ولا يحتاج إلى اعتماد جديد."); }
+                    if (request.Approved) { transaction.Rollback(); return Fail("طلب السلفة معتمد بالفعل."); }
+
+                    using (var command = new SqlCommand(@"
+UPDATE dbo.TblEmpAdvanceRequest
+SET Approved = 1,
+    ok = 1,
+    notok = 0,
+    ManagerID = @UserID,
+    jobID_approve = ISNULL(jobID_approve, @UserID)
+WHERE AdvanceID = @AdvanceID;", connection, transaction))
+                    {
+                        command.Parameters.Add("@AdvanceID", SqlDbType.Int).Value = requestId;
+                        command.Parameters.Add("@UserID", SqlDbType.Int).Value = userId.HasValue ? (object)userId.Value : DBNull.Value;
+                        command.ExecuteNonQuery();
+                    }
+
+                    AddAdvanceApprovalHistory(connection, transaction, requestId, userId, userName, remarks, true);
+                    transaction.Commit();
+                    return new LegacyHrFinanceSaveResult { Success = true, Id = requestId, Message = "تم اعتماد طلب السلفة بنجاح." };
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        public LegacyHrFinanceSaveResult CancelAdvanceRequest(int requestId, int? userId, string userName, string remarks)
+        {
+            if (requestId <= 0) { return Fail("رقم طلب السلفة غير صحيح."); }
+
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var transaction = connection.BeginTransaction())
+            {
+                try
+                {
+                    var request = LoadAdvanceById(connection, transaction, requestId);
+                    if (request == null) { transaction.Rollback(); return Fail("لم يتم العثور على طلب السلفة."); }
+                    if (request.IsDisbursed) { transaction.Rollback(); return Fail("لا يمكن إلغاء طلب تم صرفه كسلفة فعلية. يجب معالجة السلفة الفعلية من مسارها."); }
+                    if (request.PaidPartsCount > 0) { transaction.Rollback(); return Fail("لا يمكن إلغاء طلب عليه أقساط مسددة أو مرتبطة."); }
+                    if (request.AccountingApproved || request.Posted) { transaction.Rollback(); return Fail("لا يمكن إلغاء طلب مرتبط بترحيل أو اعتماد محاسبي."); }
+                    if (request.Rejected) { transaction.Rollback(); return Fail("طلب السلفة ملغى بالفعل."); }
+
+                    using (var command = new SqlCommand(@"
+UPDATE dbo.TblEmpAdvanceRequest
+SET Approved = 0,
+    ok = 0,
+    notok = 1
+WHERE AdvanceID = @AdvanceID;", connection, transaction))
+                    {
+                        command.Parameters.Add("@AdvanceID", SqlDbType.Int).Value = requestId;
+                        command.ExecuteNonQuery();
+                    }
+
+                    AddAdvanceApprovalHistory(connection, transaction, requestId, userId, userName, remarks, false);
+                    transaction.Commit();
+                    return new LegacyHrFinanceSaveResult { Success = true, Id = requestId, Message = "تم إلغاء طلب السلفة بأمان." };
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
             }
         }
 
@@ -316,10 +480,11 @@ SELECT * FROM (
         a.basicSalary,
         a.oldAdvance,
         a.Balance,
-        ISNULL(px.PartsCount,0) AS PartsCount,
-        ISNULL(px.PaidPartsCount,0) AS PaidPartsCount,
-        ISNULL(px.PaidAmount,0) AS PaidAmount,
-        ISNULL(a.AdvanceValue,0) - ISNULL(px.PaidAmount,0) AS RemainingAmount
+        CASE WHEN actual.ActualAdvanceId IS NULL THEN ISNULL(px.PartsCount,0) ELSE ISNULL(actualpx.PartsCount,0) END AS PartsCount,
+        CASE WHEN actual.ActualAdvanceId IS NULL THEN ISNULL(px.PaidPartsCount,0) ELSE ISNULL(actualpx.PaidPartsCount,0) END AS PaidPartsCount,
+        CASE WHEN actual.ActualAdvanceId IS NULL THEN ISNULL(px.PaidAmount,0) ELSE ISNULL(actualpx.PaidAmount,0) END AS PaidAmount,
+        ISNULL(a.AdvanceValue,0) - CASE WHEN actual.ActualAdvanceId IS NULL THEN ISNULL(px.PaidAmount,0) ELSE ISNULL(actualpx.PaidAmount,0) END AS RemainingAmount,
+        actual.ActualAdvanceId
  FROM dbo.TblEmpAdvanceRequest a WITH (NOLOCK)
  LEFT JOIN dbo.TblEmployee e WITH (NOLOCK) ON e.Emp_ID = CONVERT(INT, a.Emp_id)
  LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = CONVERT(INT, a.Branch_NO)
@@ -332,6 +497,20 @@ SELECT * FROM (
      FROM dbo.TblEmpAdvanceRequestDetails WITH (NOLOCK)
      GROUP BY AdvanceID
  ) px ON px.AdvanceID = a.AdvanceID
+ LEFT JOIN (
+     SELECT CONVERT(INT, orderNO) AS RequestId, MIN(AdvanceID) AS ActualAdvanceId
+     FROM dbo.TblEmpAdvance WITH (NOLOCK)
+     WHERE ISNULL(orderNO,0) <> 0
+     GROUP BY CONVERT(INT, orderNO)
+ ) actual ON actual.RequestId = a.AdvanceID
+ LEFT JOIN (
+     SELECT AdvanceID,
+            COUNT(1) AS PartsCount,
+            SUM(CASE WHEN ISNULL(Payed,0)=1 OR Payed1 IS NOT NULL OR EmpAdPaID IS NOT NULL THEN 1 ELSE 0 END) AS PaidPartsCount,
+            SUM(CASE WHEN ISNULL(Payed,0)=1 OR Payed1 IS NOT NULL OR EmpAdPaID IS NOT NULL THEN ISNULL(PartValue,0) ELSE 0 END) AS PaidAmount
+     FROM dbo.TblEmpAdvanceDetails WITH (NOLOCK)
+     GROUP BY AdvanceID
+ ) actualpx ON actualpx.AdvanceID = actual.ActualAdvanceId
  WHERE " + EmployeeStatusPredicate("e") + @"
    AND (@EmployeeId IS NULL OR CONVERT(INT, a.Emp_id) = @EmployeeId)
    AND (@DateFrom IS NULL OR a.AdvanceDate >= @DateFrom)
@@ -556,7 +735,8 @@ SELECT * FROM (
                 PartsCount = ReadInt(reader, "PartsCount"),
                 PaidPartsCount = ReadInt(reader, "PaidPartsCount"),
                 PaidAmount = ReadDecimal(reader, "PaidAmount"),
-                RemainingAmount = ReadDecimal(reader, "RemainingAmount")
+                RemainingAmount = ReadDecimal(reader, "RemainingAmount"),
+                ActualAdvanceId = ReadNullableInt(reader, "ActualAdvanceId")
             };
 
             ApplyAdvanceLockState(advance);
@@ -590,10 +770,11 @@ SELECT TOP (1)
         a.basicSalary,
         a.oldAdvance,
         a.Balance,
-        ISNULL(px.PartsCount,0) AS PartsCount,
-        ISNULL(px.PaidPartsCount,0) AS PaidPartsCount,
-        ISNULL(px.PaidAmount,0) AS PaidAmount,
-        ISNULL(a.AdvanceValue,0) - ISNULL(px.PaidAmount,0) AS RemainingAmount
+        CASE WHEN actual.ActualAdvanceId IS NULL THEN ISNULL(px.PartsCount,0) ELSE ISNULL(actualpx.PartsCount,0) END AS PartsCount,
+        CASE WHEN actual.ActualAdvanceId IS NULL THEN ISNULL(px.PaidPartsCount,0) ELSE ISNULL(actualpx.PaidPartsCount,0) END AS PaidPartsCount,
+        CASE WHEN actual.ActualAdvanceId IS NULL THEN ISNULL(px.PaidAmount,0) ELSE ISNULL(actualpx.PaidAmount,0) END AS PaidAmount,
+        ISNULL(a.AdvanceValue,0) - CASE WHEN actual.ActualAdvanceId IS NULL THEN ISNULL(px.PaidAmount,0) ELSE ISNULL(actualpx.PaidAmount,0) END AS RemainingAmount,
+        actual.ActualAdvanceId
  FROM dbo.TblEmpAdvanceRequest a WITH (NOLOCK)
  LEFT JOIN dbo.TblEmployee e WITH (NOLOCK) ON e.Emp_ID = CONVERT(INT, a.Emp_id)
  LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = CONVERT(INT, a.Branch_NO)
@@ -606,6 +787,20 @@ SELECT TOP (1)
      FROM dbo.TblEmpAdvanceRequestDetails WITH (NOLOCK)
      GROUP BY AdvanceID
  ) px ON px.AdvanceID = a.AdvanceID
+ LEFT JOIN (
+     SELECT CONVERT(INT, orderNO) AS RequestId, MIN(AdvanceID) AS ActualAdvanceId
+     FROM dbo.TblEmpAdvance WITH (NOLOCK)
+     WHERE ISNULL(orderNO,0) <> 0
+     GROUP BY CONVERT(INT, orderNO)
+ ) actual ON actual.RequestId = a.AdvanceID
+ LEFT JOIN (
+     SELECT AdvanceID,
+            COUNT(1) AS PartsCount,
+            SUM(CASE WHEN ISNULL(Payed,0)=1 OR Payed1 IS NOT NULL OR EmpAdPaID IS NOT NULL THEN 1 ELSE 0 END) AS PaidPartsCount,
+            SUM(CASE WHEN ISNULL(Payed,0)=1 OR Payed1 IS NOT NULL OR EmpAdPaID IS NOT NULL THEN ISNULL(PartValue,0) ELSE 0 END) AS PaidAmount
+     FROM dbo.TblEmpAdvanceDetails WITH (NOLOCK)
+     GROUP BY AdvanceID
+ ) actualpx ON actualpx.AdvanceID = actual.ActualAdvanceId
  WHERE a.AdvanceID = @AdvanceID;", connection, transaction))
             {
                 command.Parameters.Add("@AdvanceID", SqlDbType.Int).Value = id;
@@ -618,13 +813,16 @@ SELECT TOP (1)
 
         private static void LoadAdvanceParts(SqlConnection connection, SqlTransaction transaction, EmployeeAdvanceViewModel advance)
         {
+            advance.Parts.Clear();
+            var sourceAdvanceId = advance.ActualAdvanceId.GetValueOrDefault(advance.Id.GetValueOrDefault());
+            var tableName = advance.ActualAdvanceId.HasValue ? "dbo.TblEmpAdvanceDetails" : "dbo.TblEmpAdvanceRequestDetails";
             using (var command = new SqlCommand(@"
 SELECT PartNo, PartValue, PartDate, Payed, Payed1, EmpAdPaID, Remark
-FROM dbo.TblEmpAdvanceRequestDetails WITH (NOLOCK)
+FROM " + tableName + @" WITH (NOLOCK)
 WHERE AdvanceID = @AdvanceID
 ORDER BY PartNo;", connection, transaction))
             {
-                command.Parameters.Add("@AdvanceID", SqlDbType.Int).Value = advance.Id.GetValueOrDefault();
+                command.Parameters.Add("@AdvanceID", SqlDbType.Int).Value = sourceAdvanceId;
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
@@ -642,9 +840,80 @@ ORDER BY PartNo;", connection, transaction))
             }
         }
 
+        private static int? GetActualAdvanceIdForRequest(SqlConnection connection, SqlTransaction transaction, int requestId)
+        {
+            using (var command = new SqlCommand(@"
+SELECT TOP (1) AdvanceID
+FROM dbo.TblEmpAdvance WITH (UPDLOCK, HOLDLOCK)
+WHERE CONVERT(INT, ISNULL(orderNO,0)) = @RequestId
+ORDER BY AdvanceID;", connection, transaction))
+            {
+                command.Parameters.Add("@RequestId", SqlDbType.Int).Value = requestId;
+                var value = command.ExecuteScalar();
+                return value == null || value == DBNull.Value ? (int?)null : Convert.ToInt32(value);
+            }
+        }
+
+        private static void LoadAdvanceApprovalHistory(SqlConnection connection, SqlTransaction transaction, EmployeeAdvanceViewModel advance)
+        {
+            advance.ApprovalHistory.Clear();
+            using (var command = new SqlCommand(@"
+SELECT a.id, a.ScreenName, a.levelo, a.EmpID, u.UserName, a.ApprovDate, a.CancelApprove, a.Remarks, a.FromUser, a.Currcursor
+FROM dbo.ApprovalData a WITH (NOLOCK)
+LEFT JOIN dbo.TblUsers u WITH (NOLOCK) ON u.UserID = CONVERT(INT, a.EmpID)
+WHERE a.ScreenName = N'FrmEmpsAdvanceRequest'
+  AND CONVERT(INT, a.Transaction_ID) = @AdvanceID
+ORDER BY a.levelorder, a.id;", connection, transaction))
+            {
+                command.Parameters.Add("@AdvanceID", SqlDbType.Int).Value = advance.Id.GetValueOrDefault();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        advance.ApprovalHistory.Add(new EmployeeAdvanceApprovalHistoryViewModel
+                        {
+                            Id = ReadInt(reader, "id"),
+                            ScreenName = ReadString(reader, "ScreenName"),
+                            Level = ReadNullableInt(reader, "levelo"),
+                            EmployeeId = ReadNullableInt(reader, "EmpID"),
+                            EmployeeName = ReadString(reader, "UserName"),
+                            ApprovedAt = ReadDisplayDateTime(reader, "ApprovDate"),
+                            CancelledAt = ReadDisplayDateTime(reader, "CancelApprove"),
+                            Remarks = ReadString(reader, "Remarks"),
+                            FromUser = ReadString(reader, "FromUser"),
+                            IsCurrentCursor = ReadNullableInt(reader, "Currcursor").GetValueOrDefault() == 1
+                        });
+                    }
+                }
+            }
+        }
+
+        private static void AddAdvanceApprovalHistory(SqlConnection connection, SqlTransaction transaction, int requestId, int? userId, string userName, string remarks, bool approved)
+        {
+            using (var command = new SqlCommand(@"
+INSERT INTO dbo.ApprovalData
+(ScreenName, levelo, EmpID, levelorder, currorder, Transaction_ID, NoteID, Currcursor, ApprovDate, CancelApprove, Remarks, FromUser, SendTime, Transaction_Date)
+VALUES
+(N'FrmEmpsAdvanceRequest', 1, @UserID, 1, 1, @TransactionID, NULL, NULL, @ApprovDate, @CancelApprove, @Remarks, @FromUser, GETDATE(), GETDATE());", connection, transaction))
+            {
+                command.Parameters.Add("@UserID", SqlDbType.Float).Value = userId.HasValue ? (object)userId.Value : DBNull.Value;
+                command.Parameters.Add("@TransactionID", SqlDbType.Float).Value = requestId;
+                command.Parameters.Add("@ApprovDate", SqlDbType.DateTime).Value = approved ? (object)DateTime.Now : DBNull.Value;
+                command.Parameters.Add("@CancelApprove", SqlDbType.DateTime).Value = approved ? (object)DBNull.Value : DateTime.Now;
+                command.Parameters.Add("@Remarks", SqlDbType.NVarChar, 4000).Value = DbText(string.IsNullOrWhiteSpace(remarks) ? (approved ? "اعتماد طلب السلفة من الويب" : "إلغاء طلب السلفة من الويب") : remarks);
+                command.Parameters.Add("@FromUser", SqlDbType.NVarChar, 255).Value = DbText(string.IsNullOrWhiteSpace(userName) ? "Web" : userName);
+                command.ExecuteNonQuery();
+            }
+        }
+
         private static void ApplyAdvanceLockState(EmployeeAdvanceViewModel advance)
         {
-            if (advance.AccountingApproved)
+            advance.IsDisbursed = advance.ActualAdvanceId.HasValue;
+            if (advance.IsDisbursed)
+            {
+                advance.LockReason = "تم صرف الطلب كسلفة فعلية رقم " + advance.ActualAdvanceId.Value + ".";
+            }
+            else if (advance.AccountingApproved)
             {
                 advance.LockReason = "لا يمكن تعديل أو حذف طلب سلفة تم اعتماده محاسبياً.";
             }
@@ -663,6 +932,9 @@ ORDER BY PartNo;", connection, transaction))
 
             advance.CanEdit = string.IsNullOrWhiteSpace(advance.LockReason);
             advance.CanDelete = advance.CanEdit;
+            advance.CanDisburse = advance.Approved && !advance.IsDisbursed && !advance.Rejected;
+            advance.CanApprove = !advance.Approved && !advance.Rejected && !advance.IsDisbursed && !advance.Posted && !advance.AccountingApproved;
+            advance.CanCancel = !advance.Rejected && !advance.IsDisbursed && advance.PaidPartsCount == 0 && !advance.Posted && !advance.AccountingApproved;
         }
 
         private EnterpriseHrEmployeeLookupViewModel GetEmployee(SqlConnection connection, SqlTransaction transaction, int employeeId, bool activeOnly)
@@ -1103,6 +1375,14 @@ WHERE " + EmployeeStatusPredicate("e") + @"
             if (value == DBNull.Value) { return string.Empty; }
             DateTime date;
             return DateTime.TryParse(Convert.ToString(value), out date) ? date.ToString("yyyy/MM/dd") : Convert.ToString(value);
+        }
+
+        private static string ReadDisplayDateTime(IDataRecord reader, string column)
+        {
+            var value = reader[column];
+            if (value == DBNull.Value) { return string.Empty; }
+            DateTime date;
+            return DateTime.TryParse(Convert.ToString(value), out date) ? date.ToString("yyyy/MM/dd HH:mm") : Convert.ToString(value);
         }
     }
 }

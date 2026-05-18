@@ -153,6 +153,57 @@ namespace MyERP.Areas.Pos.Controllers
             return Json(result);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult DisburseAdvance(int id)
+        {
+            var context = GetContext();
+            if (!Can(context, "HR.Advances", "Edit"))
+            {
+                Trace.TraceWarning("POS HR permission denied: DisburseAdvance user={0}", context == null ? 0 : context.UserId);
+                Response.StatusCode = context == null ? 401 : 403;
+                return Json(new LegacyHrFinanceSaveResult { Success = false, Message = "ليست لديك صلاحية صرف السلف." });
+            }
+
+            var result = _service.DisburseAdvanceRequest(id, context == null ? (int?)null : context.UserId);
+            if (!result.Success) { Response.StatusCode = 400; }
+            return Json(result);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult ApproveAdvance(int id, string remarks)
+        {
+            var context = GetContext();
+            if (!Can(context, "HR.Advances", "Edit"))
+            {
+                Trace.TraceWarning("POS HR permission denied: ApproveAdvance user={0}", context == null ? 0 : context.UserId);
+                Response.StatusCode = context == null ? 401 : 403;
+                return Json(new LegacyHrFinanceSaveResult { Success = false, Message = "ليست لديك صلاحية اعتماد السلف." });
+            }
+
+            var result = _service.ApproveAdvanceRequest(id, context == null ? (int?)null : context.UserId, context == null ? null : context.UserName, remarks);
+            if (!result.Success) { Response.StatusCode = 400; }
+            return Json(result);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public JsonResult CancelAdvance(int id, string remarks)
+        {
+            var context = GetContext();
+            if (!Can(context, "HR.Advances", "Delete"))
+            {
+                Trace.TraceWarning("POS HR permission denied: CancelAdvance user={0}", context == null ? 0 : context.UserId);
+                Response.StatusCode = context == null ? 401 : 403;
+                return Json(new LegacyHrFinanceSaveResult { Success = false, Message = "ليست لديك صلاحية إلغاء السلف." });
+            }
+
+            var result = _service.CancelAdvanceRequest(id, context == null ? (int?)null : context.UserId, context == null ? null : context.UserName, remarks);
+            if (!result.Success) { Response.StatusCode = 400; }
+            return Json(result);
+        }
+
         [HttpGet]
         public JsonResult EmployeesLookup(string term, string employeeStatus = "active")
         {
@@ -190,6 +241,9 @@ namespace MyERP.Areas.Pos.Controllers
             model.AdvanceDetailsUrl = Url.Action("AdvanceDetails", "Hr", new { area = "Pos" });
             model.SaveAdvanceUrl = Url.Action("SaveAdvance", "Hr", new { area = "Pos" });
             model.DeleteAdvanceUrl = Url.Action("DeleteAdvance", "Hr", new { area = "Pos" });
+            model.DisburseAdvanceUrl = Url.Action("DisburseAdvance", "Hr", new { area = "Pos" });
+            model.ApproveAdvanceUrl = Url.Action("ApproveAdvance", "Hr", new { area = "Pos" });
+            model.CancelAdvanceUrl = Url.Action("CancelAdvance", "Hr", new { area = "Pos" });
             model.EmployeeLookupUrl = Url.Action("EmployeesLookup", "Hr", new { area = "Pos" });
             model.Permissions = new LegacyHrFinancePermissionsViewModel
             {

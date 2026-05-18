@@ -41,6 +41,21 @@ namespace MyERP.Common.EnterpriseHr
             return _repository.DeleteAdvance(id);
         }
 
+        public LegacyHrFinanceSaveResult DisburseAdvanceRequest(int requestId, int? userId)
+        {
+            return _repository.DisburseAdvanceRequest(requestId, userId);
+        }
+
+        public LegacyHrFinanceSaveResult ApproveAdvanceRequest(int requestId, int? userId, string userName, string remarks)
+        {
+            return _repository.ApproveAdvanceRequest(requestId, userId, userName, remarks);
+        }
+
+        public LegacyHrFinanceSaveResult CancelAdvanceRequest(int requestId, int? userId, string userName, string remarks)
+        {
+            return _repository.CancelAdvanceRequest(requestId, userId, userName, remarks);
+        }
+
         public System.Collections.Generic.IList<EnterpriseHrEmployeeLookupViewModel> SearchEmployees(string searchText, string employeeStatus, int take)
         {
             return _repository.SearchEmployees(searchText, employeeStatus, take);

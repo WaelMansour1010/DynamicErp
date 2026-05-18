@@ -79,6 +79,13 @@ namespace MyERP.Areas.Pos
 
             MapPosRoute(
                 context,
+                "Pos_finance_payment_voucher",
+                "Pos/Finance/PaymentVoucher",
+                new { controller = "Finance", action = "PaymentVoucher" }
+            );
+
+            MapPosRoute(
+                context,
                 "Pos_cashing_shell",
                 "Pos/Cashing",
                 new { controller = "PosDashboard", action = "Cashing" }
