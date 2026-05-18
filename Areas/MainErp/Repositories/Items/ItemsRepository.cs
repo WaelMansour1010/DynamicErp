@@ -128,17 +128,16 @@ SELECT * FROM Rows WHERE RowNo BETWEEN @StartRow AND @EndRow ORDER BY RowNo;";
             {
                 using (var command = connection.CreateCommand())
                 {
-                    command.CommandText = @"
+                    command.CommandText = string.Format(@"
 SELECT TOP (1)
     ItemID, ItemCode, ItemName, ItemNamee, GroupID, ItemType, PartNo, barCodeNO, CatlogNO, FactoryNO,
     PurchasePrice, SallingPrice, CustomerPrice, DealerPrice, CostPrice, minvalueqty, MaxValueqty,
     RequestLimit, HaveSerial, HaveGuarantee, GuaranteeValue, GuaranteeType, IsArchive, shortName,
     BinLocation, DefaultSupplier, PercentVisa, MinVisa, MaxVisa, PercentVisaPur, MinVisaPur, MaxVisaPur,
-    ChkLot, OtherItems, InstallmentService, TrafficViolations, IsNotShowAlarm, IsPriceIsPerview, IsPriceIsLenthW,
-    CASE WHEN ItemPhoto IS NULL THEN CONVERT(bit, 0) ELSE CONVERT(bit, 1) END AS HasImage,
+    {0},
     CAST(ItemComment AS nvarchar(max)) AS ItemComment
 FROM dbo.TblItems
-WHERE ItemID = @Id;";
+WHERE ItemID = @Id;", OptionalItemSelectColumns(connection));
                     command.Parameters.Add("@Id", SqlDbType.Int).Value = id;
                     using (var reader = command.ExecuteReader())
                     {
@@ -660,9 +659,9 @@ ORDER BY ISNULL(FromPrice, 0), ISNULL(ToPrice, 0);";
             ItemCashCommissionRangeViewModel previous = null;
             foreach (var range in cashRanges)
             {
-                if (range.FromPrice < 0 || range.ToPrice < 0 || range.Price < 0 || range.Cost < 0 || range.CashBack < 0) return "ظ†ط·ط§ظ‚ط§طھ ط¹ظ…ظˆظ„ط© POS ظ„ط§ طھظ‚ط¨ظ„ ظ‚ظٹظ…ط§ ط³ط§ظ„ط¨ط©.";
-                if (range.ToPrice < range.FromPrice) return "ظ†ظ‡ط§ظٹط© ظ†ط·ط§ظ‚ ط¹ظ…ظˆظ„ط© POS ظٹط¬ط¨ ط£ظ† طھظƒظˆظ† ط£ظƒط¨ط± ظ…ظ† ط§ظ„ط¨ط¯ط§ظٹط©.";
-                if (previous != null && range.FromPrice <= previous.ToPrice) return "ظٹظˆط¬ط¯ طھط¯ط§ط®ظ„ ظپظٹ ظ†ط·ط§ظ‚ط§طھ ط¹ظ…ظˆظ„ط© POS.";
+                if (range.FromPrice < 0 || range.ToPrice < 0 || range.Price < 0 || range.Cost < 0 || range.CashBack < 0) return "POS commission ranges cannot contain negative values.";
+                if (range.ToPrice < range.FromPrice) return "POS commission range end must be greater than or equal to the start.";
+                if (previous != null && range.FromPrice <= previous.ToPrice) return "POS commission ranges overlap.";
                 previous = range;
             }
             return null;
@@ -672,6 +671,77 @@ ORDER BY ISNULL(FromPrice, 0), ISNULL(ToPrice, 0);";
         {
             return range != null &&
                 (range.FromPrice != 0 || range.ToPrice != 0 || range.Price != 0 || range.Cost != 0 || range.CashBack != 0);
+        }
+
+        private static string OptionalItemSelectColumns(SqlConnection connection)
+        {
+            var columns = new List<string>();
+            AddOptionalSelectBit(connection, columns, "ChkLot");
+            AddOptionalSelectBit(connection, columns, "OtherItems");
+            AddOptionalSelectBit(connection, columns, "InstallmentService");
+            AddOptionalSelectBit(connection, columns, "TrafficViolations");
+            AddOptionalSelectBit(connection, columns, "IsNotShowAlarm");
+            AddOptionalSelectBit(connection, columns, "IsPriceIsPerview");
+            AddOptionalSelectBit(connection, columns, "IsPriceIsLenthW");
+            columns.Add(ColumnExists(connection, "TblItems", "ItemPhoto")
+                ? "CASE WHEN ItemPhoto IS NULL THEN CONVERT(bit, 0) ELSE CONVERT(bit, 1) END AS HasImage"
+                : "CONVERT(bit, 0) AS HasImage");
+            return string.Join(",\r\n    ", columns);
+        }
+
+        private static void AddOptionalSelectBit(SqlConnection connection, IList<string> columns, string columnName)
+        {
+            columns.Add(ColumnExists(connection, "TblItems", columnName)
+                ? columnName
+                : "CONVERT(bit, 0) AS " + columnName);
+        }
+
+        private static string OptionalItemInsertColumns(SqlConnection connection)
+        {
+            var columns = OptionalItemWriteColumns(connection);
+            return columns.Count == 0 ? string.Empty : ",\r\n    " + string.Join(", ", columns);
+        }
+
+        private static string OptionalItemInsertValues(SqlConnection connection)
+        {
+            var columns = OptionalItemWriteColumns(connection);
+            return columns.Count == 0 ? string.Empty : ",\r\n    @" + string.Join(", @", columns);
+        }
+
+        private static string OptionalItemUpdateSet(SqlConnection connection)
+        {
+            var sets = OptionalItemWriteColumns(connection)
+                .Where(x => !string.Equals(x, "ItemPhoto", StringComparison.OrdinalIgnoreCase))
+                .Select(x => x + " = @" + x)
+                .ToList();
+            if (ColumnExists(connection, "TblItems", "ItemPhoto"))
+            {
+                sets.Add("ItemPhoto = CASE WHEN @RemoveItemImage = 1 THEN NULL WHEN @ItemPhoto IS NULL THEN ItemPhoto ELSE @ItemPhoto END");
+            }
+
+            return sets.Count == 0 ? string.Empty : ",\r\n    " + string.Join(",\r\n    ", sets);
+        }
+
+        private static IList<string> OptionalItemWriteColumns(SqlConnection connection)
+        {
+            var columns = new List<string>();
+            AddOptionalWriteColumn(connection, columns, "ChkLot");
+            AddOptionalWriteColumn(connection, columns, "OtherItems");
+            AddOptionalWriteColumn(connection, columns, "InstallmentService");
+            AddOptionalWriteColumn(connection, columns, "TrafficViolations");
+            AddOptionalWriteColumn(connection, columns, "IsNotShowAlarm");
+            AddOptionalWriteColumn(connection, columns, "IsPriceIsPerview");
+            AddOptionalWriteColumn(connection, columns, "IsPriceIsLenthW");
+            AddOptionalWriteColumn(connection, columns, "ItemPhoto");
+            return columns;
+        }
+
+        private static void AddOptionalWriteColumn(SqlConnection connection, IList<string> columns, string columnName)
+        {
+            if (ColumnExists(connection, "TblItems", columnName))
+            {
+                columns.Add(columnName);
+            }
         }
 
         private static void AcquireItemLock(SqlConnection connection, SqlTransaction transaction)
@@ -931,25 +1001,23 @@ WHERE GroupID = @GroupID;", connection, transaction))
 
         private static void InsertItem(SqlConnection connection, SqlTransaction transaction, int id, string code, ItemSaveRequest request, MainErpUserContext user)
         {
-            using (var command = new SqlCommand(@"
+            using (var command = new SqlCommand(string.Format(@"
 INSERT INTO dbo.TblItems
 (
     ItemID, ItemCode, ItemName, ItemNamee, GroupID, ItemType, PartNo, barCodeNO, CatlogNO, FactoryNO,
     PurchasePrice, SallingPrice, CustomerPrice, DealerPrice, CostPrice, minvalueqty, MaxValueqty,
     RequestLimit, HaveSerial, HaveGuarantee, GuaranteeValue, GuaranteeType, IsArchive, shortName,
-    BinLocation, DefaultSupplier, PercentVisa, MinVisa, MaxVisa, PercentVisaPur, MinVisaPur, MaxVisaPur,
-    ChkLot, OtherItems, InstallmentService, TrafficViolations, IsNotShowAlarm, IsPriceIsPerview, IsPriceIsLenthW,
-    ItemPhoto, ItemComment, LastUpdate, UserID, Fullcode
+    BinLocation, DefaultSupplier, PercentVisa, MinVisa, MaxVisa, PercentVisaPur, MinVisaPur, MaxVisaPur{0},
+    ItemComment, LastUpdate, UserID, Fullcode
 )
 VALUES
 (
     @ItemID, @ItemCode, @ItemName, @ItemNamee, @GroupID, @ItemType, @PartNo, @Barcode, @CatalogNo, @FactoryNo,
     @PurchasePrice, @SalePrice, @CustomerPrice, @DealerPrice, @CostPrice, @MinQty, @MaxQty,
     @RequestLimit, @HaveSerial, @HaveGuarantee, @GuaranteeValue, @GuaranteeType, @IsArchive, @ShortName,
-    @BinLocation, @DefaultSupplier, @PercentVisa, @MinVisa, @MaxVisa, @PercentVisaPur, @MinVisaPur, @MaxVisaPur,
-    @ChkLot, @OtherItems, @InstallmentService, @TrafficViolations, @IsNotShowAlarm, @IsPriceIsPerview, @IsPriceIsLenthW,
-    @ItemPhoto, @Notes, GETDATE(), @UserID, @ItemCode
-);", connection, transaction))
+    @BinLocation, @DefaultSupplier, @PercentVisa, @MinVisa, @MaxVisa, @PercentVisaPur, @MinVisaPur, @MaxVisaPur{1},
+    @Notes, GETDATE(), @UserID, @ItemCode
+);", OptionalItemInsertColumns(connection), OptionalItemInsertValues(connection)), connection, transaction))
             {
                 AddItemParameters(command, id, code, request, user);
                 command.ExecuteNonQuery();
@@ -958,7 +1026,7 @@ VALUES
 
         private static void UpdateItem(SqlConnection connection, SqlTransaction transaction, int id, string code, ItemSaveRequest request, MainErpUserContext user)
         {
-            using (var command = new SqlCommand(@"
+            using (var command = new SqlCommand(string.Format(@"
 UPDATE dbo.TblItems
 SET ItemCode = @ItemCode,
     ItemName = @ItemName,
@@ -990,20 +1058,12 @@ SET ItemCode = @ItemCode,
     MaxVisa = @MaxVisa,
     PercentVisaPur = @PercentVisaPur,
     MinVisaPur = @MinVisaPur,
-    MaxVisaPur = @MaxVisaPur,
-    ChkLot = @ChkLot,
-    OtherItems = @OtherItems,
-    InstallmentService = @InstallmentService,
-    TrafficViolations = @TrafficViolations,
-    IsNotShowAlarm = @IsNotShowAlarm,
-    IsPriceIsPerview = @IsPriceIsPerview,
-    IsPriceIsLenthW = @IsPriceIsLenthW,
-    ItemPhoto = CASE WHEN @RemoveItemImage = 1 THEN NULL WHEN @ItemPhoto IS NULL THEN ItemPhoto ELSE @ItemPhoto END,
+    MaxVisaPur = @MaxVisaPur{0},
     ItemComment = @Notes,
     LastUpdate = GETDATE(),
     UserID = @UserID,
     Fullcode = @ItemCode
-WHERE ItemID = @ItemID;", connection, transaction))
+WHERE ItemID = @ItemID;", OptionalItemUpdateSet(connection)), connection, transaction))
             {
                 AddItemParameters(command, id, code, request, user);
                 command.ExecuteNonQuery();

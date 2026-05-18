@@ -180,7 +180,7 @@
                                 <td>@invoice.Value.ToString("0.00")</td>
                                 <td>@(invoice.IsClosed ? "مغلق" : "مفتوح") / @(invoice.IsPosted ? "مرحل" : "غير مرحل")</td>
                                 <td>@invoice.KycReferenceIds</td>
-                                <td><a class="button secondary" target="_blank" href="@Url.Action("Index", "PosTransaction", new { area = "Pos", reviewTransactionId = invoice.TransactionId })">فتح</a></td>
+                                <td><a class="button secondary" target="_blank" href="@Url.Content("~/Pos/PosTransaction/Index?reviewTransactionId=" + invoice.TransactionId)">فتح</a></td>
                             </tr>
                         }
                         @if (Model.Impact.Invoices.Count == 0)
