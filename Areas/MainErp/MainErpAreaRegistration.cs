@@ -81,6 +81,14 @@ namespace MyERP.Areas.MainErp
             );
             financePaymentVoucherRoute.DataTokens["UseNamespaceFallback"] = false;
 
+            var financeReceiptVoucherRoute = context.MapRoute(
+                "MainErp_finance_receipt_voucher",
+                "MainErp/Finance/ReceiptVoucher",
+                new { controller = "Finance", action = "ReceiptVoucher" },
+                new[] { "MyERP.Areas.MainErp.Controllers" }
+            );
+            financeReceiptVoucherRoute.DataTokens["UseNamespaceFallback"] = false;
+
             var defaultRoute = context.MapRoute(
                 "MainErp_default",
                 "MainErp/{controller}/{action}/{id}",

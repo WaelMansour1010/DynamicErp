@@ -292,8 +292,10 @@ namespace MyERP.Common.EmployeePayroll
         public string EmployeeStatusAtRunTime { get; set; }
         public decimal CountDays { get; set; }
         public decimal AbsentDays { get; set; }
+        public decimal VacationDays { get; set; }
         public decimal RemainingDays { get; set; }
         public decimal VacationDeduction { get; set; }
+        public decimal VacationSalaryValue { get; set; }
         public decimal TotalInsuranceLegacy { get; set; }
         public string CompatibilityStatus { get; set; }
         public DateTime? HiringDate { get; set; }
@@ -302,12 +304,26 @@ namespace MyERP.Common.EmployeePayroll
         public int? PayrollMonthDays { get; set; }
         public int PayrollSalaryDigits { get; set; }
         public PayrollCompatibilityInsuranceTrace InsuranceTrace { get; set; }
+        public IList<PayrollAdvanceInstallmentRow> AdvanceInstallments { get; set; }
         public IList<PayrollCompatibilityComponent> Components { get; set; }
 
         public SalaryRunEmployeeRow()
         {
+            AdvanceInstallments = new List<PayrollAdvanceInstallmentRow>();
             Components = new List<PayrollCompatibilityComponent>();
         }
+    }
+
+    public class PayrollAdvanceInstallmentRow
+    {
+        public int TableId { get; set; }
+        public int AdvanceId { get; set; }
+        public int PartNo { get; set; }
+        public string PartDate { get; set; }
+        public decimal PartValue { get; set; }
+        public bool IsPosted { get; set; }
+        public string StatusText { get; set; }
+        public string SourceText { get; set; }
     }
 
     public class PayrollCompatibilityComponent

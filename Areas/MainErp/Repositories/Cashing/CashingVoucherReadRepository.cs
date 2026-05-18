@@ -21,5 +21,10 @@ namespace MyERP.Areas.MainErp.Repositories.Cashing
         {
             return GetDetailsCore(4, id);
         }
+
+        public new PaymentVoucherLegacyPrintProfileViewModel GetLegacyPrintProfile(int id)
+        {
+            return GetLegacyPrintProfileCore(4, id);
+        }
     }
 }

@@ -58,7 +58,8 @@
                 <h2>@Model.Title</h2>
                 <p>حفظ فعلي من خلال stored procedure مع إنشاء القيد المحاسبي المتوازن.</p>
             </div>
-            <div class="voucher-header-actions">
+            <div class="voucher-header-actions voucher-toolbar" role="toolbar" aria-label="أوامر سند الصرف">
+                <span class="voucher-status is-readonly">جاهز للحفظ</span>
                 <a class="secondary-action voucher-ghost-action" href="@Url.Action(Model.BackAction, Model.BackController, new { area = "Pos" })">رجوع</a>
             </div>
         </header>
@@ -68,7 +69,9 @@
             <div class="voucher-empty voucher-error">@Model.Warning</div>
         }
 
-        @using (Html.BeginForm(saveAction, Model.BackController, new { area = "Pos" }, FormMethod.Post, new { @class = "voucher-edit-form" }))
+        <div class="voucher-save-status" data-voucher-status role="status" aria-live="polite"></div>
+
+        @using (Html.BeginForm(saveAction, Model.BackController, new { area = "Pos" }, FormMethod.Post, new { @class = "voucher-edit-form", data_payment_voucher_form = "true", autocomplete = "off" }))
         {
             @Html.AntiForgeryToken()
             @Html.HiddenFor(x => x.NoteId)
@@ -76,29 +79,59 @@
 
             <div class="voucher-section-stack">
                 <section class="voucher-section">
-                    <h3>بيانات السند</h3>
+                    <div class="voucher-section-title">
+                        <h3>بيانات السند</h3>
+                        <span>الحقول الأساسية</span>
+                    </div>
                     <div class="voucher-form-grid">
                         <label><span>التاريخ</span>@Html.TextBoxFor(x => x.NoteDate, "{0:yyyy-MM-dd}", new { type = "date", required = "required" })</label>
                         <label><span>رقم يدوي</span>@Html.TextBoxFor(x => x.ManualNo)</label>
                         <label><span>مرجع / أمر</span>@Html.TextBoxFor(x => x.OrderNo)</label>
                         <label><span>الفرع</span>@Html.DropDownListFor(x => x.BranchId, new SelectList(Model.Branches, "Value", "Text", Model.BranchId), "اختر الفرع")</label>
-                        <label><span>حساب الطرف</span>@Html.DropDownListFor(x => x.PartyAccountCode, new SelectList(Model.Accounts, "Value", "Text", Model.PartyAccountCode), "اختر الحساب", new { required = "required" })</label>
+                        <label class="voucher-account-lookup"><span>بحث الحساب</span><input type="search" data-account-filter placeholder="ابحث برقم الحساب أو الاسم" autocomplete="off" /></label>
+                        <label><span>حساب الطرف</span>@Html.DropDownListFor(x => x.PartyAccountCode, new SelectList(Model.Accounts, "Value", "Text", Model.PartyAccountCode), "اختر الحساب", new { required = "required" })<small>يظهر للمستخدم رقم الحساب واسم الحساب فقط.</small></label>
                         <label><span>اسم الطرف</span>@Html.TextBoxFor(x => x.PartyDisplay)</label>
-                        <label><span>الخزنة</span>@Html.DropDownListFor(x => x.BoxId, new SelectList(Model.Boxes, "Value", "Text", Model.BoxId), "بدون خزنة")</label>
-                        <label><span>البنك</span>@Html.DropDownListFor(x => x.BankId, new SelectList(Model.Banks, "Value", "Text", Model.BankId), "بدون بنك")</label>
                         <label><span>طريقة الدفع</span>@Html.DropDownListFor(x => x.PaymentMethod, new SelectList(paymentMethods, "Value", "Text", Model.PaymentMethod), "اختر طريقة الدفع")</label>
                         <label><span>نوع السند</span>@Html.DropDownListFor(x => x.CashingType, new SelectList(voucherTypes, "Value", "Text", Model.CashingType), "اختر نوع السند")</label>
                         <label><span>تصنيف إضافي</span>@Html.DropDownListFor(x => x.ReceiptClass, new SelectList(receiptClasses, "Value", "Text", Model.ReceiptClass), "بدون تصنيف")</label>
-                        <label><span>رقم الشيك</span>@Html.TextBoxFor(x => x.ChequeNumber)</label>
-                        <label><span>تاريخ الشيك</span>@Html.TextBoxFor(x => x.ChequeDueDate, "{0:yyyy-MM-dd}", new { type = "date" })</label>
-                        <label><span>المبلغ</span>@Html.TextBoxFor(x => x.Amount, new { type = "number", step = "0.01", required = "required", min = "0.01" })</label>
-                        <label><span>الضريبة</span>@Html.TextBoxFor(x => x.Vat, new { type = "number", step = "0.01", min = "0" })</label>
-                        <label class="voucher-check"><span>شامل الضريبة</span>@Html.CheckBoxFor(x => x.IncludeVat)</label>
                     </div>
                 </section>
 
                 <section class="voucher-section">
-                    <h3>البيان</h3>
+                    <div class="voucher-section-title">
+                        <h3>الخزنة / البنك</h3>
+                        <span data-source-hint>اختر مصدر الدفع المناسب لطريقة الدفع.</span>
+                    </div>
+                    <div class="voucher-form-grid">
+                        <label><span>الخزنة</span>@Html.DropDownListFor(x => x.BoxId, new SelectList(Model.Boxes, "Value", "Text", Model.BoxId), "بدون خزنة")<small>للدفع النقدي.</small></label>
+                        <label><span>البنك</span>@Html.DropDownListFor(x => x.BankId, new SelectList(Model.Banks, "Value", "Text", Model.BankId), "بدون بنك")<small>للتحويل البنكي.</small></label>
+                        <label><span>رقم الشيك</span>@Html.TextBoxFor(x => x.ChequeNumber)</label>
+                        <label><span>تاريخ الشيك</span>@Html.TextBoxFor(x => x.ChequeDueDate, "{0:yyyy-MM-dd}", new { type = "date" })</label>
+                    </div>
+                </section>
+
+                <section class="voucher-section">
+                    <div class="voucher-section-title">
+                        <h3>القيم</h3>
+                        <span>مراجعة الإجمالي قبل الحفظ</span>
+                    </div>
+                    <div class="voucher-form-grid">
+                        <label><span>المبلغ</span>@Html.TextBoxFor(x => x.Amount, new { type = "number", step = "0.01", required = "required", min = "0.01" })</label>
+                        <label><span>الضريبة</span>@Html.TextBoxFor(x => x.Vat, new { type = "number", step = "0.01", min = "0" })</label>
+                        <label class="voucher-check"><span>شامل الضريبة</span>@Html.CheckBoxFor(x => x.IncludeVat)</label>
+                    </div>
+                    <div class="voucher-total-panel" aria-label="إجمالي سند الصرف">
+                        <article><span>الصافي</span><strong data-total-net>0.00</strong></article>
+                        <article><span>الضريبة</span><strong data-total-vat>0.00</strong></article>
+                        <article><span>الإجمالي</span><strong data-total-gross>0.00</strong></article>
+                    </div>
+                </section>
+
+                <section class="voucher-section">
+                    <div class="voucher-section-title">
+                        <h3>البيان</h3>
+                        <span>يدعم النص العربي كاملا</span>
+                    </div>
                     <div class="voucher-form-grid is-wide">
                         <label><span>البيان</span>@Html.TextAreaFor(x => x.Remark, 3, 40, null)</label>
                         <label><span>وصف الدفع</span>@Html.TextAreaFor(x => x.PayDescription, 3, 40, null)</label>
@@ -108,7 +141,7 @@
             </div>
 
             <div class="voucher-action-row">
-                <button type="submit" class="primary-action voucher-primary-action">حفظ السند</button>
+                <button type="submit" class="primary-action voucher-primary-action" data-voucher-save>حفظ السند</button>
                 @if (Model.NoteId.HasValue)
                 {
                     <a class="secondary-action voucher-ghost-action" href="@Url.Action("Details", Model.BackController, new { area = "Pos", id = Model.NoteId.Value })">إلغاء</a>
@@ -117,5 +150,6 @@
         }
     </section>
 </div>
+@Html.Partial("~/Views/Shared/Payments/_PaymentVoucherUxScript.cshtml")
 </body>
 </html>

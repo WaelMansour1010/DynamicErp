@@ -616,6 +616,7 @@
     <Content Include="Views\Shared\EnterpriseHr\_MedicalInsuranceOperational.cshtml" />
     <Content Include="Views\Shared\EnterpriseHr\_MedicalInsuranceReports.cshtml" />
     <Content Include="Views\Shared\EnterpriseHr\_MedicalInsuranceSettings.cshtml" />
+    <Content Include="Views\Shared\Payments\_PaymentVoucherUxScript.cshtml" />
     <Compile Include="Common\StoreData\StoreDataModels.cs" />
     <Compile Include="Common\StoreData\StoreDataRepository.cs" />
     <Compile Include="Common\Users\SharedUserModels.cs" />
@@ -4261,6 +4262,10 @@
     <Content Include="Areas\MainErp\Docs\LegacyHrFinanceMigration_ClosureReport_20260514.md" />
     <Content Include="Areas\MainErp\Docs\LegacyHrFinanceMigration_RuntimeVerification_Dania_20260514.md" />
     <Content Include="Areas\MainErp\Docs\LegacyHrFinanceMigration_ProductionHardening_20260514.md" />
+    <Content Include="Areas\MainErp\Docs\AdvanceAccountingBoundary_20260518.md" />
+    <Content Include="Areas\MainErp\Docs\PaymentVoucher_PrintReporting_Audit_20260518.md" />
+    <Content Include="Areas\MainErp\Docs\PaymentVoucher_ProductionValidation_20260518.md" />
+    <Content Include="Areas\MainErp\Docs\ReceiptVoucher_VB6_Audit_20260518.md" />
     <Content Include="Areas\MainErp\Docs\PayrollReverseEngineering_20260514.md" />
     <EmbeddedResource Include="Areas\MainErp\Resources\MainErp.resx" />
     <EmbeddedResource Include="Areas\MainErp\Resources\MainErp.ar.resx" />
@@ -4280,6 +4285,8 @@
     <Content Include="Areas\MainErp\Sql\12_LegacyHrFinance_Dania_PayrollParity_Check.sql" />
     <Content Include="Areas\MainErp\Sql\13_LegacyHrFinance_Dania_ComponentParity_Probe.sql" />
     <Content Include="Areas\MainErp\Sql\15_SharedHr_WebPermissions.sql" />
+    <Content Include="Areas\MainErp\Sql\16_PaymentVoucher_VB6_SaveParity.sql" />
+    <Content Include="Areas\MainErp\Sql\17_PaymentVoucher_Accounting_Rebuild.sql" />
     <Content Include="Areas\MainErp\Views\Web.config" />
     <Content Include="Areas\MainErp\Views\Home\Index.cshtml" />
     <Content Include="Areas\MainErp\Views\Accounting\PreviewTest.cshtml" />
@@ -4536,6 +4543,7 @@
     <Content Include="Areas\Pos\Sql\108_POS_PayrollRunSnapshot.sql" />
     <Content Include="Areas\Pos\Sql\109_POS_WebPermissions_TellerInvoiceSafety.sql" />
     <Content Include="Areas\Pos\Sql\110_POS_EmployeePhoto_PrintCards.sql" />
+    <Content Include="Areas\Pos\Sql\112_POS_PayrollAdvanceDeductionLinks.sql" />
     <Content Include="Areas\Pos\Sql\README_POS_Dashboard_DailySnapshots.md" />
     <Content Include="Areas\Pos\Sql\README_POS_FinancialIntelligenceReports.md" />
     <Content Include="Areas\Pos\Sql\POS_SQL_AutoUpdate_Manifest.json" />

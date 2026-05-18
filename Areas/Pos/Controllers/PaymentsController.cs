@@ -233,6 +233,29 @@ namespace MyERP.Areas.Pos.Controllers
             return View("Print", model);
         }
 
+        public ActionResult LegacyCrystalPrintVoucher(int id)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            if (!_legacyPermissionService.CanPrint(context, "FrmPayments"))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية طباعة سند صرف");
+            }
+
+            var profile = _voucherReadRepository.GetLegacyPrintProfile(id);
+            if (profile == null)
+            {
+                return HttpNotFound("Payment voucher was not found.");
+            }
+
+            Response.StatusCode = profile.CrystalParityReady ? 200 : 501;
+            return Json(profile, JsonRequestBehavior.AllowGet);
+        }
+
         public ActionResult Index()
         {
             var context = GetPosContext();
@@ -658,6 +681,11 @@ namespace MyERP.Areas.Pos.Controllers
         internal static string FriendlyVoucherError(Exception ex)
         {
             var message = (ex == null ? string.Empty : ex.Message) ?? string.Empty;
+            if (ContainsArabic(message))
+            {
+                return message;
+            }
+
             if (message.IndexOf("Posted voucher", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return "لا يمكن تعديل أو حذف سند مرحل.";
@@ -684,6 +712,11 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             return "تعذر تنفيذ العملية الآن. راجع البيانات وحاول مرة أخرى، وإذا استمرت المشكلة راجع مسؤول النظام.";
+        }
+
+        private static bool ContainsArabic(string value)
+        {
+            return !string.IsNullOrWhiteSpace(value) && value.Any(c => c >= '\u0600' && c <= '\u06FF');
         }
 
         private static void ForceContext(PosPaymentRequestDto request, PosUserContext context)

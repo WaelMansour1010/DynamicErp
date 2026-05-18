@@ -519,7 +519,7 @@
         setText("epUnpostedRowsCount", root._salaryRows.filter(function (x) { return !x.IsApproved; }).length);
         byId("epSalaryRows").innerHTML = "";
         (preview.Rows || []).forEach(function (x, index) {
-            byId("epSalaryRows").insertAdjacentHTML("beforeend", '<tr><td>' + html(x.EmployeeCode) + " - " + html(x.EmployeeName) + '</td><td>' + html(x.BranchName || "") + '</td><td><span class="ep-status-badge ' + (x.IsApproved ? "active" : "pending-approval") + '">' + (x.IsApproved ? "مرحل" : "غير مرحل") + '</span></td><td>' + money(x.BasicSalary) + '</td><td>' + money((x.SalaryAllowances || 0) + (x.VariableAdditions || 0)) + '</td><td>' + money(x.AdvanceDeduction) + '</td><td>' + money((x.ExistingDiscounts || 0) + (x.MedicalInsuranceDeduction || 0)) + '</td><td>' + money(x.MedicalInsuranceDeduction) + '</td><td>' + money(x.NetSalary) + '</td><td><button type="button" data-payroll-row="' + index + '"><i class="fas fa-eye"></i> تفاصيل</button></td></tr>');
+            byId("epSalaryRows").insertAdjacentHTML("beforeend", '<tr><td>' + html(x.EmployeeCode) + " - " + html(x.EmployeeName) + '</td><td>' + html(x.BranchName || "") + '</td><td><span class="ep-status-badge ' + (x.IsApproved ? "active" : "pending-approval") + '">' + (x.IsApproved ? "مرحل" : "غير مرحل") + '</span></td><td>' + money(x.BasicSalary) + '</td><td>' + money((x.SalaryAllowances || 0) + (x.VariableAdditions || 0)) + '</td><td>' + money(x.AdvanceDeduction) + '</td><td>' + money((x.ExistingDiscounts || 0) + (x.MedicalInsuranceDeduction || 0) + (x.VacationDeduction || 0)) + '</td><td>' + money(x.MedicalInsuranceDeduction) + '</td><td>' + money(x.NetSalary) + '</td><td><button type="button" data-payroll-row="' + index + '"><i class="fas fa-eye"></i> تفاصيل</button></td></tr>');
         });
         if (!(preview.Rows || []).length) {
             byId("epSalaryRows").innerHTML = '<tr><td colspan="10" class="ep-empty-row">لا توجد صفوف مطابقة للفلاتر الحالية.</td></tr>';
@@ -637,6 +637,8 @@
             var notes = [];
             if (!x.AccruedSalaryAccountCode) { notes.push("حساب الأجور المستحقة غير محدد"); }
             if (x.MedicalInsuranceDeduction > 0 && !x.MedicalInsuranceEmployeeAccountCode) { notes.push("حساب استحقاق التأمين غير محدد"); }
+            if (number(x.VacationDays) > 0) { notes.push("أيام إجازة: " + number(x.VacationDays)); }
+            if (number(x.VacationDeduction) > 0) { notes.push("خصم إجازات/مرضية: " + money(x.VacationDeduction)); }
             byId("epSalaryRows").insertAdjacentHTML("beforeend",
                 '<tr data-payroll-search="' + html(((x.EmployeeCode || "") + " " + (x.EmployeeName || "") + " " + (x.BranchName || "") + " " + (x.DepartmentName || "")).toLowerCase()) + '">' +
                 '<td>' + html(x.EmployeeCode || "") + '</td>' +
@@ -645,7 +647,7 @@
                 '<td>' + html(x.DepartmentName || "") + '</td>' +
                 '<td>' + money(x.BasicSalary) + '</td>' +
                 '<td>' + money((x.SalaryAllowances || 0) + (x.VariableAdditions || 0)) + '</td>' +
-                '<td>' + money((x.ExistingDiscounts || 0) + (x.MedicalInsuranceDeduction || 0)) + '</td>' +
+                '<td>' + money((x.ExistingDiscounts || 0) + (x.MedicalInsuranceDeduction || 0) + (x.VacationDeduction || 0)) + '</td>' +
                 '<td>' + money(x.MedicalInsuranceDeduction) + '</td>' +
                 '<td>' + money(x.AdvanceDeduction) + '</td>' +
                 '<td>' + money(x.NetSalary) + '</td>' +
@@ -706,9 +708,20 @@
         setText("epDetailBasic", money(row.BasicSalary));
         setText("epDetailAdditions", money((row.SalaryAllowances || 0) + (row.VariableAdditions || 0)));
         setText("epDetailAdvance", money(row.AdvanceDeduction));
-        setText("epDetailDiscounts", money((row.ExistingDiscounts || 0) + (row.MedicalInsuranceDeduction || 0)));
+        setText("epDetailDiscounts", money((row.ExistingDiscounts || 0) + (row.MedicalInsuranceDeduction || 0) + (row.VacationDeduction || 0)));
         setText("epDetailInsurance", money(row.MedicalInsuranceDeduction));
         setText("epDetailNet", money(row.NetSalary));
+        var advanceShell = byId("epAdvanceInstallmentsShell");
+        var advanceRows = byId("epAdvanceInstallmentsRows");
+        if (advanceShell && advanceRows) {
+            var parts = row.AdvanceInstallments || [];
+            advanceRows.innerHTML = parts.length
+                ? parts.map(function (p) {
+                    return '<tr><td>' + html(p.AdvanceId || "") + '</td><td>' + html(p.PartNo || "") + '</td><td>' + html(p.PartDate || "") + '</td><td>' + money(p.PartValue || 0) + '</td><td>' + html(p.StatusText || (p.IsPosted ? "تم الخصم" : "جاهز للخصم")) + '</td></tr>';
+                }).join("")
+                : '<tr><td colspan="5" class="ep-empty-row">لا توجد أقساط سلفة لهذا الموظف في هذا الشهر.</td></tr>';
+            advanceShell.hidden = false;
+        }
         panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
     function renderPostingSummary(result) {

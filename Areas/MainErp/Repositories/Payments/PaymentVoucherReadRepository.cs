@@ -26,6 +26,67 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
             return GetDetailsCore(5, id);
         }
 
+        public PaymentVoucherLegacyPrintProfileViewModel GetLegacyPrintProfile(int id)
+        {
+            return GetLegacyPrintProfileCore(5, id);
+        }
+
+        protected PaymentVoucherLegacyPrintProfileViewModel GetLegacyPrintProfileCore(int noteType, int id)
+        {
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var command = new SqlCommand(@"
+SELECT TOP (1)
+    n.NoteID,
+    CONVERT(nvarchar(50), n.NoteSerial) AS NoteSerial,
+    CONVERT(nvarchar(50), ISNULL(n.NoteSerial1, n.NoteSerial)) AS NoteSerial1,
+    n.NoteCashingType,
+    n.CashingType,
+    n.salary_or_advance,
+    n.AdvanceID,
+    n.ReportName,
+    ISNULL(o.PaymentDifferent, 0) AS PaymentDifferent,
+    COALESCE(NULLIF(o.reportPath, N''), N'Stander') AS reportPath
+FROM dbo.Notes n
+CROSS JOIN (SELECT TOP (1) PaymentDifferent, reportPath FROM dbo.TblOptions) o
+WHERE n.NoteType = @noteType AND n.NoteID = @id;", connection))
+            {
+                command.Parameters.Add("@noteType", SqlDbType.Int).Value = noteType;
+                command.Parameters.Add("@id", SqlDbType.Int).Value = id;
+                using (var reader = command.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        return null;
+                    }
+
+                    var profile = new PaymentVoucherLegacyPrintProfileViewModel
+                    {
+                        NoteId = ReadInt(reader, "NoteID"),
+                        NoteSerial = ReadSerialString(reader, "NoteSerial"),
+                        NoteSerial1 = ReadSerialString(reader, "NoteSerial1"),
+                        PaymentType = ReadNullableInt(reader, "NoteCashingType"),
+                        CashingType = ReadNullableInt(reader, "CashingType"),
+                        PaymentDifferent = ReadNullableBool(reader, "PaymentDifferent"),
+                        IsAdvancePayment = ReadNullableInt(reader, "CashingType").GetValueOrDefault() == 4 && ReadNullableInt(reader, "salary_or_advance").GetValueOrDefault() == 1,
+                        IsDepositTransfer = !string.IsNullOrWhiteSpace(ReadString(reader, "ReportName")),
+                        ReportPath = string.IsNullOrWhiteSpace(ReadString(reader, "reportPath")) ? "Stander" : ReadString(reader, "reportPath"),
+                        CrystalParityReady = false,
+                        BoundaryMessage = "Crystal report rendering is not wired yet. This endpoint intentionally returns the resolved legacy report contract instead of producing a fake report."
+                    };
+
+                    profile.ReportFileName = noteType == 4 ? ResolveReceiptReportFile(profile) : ResolvePaymentReportFile(profile, ReadString(reader, "ReportName"));
+                    profile.LegacyReportPath = profile.IsDepositTransfer
+                        ? @"REPORTS\Deposits\" + profile.ReportFileName
+                        : @"Special\" + profile.ReportPath + @"\" + profile.ReportFileName;
+                    profile.DatasetName = noteType == 4 ? "CASHING_ORDER / Notes + TblCustemers" : (profile.IsDepositTransfer ? "Notes + BanksData + currency" : (profile.IsAdvancePayment ? "Notes + TblBranchesData + TblEmpDepartments + BanksData + TblEmpAdvanceDetails" : "EXPENSES_ORDER2 + TblCustemers"));
+                    profile.SelectionRule = noteType == 4 ? "CASHING_ORDER.NoteSerial1 = @noteSerial1 AND CASHING_ORDER.NoteType = 4 AND CASHING_ORDER.NoteID = @id" : BuildReportSelectionRule(profile);
+                    profile.ParameterMap = noteType == 4 ? "1=CompanyArabicName; 3=UserName; 4=BranchName; 5=DebitSideText; 6=CustCode; 7=CreditSideText; reporttitle=StrReportTitle" : BuildReportParameterMap(profile);
+                    profile.MissingWebFields = noteType == 4 ? "Receipt Crystal parity still needs renderer wiring and verification of CASHING_ORDER projected columns. The save path writes Notes and balanced journal lines; cheque/project/real-estate linked receipt reports remain intentionally blocked." : BuildMissingWebFields(profile);
+                    return profile;
+                }
+            }
+        }
+
         protected PaymentVoucherSearchViewModel SearchCore(int noteType, DateTime? fromDate, DateTime? toDate, string serial, string party, int? branchId, string cashboxOrBank, decimal? amount, int page = 1, int pageSize = 50)
         {
             page = Math.Max(1, page);
@@ -469,6 +530,77 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
         {
             var value = reader[name];
             return value == DBNull.Value ? 0m : Convert.ToDecimal(value);
+        }
+
+        private static bool ReadNullableBool(SqlDataReader reader, string name)
+        {
+            var value = reader[name];
+            return value != DBNull.Value && Convert.ToBoolean(value);
+        }
+
+        private static string ResolvePaymentReportFile(PaymentVoucherLegacyPrintProfileViewModel profile, string depositReportName)
+        {
+            if (profile.IsDepositTransfer)
+            {
+                return depositReportName;
+            }
+
+            if (profile.IsAdvancePayment)
+            {
+                return "PaymentVoucherByLoan.rpt";
+            }
+
+            if (!profile.PaymentDifferent)
+            {
+                return "PaymentVoucher.rpt";
+            }
+
+            return profile.PaymentType.GetValueOrDefault() == 0 ? "PaymentCash.rpt" : "PaymentCheque.rpt";
+        }
+
+        private static string ResolveReceiptReportFile(PaymentVoucherLegacyPrintProfileViewModel profile)
+        {
+            return profile.PaymentDifferent ? "RecieveVoucher2.rpt" : "RecieveVoucher.rpt";
+        }
+
+        private static string BuildReportSelectionRule(PaymentVoucherLegacyPrintProfileViewModel profile)
+        {
+            if (profile.IsDepositTransfer)
+            {
+                return "Notes.NoteType = 5 AND Notes.NoteID = @id";
+            }
+
+            if (profile.IsAdvancePayment)
+            {
+                return "Notes.NoteSerial1 = @noteSerial1 AND Notes.NoteType = 5 AND Notes.NoteID = @id";
+            }
+
+            return "EXPENSES_ORDER2.NoteSerial1 = @noteSerial1 AND EXPENSES_ORDER2.NoteType = 5 AND EXPENSES_ORDER2.NoteID = @id";
+        }
+
+        private static string BuildReportParameterMap(PaymentVoucherLegacyPrintProfileViewModel profile)
+        {
+            if (profile.IsDepositTransfer)
+            {
+                return "1=CompanyArabicName; 3=UserName; 4=WriteNo(amount); reporttitle=StrReportTitle";
+            }
+
+            return "1=CompanyArabicName; 3=UserName; 4=BranchName (English branch only); 5=DebitSideText; 6=CustCode; 7=CreditSideText; 8=Project_name and 9=Project_nameE when CashingType=3; reporttitle=StrReportTitle; ApplicationName/ReportAuthor=App.Title";
+        }
+
+        private static string BuildMissingWebFields(PaymentVoucherLegacyPrintProfileViewModel profile)
+        {
+            if (profile.IsDepositTransfer)
+            {
+                return "Deposit reports require bank transfer beneficiary/remitter fields on Notes (BeneficiaryACNo, BenefiBanckCode, BeneficiaryAddress, RemitterName, beneficiary ID/address/IBAN fields, note_value_by_characters, ExpensesRemark/RemarkE). Current shared web save only populates the core voucher fields, so deposit report parity is not ready.";
+            }
+
+            if (profile.IsAdvancePayment)
+            {
+                return "PaymentVoucherByLoan requires AdvanceID, DeptID, branch, bank, and TblEmpAdvanceDetails rows. Current web save does not rebuild employee advance installment data.";
+            }
+
+            return "Normal voucher reports depend on EXPENSES_ORDER2 and TblCustemers. Core Notes and journal data are present, but final Crystal parity still needs report rendering and verification of all EXPENSES_ORDER2 projected columns.";
         }
     }
 }

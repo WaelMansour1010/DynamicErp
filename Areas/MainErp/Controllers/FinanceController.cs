@@ -21,5 +21,22 @@ namespace MyERP.Areas.MainErp.Controllers
                 pageSize
             });
         }
+
+        public ActionResult ReceiptVoucher(DateTime? fromDate, DateTime? toDate, string serial, string party, int? branchId, string cashboxOrBank, decimal? amount, int page = 1, int pageSize = 50)
+        {
+            return RedirectToAction("Index", "Cashing", new
+            {
+                area = "MainErp",
+                fromDate,
+                toDate,
+                serial,
+                party,
+                branchId,
+                cashboxOrBank,
+                amount,
+                page,
+                pageSize
+            });
+        }
     }
 }

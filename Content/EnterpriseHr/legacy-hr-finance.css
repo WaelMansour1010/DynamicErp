@@ -5,59 +5,159 @@
 .lhf-hero p { margin: 0; color: rgba(255,255,255,.78); }
 .lhf-search { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
 .lhf-search-wide { grid-template-columns: minmax(180px,1.4fr) repeat(6,minmax(120px,auto)); align-items:end; }
+.lhf-search-changed { grid-template-columns: minmax(180px,1.2fr) repeat(5,minmax(120px,1fr)); align-items:end; }
 .lhf-search input,.lhf-search select { height: 40px; border: 1px solid rgba(255,255,255,.26); border-radius: 8px; background: rgba(255,255,255,.12); color:#fff; padding: 0 12px; }
 .lhf-search option { color:#172033; }
 .lhf-search button,.lhf-primary { min-height: 40px; border:0; border-radius:8px; background:#f4c95d; color:#172033; font-weight:800; padding:0 14px; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
 .lhf-warning { display:flex; gap:10px; align-items:center; padding:12px 14px; border-radius:8px; background:#fff7ed; color:#9a3412; border:1px solid #fed7aa; }
-.lhf-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.lhf-metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; }
 .lhf-metrics article,.lhf-panel { background:#fff; border:1px solid rgba(126,143,166,.22); border-radius:8px; box-shadow:0 10px 24px rgba(15,23,42,.06); }
 .lhf-metrics article { padding:16px; }
 .lhf-metrics span,.lhf-metrics small,.lhf-table small { color:#64748b; }
 .lhf-metrics strong { display:block; font-size:24px; color:#12344d; margin:6px 0 2px; }
+.lhf-advance-dashboard { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; }
+.lhf-advance-dashboard article { padding:14px 15px; border-radius:8px; border:1px solid rgba(126,143,166,.22); background:#fff; box-shadow:0 10px 24px rgba(15,23,42,.05); }
+.lhf-advance-dashboard span,.lhf-advance-dashboard small { display:block; color:#64748b; }
+.lhf-advance-dashboard strong { display:block; margin:5px 0 1px; color:#12344d; font-size:22px; font-weight:900; direction:ltr; text-align:start; }
+.lhf-advance-dashboard article.has-warning { border-color:#fed7aa; background:#fff7ed; }
+.lhf-advance-dashboard article.has-warning strong { color:#9a3412; }
 .lhf-panel header { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:16px 18px; border-bottom:1px solid rgba(126,143,166,.16); }
 .lhf-panel h3 { margin:0; font-size:18px; font-weight:800; }
 .lhf-table-wrap { overflow:auto; }
 .lhf-table { width:100%; min-width:900px; border-collapse:collapse; }
 .lhf-table th,.lhf-table td { padding:13px 14px; border-bottom:1px solid rgba(126,143,166,.14); text-align:start; vertical-align:top; }
-.lhf-table th { background:#f8fafc; color:#475569; font-weight:800; }
+.lhf-table th { position:sticky; top:0; z-index:1; background:#f8fafc; color:#475569; font-weight:800; }
 .lhf-table tr[data-component-id] { cursor:pointer; }
 .lhf-table tr[data-component-id]:hover { background:#f8fbfd; }
+.lhf-table tr.lhf-row-locked { background:#fbfbfc; }
 .lhf-table strong,.lhf-table small,.lhf-table code { display:block; }
 .lhf-table code { width:max-content; max-width:220px; white-space:normal; padding:2px 6px; border-radius:6px; color:#155e75; background:#ecfeff; }
 .lhf-muted-account { display:inline-flex; color:#64748b; font-size:12px; line-height:1.6; }
 .lhf-hidden-technical { display:none !important; }
 .lhf-badge { display:inline-flex; margin:2px 0; min-height:23px; align-items:center; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:800; }
-.lhf-badge.info{background:#e0f2fe;color:#075985}.lhf-badge.success{background:#dcfce7;color:#166534}.lhf-badge.warning{background:#fef3c7;color:#92400e}.lhf-badge.danger{background:#fee2e2;color:#991b1b}
+.lhf-badge.info{background:#e0f2fe;color:#075985}.lhf-badge.success{background:#dcfce7;color:#166534}.lhf-badge.warning{background:#fef3c7;color:#92400e}.lhf-badge.danger{background:#fee2e2;color:#991b1b}.lhf-badge.locked{background:#e2e8f0;color:#334155}
+.lhf-status-stack { display:flex; flex-wrap:wrap; gap:4px; max-width:180px; }
+.lhf-installment-summary { display:flex; flex-direction:column; gap:3px; min-width:130px; }
+.lhf-installment-chip { display:inline-flex; width:max-content; padding:2px 8px; border-radius:999px; background:#f1f5f9; color:#334155; font-size:12px; font-weight:800; }
+.lhf-lock-note { color:#9a3412!important; }
+.lhf-action-note { display:inline-flex; align-items:center; min-height:30px; padding:0 9px; border-radius:8px; background:#f1f5f9; color:#64748b; font-weight:800; }
+.lhf-run-link { display:block; width:max-content; max-width:100%; margin-top:4px; color:#075985; font-weight:900; text-decoration:none; }
+.lhf-run-link:hover { text-decoration:underline; }
 .lhf-empty { text-align:center; color:#64748b; padding:18px; }
 .lhf-num { direction:ltr; text-align:end!important; font-variant-numeric:tabular-nums; }
 .lhf-actions { white-space:nowrap; }
 .lhf-actions button,.lhf-editor-card footer button:not(.lhf-primary) { min-height:34px; border:1px solid rgba(126,143,166,.28); background:#fff; color:#1e293b; border-radius:8px; padding:0 10px; font-weight:800; }
 .lhf-actions button:hover { background:#f8fafc; }
+.lhf-actions button[disabled],.lhf-editor-card button[disabled] { opacity:.65; cursor:not-allowed; }
+.lhf-actions button.is-loading,.lhf-editor-card button.is-loading { position:relative; }
 .lhf-editor { position:fixed; inset:0; z-index:1000; display:grid; place-items:center; padding:22px; background:rgba(15,23,42,.42); }
 .lhf-editor[hidden]{display:none}.lhf-editor-card{width:min(900px,100%);max-height:calc(100vh - 44px);overflow:auto;background:#fff;border-radius:8px;box-shadow:0 24px 80px rgba(15,23,42,.28)}
 .lhf-editor-card header,.lhf-editor-card footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid rgba(126,143,166,.16)}
 .lhf-editor-card footer{border-top:1px solid rgba(126,143,166,.16);border-bottom:0}.lhf-editor-card header button{width:36px;height:36px;border:0;border-radius:8px;background:#f1f5f9}
+.lhf-editor-alert { margin:14px 18px 0; padding:11px 13px; border-radius:8px; border:1px solid #fed7aa; background:#fff7ed; color:#9a3412; font-weight:800; }
 .lhf-editor-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:18px}.lhf-editor-grid label{display:flex;flex-direction:column;gap:6px;margin:0;font-size:12px;color:#475569;font-weight:700}
 .lhf-editor-grid input,.lhf-editor-grid select{height:39px;border:1px solid rgba(126,143,166,.34);border-radius:8px;padding:0 10px;background:#fff;color:#172033}.lhf-check{flex-direction:row!important;align-items:center;min-height:39px}.lhf-check input{width:18px;height:18px}
+.lhf-employee-filter { margin-bottom:6px; }
 .lhf-span-2{grid-column:span 2}.lhf-span-3{grid-column:1/-1}
 .lhf-advance-summary{padding:12px 14px;border:1px dashed rgba(37,99,235,.34);border-radius:8px;background:#eff6ff;color:#1e3a8a;display:flex;flex-direction:column;gap:6px}
+.lhf-advance-financials { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-top:4px; }
+.lhf-advance-financials span { padding:8px 10px; border-radius:8px; background:rgba(255,255,255,.65); color:#334155; }
+.lhf-advance-financials strong { display:inline; color:#0f172a; }
+.lhf-parts-grid-wrap { overflow:auto; max-height:220px; border:1px solid rgba(37,99,235,.18); border-radius:8px; background:#fff; }
+.lhf-parts-grid { width:100%; border-collapse:collapse; min-width:520px; color:#172033; }
+.lhf-parts-grid th,.lhf-parts-grid td { padding:9px 10px; border-bottom:1px solid rgba(126,143,166,.16); text-align:start; }
+.lhf-parts-grid th { background:#f8fafc; color:#475569; font-weight:800; position:sticky; top:0; }
+.lhf-parts-grid tr.is-overdue td { background:#fff1f2; }
+.lhf-accounting-boundary { display:flex; flex-direction:column; gap:6px; padding:11px 12px; border-radius:8px; border:1px solid rgba(126,143,166,.24); background:#fff; color:#334155; }
+.lhf-accounting-boundary.safe { border-color:#bbf7d0; background:#f0fdf4; color:#166534; }
+.lhf-accounting-boundary.warning { border-color:#fde68a; background:#fffbeb; color:#92400e; }
+.lhf-accounting-boundary.danger { border-color:#fecaca; background:#fff1f2; color:#991b1b; }
+.lhf-accounting-boundary div { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+.lhf-accounting-boundary div span { padding:7px 9px; border-radius:8px; background:rgba(255,255,255,.62); }
+.lhf-vacation-engine { padding:16px 18px; border-bottom:1px solid rgba(126,143,166,.16); background:#fbfdff; }
+.lhf-vacation-engine h4 { margin:0 0 6px; font-size:16px; font-weight:900; color:#12344d; }
+.lhf-vacation-engine p { margin:0 0 12px; color:#64748b; }
+.lhf-vacation-balance-form { display:grid; grid-template-columns:1.2fr repeat(3,minmax(150px,.7fr)) auto; gap:10px; align-items:end; }
+.lhf-vacation-balance-form label { display:flex; flex-direction:column; gap:6px; margin:0; color:#475569; font-size:12px; font-weight:800; }
+.lhf-vacation-balance-form input,.lhf-vacation-balance-form select { height:39px; border:1px solid rgba(126,143,166,.34); border-radius:8px; padding:0 10px; background:#fff; color:#172033; }
+.lhf-vacation-balance-result { margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+.lhf-vac-loading,.lhf-vac-errors,.lhf-vac-warnings { padding:11px 13px; border-radius:8px; font-weight:800; }
+.lhf-vac-loading { color:#1e3a8a; background:#eff6ff; border:1px solid #bfdbfe; }
+.lhf-vac-errors { color:#991b1b; background:#fff1f2; border:1px solid #fecaca; }
+.lhf-vac-warnings { color:#92400e; background:#fffbeb; border:1px solid #fde68a; }
+.lhf-vac-errors ul,.lhf-vac-warnings ul { margin:8px 0 0; padding-inline-start:20px; }
+.lhf-vac-balance-status { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 14px; border-radius:8px; }
+.lhf-vac-balance-status.success { color:#166534; background:#f0fdf4; border:1px solid #bbf7d0; }
+.lhf-vac-balance-status.danger { color:#991b1b; background:#fff1f2; border:1px solid #fecaca; }
+.lhf-vac-balance-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.lhf-vac-balance-grid article { padding:12px; border-radius:8px; border:1px solid rgba(126,143,166,.18); background:#fff; }
+.lhf-vac-balance-grid span { display:block; color:#64748b; font-size:12px; font-weight:800; }
+.lhf-vac-balance-grid strong { display:block; margin-top:5px; color:#0f172a; font-size:18px; font-weight:900; }
+.lhf-vac-balance-grid .lhf-vac-net { border-color:#bfdbfe; background:#eff6ff; }
+.lhf-vac-line-list { overflow:auto; border:1px solid rgba(126,143,166,.18); border-radius:8px; background:#fff; }
+.lhf-vac-line-list > strong { display:block; padding:11px 12px; border-bottom:1px solid rgba(126,143,166,.16); color:#12344d; }
+.lhf-vac-line-list table { width:100%; min-width:640px; border-collapse:collapse; }
+.lhf-vac-line-list th,.lhf-vac-line-list td { padding:10px 12px; border-bottom:1px solid rgba(126,143,166,.14); text-align:start; }
+.lhf-vac-line-list th { background:#f8fafc; color:#475569; font-weight:900; }
+.lhf-vacation-workspace { display:flex; flex-direction:column; gap:14px; }
+.lhf-vacation-summary { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; }
+.lhf-vacation-summary article { padding:14px 15px; border-radius:8px; border:1px solid rgba(126,143,166,.22); background:#fff; box-shadow:0 10px 24px rgba(15,23,42,.05); }
+.lhf-vacation-summary span,.lhf-vacation-summary small { display:block; color:#64748b; }
+.lhf-vacation-summary strong { display:block; margin:5px 0 1px; color:#12344d; font-size:22px; font-weight:900; direction:ltr; text-align:start; }
+.lhf-vacation-summary article.has-warning { border-color:#fde68a; background:#fffbeb; }
+.lhf-vacation-summary article.has-warning strong { color:#92400e; }
+.lhf-panel-tools { display:flex; align-items:center; gap:8px; }
+.lhf-panel-tools input { height:38px; min-width:260px; border:1px solid rgba(126,143,166,.3); border-radius:8px; padding:0 12px; background:#fff; color:#172033; }
+.lhf-vacation-calendar-strip { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; padding:14px 16px 16px; }
+.lhf-vacation-date-card { min-height:118px; display:flex; flex-direction:column; gap:5px; padding:13px; border-radius:8px; border:1px solid rgba(126,143,166,.2); background:#fff; position:relative; overflow:hidden; }
+.lhf-vacation-date-card:before { content:""; position:absolute; inset-inline-start:0; top:0; bottom:0; width:5px; background:#94a3b8; }
+.lhf-vacation-date-card.success:before { background:#22c55e; }
+.lhf-vacation-date-card.warning:before { background:#f59e0b; }
+.lhf-vacation-date-card.danger:before { background:#ef4444; }
+.lhf-vacation-date-card.info:before { background:#0ea5e9; }
+.lhf-vacation-date-card small { color:#64748b; font-weight:800; }
+.lhf-vacation-date-card strong { color:#0f172a; font-size:15px; font-weight:900; }
+.lhf-vacation-date-card span { color:#334155; }
+.lhf-vacation-date-card em { width:max-content; max-width:100%; padding:2px 8px; border-radius:999px; background:#f1f5f9; color:#475569; font-style:normal; font-size:12px; font-weight:800; }
+.lhf-vacation-table { min-width:1100px; }
+.lhf-approval-mini { display:flex; align-items:center; gap:6px; white-space:nowrap; }
+.lhf-approval-mini span { min-height:24px; padding:2px 8px; border-radius:999px; background:#e2e8f0; color:#475569; font-size:12px; font-weight:800; }
+.lhf-approval-mini span.done { background:#dcfce7; color:#166534; }
+.lhf-vacation-request-summary { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:11px 12px; border-radius:8px; background:#eff6ff; border:1px dashed rgba(37,99,235,.34); color:#1e3a8a; }
+.lhf-vacation-request-summary strong { color:#0f172a; }
+.lhf-vacation-timeline { padding:12px; border:1px solid rgba(126,143,166,.2); border-radius:8px; background:#fff; }
+.lhf-vacation-timeline > strong { display:block; margin-bottom:10px; color:#12344d; }
+.lhf-vacation-timeline ol { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:0; padding:0; list-style:none; }
+.lhf-vacation-timeline li { padding:9px 10px; border-radius:8px; background:#f1f5f9; color:#475569; font-weight:800; text-align:center; }
+.lhf-vacation-timeline li.done { background:#dcfce7; color:#166534; }
+.lhf-vacation-timeline li.danger { background:#fee2e2; color:#991b1b; }
+.lhf-vacation-history { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:10px; }
+.lhf-vacation-history span { display:flex; flex-direction:column; gap:2px; padding:8px 10px; border-radius:8px; background:#f8fafc; color:#334155; }
+.lhf-vacation-history small,.lhf-vacation-history em { color:#64748b; font-style:normal; }
 .lhf-message-error{color:#b91c1c!important}
-@media(max-width:900px){.lhf-hero,.lhf-metrics,.lhf-editor-grid,.lhf-search,.lhf-search-wide{grid-template-columns:1fr}.lhf-span-2,.lhf-span-3{grid-column:auto}}
+@media(max-width:1200px){.lhf-advance-dashboard,.lhf-vacation-summary{grid-template-columns:repeat(3,minmax(0,1fr))}.lhf-vacation-calendar-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.lhf-advance-financials,.lhf-accounting-boundary div,.lhf-vac-balance-grid,.lhf-vacation-request-summary,.lhf-vacation-history{grid-template-columns:repeat(2,minmax(0,1fr))}.lhf-vacation-balance-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:900px){.lhf-hero,.lhf-metrics,.lhf-editor-grid,.lhf-search,.lhf-search-wide,.lhf-search-changed,.lhf-advance-dashboard,.lhf-vacation-summary,.lhf-vacation-calendar-strip,.lhf-advance-financials,.lhf-accounting-boundary div,.lhf-vacation-balance-form,.lhf-vac-balance-grid,.lhf-vacation-request-summary,.lhf-vacation-timeline ol,.lhf-vacation-history{grid-template-columns:1fr}.lhf-panel-tools,.lhf-panel-tools input{width:100%;min-width:0}.lhf-span-2,.lhf-span-3{grid-column:auto}.lhf-panel header{align-items:flex-start;flex-direction:column}.lhf-editor{padding:12px}.lhf-editor-card{max-height:calc(100vh - 24px)}}
 body.pos-enterprise-hr-page { margin:0; min-height:100vh; background:#f6f8fb; font-family:"Cairo","Tahoma",Arial,sans-serif; }
 body.pos-enterprise-hr-page .lhf-page { padding:22px; }
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page { background:#0f172a; color:#e5e7eb; }
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-page { color:#e5e7eb; }
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-panel,
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-metrics article,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-advance-dashboard article,
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-editor-card { background:#111827; border-color:rgba(148,163,184,.22); color:#e5e7eb; box-shadow:none; }
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-table th { background:#1f2937; color:#cbd5e1; }
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-table th,
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-table td,
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-panel header { border-color:rgba(148,163,184,.18); }
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-table tr[data-component-id]:hover { background:#1e293b; }
-html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-metrics strong { color:#f8fafc; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-table tr.lhf-row-locked { background:#111c2e; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-run-link { color:#7dd3fc; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-metrics strong,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-advance-dashboard strong { color:#f8fafc; }
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-metrics span,
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-metrics small,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-advance-dashboard span,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-advance-dashboard small,
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-table small,
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-muted-account,
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-empty { color:#94a3b8; }
@@ -66,3 +166,39 @@ html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-editor-grid select,
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-actions button,
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-editor-card footer button:not(.lhf-primary) { background:#0f172a; color:#e5e7eb; border-color:rgba(148,163,184,.28); }
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-advance-summary { background:#172554; color:#dbeafe; border-color:rgba(96,165,250,.4); }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-advance-financials span,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-parts-grid-wrap,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-parts-grid { background:#0f172a; color:#e5e7eb; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-advance-financials strong { color:#f8fafc; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-parts-grid th { background:#1f2937; color:#cbd5e1; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-parts-grid tr.is-overdue td { background:#3f1d24; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-accounting-boundary { background:#0f172a; color:#e5e7eb; border-color:rgba(148,163,184,.28); }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-accounting-boundary.safe { background:#052e16; color:#bbf7d0; border-color:#166534; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-accounting-boundary.warning { background:#3b2f12; color:#fde68a; border-color:#92400e; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-accounting-boundary.danger { background:#3f1d24; color:#fecaca; border-color:#991b1b; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-engine,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vac-balance-grid article,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vac-line-list { background:#0f172a; color:#e5e7eb; border-color:rgba(148,163,184,.22); }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-engine h4,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vac-balance-grid strong,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vac-line-list > strong { color:#f8fafc; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-engine p,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vac-balance-grid span { color:#94a3b8; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-balance-form input,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-balance-form select { background:#111827; color:#e5e7eb; border-color:rgba(148,163,184,.28); }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vac-balance-grid .lhf-vac-net { background:#172554; border-color:#2563eb; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vac-line-list th { background:#1f2937; color:#cbd5e1; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-summary article,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-date-card,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-timeline { background:#111827; border-color:rgba(148,163,184,.22); color:#e5e7eb; box-shadow:none; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-summary strong,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-date-card strong,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-timeline > strong,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-request-summary strong { color:#f8fafc; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-summary span,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-summary small,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-date-card small,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-date-card span { color:#94a3b8; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-panel-tools input { background:#0f172a; color:#e5e7eb; border-color:rgba(148,163,184,.28); }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-request-summary { background:#172554; color:#dbeafe; border-color:rgba(96,165,250,.4); }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-vacation-history span { background:#0f172a; color:#e5e7eb; }

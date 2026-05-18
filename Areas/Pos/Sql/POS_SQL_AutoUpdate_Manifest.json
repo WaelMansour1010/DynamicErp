@@ -59,7 +59,9 @@
     { "order": 108, "file": "108_POS_PayrollRunSnapshot.sql", "autoApply": true, "purpose": "Payroll run snapshot headers, employees, and journal links for shared POS/MainERP salary runs." },
     { "order": 109, "file": "109_POS_WebPermissions_TellerInvoiceSafety.sql", "autoApply": true, "purpose": "Safety seed that carries legacy POS teller and invoice permissions into POS.Sales.Index web permissions without revoking existing grants." },
     { "order": 110, "file": "110_POS_EmployeePhoto_PrintCards.sql", "autoApply": true, "purpose": "Employee photo data column used by shared HR printable employee and medical insurance cards." },
-    { "order": 111, "file": "111_POS_KycFollowUp_ReportProcedure_2012.sql", "autoApply": true, "purpose": "SQL Server 2012 compatible KYC follow-up report procedure hotfix with collation-safe joins." }
+    { "order": 111, "file": "111_POS_KycFollowUp_ReportProcedure_2012.sql", "autoApply": true, "purpose": "SQL Server 2012 compatible KYC follow-up report procedure hotfix with collation-safe joins." },
+    { "order": 112, "file": "112_POS_PayrollAdvanceDeductionLinks.sql", "autoApply": true, "purpose": "Payroll advance installment links to salary runs so payroll posting can mark deducted installments safely." },
+    { "order": 113, "file": "113_POS_PayrollVacationAttendanceIntegration.sql", "autoApply": true, "purpose": "Payroll vacation/attendance compatibility fields and legacy GetAbcentDay2 function for salary run recalculation." }
   ],
   "manualScripts": [
     { "file": "35_POS_SystemHealthPermissions.sql", "reason": "Requires sysadmin/master login and replacing the app SQL login placeholder." },

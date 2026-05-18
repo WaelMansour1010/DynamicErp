@@ -153,6 +153,10 @@ INSERT INTO @Screens VALUES
 (N'HR.MedicalInsurance', N'التأمين الطبي', N'Medical insurance', N'/MainErp/EmployeePayroll/MedicalInsurance', N'EmployeePayroll', N'MedicalInsurance', N'fas fa-briefcase-medical', 90, 1, 1, 0, 1, 1),
 (N'Shared.WebPermissions', N'صلاحيات شاشات الويب', N'Web screen permissions', N'/MainErp/Permissions', N'Permissions', N'Index', N'fas fa-user-shield', 900, 1, 1, 1, 1, 1);
 
+INSERT INTO @Screens VALUES
+(N'HR.ChangedComponentData', N'تسجيل المفردات المتغيرة', N'Variable salary components', N'/MainErp/Hr/ChangedComponentData', N'Hr', N'ChangedComponentData', N'fas fa-exchange-alt', 35, 1, 1, 1, 1, 1),
+(N'FrmChangedComponentData', N'تسجيل المفردات المتغيرة - صلاحية VB6', N'VB6 variable salary components fallback', N'/MainErp/Hr/ChangedComponentData', N'Hr', N'ChangedComponentData', N'fas fa-exchange-alt', 36, 1, 1, 1, 1, 1);
+
 UPDATE s
    SET s.WebModuleId = @ModuleId,
        s.ArabicCaption = src.ArabicCaption,

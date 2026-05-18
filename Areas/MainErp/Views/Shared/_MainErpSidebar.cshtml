@@ -12,7 +12,7 @@
     var inventoryOpen = sectionActive(new[] { "items", "store-data", "stocktaking", "defin-comp-item" });
     var excelOpen = sectionActive(new[] { "master-data-import" });
     var projectsOpen = sectionActive(new[] { "projects", "project-extracts" });
-    var hrOpen = sectionActive(new[] { "employee-payroll", "salary-run", "medical-insurance", "hr-advances", "hr-payroll-items", "hr-absences", "hr-vacations", "hr-allowances", "hr-end-service", "legacy-advances", "legacy-leave-entitlements", "legacy-compensation-adjustments" });
+    var hrOpen = sectionActive(new[] { "employee-payroll", "salary-run", "medical-insurance", "hr-advances", "hr-payroll-items", "hr-changed-components", "hr-absences", "hr-vacations", "hr-allowances", "hr-end-service", "legacy-advances", "legacy-leave-entitlements", "legacy-compensation-adjustments" });
     var systemOpen = sectionActive(new[] { "users", "permissions", "branches", "options", "database-migration", "dashboard" });
 
     if (!(customersOpen || financeOpen || inventoryOpen || excelOpen || projectsOpen || hrOpen || systemOpen))
@@ -100,6 +100,7 @@
                 <a class="pos-nav-link main-erp-nav-link @(isActive("medical-insurance") ? "active" : "")" href="@Url.Action("MedicalInsurance", "EmployeePayroll", new { area = "MainErp" })" title="التأمين الطبي"><i class="fas fa-briefcase-medical"></i><span>التأمين الطبي</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("hr-advances") ? "active" : "")" href="@Url.Action("Advances", "Hr", new { area = "MainErp" })" title="السلف"><i class="fas fa-hand-holding-usd"></i><span>السلف</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("hr-payroll-items") ? "active" : "")" href="@Url.Action("PayrollItems", "Hr", new { area = "MainErp" })" title="المفردات"><i class="fas fa-list-alt"></i><span>المفردات</span></a>
+                <a class="pos-nav-link main-erp-nav-link @(isActive("hr-changed-components") ? "active" : "")" href="@Url.Action("ChangedComponentData", "Hr", new { area = "MainErp" })" title="تسجيل المفردات المتغيرة"><i class="fas fa-exchange-alt"></i><span>المفردات المتغيرة</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("hr-absences") ? "active" : "")" href="@Url.Action("Absences", "Hr", new { area = "MainErp" })" title="الغياب"><i class="fas fa-user-clock"></i><span>الغياب</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("hr-vacations") ? "active" : "")" href="@Url.Action("Vacations", "Hr", new { area = "MainErp" })" title="الإجازات"><i class="fas fa-calendar-check"></i><span>الإجازات</span></a>
                 <a class="pos-nav-link main-erp-nav-link @(isActive("hr-allowances") ? "active" : "")" href="@Url.Action("Allowances", "Hr", new { area = "MainErp" })" title="البدلات"><i class="fas fa-plus-circle"></i><span>البدلات</span></a>

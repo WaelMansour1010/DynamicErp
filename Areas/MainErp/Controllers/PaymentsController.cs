@@ -175,6 +175,23 @@ namespace MyERP.Areas.MainErp.Controllers
             return View("Print", model);
         }
 
+        public ActionResult LegacyCrystalPrint(int id)
+        {
+            if (!_permissionService.CanPrint(MainErpUserContext, "FrmPayments"))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية طباعة سند صرف");
+            }
+
+            var profile = _repository.GetLegacyPrintProfile(id);
+            if (profile == null)
+            {
+                return HttpNotFound("Payment voucher was not found.");
+            }
+
+            Response.StatusCode = profile.CrystalParityReady ? 200 : 501;
+            return Json(profile, JsonRequestBehavior.AllowGet);
+        }
+
         private ActionResult PaymentEditView(PaymentVoucherEditViewModel model, bool isEdit, string warning)
         {
             model.Title = isEdit ? "تعديل سند صرف" : "إضافة سند صرف";
@@ -218,6 +235,10 @@ namespace MyERP.Areas.MainErp.Controllers
         internal static string FriendlyVoucherError(Exception ex)
         {
             var message = (ex == null ? string.Empty : ex.Message) ?? string.Empty;
+            if (ContainsArabic(message))
+            {
+                return message;
+            }
             if (message.IndexOf("Posted voucher", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return "لا يمكن تعديل أو حذف سند مرحل.";
@@ -244,6 +265,24 @@ namespace MyERP.Areas.MainErp.Controllers
             }
 
             return "تعذر تنفيذ العملية الآن. راجع البيانات وحاول مرة أخرى، وإذا استمرت المشكلة راجع مسؤول النظام.";
+        }
+
+        private static bool ContainsArabic(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            foreach (var c in value)
+            {
+                if (c >= '\u0600' && c <= '\u06FF')
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

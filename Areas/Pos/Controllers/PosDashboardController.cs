@@ -283,7 +283,7 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             if ((screen == "employee-payroll" || screen == "salary-run" || screen == "medical-insurance" || screen == "medical-insurance-reports"
-                || screen == "hr-advances" || screen == "hr-payroll-items" || screen == "hr-absences" || screen == "hr-vacations" || screen == "hr-allowances" || screen == "hr-end-service")
+                || screen == "hr-advances" || screen == "hr-payroll-items" || screen == "hr-changed-components" || screen == "hr-absences" || screen == "hr-vacations" || screen == "hr-allowances" || screen == "hr-end-service")
                 && !CanOpenEmployeePayroll(context))
             {
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح شاشات الموظفين والرواتب");
@@ -522,6 +522,10 @@ namespace MyERP.Areas.Pos.Controllers
             if (screen == "hr-payroll-items")
             {
                 return Url.Content("~/Pos/Hr/PayrollItems");
+            }
+            if (screen == "hr-changed-components")
+            {
+                return Url.Content("~/Pos/Hr/ChangedComponentData");
             }
 
             if (screen == "hr-absences")

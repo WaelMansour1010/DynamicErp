@@ -2488,6 +2488,105 @@ body.main-erp-sidebar-collapsed .pos-main-shell.main-erp-app-shell {
     padding: 10px;
 }
 
+.voucher-toolbar,
+.voucher-search-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.voucher-search-actions {
+    align-self: end;
+}
+
+.voucher-save-status {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    color: #1d4ed8;
+    display: none;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 10px 12px;
+}
+
+.voucher-save-status.is-active {
+    display: block;
+}
+
+.voucher-save-status.is-error {
+    background: #fff1f3;
+    border-color: #fecdd3;
+    color: #b42318;
+}
+
+.voucher-total-panel {
+    background: #f8fafc;
+    border-top: 1px solid #e4eaf0;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 14px 16px;
+}
+
+.voucher-total-panel article {
+    background: #fff;
+    border: 1px solid #dce4ee;
+    border-radius: 8px;
+    display: grid;
+    gap: 6px;
+    min-height: 76px;
+    padding: 12px;
+}
+
+.voucher-total-panel span,
+.voucher-form-grid small,
+.voucher-section-title span {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.voucher-total-panel strong {
+    color: #111827;
+    direction: ltr;
+    font-size: 22px;
+    font-weight: 900;
+    text-align: left;
+}
+
+.voucher-form-grid label.is-voucher-source-active {
+    background: #ecfdf3;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.voucher-form-grid label.is-voucher-source-muted {
+    opacity: .68;
+}
+
+.voucher-edit-form[aria-busy="true"],
+.voucher-search-panel[aria-busy="true"] {
+    opacity: .86;
+}
+
+.voucher-primary-action[disabled],
+.voucher-search-panel button[disabled] {
+    cursor: wait;
+    opacity: .72;
+}
+
+.voucher-workspace input:focus,
+.voucher-workspace select:focus,
+.voucher-workspace textarea:focus,
+.voucher-workspace button:focus,
+.voucher-workspace a:focus {
+    outline: 3px solid rgba(37, 99, 235, .18);
+    outline-offset: 2px;
+}
+
 .voucher-definition-grid div {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -2509,11 +2608,77 @@ body.main-erp-sidebar-collapsed .pos-main-shell.main-erp-app-shell {
         grid-template-columns: 1fr;
     }
 
+    .voucher-total-panel {
+        grid-template-columns: 1fr;
+    }
+
     .voucher-page-header > div:first-child {
         border-right: 0;
         border-top: 4px solid #2563eb;
         padding-right: 0;
         padding-top: 12px;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .voucher-workspace,
+    .voucher-page-header,
+    .voucher-header-actions,
+    .voucher-metric-strip article,
+    .voucher-kpi-grid article,
+    .voucher-search-panel,
+    .voucher-table-card,
+    .voucher-section,
+    .voucher-action-row,
+    .voucher-pager,
+    .voucher-total-panel article {
+        background: #111827;
+        border-color: #334155;
+        box-shadow: none;
+        color: #e5e7eb;
+    }
+
+    .voucher-section-title,
+    .voucher-table-title,
+    .voucher-section > h3,
+    .voucher-section > h4,
+    .voucher-total-panel {
+        background: #0f172a;
+        border-color: #334155;
+    }
+
+    .voucher-page-header h2,
+    .voucher-page-header h3,
+    .voucher-table-title h3,
+    .voucher-table-title h4,
+    .voucher-section h3,
+    .voucher-section h4,
+    .voucher-section-title h3,
+    .voucher-section-title h4,
+    .voucher-metric-strip strong,
+    .voucher-kpi-grid strong,
+    .voucher-total-panel strong,
+    .voucher-table td {
+        color: #f8fafc;
+    }
+
+    .voucher-search-panel input,
+    .voucher-search-panel select,
+    .voucher-form-grid input,
+    .voucher-form-grid select,
+    .voucher-form-grid textarea {
+        background: #0b1220;
+        border-color: #475569;
+        color: #e5e7eb;
+    }
+
+    .voucher-table th {
+        background: #1f2937;
+        color: #cbd5e1;
+    }
+
+    .voucher-table tbody tr:hover td {
+        background: #172033;
     }
 }
 

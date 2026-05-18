@@ -389,6 +389,104 @@
         padding: 10px;
     }
 
+    .voucher-pos-page .voucher-toolbar,
+    .voucher-pos-page .voucher-search-actions {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .voucher-pos-page .voucher-search-actions {
+        align-self: end;
+    }
+
+    .voucher-pos-page .voucher-save-status {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 10px;
+        color: #1d4ed8;
+        display: none;
+        font-size: 13px;
+        font-weight: 900;
+        padding: 10px 12px;
+    }
+
+    .voucher-pos-page .voucher-save-status.is-active {
+        display: block;
+    }
+
+    .voucher-pos-page .voucher-save-status.is-error {
+        background: #fff1f3;
+        border-color: #fecdd3;
+        color: #b42318;
+    }
+
+    .voucher-pos-page .voucher-total-panel {
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding: 14px 16px;
+    }
+
+    .voucher-pos-page .voucher-total-panel article {
+        background: #fff;
+        border: 1px solid #dbe4ef;
+        border-radius: 10px;
+        display: grid;
+        gap: 6px;
+        min-height: 76px;
+        padding: 12px;
+    }
+
+    .voucher-pos-page .voucher-total-panel span,
+    .voucher-pos-page .voucher-form-grid small,
+    .voucher-pos-page .voucher-section-title span {
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .voucher-pos-page .voucher-total-panel strong {
+        color: #111827;
+        direction: ltr;
+        font-size: 22px;
+        font-weight: 900;
+        text-align: left;
+    }
+
+    .voucher-pos-page .voucher-form-grid label.is-voucher-source-active {
+        background: #ecfdf3;
+        border: 1px solid #bbf7d0;
+        border-radius: 10px;
+        padding: 8px;
+    }
+
+    .voucher-pos-page .voucher-form-grid label.is-voucher-source-muted {
+        opacity: .68;
+    }
+
+    .voucher-pos-page [aria-busy="true"] {
+        opacity: .86;
+    }
+
+    .voucher-pos-page button[disabled],
+    .voucher-pos-page .voucher-primary-action[disabled] {
+        cursor: wait;
+        opacity: .72;
+    }
+
+    .voucher-pos-page input:focus,
+    .voucher-pos-page select:focus,
+    .voucher-pos-page textarea:focus,
+    .voucher-pos-page button:focus,
+    .voucher-pos-page a:focus {
+        outline: 3px solid rgba(37, 99, 235, .18);
+        outline-offset: 2px;
+    }
+
     .voucher-pos-page .voucher-tab-strip {
         position: sticky;
         top: 8px;
@@ -498,7 +596,8 @@
         .voucher-pos-page .voucher-page-header,
         .voucher-pos-page .voucher-search-panel,
         .voucher-pos-page .voucher-metric-strip,
-        .voucher-pos-page .voucher-kpi-grid {
+        .voucher-pos-page .voucher-kpi-grid,
+        .voucher-pos-page .voucher-total-panel {
             grid-template-columns: 1fr;
         }
 
@@ -507,6 +606,61 @@
             border-top: 5px solid #2563eb;
             padding-right: 0;
             padding-top: 12px;
+        }
+    }
+
+    @@media (prefers-color-scheme: dark) {
+        .voucher-pos-page {
+            background: #0f172a;
+            color: #e5e7eb;
+        }
+
+        .voucher-pos-page .voucher-page-header,
+        .voucher-pos-page .voucher-header-actions,
+        .voucher-pos-page .voucher-metric-strip article,
+        .voucher-pos-page .voucher-kpi-grid article,
+        .voucher-pos-page .voucher-search-panel,
+        .voucher-pos-page .voucher-table-card,
+        .voucher-pos-page .voucher-section,
+        .voucher-pos-page .voucher-action-row,
+        .voucher-pos-page .voucher-pager,
+        .voucher-pos-page .voucher-total-panel article {
+            background: #111827;
+            border-color: #334155;
+            box-shadow: none;
+        }
+
+        .voucher-pos-page .voucher-section-title,
+        .voucher-pos-page .voucher-table-title,
+        .voucher-pos-page .voucher-total-panel {
+            background: #0f172a;
+            border-color: #334155;
+        }
+
+        .voucher-pos-page .voucher-page-header h2,
+        .voucher-pos-page .voucher-page-header h3,
+        .voucher-pos-page .voucher-table-title h3,
+        .voucher-pos-page .voucher-section h3,
+        .voucher-pos-page .voucher-section h4,
+        .voucher-pos-page .voucher-metric-strip strong,
+        .voucher-pos-page .voucher-kpi-grid strong,
+        .voucher-pos-page .voucher-total-panel strong,
+        .voucher-pos-page .voucher-table td {
+            color: #f8fafc;
+        }
+
+        .voucher-pos-page .voucher-form-grid input,
+        .voucher-pos-page .voucher-form-grid select,
+        .voucher-pos-page .voucher-form-grid textarea,
+        .voucher-pos-page .voucher-search-panel input {
+            background: #0b1220;
+            border-color: #475569;
+            color: #e5e7eb;
+        }
+
+        .voucher-pos-page .voucher-table th {
+            background: #1f2937;
+            color: #cbd5e1;
         }
     }
 </style>

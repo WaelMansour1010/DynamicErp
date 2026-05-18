@@ -176,6 +176,23 @@ namespace MyERP.Areas.MainErp.Controllers
             return View("~/Areas/MainErp/Views/Payments/Print.cshtml", model);
         }
 
+        public ActionResult LegacyCrystalPrint(int id)
+        {
+            if (!_permissionService.CanPrint(MainErpUserContext, "FrmCashing"))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية طباعة سند قبض");
+            }
+
+            var profile = _repository.GetLegacyPrintProfile(id);
+            if (profile == null)
+            {
+                return HttpNotFound("Cashing voucher was not found.");
+            }
+
+            Response.StatusCode = profile.CrystalParityReady ? 200 : 501;
+            return Json(profile, JsonRequestBehavior.AllowGet);
+        }
+
         private ActionResult CashingEditView(PaymentVoucherEditViewModel model, bool isEdit, string warning)
         {
             model.Title = isEdit ? "تعديل سند قبض" : "إضافة سند قبض";

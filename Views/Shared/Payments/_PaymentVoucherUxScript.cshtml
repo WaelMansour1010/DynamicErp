@@ -1,0 +1,138 @@
+<script>
+    (function () {
+        var form = document.querySelector("[data-payment-voucher-form]");
+        if (!form) { return; }
+
+        var saveButton = form.querySelector("[data-voucher-save]");
+        var status = document.querySelector("[data-voucher-status]");
+        var amount = form.querySelector("[name='Amount']");
+        var vat = form.querySelector("[name='Vat']");
+        var includeVat = form.querySelector("[name='IncludeVat']");
+        var paymentMethod = form.querySelector("[name='PaymentMethod']");
+        var box = form.querySelector("[name='BoxId']");
+        var bank = form.querySelector("[name='BankId']");
+        var account = form.querySelector("[name='PartyAccountCode']");
+        var accountFilter = document.querySelector("[data-account-filter]");
+        var totalNet = document.querySelector("[data-total-net]");
+        var totalVat = document.querySelector("[data-total-vat]");
+        var totalGross = document.querySelector("[data-total-gross]");
+        var sourceHint = document.querySelector("[data-source-hint]");
+        var originalAccountOptions = account ? Array.prototype.map.call(account.options, function (option) {
+            return { value: option.value, text: option.text, selected: option.selected };
+        }) : [];
+        var isSubmitting = false;
+
+        function numberValue(element) {
+            var value = parseFloat(element && element.value ? element.value : "0");
+            return isNaN(value) ? 0 : value;
+        }
+
+        function money(value) {
+            return value.toLocaleString("ar-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function setStatus(message, isError) {
+            if (!status) { return; }
+            status.textContent = message || "";
+            status.classList.toggle("is-error", !!isError);
+            status.classList.toggle("is-active", !!message);
+        }
+
+        function updateTotals() {
+            var amountValue = numberValue(amount);
+            var vatValue = numberValue(vat);
+            var includesVat = includeVat && includeVat.checked;
+            var netValue = includesVat ? Math.max(amountValue - vatValue, 0) : amountValue;
+            var grossValue = includesVat ? amountValue : amountValue + vatValue;
+            if (totalNet) { totalNet.textContent = money(netValue); }
+            if (totalVat) { totalVat.textContent = money(vatValue); }
+            if (totalGross) { totalGross.textContent = money(grossValue); }
+        }
+
+        function updatePaymentSource() {
+            var method = paymentMethod ? paymentMethod.value : "";
+            var wantsBank = method === "2";
+            var wantsBox = method === "0";
+            if (box) {
+                box.closest("label").classList.toggle("is-voucher-source-active", wantsBox);
+                box.closest("label").classList.toggle("is-voucher-source-muted", wantsBank);
+            }
+            if (bank) {
+                bank.closest("label").classList.toggle("is-voucher-source-active", wantsBank);
+                bank.closest("label").classList.toggle("is-voucher-source-muted", wantsBox);
+            }
+            if (sourceHint) {
+                sourceHint.textContent = wantsBank
+                    ? "سيتم اعتماد حساب البنك كطرف دائن في القيد."
+                    : "سيتم اعتماد حساب الخزنة كطرف دائن في القيد.";
+            }
+        }
+
+        function filterAccounts() {
+            if (!account || !accountFilter) { return; }
+            var term = accountFilter.value.toLowerCase();
+            var selectedValue = account.value;
+            var matches = originalAccountOptions.filter(function (item, index) {
+                return index === 0 || item.value === selectedValue || item.text.toLowerCase().indexOf(term) >= 0;
+            }).slice(0, 80);
+            account.innerHTML = "";
+            matches.forEach(function (item) {
+                var option = document.createElement("option");
+                option.value = item.value;
+                option.text = item.text;
+                option.selected = item.value === selectedValue;
+                account.appendChild(option);
+            });
+        }
+
+        function setBusy() {
+            isSubmitting = true;
+            form.setAttribute("aria-busy", "true");
+            if (saveButton) {
+                saveButton.disabled = true;
+                saveButton.setAttribute("data-original-text", saveButton.textContent);
+                saveButton.textContent = "جاري الحفظ...";
+            }
+            setStatus("جاري حفظ السند، يرجى الانتظار...");
+        }
+
+        [amount, vat, includeVat].forEach(function (element) {
+            if (!element) { return; }
+            element.addEventListener("input", updateTotals);
+            element.addEventListener("change", updateTotals);
+        });
+        [paymentMethod, box, bank].forEach(function (element) {
+            if (!element) { return; }
+            element.addEventListener("change", updatePaymentSource);
+        });
+        if (accountFilter) {
+            accountFilter.addEventListener("input", filterAccounts);
+        }
+
+        form.addEventListener("keydown", function (event) {
+            if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+                event.preventDefault();
+                if (isSubmitting) { return; }
+                if (saveButton) {
+                    saveButton.click();
+                } else if (form.requestSubmit) {
+                    form.requestSubmit();
+                } else {
+                    form.submit();
+                }
+            }
+        });
+
+        form.addEventListener("submit", function (event) {
+            if (isSubmitting) {
+                event.preventDefault();
+                setStatus("تم إرسال الطلب بالفعل. انتظر نتيجة الحفظ.", true);
+                return;
+            }
+            setBusy();
+        });
+
+        updateTotals();
+        updatePaymentSource();
+    })();
+</script>

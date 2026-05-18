@@ -200,4 +200,25 @@ namespace MyERP.Areas.MainErp.ViewModels.Payments
         public int VoucherId { get; set; }
         public string Message { get; set; }
     }
+
+    public class PaymentVoucherLegacyPrintProfileViewModel
+    {
+        public int NoteId { get; set; }
+        public string NoteSerial { get; set; }
+        public string NoteSerial1 { get; set; }
+        public int? PaymentType { get; set; }
+        public int? CashingType { get; set; }
+        public bool PaymentDifferent { get; set; }
+        public bool IsAdvancePayment { get; set; }
+        public bool IsDepositTransfer { get; set; }
+        public string ReportPath { get; set; }
+        public string ReportFileName { get; set; }
+        public string LegacyReportPath { get; set; }
+        public string DatasetName { get; set; }
+        public string SelectionRule { get; set; }
+        public string ParameterMap { get; set; }
+        public string MissingWebFields { get; set; }
+        public bool CrystalParityReady { get; set; }
+        public string BoundaryMessage { get; set; }
+    }
 }

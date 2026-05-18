@@ -232,6 +232,29 @@ namespace MyERP.Areas.Pos.Controllers
             return View("~/Areas/Pos/Views/Payments/Print.cshtml", model);
         }
 
+        public ActionResult LegacyCrystalPrintVoucher(int id)
+        {
+            var context = PosLoginController.RestorePosContext(Request, Session, _posRepository);
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            if (!_legacyPermissionService.CanPrint(context, "FrmCashing"))
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية طباعة سند قبض");
+            }
+
+            var profile = _repository.GetLegacyPrintProfile(id);
+            if (profile == null)
+            {
+                return HttpNotFound("Cashing voucher was not found.");
+            }
+
+            Response.StatusCode = profile.CrystalParityReady ? 200 : 501;
+            return Json(profile, JsonRequestBehavior.AllowGet);
+        }
+
         private ActionResult CashingEditView(PaymentVoucherEditViewModel model, bool isEdit, string warning)
         {
             model.Title = isEdit ? "تعديل سند قبض" : "إضافة سند قبض";

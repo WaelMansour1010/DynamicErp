@@ -1280,6 +1280,7 @@ ORDER BY v.Notes_ID, v.DEV_ID_Line_No, v.Double_Entry_Vouchers_ID;";
                     }
 
                     var postedRows = MarkSalaryRowsPosted(connection, transaction, request);
+                    var postedAdvanceInstallments = MarkPayrollAdvanceInstallmentsPosted(connection, transaction, request, userId, noteIdByBranch.Values.FirstOrDefault());
                     LinkPayrollRunPosting(connection, transaction, request, userId, noteIdByBranch.Values.ToList(), insertedLines, result.DebitTotal, result.CreditTotal);
                     transaction.Commit();
 
@@ -1290,7 +1291,7 @@ ORDER BY v.Notes_ID, v.DEV_ID_Line_No, v.Double_Entry_Vouchers_ID;";
                     result.VoucherLinesCount = insertedLines;
                     result.SalaryRowsMarkedPosted = postedRows;
                     result.NotesCount = result.NoteIds.Count;
-                    result.Message = "تم ترحيل قيد استحقاق الرواتب بنجاح.";
+                    result.Message = "تم ترحيل قيد استحقاق الرواتب بنجاح. تم تعليم " + postedAdvanceInstallments.ToString() + " قسط سلفة كمخصوم من المسير.";
                 }
                 catch
                 {
@@ -1847,6 +1848,46 @@ WHERE sgn = @Sgn
                 AddNullable(command, "@DepartmentId", SqlDbType.Int, request.DepartmentId);
                 AddNullable(command, "@EmployeeId", SqlDbType.Int, request.EmployeeId);
                 return command.ExecuteNonQuery();
+            }
+        }
+
+        private static int MarkPayrollAdvanceInstallmentsPosted(SqlConnection connection, SqlTransaction transaction, PayrollPostingRequest request, int userId, int noteId)
+        {
+            if (request == null || !request.PayrollRunId.HasValue || request.PayrollRunId.Value <= 0
+                || !TableExists(connection, transaction, "PayrollRunAdvanceDeductions")
+                || !TableExists(connection, transaction, "TblEmpAdvanceDetails"))
+            {
+                return 0;
+            }
+
+            using (var command = CreateCommand(connection, transaction, @"
+UPDATE d
+SET Payed = 1,
+    Remark = LEFT(LTRIM(RTRIM(ISNULL(d.Remark, N'') + N' ' + N'خصم من مسير الرواتب رقم ' + CONVERT(nvarchar(20), @PayrollRunId))), 4000)
+FROM dbo.TblEmpAdvanceDetails d
+INNER JOIN dbo.PayrollRunAdvanceDeductions l WITH (UPDLOCK, HOLDLOCK)
+    ON l.AdvanceDetailTableId = d.TableID
+WHERE l.PayrollRunId = @PayrollRunId
+  AND ISNULL(l.IsPosted, 0) = 0
+  AND (d.Payed IS NULL OR d.Payed <> 1);
+
+DECLARE @Rows int;
+SET @Rows = @@ROWCOUNT;
+
+UPDATE dbo.PayrollRunAdvanceDeductions
+SET IsPosted = 1,
+    PostedAt = GETDATE(),
+    PostedBy = @UserId,
+    NoteId = @NoteId
+WHERE PayrollRunId = @PayrollRunId
+  AND ISNULL(IsPosted, 0) = 0;
+
+SELECT @Rows;"))
+            {
+                command.Parameters.Add("@PayrollRunId", SqlDbType.Int).Value = request.PayrollRunId.Value;
+                command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+                AddNullable(command, "@NoteId", SqlDbType.Int, noteId > 0 ? (object)noteId : null);
+                return Convert.ToInt32(command.ExecuteScalar());
             }
         }
 
@@ -2700,6 +2741,16 @@ END"))
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = "SELECT COL_LENGTH('dbo." + tableName.Replace("'", "''") + "', @ColumnName);";
+                command.Parameters.Add("@ColumnName", SqlDbType.NVarChar, 128).Value = columnName;
+                var value = command.ExecuteScalar();
+                return value != null && value != DBNull.Value;
+            }
+        }
+
+        private static bool ColumnExists(SqlConnection connection, SqlTransaction transaction, string tableName, string columnName)
+        {
+            using (var command = CreateCommand(connection, transaction, "SELECT COL_LENGTH('dbo." + tableName.Replace("'", "''") + "', @ColumnName);"))
+            {
                 command.Parameters.Add("@ColumnName", SqlDbType.NVarChar, 128).Value = columnName;
                 var value = command.ExecuteScalar();
                 return value != null && value != DBNull.Value;
@@ -3574,6 +3625,16 @@ ORDER BY ABS(SUM(AllocationValue) - SUM(VoucherDebit)) DESC;";
                     return preview;
                 }
 
+                var hasVacationSnapshotColumns = ColumnExists(connection, "PayrollRunEmployees", "VacationDays")
+                    && ColumnExists(connection, "PayrollRunEmployees", "VacationDeduction")
+                    && ColumnExists(connection, "PayrollRunEmployees", "VacationSalaryValue")
+                    && ColumnExists(connection, "PayrollRunEmployees", "AbsentDays")
+                    && ColumnExists(connection, "PayrollRunEmployees", "CountDays")
+                    && ColumnExists(connection, "PayrollRunEmployees", "RemainingDays");
+                var vacationSnapshotSelect = hasVacationSnapshotColumns
+                    ? @"d.VacationDays, d.VacationDeduction, d.VacationSalaryValue, d.AbsentDays, d.CountDays, d.RemainingDays,"
+                    : @"CONVERT(money, 0) AS VacationDays, CONVERT(money, 0) AS VacationDeduction, CONVERT(money, 0) AS VacationSalaryValue, CONVERT(money, 0) AS AbsentDays, CONVERT(money, 0) AS CountDays, CONVERT(money, 0) AS RemainingDays,";
+
                 using (var command = connection.CreateCommand())
                 {
                     command.CommandText = @"
@@ -3582,6 +3643,7 @@ SELECT h.PayrollRunId, h.RunName, h.PeriodYear, h.PeriodMonth, h.BranchId, h.Dep
        d.DepartmentId AS RowDepartmentId, d.DepartmentName, d.ProjectId, d.BasicSalary, d.Allowances,
        d.VariableAdditions, d.Deductions, d.Advances, d.MedicalInsurance, d.MedicalInsuranceCompanyCost,
        d.TotalBeforeDeductions, d.TotalDeductions, d.NetSalary, d.EmployeeStatusAtRunTime,
+       " + vacationSnapshotSelect + @"
        d.ExistingSalaryRowId, d.IsPosted AS RowPosted, d.AccountCode, d.AccruedSalaryAccountCode,
        d.AdvancePaymentAccountCode, d.MedicalInsuranceEmployeeAccountCode, d.MedicalInsuranceCompanyAccountCode
 FROM dbo.PayrollRunHeader h WITH (NOLOCK)
@@ -3622,6 +3684,12 @@ ORDER BY d.EmployeeCode, d.EmployeeId;";
                                 AdvanceDeduction = ReadDecimal(reader, "Advances"),
                                 MedicalInsuranceDeduction = ReadDecimal(reader, "MedicalInsurance"),
                                 MedicalInsuranceCompanyCost = ReadDecimal(reader, "MedicalInsuranceCompanyCost"),
+                                VacationDays = ReadDecimal(reader, "VacationDays"),
+                                VacationDeduction = ReadDecimal(reader, "VacationDeduction"),
+                                VacationSalaryValue = ReadDecimal(reader, "VacationSalaryValue"),
+                                AbsentDays = ReadDecimal(reader, "AbsentDays"),
+                                CountDays = ReadDecimal(reader, "CountDays"),
+                                RemainingDays = ReadDecimal(reader, "RemainingDays"),
                                 TotalBeforeDeductions = ReadDecimal(reader, "TotalBeforeDeductions"),
                                 TotalDeductions = ReadDecimal(reader, "TotalDeductions"),
                                 NetSalary = ReadDecimal(reader, "NetSalary"),
@@ -3643,6 +3711,10 @@ ORDER BY d.EmployeeCode, d.EmployeeId;";
                 }
             }
 
+            using (var connection = OpenConnection())
+            {
+                AttachPayrollRunAdvanceInstallments(connection, preview);
+            }
             RecalculatePreviewTotals(preview);
             BuildJournalPreview(preview);
             using (var connection = OpenConnection())
@@ -3952,6 +4024,7 @@ ORDER BY h.CreatedAt DESC, h.PayrollRunId DESC;";
                 AttachCompatibilityComponents(connection, preview, sgn);
                 AttachInsuranceCompatibilityTrace(connection, preview, sgn);
                 AttachMedicalInsuranceCompatibility(connection, preview);
+                AttachRuntimeAdvanceInstallments(connection, preview);
             }
 
             RecalculateCompatibilityFallbackRows(preview);
@@ -4294,6 +4367,10 @@ ORDER BY e.Fullcode, e.Emp_Code, e.Emp_ID;";
                 }
             }
 
+            using (var connection = OpenConnection())
+            {
+                AttachRuntimeAdvanceInstallments(connection, preview);
+            }
             foreach (var row in preview.Rows)
             {
                 preview.TotalBasic += row.BasicSalary;
@@ -4342,6 +4419,131 @@ ORDER BY e.Fullcode, e.Emp_Code, e.Emp_ID;";
             }
         }
 
+        private void AttachRuntimeAdvanceInstallments(SqlConnection connection, SalaryRunPreview preview)
+        {
+            if (preview == null || preview.Rows == null || preview.Rows.Count == 0
+                || !TableExists(connection, "TblEmpAdvance")
+                || !TableExists(connection, "TblEmpAdvanceDetails"))
+            {
+                return;
+            }
+
+            var request = preview.Request ?? new SalaryRunRequest();
+            var employeeIds = preview.Rows.Select(x => x.EmployeeId).Distinct().ToList();
+            if (employeeIds.Count == 0)
+            {
+                return;
+            }
+
+            var employeeCsv = string.Join(",", employeeIds.Select(x => x.ToString()).ToArray());
+            var byEmployee = preview.Rows.ToDictionary(x => x.EmployeeId);
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = @"
+SELECT a.Emp_ID,
+       d.TableID,
+       d.AdvanceID,
+       ISNULL(d.PartNO, 0) AS PartNO,
+       d.PartDate,
+       ISNULL(d.PartValue, 0) AS PartValue,
+       ISNULL(d.Payed, 0) AS IsPosted,
+       ISNULL(d.StutsID, 0) AS StutsID,
+       d.MothID2,
+       d.YearID2
+FROM dbo.TblEmpAdvance a WITH (NOLOCK)
+INNER JOIN dbo.TblEmpAdvanceDetails d WITH (NOLOCK) ON d.AdvanceID = a.AdvanceID
+WHERE a.Emp_ID IN (" + employeeCsv + @")
+  AND ISNULL(a.AdvanceType, 0) = 0
+  AND ((MONTH(d.PartDate) = @Month AND YEAR(d.PartDate) = @Year)
+       OR (d.MothID2 = @Month AND d.YearID2 = @Year))
+  AND (d.Payed IS NULL OR d.Payed <> 1)
+ORDER BY a.Emp_ID, d.PartDate, d.TableID;";
+                command.Parameters.Add("@Year", SqlDbType.Int).Value = request.Year;
+                command.Parameters.Add("@Month", SqlDbType.Int).Value = request.Month;
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        SalaryRunEmployeeRow row;
+                        if (!byEmployee.TryGetValue(ReadInt(reader, "Emp_ID"), out row))
+                        {
+                            continue;
+                        }
+
+                        row.AdvanceInstallments.Add(new PayrollAdvanceInstallmentRow
+                        {
+                            TableId = ReadInt(reader, "TableID"),
+                            AdvanceId = ReadInt(reader, "AdvanceID"),
+                            PartNo = ReadInt(reader, "PartNO"),
+                            PartDate = FormatDate(reader["PartDate"]),
+                            PartValue = ReadDecimal(reader, "PartValue"),
+                            IsPosted = ReadBool(reader, "IsPosted"),
+                            StatusText = "جاهز للخصم",
+                            SourceText = "TblEmpAdvanceDetails"
+                        });
+                    }
+                }
+            }
+
+            foreach (var row in preview.Rows)
+            {
+                if (row.IsApproved)
+                {
+                    continue;
+                }
+
+                var installmentTotal = row.AdvanceInstallments.Sum(x => x.PartValue);
+                if (installmentTotal > 0 || row.AdvanceDeduction == 0)
+                {
+                    row.AdvanceDeduction = installmentTotal;
+                }
+            }
+        }
+
+        private void AttachPayrollRunAdvanceInstallments(SqlConnection connection, SalaryRunPreview preview)
+        {
+            if (preview == null || preview.Rows == null || preview.Rows.Count == 0
+                || !preview.PayrollRunId.HasValue
+                || !TableExists(connection, "PayrollRunAdvanceDeductions"))
+            {
+                return;
+            }
+
+            var byEmployee = preview.Rows.ToDictionary(x => x.EmployeeId);
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = @"
+SELECT EmployeeId, AdvanceDetailTableId, AdvanceId, PartNo, PartDate, PartValue, IsPosted
+FROM dbo.PayrollRunAdvanceDeductions WITH (NOLOCK)
+WHERE PayrollRunId = @PayrollRunId
+ORDER BY EmployeeId, PartDate, AdvanceDetailTableId;";
+                command.Parameters.Add("@PayrollRunId", SqlDbType.Int).Value = preview.PayrollRunId.Value;
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        SalaryRunEmployeeRow row;
+                        if (!byEmployee.TryGetValue(ReadInt(reader, "EmployeeId"), out row))
+                        {
+                            continue;
+                        }
+
+                        row.AdvanceInstallments.Add(new PayrollAdvanceInstallmentRow
+                        {
+                            TableId = ReadInt(reader, "AdvanceDetailTableId"),
+                            AdvanceId = ReadInt(reader, "AdvanceId"),
+                            PartNo = ReadInt(reader, "PartNo"),
+                            PartDate = FormatDate(reader["PartDate"]),
+                            PartValue = ReadDecimal(reader, "PartValue"),
+                            IsPosted = ReadBool(reader, "IsPosted"),
+                            StatusText = ReadBool(reader, "IsPosted") ? "تم خصمه من المسير" : "محفوظ في المسير",
+                            SourceText = "PayrollRunAdvanceDeductions"
+                        });
+                    }
+                }
+            }
+        }
+
         private void LoadCompatibilityRows(SqlConnection connection, SalaryRunPreview preview, string sgn)
         {
             var request = preview.Request;
@@ -4352,6 +4554,22 @@ ORDER BY e.Fullcode, e.Emp_Code, e.Emp_ID;";
                     && FunctionExists(connection, "EmpPrePaymentID")
                     && FunctionExists(connection, "EmpPrePaymentValue")
                     && FunctionExists(connection, "GetAbcentDay");
+                var hasEmpSalaryVacationColumns = ColumnExists(connection, "emp_salary", "TotalVacValue")
+                    && ColumnExists(connection, "emp_salary", "vacDay");
+                var savedVacationSelect = hasEmpSalaryVacationColumns
+                    ? "ISNULL(s.TotalVacValue, 0) AS TotalVacValue, ISNULL(s.vacDay, 0) AS SavedVacDay,"
+                    : "CONVERT(money, 0) AS TotalVacValue, CONVERT(money, 0) AS SavedVacDay,";
+                var runtimeVacationDaysSelect = FunctionExists(connection, "GetAbcentDay2")
+                    ? "dbo.GetAbcentDay2(e.Emp_ID, @Year, @Month) AS RuntimeVacationDays"
+                    : @"(
+        SELECT SUM(ISNULL(cd.NoofDays, 0))
+        FROM dbo.TblChangedComponentRegister cr WITH (NOLOCK)
+        LEFT JOIN dbo.TblChangedComponentRegisterDetails cd WITH (NOLOCK) ON cr.ChangedComponentid = cd.ChangedComponentid
+        WHERE cr.Actualmonth = @Month
+          AND cr.Actualyear = @Year
+          AND ISNULL(cd.value, 0) = 0
+          AND cd.Emp_id = e.Emp_ID
+    ) AS RuntimeVacationDays";
                 command.CommandText = hasLegacyFunctions ? @"
 SELECT
     e.Emp_ID, e.Emp_Code, e.Emp_Name, e.BranchId, b.branch_name, e.DepartmentID, d.DepartmentName,
@@ -4361,11 +4579,13 @@ SELECT
     ISNULL(s.Emp_Salary, 0) AS SavedEmpSalary,
     s.id AS SalaryRowId, s.payed, s.total1, s.total2, s.EmpTotalNet, s.TotalAdvance, s.TotalDiscount,
     s.ToalInsurance, s.CountDays, s.AbcentDay, s.RemainDay, s.VoCation3, s.Mokafea, s.SalesCom,
+    " + savedVacationSelect + @"
     ISNULL(a.TotalAdvance, 0) AS RuntimeAdvance,
     dbo.EmpInsurances(@Month - 1, @Year, e.Emp_ID) AS RuntimeInsurance,
     dbo.EmpVoCation3(@Month, @Year, e.Emp_ID) AS RuntimeVacation3,
     dbo.EmpPrePaymentValue(dbo.EmpPrePaymentID(e.Emp_ID)) AS RuntimePrePaymentValue,
-    dbo.GetAbcentDay(e.Emp_ID, @Year, @Month) AS RuntimeAbsentDays
+    dbo.GetAbcentDay(e.Emp_ID, @Year, @Month) AS RuntimeAbsentDays,
+    " + runtimeVacationDaysSelect + @"
 FROM dbo.TblEmployee e WITH (NOLOCK)
 LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = e.BranchId
 LEFT JOIN dbo.TblEmpDepartments d WITH (NOLOCK) ON d.DeparmentID = e.DepartmentID
@@ -4395,11 +4615,13 @@ SELECT
     ISNULL(s.Emp_Salary, 0) AS SavedEmpSalary,
     s.id AS SalaryRowId, s.payed, s.total1, s.total2, s.EmpTotalNet, s.TotalAdvance, s.TotalDiscount,
     s.ToalInsurance, s.CountDays, s.AbcentDay, s.RemainDay, s.VoCation3, s.Mokafea, s.SalesCom,
+    " + savedVacationSelect + @"
     ISNULL(a.TotalAdvance, 0) AS RuntimeAdvance,
     CONVERT(money, 0) AS RuntimeInsurance,
     CONVERT(money, 0) AS RuntimeVacation3,
     CONVERT(money, 0) AS RuntimePrePaymentValue,
-    CONVERT(money, 0) AS RuntimeAbsentDays
+    CONVERT(money, 0) AS RuntimeAbsentDays,
+    " + runtimeVacationDaysSelect + @"
 FROM dbo.TblEmployee e WITH (NOLOCK)
 LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = e.BranchId
 LEFT JOIN dbo.TblEmpDepartments d WITH (NOLOCK) ON d.DeparmentID = e.DepartmentID
@@ -4451,10 +4673,37 @@ ORDER BY e.Fullcode, e.Emp_Code, e.Emp_ID;";
                             insurance = ReadDecimal(reader, "RuntimeInsurance");
                         }
 
-                        var vacation3 = ReadDecimal(reader, "VoCation3");
+                        var savedVacation3 = ReadDecimal(reader, "VoCation3");
+                        var vacation3 = savedVacation3;
                         if (vacation3 == 0)
                         {
                             vacation3 = ReadDecimal(reader, "RuntimeVacation3");
+                        }
+                        var vacationDays = ReadDecimal(reader, "SavedVacDay");
+                        if (vacationDays == 0)
+                        {
+                            vacationDays = ReadDecimal(reader, "RuntimeVacationDays");
+                        }
+                        var countDays = ReadDecimal(reader, "CountDays");
+                        if (!hasSnapshot && countDays == 0)
+                        {
+                            countDays = GetPayrollMonthDayNo(ReadBool(reader, "MonthIs30days"), request.Year, request.Month);
+                        }
+                        var absentDays = hasSnapshot ? ReadDecimal(reader, "AbcentDay") : ReadDecimal(reader, "RuntimeAbsentDays");
+                        var remainingDays = ReadDecimal(reader, "RemainDay");
+                        if (!hasSnapshot)
+                        {
+                            remainingDays = Math.Max(0m, countDays - absentDays - vacationDays);
+                        }
+                        var isApproved = ReadNullableInt(reader, "payed").GetValueOrDefault() == 1;
+                        if (hasSnapshot && !isApproved)
+                        {
+                            snapshotTotal2 = Math.Max(0m, snapshotTotal2 - savedVacation3) + vacation3;
+                            snapshotNet = snapshotTotal1 - snapshotTotal2;
+                            if (countDays > 0)
+                            {
+                                remainingDays = Math.Max(0m, countDays - absentDays - vacationDays);
+                            }
                         }
 
                         var row = new SalaryRunEmployeeRow
@@ -4480,16 +4729,18 @@ ORDER BY e.Fullcode, e.Emp_Code, e.Emp_ID;";
                             TotalDeductions = hasSnapshot ? snapshotTotal2 : 0,
                             NetSalary = hasSnapshot ? snapshotNet : 0,
                             ExistingSalaryRowId = salaryRowId,
-                            IsApproved = ReadNullableInt(reader, "payed").GetValueOrDefault() == 1,
+                            IsApproved = isApproved,
                             EmployeeAccountCode = ReadString(reader, "Account_code"),
                             AccruedSalaryAccountCode = ReadString(reader, "Account_code1"),
                             VacationProvisionAccountCode = ReadString(reader, "Account_Code2"),
                             AdvancePaymentAccountCode = ReadString(reader, "Account_Code3"),
                             IsLegacySnapshot = hasSnapshot,
-                            CountDays = ReadDecimal(reader, "CountDays"),
-                            AbsentDays = hasSnapshot ? ReadDecimal(reader, "AbcentDay") : ReadDecimal(reader, "RuntimeAbsentDays"),
-                            RemainingDays = ReadDecimal(reader, "RemainDay"),
+                            CountDays = countDays,
+                            AbsentDays = absentDays,
+                            VacationDays = vacationDays,
+                            RemainingDays = remainingDays,
                             VacationDeduction = vacation3,
+                            VacationSalaryValue = ReadDecimal(reader, "TotalVacValue"),
                             TotalInsuranceLegacy = insurance,
                             CompatibilityStatus = hasSnapshot ? "LegacySnapshot" : "Reconstructed",
                             HiringDate = ReadNullableDate(reader, "BignDateWork"),
@@ -4855,14 +5106,67 @@ ORDER BY e.Emp_ID;";
         {
             foreach (var row in preview.Rows.Where(x => !x.IsLegacySnapshot))
             {
+                ApplyVacationAttendanceCompatibility(row);
                 var componentAddition = row.Components.Where(x => x.ViewComponent && !x.AddOrDiscount).Sum(x => x.SourceValue);
                 var deduction = row.Components.Where(x => x.ViewComponent && x.AddOrDiscount).Sum(x => x.SourceValue);
                 var addition = componentAddition != 0 ? componentAddition : row.BasicSalary;
                 row.BasicSalary = addition;
-                row.TotalBeforeDeductions = addition + row.VariableAdditions;
+                row.TotalBeforeDeductions = addition + row.VariableAdditions + row.VacationSalaryValue;
                 row.TotalDeductions = row.AdvanceDeduction + row.ExistingDiscounts + row.MedicalInsuranceDeduction + row.VacationDeduction + deduction;
                 row.NetSalary = row.TotalBeforeDeductions - row.TotalDeductions;
             }
+        }
+
+        private static void ApplyVacationAttendanceCompatibility(SalaryRunEmployeeRow row)
+        {
+            if (row == null || row.VacationDays <= 0 || row.Components == null || row.Components.Count == 0)
+            {
+                return;
+            }
+
+            var monthDays = GetPayrollMonthDayNo(row.MonthIs30Days, DateTime.Today.Year, DateTime.Today.Month);
+            if (row.PayrollMonthDays.HasValue && row.PayrollMonthDays.Value > 0)
+            {
+                monthDays = row.MonthIs30Days ? 30m : row.PayrollMonthDays.Value;
+            }
+
+            var paidWorkDays = row.CountDays > 0 ? row.CountDays - row.VacationDays : monthDays - row.VacationDays;
+            if (paidWorkDays < 0)
+            {
+                paidWorkDays = 0;
+            }
+
+            decimal vacationSalaryValue = 0;
+            foreach (var component in row.Components.Where(x => x.ViewComponent && !x.FixedOrChanged && !x.ShowMofradAll))
+            {
+                var baseValue = component.RawSourceValue != 0 ? component.RawSourceValue : component.SourceValue;
+                if (baseValue == 0)
+                {
+                    continue;
+                }
+
+                var denominator = component.Culc30OrReminder.GetValueOrDefault() == 0
+                    ? monthDays
+                    : (row.PayrollMonthDays.HasValue && row.PayrollMonthDays.Value > 0 ? row.PayrollMonthDays.Value : monthDays);
+                if (denominator <= 0)
+                {
+                    continue;
+                }
+
+                var digits = Math.Max(row.PayrollSalaryDigits, 0);
+                component.RawSourceValue = baseValue;
+                component.SourceValue = Math.Round(baseValue / denominator * paidWorkDays, digits);
+                component.TemporalProrationApplied = true;
+                component.TemporalAdjustedValue = component.SourceValue;
+                component.TemporalRulePath = FirstNonEmpty(component.TemporalRulePath, "full-period") + "|vacation-days-prorated";
+                if (!component.AddOrDiscount)
+                {
+                    vacationSalaryValue += Math.Round(baseValue / denominator * row.VacationDays, digits);
+                }
+            }
+
+            row.VacationSalaryValue = vacationSalaryValue;
+            row.RemainingDays = Math.Max(0m, (row.CountDays > 0 ? row.CountDays : monthDays) - row.AbsentDays - row.VacationDays);
         }
 
         private static PayrollCompatibilityComponentDiff BuildComponentDiff(SalaryRunEmployeeRow row, PayrollCompatibilityComponent component)
@@ -5083,7 +5387,7 @@ ORDER BY e.Emp_ID;";
             if (row.CountDays <= 0 && context.PayrollDays > 0)
             {
                 row.CountDays = context.PayrollDays;
-                row.RemainingDays = row.CountDays - row.AbsentDays;
+                row.RemainingDays = row.CountDays - row.AbsentDays - row.VacationDays;
             }
 
             context.ProrationBypassed = context.CountFlag && component.ShowMofradAll;
@@ -5131,6 +5435,11 @@ ORDER BY e.Emp_ID;";
             }
 
             return string.IsNullOrEmpty(reason) ? (DateTime?)null : start;
+        }
+
+        private static decimal GetPayrollMonthDayNo(bool monthIs30Days, int year, int month)
+        {
+            return monthIs30Days ? 30m : DateTime.DaysInMonth(year, month);
         }
 
         private static int CountActiveSources(PayrollCompatibilityComponent component)
@@ -5202,6 +5511,11 @@ ORDER BY e.Emp_ID;";
                     {
                         row.ExistingSalaryRowId = InsertSalaryRunRow(connection, transaction, row, preview.Request, sgn);
                         result.InsertedRows++;
+                    }
+
+                    if (payrollRunId > 0)
+                    {
+                        UpsertPayrollRunEmployee(connection, transaction, payrollRunId, row, userId);
                     }
 
                     SaveMedicalDeductionAudit(connection, transaction, row, preview.Request, periodStart, periodEnd, userId);
@@ -5296,6 +5610,8 @@ WHERE PayrollRunId = @PayrollRunId
                 UpsertPayrollRunEmployee(connection, transaction, payrollRunId, row, userId);
             }
 
+            SavePayrollAdvanceDeductionSnapshot(connection, transaction, payrollRunId, preview.Rows, userId);
+
             return payrollRunId;
         }
 
@@ -5323,6 +5639,28 @@ WHERE PayrollRunId = @PayrollRunId
 
         private static void UpsertPayrollRunEmployee(SqlConnection connection, SqlTransaction transaction, int payrollRunId, SalaryRunEmployeeRow row, int userId)
         {
+            var hasVacationSnapshotColumns = ColumnExists(connection, transaction, "PayrollRunEmployees", "VacationDays")
+                && ColumnExists(connection, transaction, "PayrollRunEmployees", "VacationDeduction")
+                && ColumnExists(connection, transaction, "PayrollRunEmployees", "VacationSalaryValue")
+                && ColumnExists(connection, transaction, "PayrollRunEmployees", "AbsentDays")
+                && ColumnExists(connection, transaction, "PayrollRunEmployees", "CountDays")
+                && ColumnExists(connection, transaction, "PayrollRunEmployees", "RemainingDays");
+            var vacationUpdateSet = hasVacationSnapshotColumns
+                ? @"
+        VacationDays = @VacationDays,
+        VacationDeduction = @VacationDeduction,
+        VacationSalaryValue = @VacationSalaryValue,
+        AbsentDays = @AbsentDays,
+        CountDays = @CountDays,
+        RemainingDays = @RemainingDays,"
+                : string.Empty;
+            var vacationInsertColumns = hasVacationSnapshotColumns
+                ? ", VacationDays, VacationDeduction, VacationSalaryValue, AbsentDays, CountDays, RemainingDays"
+                : string.Empty;
+            var vacationInsertValues = hasVacationSnapshotColumns
+                ? ", @VacationDays, @VacationDeduction, @VacationSalaryValue, @AbsentDays, @CountDays, @RemainingDays"
+                : string.Empty;
+
             using (var command = CreateCommand(connection, transaction, @"
 IF EXISTS (SELECT 1 FROM dbo.PayrollRunEmployees WHERE PayrollRunId = @PayrollRunId AND EmployeeId = @EmployeeId)
 BEGIN
@@ -5341,6 +5679,7 @@ BEGIN
         Advances = @Advances,
         MedicalInsurance = @MedicalInsurance,
         MedicalInsuranceCompanyCost = @MedicalInsuranceCompanyCost,
+        " + vacationUpdateSet + @"
         TotalBeforeDeductions = @TotalBeforeDeductions,
         TotalDeductions = @TotalDeductions,
         NetSalary = @NetSalary,
@@ -5360,13 +5699,13 @@ BEGIN
     INSERT INTO dbo.PayrollRunEmployees
     (PayrollRunId, EmployeeId, EmployeeCode, EmployeeName, BranchId, BranchName, DepartmentId, DepartmentName, ProjectId,
      BasicSalary, Allowances, VariableAdditions, Deductions, Advances, MedicalInsurance, MedicalInsuranceCompanyCost,
-     TotalBeforeDeductions, TotalDeductions, NetSalary, EmployeeStatusAtRunTime, ExistingSalaryRowId, IsPosted,
+     TotalBeforeDeductions, TotalDeductions, NetSalary, EmployeeStatusAtRunTime, ExistingSalaryRowId, IsPosted" + vacationInsertColumns + @",
      AccountCode, AccruedSalaryAccountCode, AdvancePaymentAccountCode, MedicalInsuranceEmployeeAccountCode,
      MedicalInsuranceCompanyAccountCode, CreatedBy)
     VALUES
     (@PayrollRunId, @EmployeeId, @EmployeeCode, @EmployeeName, @BranchId, @BranchName, @DepartmentId, @DepartmentName, @ProjectId,
      @BasicSalary, @Allowances, @VariableAdditions, @Deductions, @Advances, @MedicalInsurance, @MedicalInsuranceCompanyCost,
-     @TotalBeforeDeductions, @TotalDeductions, @NetSalary, @EmployeeStatusAtRunTime, @ExistingSalaryRowId, @IsPosted,
+     @TotalBeforeDeductions, @TotalDeductions, @NetSalary, @EmployeeStatusAtRunTime, @ExistingSalaryRowId, @IsPosted" + vacationInsertValues + @",
      @AccountCode, @AccruedSalaryAccountCode, @AdvancePaymentAccountCode, @MedicalInsuranceEmployeeAccountCode,
      @MedicalInsuranceCompanyAccountCode, @UserId);
 END"))
@@ -5387,6 +5726,15 @@ END"))
                 command.Parameters.Add("@Advances", SqlDbType.Money).Value = row.AdvanceDeduction;
                 command.Parameters.Add("@MedicalInsurance", SqlDbType.Money).Value = row.MedicalInsuranceDeduction;
                 command.Parameters.Add("@MedicalInsuranceCompanyCost", SqlDbType.Money).Value = row.MedicalInsuranceCompanyCost;
+                if (hasVacationSnapshotColumns)
+                {
+                    command.Parameters.Add("@VacationDays", SqlDbType.Money).Value = row.VacationDays;
+                    command.Parameters.Add("@VacationDeduction", SqlDbType.Money).Value = row.VacationDeduction;
+                    command.Parameters.Add("@VacationSalaryValue", SqlDbType.Money).Value = row.VacationSalaryValue;
+                    command.Parameters.Add("@AbsentDays", SqlDbType.Money).Value = row.AbsentDays;
+                    command.Parameters.Add("@CountDays", SqlDbType.Money).Value = row.CountDays;
+                    command.Parameters.Add("@RemainingDays", SqlDbType.Money).Value = row.RemainingDays;
+                }
                 command.Parameters.Add("@TotalBeforeDeductions", SqlDbType.Money).Value = row.TotalBeforeDeductions;
                 command.Parameters.Add("@TotalDeductions", SqlDbType.Money).Value = row.TotalDeductions;
                 command.Parameters.Add("@NetSalary", SqlDbType.Money).Value = row.NetSalary;
@@ -5400,6 +5748,69 @@ END"))
                 command.Parameters.Add("@MedicalInsuranceCompanyAccountCode", SqlDbType.NVarChar, 50).Value = (object)row.MedicalInsuranceCompanyAccountCode ?? DBNull.Value;
                 command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
                 command.ExecuteNonQuery();
+            }
+        }
+
+        private static void SavePayrollAdvanceDeductionSnapshot(SqlConnection connection, SqlTransaction transaction, int payrollRunId, IList<SalaryRunEmployeeRow> rows, int userId)
+        {
+            if (payrollRunId <= 0 || rows == null || rows.Count == 0 || !TableExists(connection, transaction, "PayrollRunAdvanceDeductions"))
+            {
+                return;
+            }
+
+            using (var delete = CreateCommand(connection, transaction, @"
+DELETE FROM dbo.PayrollRunAdvanceDeductions
+WHERE PayrollRunId = @PayrollRunId
+  AND ISNULL(IsPosted, 0) = 0;"))
+            {
+                delete.Parameters.Add("@PayrollRunId", SqlDbType.Int).Value = payrollRunId;
+                delete.ExecuteNonQuery();
+            }
+
+            using (var command = CreateCommand(connection, transaction, @"
+IF NOT EXISTS (
+    SELECT 1
+    FROM dbo.PayrollRunAdvanceDeductions
+    WHERE PayrollRunId = @PayrollRunId
+      AND AdvanceDetailTableId = @AdvanceDetailTableId
+)
+BEGIN
+    INSERT INTO dbo.PayrollRunAdvanceDeductions
+    (PayrollRunId, EmployeeId, SalaryRowId, AdvanceId, AdvanceDetailTableId, PartNo, PartDate, PartValue, CreatedBy)
+    VALUES
+    (@PayrollRunId, @EmployeeId, @SalaryRowId, @AdvanceId, @AdvanceDetailTableId, @PartNo, @PartDate, @PartValue, @UserId);
+END"))
+            {
+                command.Parameters.Add("@PayrollRunId", SqlDbType.Int);
+                command.Parameters.Add("@EmployeeId", SqlDbType.Int);
+                command.Parameters.Add("@SalaryRowId", SqlDbType.Int);
+                command.Parameters.Add("@AdvanceId", SqlDbType.Int);
+                command.Parameters.Add("@AdvanceDetailTableId", SqlDbType.Int);
+                command.Parameters.Add("@PartNo", SqlDbType.Int);
+                command.Parameters.Add("@PartDate", SqlDbType.DateTime);
+                command.Parameters.Add("@PartValue", SqlDbType.Money);
+                command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+
+                foreach (var row in rows)
+                {
+                    if (row.AdvanceInstallments == null || row.AdvanceInstallments.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    foreach (var part in row.AdvanceInstallments.Where(x => x.TableId > 0 && x.PartValue > 0))
+                    {
+                        command.Parameters["@PayrollRunId"].Value = payrollRunId;
+                        command.Parameters["@EmployeeId"].Value = row.EmployeeId;
+                        command.Parameters["@SalaryRowId"].Value = row.ExistingSalaryRowId.HasValue ? (object)row.ExistingSalaryRowId.Value : DBNull.Value;
+                        command.Parameters["@AdvanceId"].Value = part.AdvanceId;
+                        command.Parameters["@AdvanceDetailTableId"].Value = part.TableId;
+                        command.Parameters["@PartNo"].Value = part.PartNo;
+                        command.Parameters["@PartDate"].Value = ParseDisplayDate(part.PartDate);
+                        command.Parameters["@PartValue"].Value = part.PartValue;
+                        command.ExecuteNonQuery();
+                    }
+                }
             }
         }
 
@@ -5492,6 +5903,12 @@ ORDER BY id;"))
 
         private static int UpdateSalaryRunRow(SqlConnection connection, SqlTransaction transaction, SalaryRunEmployeeRow row, SalaryRunRequest request, string sgn)
         {
+            var hasLegacyVacationColumns = ColumnExists(connection, transaction, "emp_salary", "TotalVacValue") && ColumnExists(connection, transaction, "emp_salary", "vacDay");
+            var legacyVacationSet = hasLegacyVacationColumns
+                ? @",
+    TotalVacValue = @VacationSalaryValue,
+    vacDay = @VacationDays"
+                : string.Empty;
             using (var command = CreateCommand(connection, transaction, @"
 UPDATE dbo.emp_salary
 SET Emp_Code = @Code,
@@ -5510,11 +5927,12 @@ SET Emp_Code = @Code,
     project_id = @ProjectId,
     BranchId = @BranchId,
     DepartmentID = @DepartmentId,
-    RecordDate = GETDATE()" + BuildComponentUpdateSet(row) + @"
+    RecordDate = GETDATE()" + legacyVacationSet + BuildComponentUpdateSet(row) + @"
 WHERE id = @Id AND ISNULL(payed, 0) = 0;"))
             {
                 AddSalaryParameters(command, row, request, sgn);
                 AddSalarySnapshotParameters(command, row);
+                AddLegacyVacationSalaryParameters(command, row, hasLegacyVacationColumns);
                 command.Parameters.Add("@Id", SqlDbType.Int).Value = row.ExistingSalaryRowId.Value;
                 return command.ExecuteNonQuery();
             }
@@ -5522,15 +5940,19 @@ WHERE id = @Id AND ISNULL(payed, 0) = 0;"))
 
         private static int InsertSalaryRunRow(SqlConnection connection, SqlTransaction transaction, SalaryRunEmployeeRow row, SalaryRunRequest request, string sgn)
         {
+            var hasLegacyVacationColumns = ColumnExists(connection, transaction, "emp_salary", "TotalVacValue") && ColumnExists(connection, transaction, "emp_salary", "vacDay");
+            var legacyVacationInsertColumns = hasLegacyVacationColumns ? ", TotalVacValue, vacDay" : string.Empty;
+            var legacyVacationInsertValues = hasLegacyVacationColumns ? ", @VacationSalaryValue, @VacationDays" : string.Empty;
             using (var command = CreateCommand(connection, transaction, @"
 INSERT INTO dbo.emp_salary
-(emp_id, Emp_Code, Emp_Name, Emp_Salary, total1, TotalAdvance, TotalDiscount, total2, EmpTotalNet, sgn, m_year, m_month, payed, DepartmentID, BranchId, project_id, ToalInsurance, VoCation3, AbcentDay, CountDays, RemainDay, RecordDate" + BuildComponentInsertColumns(row) + @")
+(emp_id, Emp_Code, Emp_Name, Emp_Salary, total1, TotalAdvance, TotalDiscount, total2, EmpTotalNet, sgn, m_year, m_month, payed, DepartmentID, BranchId, project_id, ToalInsurance, VoCation3, AbcentDay, CountDays, RemainDay, RecordDate" + legacyVacationInsertColumns + BuildComponentInsertColumns(row) + @")
 VALUES
-(@EmployeeId, @Code, @Name, @Basic, @TotalBefore, @Advance, @Discounts, @TotalDeductions, @Net, @Sgn, @YearText, @MonthText, 0, @DepartmentId, @BranchId, @ProjectId, @Insurance, @VacationDeduction, @AbsentDays, @CountDays, @RemainingDays, GETDATE()" + BuildComponentInsertValues(row) + @");
+(@EmployeeId, @Code, @Name, @Basic, @TotalBefore, @Advance, @Discounts, @TotalDeductions, @Net, @Sgn, @YearText, @MonthText, 0, @DepartmentId, @BranchId, @ProjectId, @Insurance, @VacationDeduction, @AbsentDays, @CountDays, @RemainingDays, GETDATE()" + legacyVacationInsertValues + BuildComponentInsertValues(row) + @");
 SELECT CONVERT(int, SCOPE_IDENTITY());"))
             {
                 AddSalaryParameters(command, row, request, sgn);
                 AddSalarySnapshotParameters(command, row);
+                AddLegacyVacationSalaryParameters(command, row, hasLegacyVacationColumns);
                 return Convert.ToInt32(command.ExecuteScalar());
             }
         }
@@ -7126,6 +7548,17 @@ ORDER BY Account_Serial;"))
             }
         }
 
+        private static void AddLegacyVacationSalaryParameters(SqlCommand command, SalaryRunEmployeeRow row, bool includeParameters)
+        {
+            if (!includeParameters)
+            {
+                return;
+            }
+
+            command.Parameters.Add("@VacationSalaryValue", SqlDbType.Float).Value = Convert.ToDouble(row.VacationSalaryValue);
+            command.Parameters.Add("@VacationDays", SqlDbType.Float).Value = Convert.ToDouble(row.VacationDays);
+        }
+
         private static decimal GetComponentSnapshotValue(SalaryRunEmployeeRow row, int componentNo)
         {
             var component = row.Components.FirstOrDefault(x => x.ComponentNo == componentNo);
@@ -7517,6 +7950,23 @@ ORDER BY Account_Serial;"))
         {
             var value = reader[name];
             return value == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(value);
+        }
+
+        private static string FormatDate(object value)
+        {
+            if (value == null || value == DBNull.Value)
+            {
+                return string.Empty;
+            }
+
+            DateTime date;
+            return DateTime.TryParse(Convert.ToString(value), out date) ? date.ToString("yyyy/MM/dd") : Convert.ToString(value);
+        }
+
+        private static object ParseDisplayDate(string value)
+        {
+            DateTime date;
+            return DateTime.TryParse(value, out date) ? (object)date : DBNull.Value;
         }
 
         private static bool ReadBool(IDataRecord reader, string name)
