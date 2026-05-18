@@ -282,7 +282,9 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية استيراد العمليات من Excel");
             }
 
-            if ((screen == "employee-payroll" || screen == "salary-run" || screen == "medical-insurance" || screen == "medical-insurance-reports") && !CanOpenEmployeePayroll(context))
+            if ((screen == "employee-payroll" || screen == "salary-run" || screen == "medical-insurance" || screen == "medical-insurance-reports"
+                || screen == "hr-advances" || screen == "hr-payroll-items" || screen == "hr-absences" || screen == "hr-vacations" || screen == "hr-allowances" || screen == "hr-end-service")
+                && !CanOpenEmployeePayroll(context))
             {
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية فتح شاشات الموظفين والرواتب");
             }
@@ -514,32 +516,32 @@ namespace MyERP.Areas.Pos.Controllers
 
             if (screen == "hr-advances")
             {
-                return Url.Content("~/MainErp/Hr/Advances?fromPos=1&host=pos");
+                return Url.Content("~/Pos/Hr/Advances");
             }
 
             if (screen == "hr-payroll-items")
             {
-                return Url.Content("~/MainErp/Hr/PayrollItems?fromPos=1&host=pos");
+                return Url.Content("~/Pos/Hr/PayrollItems");
             }
 
             if (screen == "hr-absences")
             {
-                return Url.Content("~/MainErp/Hr/Absences?fromPos=1&host=pos");
+                return Url.Content("~/Pos/Hr/Absences");
             }
 
             if (screen == "hr-vacations")
             {
-                return Url.Content("~/MainErp/Hr/Vacations?fromPos=1&host=pos");
+                return Url.Content("~/Pos/Hr/Vacations");
             }
 
             if (screen == "hr-allowances")
             {
-                return Url.Content("~/MainErp/Hr/Allowances?fromPos=1&host=pos");
+                return Url.Content("~/Pos/Hr/Allowances");
             }
 
             if (screen == "hr-end-service")
             {
-                return Url.Content("~/MainErp/Hr/EndOfService?fromPos=1&host=pos");
+                return Url.Content("~/Pos/Hr/EndOfService");
             }
 
             if (screen == "system-health")

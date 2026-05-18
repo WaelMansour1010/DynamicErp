@@ -601,12 +601,16 @@
     <Compile Include="Common\DiscountNotifications\DiscountNotificationReadRepository.cs" />
     <Compile Include="Common\EmployeePayroll\EmployeePayrollModels.cs" />
     <Compile Include="Common\EmployeePayroll\EmployeePayrollRepository.cs" />
+    <Compile Include="Common\EnterpriseHr\EnterpriseHrRepository.cs" />
+    <Compile Include="Common\EnterpriseHr\EnterpriseHrService.cs" />
+    <Compile Include="Common\EnterpriseHr\EnterpriseHrViewModels.cs" />
     <Compile Include="Common\JournalEntries\SharedJournalEntryCore.cs" />
     <Compile Include="Common\JournalEntries\SharedJournalEntryModels.cs" />
     <Compile Include="Common\JournalEntries\SharedJournalService.cs" />
     <Compile Include="Common\JournalEntries\SharedJournalSqlRepository.cs" />
     <Content Include="Views\Shared\EnterpriseHr\_EmployeePayrollEmployees.cshtml" />
     <Content Include="Views\Shared\EnterpriseHr\_EmployeePayrollSalaryRun.cshtml" />
+    <Content Include="Views\Shared\EnterpriseHr\_LegacyHrFinance.cshtml" />
     <Content Include="Views\Shared\EnterpriseHr\_MedicalInsuranceOperational.cshtml" />
     <Content Include="Views\Shared\EnterpriseHr\_MedicalInsuranceReports.cshtml" />
     <Content Include="Views\Shared\EnterpriseHr\_MedicalInsuranceSettings.cshtml" />
@@ -630,6 +634,7 @@
     <Compile Include="Areas\Pos\Controllers\SalesTargetsController.cs" />
     <Compile Include="Areas\Pos\Controllers\JournalEntriesController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosDashboardController.cs" />
+    <Compile Include="Areas\Pos\Controllers\HrController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosLoginController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosSystemHealthController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosSqlUpdatesController.cs" />
@@ -4224,6 +4229,7 @@
     <Content Include="Areas\MainErp\Content\financial-expenses.css" />
     <Content Include="Areas\MainErp\Content\financial-administration.css" />
     <Content Include="Areas\MainErp\Content\legacy-hr-finance.css" />
+    <Content Include="Content\EnterpriseHr\legacy-hr-finance.css" />
     <Content Include="Areas\MainErp\Content\items.css" />
     <Content Include="Areas\MainErp\Content\legacy-operations.css" />
     <Content Include="Areas\MainErp\Content\master-data-import.css" />
@@ -4241,6 +4247,7 @@
     <Content Include="Areas\MainErp\Scripts\financial-expenses.js" />
     <Content Include="Areas\MainErp\Scripts\financial-administration.js" />
     <Content Include="Areas\MainErp\Scripts\legacy-hr-finance.js" />
+    <Content Include="Content\EnterpriseHr\legacy-hr-finance.js" />
     <Content Include="Areas\MainErp\Scripts\items.js" />
     <Content Include="Areas\MainErp\Scripts\employee-payroll.js" />
     <Content Include="Areas\MainErp\Scripts\legacy-operations.js" />
@@ -4452,6 +4459,7 @@
     <Content Include="Areas\Pos\Views\EmployeePayroll\MedicalInsurance.cshtml" />
     <Content Include="Areas\Pos\Views\EmployeePayroll\MedicalInsuranceReports.cshtml" />
     <Content Include="Areas\Pos\Views\EmployeePayroll\SalaryRun.cshtml" />
+    <Content Include="Areas\Pos\Views\Hr\Index.cshtml" />
     <Content Include="Areas\Pos\Views\KycBankFollowUp\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosLogin\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PrintTemplate\Index.cshtml" />

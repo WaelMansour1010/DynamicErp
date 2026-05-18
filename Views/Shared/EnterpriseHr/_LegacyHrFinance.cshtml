@@ -1,0 +1,256 @@
+@model MyERP.Common.EnterpriseHr.LegacyHrFinancePageViewModel
+@using System.Linq
+@using System.Globalization
+
+<section class="lhf-page" data-lhf-page="@Model.ModuleKey"
+         data-host-context="@Model.HostContext"
+         data-screen-key="@Model.ScreenKey"
+         data-component-details-url="@Model.ComponentDetailsUrl"
+         data-save-component-url="@Model.SaveComponentUrl"
+         data-advance-details-url="@Model.AdvanceDetailsUrl"
+         data-save-advance-url="@Model.SaveAdvanceUrl"
+         data-delete-advance-url="@Model.DeleteAdvanceUrl"
+         data-employee-lookup-url="@Model.EmployeeLookupUrl">
+    @Html.AntiForgeryToken()
+    <header class="lhf-hero">
+        <div>
+            <span>@Model.SourceSystem</span>
+            <h2>@Model.Title</h2>
+            <p>شاشة مشتركة بين POS و MainERP ضمن شؤون الموظفين، مع الحفاظ على سياق النظام المفتوح.</p>
+        </div>
+        <form method="get" class="lhf-search @(Model.ModuleKey == "advances" ? "lhf-search-wide" : "")">
+            <input type="search" name="searchText" value="@Model.SearchText" placeholder="بحث بالكود أو الموظف أو البيان" />
+            <select name="employeeStatus" title="حالة الموظف">
+                <option value="active" @(Model.EmployeeStatus == "active" ? "selected" : "")>الموظفون النشطون</option>
+                <option value="stopped" @(Model.EmployeeStatus == "stopped" ? "selected" : "")>الموظفون الموقوفون</option>
+                <option value="all" @(Model.EmployeeStatus == "all" ? "selected" : "")>كل الموظفين</option>
+            </select>
+            @if (Model.ModuleKey == "advances")
+            {
+                <select name="employeeId" title="الموظف">
+                    <option value="">كل الموظفين</option>
+                    @foreach (var employee in Model.Employees)
+                    {
+                        <option value="@employee.Id" @(Model.EmployeeId == employee.Id ? "selected" : "")>@employee.Code - @employee.Name</option>
+                    }
+                </select>
+                <input type="date" name="dateFrom" value="@Model.DateFrom" title="من تاريخ" />
+                <input type="date" name="dateTo" value="@Model.DateTo" title="إلى تاريخ" />
+                <select name="advanceStatus" title="حالة السلفة">
+                    <option value="all" @(Model.AdvanceStatus == "all" ? "selected" : "")>كل الحالات</option>
+                    <option value="draft" @(Model.AdvanceStatus == "draft" ? "selected" : "")>مسودة</option>
+                    <option value="approved" @(Model.AdvanceStatus == "approved" ? "selected" : "")>معتمدة</option>
+                    <option value="posted" @(Model.AdvanceStatus == "posted" ? "selected" : "")>مرسلة/مرحلة</option>
+                    <option value="accounting-approved" @(Model.AdvanceStatus == "accounting-approved" ? "selected" : "")>معتمدة محاسبياً</option>
+                    <option value="rejected" @(Model.AdvanceStatus == "rejected" ? "selected" : "")>مرفوضة</option>
+                </select>
+            }
+            <button type="submit"><i class="fas fa-search"></i><span>بحث</span></button>
+        </form>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Warning))
+    {
+        <div class="lhf-warning"><i class="fas fa-exclamation-triangle"></i><span>@Model.Warning</span></div>
+    }
+
+    <div class="lhf-metrics">
+        @foreach (var metric in Model.Metrics)
+        {
+            <article><span>@metric.Label</span><strong>@metric.Value</strong><small>@metric.Hint</small></article>
+        }
+    </div>
+
+    @if (Model.ModuleKey == "advances")
+    {
+        <section class="lhf-panel lhf-advances-panel">
+            <header>
+                <div>
+                    <h3>طلبات السلف</h3>
+                    <span>هذه الشاشة تحفظ طلب السلفة وأقساطها. القيد المحاسبي الفعلي يظل ضمن شاشة صرف السلفة حسب منطق VB6.</span>
+                </div>
+                @if (Model.Permissions.CanAdd)
+                {
+                    <button type="button" class="lhf-primary" data-new-advance><i class="fas fa-plus"></i><span>طلب سلفة جديد</span></button>
+                }
+            </header>
+            <div class="lhf-table-wrap">
+                <table class="lhf-table lhf-advance-table">
+                    <thead>
+                        <tr>
+                            <th>رقم</th>
+                            <th>الموظف</th>
+                            <th>الفرع / الإدارة</th>
+                            <th>التاريخ</th>
+                            <th>القيمة</th>
+                            <th>الأقساط</th>
+                            <th>المتبقي</th>
+                            <th>الحالة</th>
+                            <th>ملاحظات</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.Advances)
+                        {
+                            <tr data-advance-id="@row.Id">
+                                <td><code>@row.Id</code></td>
+                                <td><strong>@row.EmployeeName</strong><small>@row.EmployeeCode</small></td>
+                                <td><strong>@row.BranchName</strong><small>@row.DepartmentName</small></td>
+                                <td>@row.AdvanceDate</td>
+                                <td class="lhf-num">@row.AdvanceValue.ToString("N2")</td>
+                                <td><strong>@row.PaymentCounts</strong><small>أول قسط: @row.FirstMonthPayment / @row.FirstYearPayment</small></td>
+                                <td class="lhf-num">@row.RemainingAmount.ToString("N2")</td>
+                                <td>
+                                    @if (row.Rejected) { <span class="lhf-badge danger">مرفوضة</span> }
+                                    else if (row.AccountingApproved) { <span class="lhf-badge success">معتمدة محاسبياً</span> }
+                                    else if (row.Posted) { <span class="lhf-badge warning">مرسلة</span> }
+                                    else if (row.Approved) { <span class="lhf-badge success">معتمدة</span> }
+                                    else { <span class="lhf-badge info">مسودة</span> }
+                                    @if (row.PaidPartsCount > 0) { <span class="lhf-badge warning">به أقساط مسددة</span> }
+                                </td>
+                                <td><span>@row.Reason</span><small>@row.LockReason</small></td>
+                                <td class="lhf-actions">
+                                    @if (Model.Permissions.CanEdit && row.CanEdit)
+                                    {
+                                        <button type="button" data-edit-advance="@row.Id">تعديل</button>
+                                    }
+                                    @if (Model.Permissions.CanDelete && row.CanDelete)
+                                    {
+                                        <button type="button" data-delete-advance="@row.Id">حذف</button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Advances.Any())
+                        {
+                            <tr><td colspan="10" class="lhf-empty">لا توجد طلبات سلف مطابقة للفلاتر الحالية.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+    else if (Model.ModuleKey == "components")
+    {
+        <section class="lhf-panel">
+            <header>
+                <h3>كتالوج مكونات الرواتب</h3>
+                @if (Model.Permissions.CanAdd)
+                {
+                    <button type="button" class="lhf-primary" data-new-component><i class="fas fa-plus"></i><span>مكون جديد</span></button>
+                }
+            </header>
+            <div class="lhf-table-wrap">
+                <table class="lhf-table">
+                    <thead><tr><th>المكون</th><th>الحساب</th><th>التصنيف</th><th>طريقة الحساب</th><th>ظهور</th></tr></thead>
+                    <tbody>
+                        @foreach (var row in Model.Components)
+                        {
+                            <tr data-component-id="@row.Id">
+                                <td><strong>@row.Name</strong><small>@row.NameEnglish</small></td>
+                                <td><span class="lhf-muted-account">يتم عرض الحسابات من شاشة معاينة القيد بأسماء واضحة</span></td>
+                                <td>
+                                    <span class="lhf-badge @(row.AddOrDiscount ? "success" : "danger")">@(row.AddOrDiscount ? "إضافة" : "خصم")</span>
+                                    @if (row.Salary) { <span class="lhf-badge info">راتب</span> }
+                                    @if (row.Insurance) { <span class="lhf-badge warning">تأمين</span> }
+                                    @if (row.Reward) { <span class="lhf-badge success">مكافأة</span> }
+                                </td>
+                                <td>@(row.FixedOrChanged ? "متغير" : "ثابت") - وحدة @row.Unit</td>
+                                <td>@(row.ViewComponent ? "ظاهر" : "مخفي")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+    else
+    {
+        <section class="lhf-panel">
+            <header><h3>السجلات</h3><span>دورة قراءة محكومة</span></header>
+            <div class="lhf-table-wrap">
+                <table class="lhf-table">
+                    <thead><tr><th>رقم</th><th>البيان</th><th>التاريخ/الفترة</th><th>القيمة</th><th>الحالة</th><th>تفاصيل</th></tr></thead>
+                    <tbody>
+                        @foreach (var row in Model.Rows)
+                        {
+                            <tr>
+                                <td><code>@row.Id</code></td>
+                                <td><strong>@row.Primary</strong><small>@row.Secondary</small></td>
+                                <td>@row.Period</td>
+                                <td>@row.Amount</td>
+                                <td>
+                                    @foreach (var tag in row.Tags)
+                                    {
+                                        <span class="lhf-badge info">@tag</span>
+                                    }
+                                </td>
+                                <td>@row.Details</td>
+                            </tr>
+                        }
+                        @if (!Model.Rows.Any())
+                        {
+                            <tr><td colspan="6" class="lhf-empty">لا توجد سجلات مطابقة للبحث الحالي.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    }
+
+    <aside class="lhf-editor" id="lhfComponentEditor" hidden>
+        <form class="lhf-editor-card" id="lhfComponentForm">
+            <header><h3>مكون راتب</h3><button type="button" data-close-component><i class="fas fa-times"></i></button></header>
+            <input type="hidden" id="lhfComponentId" name="Id" />
+            <div class="lhf-editor-grid">
+                <label><span>الاسم العربي</span><input id="lhfName" name="Name" required /></label>
+                <label><span>الاسم الإنجليزي</span><input id="lhfNameEnglish" name="NameEnglish" /></label>
+                <label class="lhf-hidden-technical"><span>حساب المصروف/الاستحقاق</span><input id="lhfAccountCode" name="AccountCode" /></label>
+                <label class="lhf-hidden-technical"><span>حساب مقابل</span><input id="lhfAccountCode1" name="AccountCode1" /></label>
+                <label><span>الوحدة</span><input id="lhfUnit" name="Unit" type="number" /></label>
+                <label><span>ترتيب/طريقة الاحتساب</span><input id="lhfAllowIntroduction" name="AllowIntroduction" type="number" /></label>
+                <label class="lhf-check"><input id="lhfAddOrDiscount" name="AddOrDiscount" type="checkbox" /><span>إضافة وليست خصم</span></label>
+                <label class="lhf-check"><input id="lhfFixedOrChanged" name="FixedOrChanged" type="checkbox" /><span>متغير</span></label>
+                <label class="lhf-check"><input id="lhfViewComponent" name="ViewComponent" type="checkbox" /><span>ظاهر في المسير</span></label>
+                <label class="lhf-check"><input id="lhfSalary" name="Salary" type="checkbox" /><span>يدخل في الراتب</span></label>
+                <label class="lhf-check"><input id="lhfAbsence" name="Absence" type="checkbox" /><span>غياب</span></label>
+                <label class="lhf-check"><input id="lhfLate" name="Late" type="checkbox" /><span>تأخير</span></label>
+                <label class="lhf-check"><input id="lhfOvertime" name="Overtime" type="checkbox" /><span>إضافي</span></label>
+                <label class="lhf-check"><input id="lhfInsurance" name="Insurance" type="checkbox" /><span>تأمين</span></label>
+                <label class="lhf-check"><input id="lhfReward" name="Reward" type="checkbox" /><span>مكافأة</span></label>
+            </div>
+            <footer><span id="lhfEditorMessage"></span><button type="button" data-close-component>إلغاء</button><button type="submit" class="lhf-primary">حفظ</button></footer>
+        </form>
+    </aside>
+
+    <aside class="lhf-editor" id="lhfAdvanceEditor" hidden>
+        <form class="lhf-editor-card" id="lhfAdvanceForm">
+            <header><h3>طلب سلفة موظف</h3><button type="button" data-close-advance><i class="fas fa-times"></i></button></header>
+            <input type="hidden" id="lhfAdvanceId" name="Id" />
+            <div class="lhf-editor-grid">
+                <label class="lhf-span-2"><span>الموظف</span>
+                    <select id="lhfAdvanceEmployeeId" name="EmployeeId" required>
+                        <option value="">اختر الموظف</option>
+                        @foreach (var employee in Model.Employees)
+                        {
+                            <option value="@employee.Id" data-salary="@employee.BasicSalary.ToString(CultureInfo.InvariantCulture)" data-branch="@employee.BranchName" data-department="@employee.DepartmentName">@employee.Code - @employee.Name</option>
+                        }
+                    </select>
+                </label>
+                <label><span>تاريخ الطلب</span><input id="lhfAdvanceDate" name="AdvanceDate" type="date" required /></label>
+                <label><span>قيمة السلفة</span><input id="lhfAdvanceValue" name="AdvanceValue" type="number" step="0.01" min="0.01" required /></label>
+                <label><span>عدد الأقساط</span><input id="lhfPaymentCounts" name="PaymentCounts" type="number" min="1" max="84" required /></label>
+                <label><span>أول شهر للسداد</span><input id="lhfFirstMonthPayment" name="FirstMonthPayment" type="number" min="1" max="12" required /></label>
+                <label><span>أول سنة للسداد</span><input id="lhfFirstYearPayment" name="FirstYearPayment" type="number" min="1900" max="2100" required /></label>
+                <label class="lhf-check"><input id="lhfAutoDiscount" name="AutoDiscount" type="checkbox" checked /><span>يخصم تلقائياً من الراتب</span></label>
+                <label class="lhf-span-3"><span>السبب / الملاحظات</span><input id="lhfAdvanceReason" name="Reason" maxlength="4000" /></label>
+                <div class="lhf-advance-summary lhf-span-3">
+                    <span id="lhfAdvanceEmployeeMeta">اختر موظفاً لعرض الفرع والإدارة والراتب الأساسي.</span>
+                    <strong id="lhfAdvancePartsPreview">سيتم حساب الأقساط عند الحفظ.</strong>
+                </div>
+            </div>
+            <footer><span id="lhfAdvanceMessage"></span><button type="button" data-close-advance>إلغاء</button><button type="submit" class="lhf-primary">حفظ طلب السلفة</button></footer>
+        </form>
+    </aside>
+</section>

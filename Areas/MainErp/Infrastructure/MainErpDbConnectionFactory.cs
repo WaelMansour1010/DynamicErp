@@ -4,10 +4,11 @@ using System.Diagnostics;
 using System.Web;
 using MyERP.Areas.MainErp.Interfaces;
 using MyERP.Areas.MainErp.Security;
+using MyERP.Common.EnterpriseHr;
 
 namespace MyERP.Areas.MainErp.Infrastructure
 {
-    public class MainErpDbConnectionFactory : IMainErpDbConnectionFactory
+    public class MainErpDbConnectionFactory : IMainErpDbConnectionFactory, IEnterpriseHrDbConnectionFactory
     {
         public const string DefaultConnectionStringName = "MainErp_ConnectionString";
         public const string ActiveConnectionStringNameKey = "MainErp.ActiveConnectionStringName";

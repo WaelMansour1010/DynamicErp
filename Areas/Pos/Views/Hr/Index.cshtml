@@ -1,0 +1,28 @@
+@model MyERP.Common.EnterpriseHr.LegacyHrFinancePageViewModel
+@{
+    Layout = null;
+    ViewBag.Title = Model.Title;
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <script>
+        (function () {
+            var key = "kishny.pos.theme";
+            var saved = null;
+            try { saved = localStorage.getItem(key); } catch (e) { saved = null; }
+            document.documentElement.setAttribute("data-pos-theme", saved === "dark" ? "dark" : "light");
+        })();
+    </script>
+    <link href="@Url.Content("~/assets/css/Courses/css/fontawesome-all.min.css")" rel="stylesheet" />
+    <link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css?v=20260518-hr-shared")" rel="stylesheet" />
+    <link href="@Url.Content("~/Content/EnterpriseHr/legacy-hr-finance.css?v=20260518-shared")" rel="stylesheet" />
+</head>
+<body class="pos-embedded-page pos-enterprise-hr-page" dir="rtl">
+    @Html.Partial("~/Views/Shared/EnterpriseHr/_LegacyHrFinance.cshtml", Model)
+    <script src="@Url.Content("~/Content/EnterpriseHr/legacy-hr-finance.js?v=20260518-shared")"></script>
+</body>
+</html>
