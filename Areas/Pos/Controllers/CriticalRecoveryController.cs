@@ -1,37 +1,61 @@
 using System;
 using System.Web.Mvc;
+using MyERP.Areas.Pos.Data;
+using MyERP.Areas.Pos.Models;
 using MyERP.Areas.Shared.CriticalRecovery;
 
 namespace MyERP.Areas.Pos.Controllers
 {
-    [CriticalRecoveryAuthorize]
     public class CriticalRecoveryController : Controller
     {
+        private readonly PosSqlRepository _repository = new PosSqlRepository();
         private readonly CriticalRecoveryService _service = new CriticalRecoveryService("Pos");
 
         public ActionResult Index()
         {
-            return View("~/Areas/Shared/CriticalRecovery/Views/Index.cshtml", _service.BuildIndex("Pos"));
+            var context = RequireAdminContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            ViewBag.PosContext = context;
+            ViewBag.ActiveScreen = "critical-recovery";
+            return View("Index", _service.BuildIndex("Pos"));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Analyze(CriticalRecoveryIndexViewModel model)
         {
+            var context = RequireAdminContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
             model = model ?? new CriticalRecoveryIndexViewModel();
             model.AreaName = "Pos";
             model.Impact = _service.Analyze(model.Filter);
             var fresh = _service.BuildIndex("Pos");
             model.SnapshotBatches = fresh.SnapshotBatches;
             model.AuditItems = fresh.AuditItems;
-            TempData["CriticalRecoveryMessage"] = "Preview only. No data was changed.";
-            return View("~/Areas/Shared/CriticalRecovery/Views/Index.cshtml", model);
+            model.BranchOptions = fresh.BranchOptions;
+            ViewBag.PosContext = context;
+            ViewBag.ActiveScreen = "critical-recovery";
+            TempData["CriticalRecoveryMessage"] = "تمت المعاينة فقط. لم يتم تعديل أي بيانات.";
+            return View("Index", model);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Export(CriticalRecoveryIndexViewModel model)
         {
+            if (RequireAdminContext() == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
             model = model ?? new CriticalRecoveryIndexViewModel();
             var impact = _service.Analyze(model.Filter);
             return File(_service.BuildExcelExport(impact), "application/vnd.ms-excel", "CriticalRecovery_AffectedRows.xls");
@@ -41,10 +65,16 @@ namespace MyERP.Areas.Pos.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Initiate(CriticalRecoveryIndexViewModel model)
         {
+            var context = RequireAdminContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
             try
             {
                 model = model ?? new CriticalRecoveryIndexViewModel();
-                var result = _service.Initiate(model.Filter, model.Request, CurrentUserName(), Request);
+                var result = _service.Initiate(model.Filter, model.Request, context.UserName, Request);
                 TempData[result.Success ? "CriticalRecoveryMessage" : "CriticalRecoveryError"] = result.Message;
             }
             catch (Exception ex)
@@ -59,10 +89,16 @@ namespace MyERP.Areas.Pos.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult ApproveAndExecute(CriticalRecoveryIndexViewModel model)
         {
+            var context = RequireAdminContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
             try
             {
                 model = model ?? new CriticalRecoveryIndexViewModel();
-                var result = _service.ApproveAndExecute(model.Request, CurrentUserName(), Request);
+                var result = _service.ApproveAndExecute(model.Request, context.UserName, Request);
                 TempData[result.Success ? "CriticalRecoveryMessage" : "CriticalRecoveryError"] = result.Message;
             }
             catch (Exception ex)
@@ -77,10 +113,16 @@ namespace MyERP.Areas.Pos.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Restore(CriticalRecoveryIndexViewModel model)
         {
+            var context = RequireAdminContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
             try
             {
                 model = model ?? new CriticalRecoveryIndexViewModel();
-                var result = _service.Restore(model.Restore, CurrentUserName(), Request);
+                var result = _service.Restore(model.Restore, context.UserName, Request);
                 TempData[result.Success ? "CriticalRecoveryMessage" : "CriticalRecoveryError"] = result.Message;
             }
             catch (Exception ex)
@@ -93,12 +135,24 @@ namespace MyERP.Areas.Pos.Controllers
 
         public ActionResult MenuItem()
         {
-            return PartialView("~/Areas/Shared/CriticalRecovery/Views/_CriticalRecoveryMenuItem.cshtml", "Pos");
+            return PartialView("_CriticalRecoveryMenuItem", "Pos");
         }
 
-        private string CurrentUserName()
+        private PosUserContext RequireAdminContext()
         {
-            return User == null || User.Identity == null ? string.Empty : User.Identity.Name;
+            var context = PosLoginController.RestorePosContext(Request, Session, _repository);
+            if (context == null)
+            {
+                TempData["PosLoginMessage"] = PosLoginController.PosSessionExpiredMessage;
+                return null;
+            }
+
+            if (context.UserType.GetValueOrDefault(-1) != 0 && !context.IsFullAccess)
+            {
+                throw new UnauthorizedAccessException("Critical Recovery Center requires POS admin access.");
+            }
+
+            return context;
         }
     }
 }

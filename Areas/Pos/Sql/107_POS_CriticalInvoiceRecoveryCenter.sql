@@ -1,5 +1,80 @@
 SET ANSI_NULLS ON
 GO
+
+DECLARE @CriticalRecoveryCaptionAr nvarchar(220);
+SET @CriticalRecoveryCaptionAr =
+    NCHAR(0x0645) + NCHAR(0x0631) + NCHAR(0x0643) + NCHAR(0x0632) + N' ' +
+    NCHAR(0x0627) + NCHAR(0x0644) + NCHAR(0x0627) + NCHAR(0x0633) + NCHAR(0x062A) + NCHAR(0x0631) + NCHAR(0x062C) + NCHAR(0x0627) + NCHAR(0x0639) + N' ' +
+    NCHAR(0x0627) + NCHAR(0x0644) + NCHAR(0x062D) + NCHAR(0x0631) + NCHAR(0x062C);
+
+IF OBJECT_ID(N'dbo.WebModules', N'U') IS NOT NULL
+   AND OBJECT_ID(N'dbo.WebScreens', N'U') IS NOT NULL
+BEGIN
+    DECLARE @AdminModuleId int;
+
+    SELECT TOP (1) @AdminModuleId = WebModuleId
+    FROM dbo.WebModules
+    WHERE ModuleKey = N'POS.Admin';
+
+    IF @AdminModuleId IS NOT NULL
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM dbo.WebScreens WHERE ScreenKey = N'POS.CriticalRecovery.Index')
+        BEGIN
+            INSERT INTO dbo.WebScreens
+            (
+                WebModuleId,
+                ScreenKey,
+                ArabicCaption,
+                EnglishCaption,
+                AreaName,
+                ControllerName,
+                ActionName,
+                RouteUrl,
+                IconCss,
+                DisplayOrder,
+                IsActive,
+                IsMenuVisible,
+                CreatedAt,
+                UpdatedAt
+            )
+            VALUES
+            (
+                @AdminModuleId,
+                N'POS.CriticalRecovery.Index',
+                @CriticalRecoveryCaptionAr,
+                N'Critical Recovery Center',
+                N'Pos',
+                N'CriticalRecovery',
+                N'Index',
+                N'/Pos/CriticalRecovery/Index',
+                N'fas fa-exclamation-triangle',
+                45,
+                1,
+                1,
+                GETDATE(),
+                GETDATE()
+            );
+        END
+        ELSE
+        BEGIN
+            UPDATE dbo.WebScreens
+               SET WebModuleId = @AdminModuleId,
+                   ArabicCaption = @CriticalRecoveryCaptionAr,
+                   EnglishCaption = N'Critical Recovery Center',
+                   AreaName = N'Pos',
+                   ControllerName = N'CriticalRecovery',
+                   ActionName = N'Index',
+                   RouteUrl = N'/Pos/CriticalRecovery/Index',
+                   IconCss = N'fas fa-exclamation-triangle',
+                   DisplayOrder = 45,
+                   IsActive = 1,
+                   IsMenuVisible = 1,
+                   UpdatedAt = GETDATE()
+             WHERE ScreenKey = N'POS.CriticalRecovery.Index';
+        END
+    END
+END
+GO
 SET QUOTED_IDENTIFIER ON
 GO
 
@@ -231,6 +306,7 @@ CREATE PROCEDURE dbo.usp_CriticalRecovery_AnalyzeInvoices
     @DateFrom datetime = NULL,
     @DateTo datetime = NULL,
     @InvoiceType int = NULL,
+    @InvoiceScope nvarchar(30) = N'SalesOnly',
     @InvoiceNo nvarchar(100) = N'',
     @CashierUserId nvarchar(128) = N'',
     @CustomerSearch nvarchar(200) = N'',
@@ -263,7 +339,7 @@ BEGIN
     IF OBJECT_ID('dbo.Transactions','U') IS NULL
     BEGIN
         SELECT * FROM #AffectedInvoices;
-        SELECT CAST(NULL AS bigint) Transaction_ID, CAST(N'' AS nvarchar(100)) ModuleName, CAST(N'' AS sysname) TableName, CAST(0 AS int) RowCount, CAST(0 AS int) IsProtected, CAST(N'' AS nvarchar(30)) ActionPolicy WHERE 1=0;
+        SELECT CAST(NULL AS bigint) Transaction_ID, CAST(N'' AS nvarchar(100)) ModuleName, CAST(N'' AS sysname) TableName, CAST(0 AS int) [RowCount], CAST(0 AS int) IsProtected, CAST(N'' AS nvarchar(30)) ActionPolicy WHERE 1=0;
         SELECT N'dbo.Transactions was not found.' WarningMessage;
         RETURN;
     END
@@ -284,6 +360,16 @@ BEGIN
     DECLARE @postedExpr nvarchar(200);
     SET @postedExpr = CASE WHEN COL_LENGTH('dbo.Transactions','Posted') IS NOT NULL THEN N'CASE WHEN ISNULL(T.Posted,0)<>0 THEN 1 ELSE 0 END' ELSE N'0' END;
 
+    DECLARE @valueExpr nvarchar(200);
+    SET @valueExpr = CASE
+        WHEN COL_LENGTH('dbo.Transactions','Note_Value') IS NOT NULL THEN N'T.Note_Value'
+        WHEN COL_LENGTH('dbo.Transactions','NetValue') IS NOT NULL THEN N'T.NetValue'
+        WHEN COL_LENGTH('dbo.Transactions','Total') IS NOT NULL THEN N'T.Total'
+        WHEN COL_LENGTH('dbo.Transactions','FinacilaTotal') IS NOT NULL THEN N'T.FinacilaTotal'
+        WHEN COL_LENGTH('dbo.Transactions','Transaction_NetValue') IS NOT NULL THEN N'T.Transaction_NetValue'
+        ELSE N'0'
+    END;
+
     DECLARE @customerJoin nvarchar(max);
     SET @customerJoin = CASE WHEN OBJECT_ID('dbo.TblCustemers','U') IS NOT NULL AND COL_LENGTH('dbo.Transactions','CusID') IS NOT NULL THEN N' LEFT JOIN dbo.TblCustemers C ON T.CusID=C.CusID ' ELSE N'' END;
 
@@ -295,19 +381,23 @@ BEGIN
 INSERT #AffectedInvoices(Transaction_ID, NoteID, InvoiceNo, InvoiceType, BranchId, Transaction_Date, CustomerName, Note_Value, IsPosted, IsClosed, KycReferenceIds)
 SELECT TOP 5000 CAST(T.Transaction_ID AS bigint), CAST(' + @noteExpr + N' AS bigint), ' + @serialExpr + N',
        CAST(T.Transaction_Type AS int), CAST(' + @branchExpr + N' AS int), T.Transaction_Date,
-       ' + @customerExpr + N', CAST(ISNULL(T.Note_Value,0) AS decimal(19,4)), ' + @postedExpr + N', 0, N''''
+       ' + @customerExpr + N', CAST(ISNULL(' + @valueExpr + N',0) AS decimal(19,4)), ' + @postedExpr + N', 0, N''''
 FROM dbo.Transactions T ' + @customerJoin + N'
 WHERE (@BranchId IS NULL OR ' + @branchExpr + N' = @BranchId)
   AND (@DateFrom IS NULL OR T.Transaction_Date >= @DateFrom)
   AND (@DateTo IS NULL OR T.Transaction_Date < DATEADD(DAY,1,@DateTo))
-  AND (@InvoiceType IS NULL OR T.Transaction_Type = @InvoiceType)
+  AND (
+        (@InvoiceType IS NOT NULL AND T.Transaction_Type = @InvoiceType)
+        OR (@InvoiceType IS NULL AND @InvoiceScope = N''SalesAndReturns'' AND T.Transaction_Type IN (21,9))
+        OR (@InvoiceType IS NULL AND ISNULL(@InvoiceScope,N''SalesOnly'') <> N''SalesAndReturns'' AND T.Transaction_Type = 21)
+      )
   AND (@InvoiceNo = N'''' OR ' + @serialExpr + N' LIKE N''%'' + @InvoiceNo + N''%'')
   AND (@SelectedTransactionIds = N'''' OR CHARINDEX(N'','' + CONVERT(nvarchar(30),T.Transaction_ID) + N'','', N'','' + @SelectedTransactionIds + N'','') > 0)
 ORDER BY T.Transaction_Date DESC, T.Transaction_ID DESC';
 
     EXEC sp_executesql @sql,
-        N'@BranchId int,@DateFrom datetime,@DateTo datetime,@InvoiceType int,@InvoiceNo nvarchar(100),@SelectedTransactionIds nvarchar(max)',
-        @BranchId,@DateFrom,@DateTo,@InvoiceType,@InvoiceNo,@SelectedTransactionIds;
+        N'@BranchId int,@DateFrom datetime,@DateTo datetime,@InvoiceType int,@InvoiceScope nvarchar(30),@InvoiceNo nvarchar(100),@SelectedTransactionIds nvarchar(max)',
+        @BranchId,@DateFrom,@DateTo,@InvoiceType,@InvoiceScope,@InvoiceNo,@SelectedTransactionIds;
 
     IF OBJECT_ID('dbo.TransactionKycLinks','U') IS NOT NULL
     BEGIN
@@ -323,7 +413,7 @@ ORDER BY T.Transaction_Date DESC, T.Transaction_ID DESC';
     FROM #AffectedInvoices
     ORDER BY Transaction_Date DESC, Transaction_ID DESC;
 
-    CREATE TABLE #Dependency(Transaction_ID bigint, ModuleName nvarchar(100), TableName sysname, RowCount int, IsProtected int, ActionPolicy nvarchar(30));
+    CREATE TABLE #Dependency(Transaction_ID bigint, ModuleName nvarchar(100), TableName sysname, [RowCount] int, IsProtected int, ActionPolicy nvarchar(30));
 
     DECLARE c CURSOR LOCAL FAST_FORWARD FOR
         SELECT ModuleName, TableName, PrimaryKeyColumn, RelationColumn, RelationType, IsProtected, ActionPolicy
@@ -337,7 +427,7 @@ ORDER BY T.Transaction_Date DESC, T.Transaction_ID DESC';
     BEGIN
         IF @rel IS NOT NULL AND COL_LENGTH('dbo.' + @table, @rel) IS NOT NULL
         BEGIN
-            SET @sql = N'INSERT #Dependency(Transaction_ID, ModuleName, TableName, RowCount, IsProtected, ActionPolicy)
+            SET @sql = N'INSERT #Dependency(Transaction_ID, ModuleName, TableName, [RowCount], IsProtected, ActionPolicy)
 SELECT A.Transaction_ID, @ModuleName, @TableName, COUNT(1), @IsProtected, @ActionPolicy
 FROM #AffectedInvoices A
 JOIN dbo.' + QUOTENAME(@table) + N' X ON X.' + QUOTENAME(@rel) + N' = CASE WHEN @RelationType=N''NoteId'' THEN A.NoteID ELSE A.Transaction_ID END
@@ -349,9 +439,9 @@ GROUP BY A.Transaction_ID';
     CLOSE c;
     DEALLOCATE c;
 
-    SELECT Transaction_ID, ModuleName, TableName, RowCount, IsProtected, ActionPolicy
+    SELECT Transaction_ID, ModuleName, TableName, [RowCount], IsProtected, ActionPolicy
     FROM #Dependency
-    WHERE RowCount > 0
+    WHERE [RowCount] > 0
     ORDER BY Transaction_ID, ModuleName, TableName;
 
     SELECT WarningMessage FROM
@@ -370,6 +460,7 @@ CREATE PROCEDURE dbo.usp_CriticalRecovery_InitiateRequest
     @DateFrom datetime = NULL,
     @DateTo datetime = NULL,
     @InvoiceType int = NULL,
+    @InvoiceScope nvarchar(30) = N'SalesOnly',
     @InvoiceNo nvarchar(100) = N'',
     @CashierUserId nvarchar(128) = N'',
     @CustomerSearch nvarchar(200) = N'',
@@ -425,6 +516,16 @@ BEGIN
     END
 
     DECLARE @RequestId int;
+    IF @InvoiceType IS NULL AND ISNULL(@InvoiceScope,N'SalesOnly') = N'SalesAndReturns'
+    BEGIN
+        SET @InvoiceType = -1;
+    END
+
+    IF @InvoiceType IS NULL AND ISNULL(@InvoiceScope,N'SalesOnly') <> N'SalesAndReturns'
+    BEGIN
+        SET @InvoiceType = 21;
+    END
+
     INSERT dbo.CriticalRecoveryRequest(RequestedBy, Mode, Reason, BranchId, DateFrom, DateTo, InvoiceType, InvoiceNo, SelectedTransactionIds, DryRun, AllowPhysicalDelete, DeleteOrphanKycRecords, MachineName, IpAddress, SessionId)
     VALUES(@RequestedBy, @Mode, @Reason, @BranchId, @DateFrom, @DateTo, @InvoiceType, @InvoiceNo, @SelectedTransactionIds, @DryRun, @AllowPhysicalDelete, @DeleteOrphanKycRecords, @MachineName, @IpAddress, @SessionId);
     SET @RequestId = SCOPE_IDENTITY();
@@ -517,6 +618,16 @@ BEGIN
         SET @serialExpr = CASE WHEN COL_LENGTH('dbo.Transactions','NoteSerial1') IS NOT NULL THEN N'CONVERT(nvarchar(100),T.NoteSerial1)' WHEN COL_LENGTH('dbo.Transactions','ManualNO') IS NOT NULL THEN N'CONVERT(nvarchar(100),T.ManualNO)' ELSE N'CONVERT(nvarchar(100),T.Transaction_ID)' END;
         DECLARE @postedExpr nvarchar(200);
         SET @postedExpr = CASE WHEN COL_LENGTH('dbo.Transactions','Posted') IS NOT NULL THEN N'CASE WHEN ISNULL(T.Posted,0)<>0 THEN 1 ELSE 0 END' ELSE N'0' END;
+
+        DECLARE @valueExpr nvarchar(200);
+        SET @valueExpr = CASE
+            WHEN COL_LENGTH('dbo.Transactions','Note_Value') IS NOT NULL THEN N'T.Note_Value'
+            WHEN COL_LENGTH('dbo.Transactions','NetValue') IS NOT NULL THEN N'T.NetValue'
+            WHEN COL_LENGTH('dbo.Transactions','Total') IS NOT NULL THEN N'T.Total'
+            WHEN COL_LENGTH('dbo.Transactions','FinacilaTotal') IS NOT NULL THEN N'T.FinacilaTotal'
+            WHEN COL_LENGTH('dbo.Transactions','Transaction_NetValue') IS NOT NULL THEN N'T.Transaction_NetValue'
+            ELSE N'0'
+        END;
         DECLARE @customerJoin nvarchar(max);
         SET @customerJoin = CASE WHEN OBJECT_ID('dbo.TblCustemers','U') IS NOT NULL AND COL_LENGTH('dbo.Transactions','CusID') IS NOT NULL THEN N' LEFT JOIN dbo.TblCustemers C ON T.CusID=C.CusID ' ELSE N'' END;
         DECLARE @customerExpr nvarchar(400);
@@ -527,12 +638,16 @@ BEGIN
 INSERT #AffectedInvoices(Transaction_ID, NoteID, InvoiceNo, InvoiceType, BranchId, Transaction_Date, CustomerName, Note_Value, IsPosted, IsClosed, KycReferenceIds)
 SELECT TOP 5000 CAST(T.Transaction_ID AS bigint), CAST(' + @noteExpr + N' AS bigint), ' + @serialExpr + N',
        CAST(T.Transaction_Type AS int), CAST(' + @branchExpr + N' AS int), T.Transaction_Date,
-       ' + @customerExpr + N', CAST(ISNULL(T.Note_Value,0) AS decimal(19,4)), ' + @postedExpr + N', 0, N''''
+       ' + @customerExpr + N', CAST(ISNULL(' + @valueExpr + N',0) AS decimal(19,4)), ' + @postedExpr + N', 0, N''''
 FROM dbo.Transactions T ' + @customerJoin + N'
 WHERE (@BranchId IS NULL OR ' + @branchExpr + N' = @BranchId)
   AND (@DateFrom IS NULL OR T.Transaction_Date >= @DateFrom)
   AND (@DateTo IS NULL OR T.Transaction_Date < DATEADD(DAY,1,@DateTo))
-  AND (@InvoiceType IS NULL OR T.Transaction_Type = @InvoiceType)
+  AND (
+        @InvoiceType IS NULL
+        OR (@InvoiceType = -1 AND T.Transaction_Type IN (21,9))
+        OR T.Transaction_Type = @InvoiceType
+      )
   AND (@InvoiceNo = N'''' OR ' + @serialExpr + N' LIKE N''%'' + @InvoiceNo + N''%'')
   AND (@Selected = N'''' OR CHARINDEX(N'','' + CONVERT(nvarchar(30),T.Transaction_ID) + N'','', N'','' + @Selected + N'','') > 0)
 ORDER BY T.Transaction_Date DESC, T.Transaction_ID DESC';

@@ -2835,6 +2835,7 @@
                 openKycModal();
                 loadKycCustomerFromQuery();
             }
+            loadReviewInvoiceFromQuery();
             setCommissionStatus(commissionsReady ? "تم تحميل إعدادات العمولات" : "تعذر تحميل إعدادات العمولات. لا يمكن الحفظ قبل إعادة تحميل الشاشة.", !commissionsReady);
         });
     }
@@ -2852,6 +2853,12 @@
 
             setKycMessage((data && data.message) || "تعذر تحميل بيانات KYC المطلوبة", true);
         });
+    }
+
+    function loadReviewInvoiceFromQuery() {
+        var transactionId = parseInt(queryValue("reviewTransactionId"), 10) || 0;
+        if (transactionId <= 0) { return; }
+        loadInvoiceForReview(transactionId);
     }
 
     function showSalesEntry() {
@@ -5725,7 +5732,9 @@
     initTodayInvoicesPanelState();
     refreshPhoneInputs();
     refreshNationalIdInputs();
-    if (salesIndexFirst()) {
+    if (queryValue("reviewTransactionId")) {
+        showSalesEntry();
+    } else if (salesIndexFirst()) {
         showSalesIndex();
     } else {
         initializePosEntry(queryValue("openKyc") === "true" || kycStandalone());

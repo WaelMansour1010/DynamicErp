@@ -1,12 +1,10 @@
 @model MyERP.Areas.MainErp.ViewModels.Security.MainErpPermissionsIndexViewModel
-@using System.Linq
 @using System.Web
 @{
     ViewBag.Title = "الصلاحيات على الشاشات";
     var host = (Model.Host ?? "").Trim();
     var isPosHost = string.Equals(host, "pos", System.StringComparison.OrdinalIgnoreCase);
     Layout = isPosHost ? null : "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
-    var hostQuery = string.IsNullOrWhiteSpace(host) ? "" : "&host=" + HttpUtility.UrlEncode(host);
     var endpointArea = isPosHost ? "Pos" : "MainErp";
     var endpointController = isPosHost ? "WebPermissions" : "Permissions";
     var usersUrl = isPosHost ? Url.Content("~/Pos/PosLegacyAdmin/Users") : Url.Action("Index", "Users", new { area = "MainErp" });
@@ -17,12 +15,12 @@
     <link href="@Url.Content("~/assets/css/Courses/css/fontawesome-all.min.css")" rel="stylesheet" />
 }
 
-<section class="web-permissions-page" dir="rtl" data-host="@host" data-area="@Model.DefaultAreaFilter" data-admin="@(Model.IsAdminView ? "true" : "false")">
+<section class="web-permissions-page" dir="rtl" data-host="@host" data-area="@Model.DefaultAreaFilter">
     <header class="web-perm-header">
         <div>
             <span class="web-perm-eyebrow">WebScreenPermissions</span>
             <h1>الصلاحيات على الشاشات</h1>
-            <p>كتالوج صلاحيات ويب مستقل يعرض أسماء الشاشات الحقيقية ومساراتها، بدون الاعتماد على أسماء نماذج VB6 القديمة.</p>
+            <p>كتالوج صلاحيات ويب منفصل يعرض شاشات النظام الحقيقية ويختصر إدارة الصلاحيات بالمجموعات والقوالب والتطبيق الجماعي.</p>
         </div>
         <div class="web-perm-actions">
             <a class="web-perm-btn" href="@usersUrl"><i class="fas fa-users-cog"></i><span>المستخدمون</span></a>
@@ -32,7 +30,7 @@
 
     <div class="web-perm-kpis" id="permissionKpis">
         <article><span>المستخدمون النشطون</span><strong>0</strong><small>من جدول المستخدمين</small></article>
-        <article><span>شاشات الويب</span><strong>0</strong><small>WebScreens</small></article>
+        <article><span>شاشات الويب</span><strong>0</strong><small>ضمن النطاق الحالي</small></article>
         <article><span>صلاحيات ممنوحة</span><strong>0</strong><small>إجمالي الأعلام المفعلة</small></article>
         <article><span>بدون صلاحيات</span><strong>0</strong><small>مستخدمون بلا أي صلاحية ويب</small></article>
     </div>
@@ -52,9 +50,18 @@
             </select>
         </label>
         <label>
-            <span>المستخدم</span>
+            <span>المستخدم الحالي</span>
             <select id="userFilter">
                 <option value="">اختر مستخدم</option>
+                @foreach (var user in Model.Users)
+                {
+                    <option value="@user.Id">@user.Name</option>
+                }
+            </select>
+        </label>
+        <label>
+            <span>مستخدمون للتطبيق الجماعي</span>
+            <select id="bulkUsers" multiple size="1">
                 @foreach (var user in Model.Users)
                 {
                     <option value="@user.Id">@user.Name</option>
@@ -81,21 +88,38 @@
         </label>
         <label class="web-perm-search">
             <span>بحث</span>
-            <input id="searchFilter" type="search" placeholder="اسم الشاشة، المسار، أو ScreenKey" />
+            <input id="searchFilter" type="search" placeholder="اسم الشاشة، المسار، ScreenKey أو اسم قديم" />
         </label>
         <button type="button" class="web-perm-btn web-perm-btn-primary" id="reloadMatrixBtn"><i class="fas fa-search"></i><span>بحث</span></button>
     </section>
+
+    <section class="web-perm-quickbar">
+        <div>
+            <strong>تطبيق سريع</strong>
+            <span>اختر مستخدما أو عدة مستخدمين ثم طبق على المجموعة أو الشاشة المحددة.</span>
+        </div>
+        <div class="web-perm-toolbar-actions">
+            <button type="button" class="web-perm-btn web-perm-btn-success" data-bulk-mode="full"><i class="fas fa-check-double"></i><span>صلاحية كاملة</span></button>
+            <button type="button" class="web-perm-btn" data-bulk-mode="view"><i class="fas fa-eye"></i><span>عرض فقط</span></button>
+            <button type="button" class="web-perm-btn" data-bulk-mode="nodelete"><i class="fas fa-shield-alt"></i><span>كامل بدون حذف</span></button>
+            <button type="button" class="web-perm-btn web-perm-btn-danger" data-bulk-mode="clear"><i class="fas fa-ban"></i><span>إزالة الصلاحية</span></button>
+        </div>
+    </section>
+
+    <div class="web-perm-module-grid" id="moduleCards"></div>
 
     <section class="web-perm-panel active" data-panel="users">
         <div class="web-perm-toolbar">
             <div>
                 <h2>وضع المستخدم</h2>
-                <p>اختر مستخدما ثم عدل صلاحياته على شاشات الويب، مجمعة حسب الموديول.</p>
+                <p>عدل صلاحيات المستخدم على الشاشات. يمكن تطبيق صلاحية كاملة على شاشة أو مجموعة بضغطة واحدة.</p>
             </div>
             <div class="web-perm-toolbar-actions">
-                <button type="button" class="web-perm-btn" id="selectModuleBtn"><i class="fas fa-check-double"></i><span>تحديد الموديول</span></button>
-                <button type="button" class="web-perm-btn" id="clearModuleBtn"><i class="fas fa-eraser"></i><span>مسح الموديول</span></button>
-                <a class="web-perm-btn" id="exportMatrixLink" href="@Url.Action("Export", endpointController, new { area = endpointArea })?userId=0@hostQuery"><i class="fas fa-file-excel"></i><span>تصدير Excel</span></a>
+                <button type="button" class="web-perm-btn" id="selectModuleBtn"><i class="fas fa-check-double"></i><span>Full للمجموعة</span></button>
+                <button type="button" class="web-perm-btn" id="viewOnlyModuleBtn"><i class="fas fa-eye"></i><span>عرض فقط</span></button>
+                <button type="button" class="web-perm-btn" id="noDeleteModuleBtn"><i class="fas fa-shield-alt"></i><span>بدون حذف</span></button>
+                <button type="button" class="web-perm-btn" id="clearModuleBtn"><i class="fas fa-eraser"></i><span>مسح المجموعة</span></button>
+                <a class="web-perm-btn" id="exportMatrixLink" href="@Url.Action("Export", endpointController, new { area = endpointArea })?userId=0"><i class="fas fa-file-excel"></i><span>تصدير Excel</span></a>
             </div>
         </div>
         <div class="web-perm-table-wrap">
@@ -103,7 +127,8 @@
                 <thead>
                     <tr>
                         <th>الشاشة</th>
-                        <th>الموديول</th>
+                        <th>المجموعة</th>
+                        <th>كامل</th>
                         <th>عرض</th>
                         <th>إضافة</th>
                         <th>تعديل</th>
@@ -114,7 +139,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td colspan="9" class="web-perm-empty">اختر مستخدما لعرض مصفوفة الصلاحيات.</td></tr>
+                    <tr><td colspan="10" class="web-perm-empty">جار تحميل شاشات الويب...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -125,11 +150,16 @@
         <div class="web-perm-toolbar">
             <div>
                 <h2>وضع الشاشة</h2>
-                <p>اختر شاشة من المصفوفة لمعرفة المستخدمين الذين لديهم صلاحية عليها.</p>
+                <p>اختر شاشة لعرض كل المستخدمين الذين لديهم صلاحية عليها، مع نوع الصلاحية.</p>
+            </div>
+            <div class="web-perm-toolbar-actions web-screen-picker">
+                <input id="screenSearchBox" type="search" placeholder="ابحث عن شاشة..." />
+                <select id="screenSelect"><option value="">اختر شاشة</option></select>
+                <button type="button" class="web-perm-btn web-perm-btn-primary" id="loadScreenUsersBtn"><i class="fas fa-users"></i><span>عرض المستخدمين</span></button>
             </div>
         </div>
         <div class="web-perm-user-list" id="screenUsersList">
-            <div class="web-perm-empty">اضغط على اسم شاشة في المصفوفة لعرض مستخدميها.</div>
+            <div class="web-perm-empty">اختر شاشة من القائمة لعرض مستخدميها.</div>
         </div>
     </section>
 
@@ -153,26 +183,8 @@
     <section class="web-perm-panel" data-panel="copy">
         <div class="web-perm-form-card">
             <h2>نسخ الصلاحيات من مستخدم إلى مستخدم</h2>
-            <label>
-                <span>من المستخدم</span>
-                <select id="copySourceUser">
-                    <option value="">اختر المصدر</option>
-                    @foreach (var user in Model.Users)
-                    {
-                        <option value="@user.Id">@user.Name</option>
-                    }
-                </select>
-            </label>
-            <label>
-                <span>إلى المستخدم</span>
-                <select id="copyTargetUser">
-                    <option value="">اختر الهدف</option>
-                    @foreach (var user in Model.Users)
-                    {
-                        <option value="@user.Id">@user.Name</option>
-                    }
-                </select>
-            </label>
+            <label><span>من المستخدم</span><select id="copySourceUser"><option value="">اختر المصدر</option>@foreach (var user in Model.Users){<option value="@user.Id">@user.Name</option>}</select></label>
+            <label><span>إلى المستخدم</span><select id="copyTargetUser"><option value="">اختر الهدف</option>@foreach (var user in Model.Users){<option value="@user.Id">@user.Name</option>}</select></label>
             <button type="button" class="web-perm-btn web-perm-btn-primary" id="copyPermissionsBtn"><i class="fas fa-copy"></i><span>نسخ الصلاحيات</span></button>
         </div>
     </section>
@@ -181,47 +193,18 @@
 </section>
 
 <style>
-    .web-permissions-page{--bg:#f6f8fb;--panel:#fff;--ink:#132033;--muted:#637083;--line:#e3e8f0;--brand:#155e75;--brand2:#0f766e;--soft:#ecfeff;--danger:#b91c1c;color:var(--ink);background:var(--bg);min-height:100vh;padding:20px}
-    .web-perm-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}
-    .web-perm-eyebrow{display:inline-flex;color:#e11d48;font-weight:800;font-size:12px;margin-bottom:6px}
-    .web-perm-header h1{margin:0;font-size:26px;line-height:1.25;font-weight:900}
-    .web-perm-header p,.web-perm-toolbar p{margin:6px 0 0;color:var(--muted);font-size:13px}
-    .web-perm-actions,.web-perm-toolbar-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .web-perm-btn{border:1px solid var(--line);background:#fff;color:var(--ink);height:38px;padding:0 12px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:800;text-decoration:none;cursor:pointer;white-space:nowrap}
-    .web-perm-btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border-color:transparent}
-    .web-perm-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
-    .web-perm-kpis article{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:13px 14px}
-    .web-perm-kpis span,.web-perm-kpis small{display:block;color:var(--muted);font-size:12px}
-    .web-perm-kpis strong{display:block;font-size:26px;margin:4px 0;font-weight:900}
-    .web-perm-tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
-    .web-perm-tabs button{border:1px solid var(--line);background:#fff;border-radius:8px;height:40px;padding:0 14px;display:inline-flex;gap:8px;align-items:center;font-weight:900;cursor:pointer}
-    .web-perm-tabs button.active{background:#102a43;color:#fff;border-color:#102a43}
-    .web-perm-filters{display:grid;grid-template-columns:1fr 1.4fr 1.3fr 1fr 1.6fr auto;gap:10px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:12px;align-items:end}
-    .web-perm-filters label,.web-perm-form-card label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted);font-weight:800}
-    .web-perm-filters select,.web-perm-filters input,.web-perm-form-card select{height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;color:var(--ink);background:#fff}
-    .web-perm-panel{display:none;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-    .web-perm-panel.active{display:block}
-    .web-perm-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;border-bottom:1px solid var(--line)}
-    .web-perm-toolbar h2,.web-perm-form-card h2{margin:0;font-size:18px}
-    .web-perm-table-wrap{overflow:auto;max-height:58vh}
-    .web-perm-table{width:100%;border-collapse:separate;border-spacing:0;min-width:920px}
-    .web-perm-table th{position:sticky;top:0;background:#f3f6fa;z-index:1;color:#334155;font-size:12px;text-align:center;padding:10px;border-bottom:1px solid var(--line)}
-    .web-perm-table td{padding:10px;border-bottom:1px solid #edf1f6;text-align:center;vertical-align:middle}
-    .web-perm-table td:first-child,.web-perm-table th:first-child{text-align:right;min-width:280px}
-    .screen-title{border:0;background:transparent;color:var(--ink);font-weight:900;cursor:pointer;text-align:right;padding:0}
-    .screen-title small{display:block;color:var(--muted);font-weight:600;font-size:11px;margin-top:3px;direction:ltr;text-align:right}
-    .module-chip{display:inline-flex;border-radius:999px;background:var(--soft);color:#0f766e;padding:4px 9px;font-weight:900;font-size:12px}
-    .perm-toggle{inline-size:20px;block-size:20px;accent-color:#0f766e;cursor:pointer}
-    .web-perm-empty{padding:24px;text-align:center;color:var(--muted)}
-    .web-perm-footer{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;padding:10px 14px;background:#fafbfd}
-    .web-perm-user-list{padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
-    .web-user-card{border:1px solid var(--line);border-radius:8px;padding:12px;background:#fff}
-    .web-user-card strong{display:block}.web-user-card small{color:var(--muted)}
-    .web-perm-form-card{padding:16px;display:grid;grid-template-columns:minmax(220px,360px) minmax(220px,360px) auto;gap:12px;align-items:end}
-    .web-perm-toast{position:fixed;left:24px;bottom:24px;background:#102a43;color:#fff;border-radius:8px;padding:12px 14px;box-shadow:0 16px 36px rgba(15,23,42,.22);opacity:0;transform:translateY(12px);transition:.2s;pointer-events:none;z-index:50}
-    .web-perm-toast.show{opacity:1;transform:translateY(0)}
-    @@media(max-width:1100px){.web-perm-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.web-perm-filters{grid-template-columns:1fr 1fr}.web-perm-form-card{grid-template-columns:1fr}.web-perm-header,.web-perm-toolbar{flex-direction:column;align-items:stretch}}
-    @@media(max-width:640px){.web-perm-kpis,.web-perm-filters{grid-template-columns:1fr}.web-perm-tabs button{flex:1}.web-perm-header h1{font-size:22px}}
+    .web-permissions-page{--bg:#f6f8fb;--panel:#fff;--ink:#132033;--muted:#637083;--line:#e3e8f0;--brand:#155e75;--brand2:#0f766e;--soft:#ecfeff;--danger:#b91c1c;--ok:#15803d;--warn:#b45309;color:var(--ink);background:var(--bg);min-height:100vh;padding:20px}
+    .web-perm-header,.web-perm-toolbar,.web-perm-quickbar{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+    .web-perm-header{margin-bottom:14px}.web-perm-eyebrow{display:inline-flex;color:#e11d48;font-weight:800;font-size:12px;margin-bottom:6px}.web-perm-header h1{margin:0;font-size:26px;line-height:1.25;font-weight:900}.web-perm-header p,.web-perm-toolbar p,.web-perm-quickbar span{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .web-perm-actions,.web-perm-toolbar-actions{display:flex;gap:8px;flex-wrap:wrap}.web-perm-btn{border:1px solid var(--line);background:#fff;color:var(--ink);height:38px;padding:0 12px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:800;text-decoration:none;cursor:pointer;white-space:nowrap}.web-perm-btn-primary{background:#102a43;color:#fff;border-color:#102a43}.web-perm-btn-success{background:#0f766e;color:#fff;border-color:#0f766e}.web-perm-btn-danger{color:#b91c1c;border-color:#fecaca;background:#fff5f5}
+    .web-perm-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}.web-perm-kpis article{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:13px 14px}.web-perm-kpis span,.web-perm-kpis small{display:block;color:var(--muted);font-size:12px}.web-perm-kpis strong{display:block;font-size:26px;margin:4px 0;font-weight:900}
+    .web-perm-tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}.web-perm-tabs button{border:1px solid var(--line);background:#fff;border-radius:8px;height:40px;padding:0 14px;display:inline-flex;gap:8px;align-items:center;font-weight:900;cursor:pointer}.web-perm-tabs button.active{background:#102a43;color:#fff;border-color:#102a43}
+    .web-perm-filters{display:grid;grid-template-columns:1fr 1.2fr 1.2fr 1.2fr 1fr 1.5fr auto;gap:10px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px;align-items:end}.web-perm-filters label,.web-perm-form-card label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted);font-weight:800}.web-perm-filters select,.web-perm-filters input,.web-perm-form-card select,.web-screen-picker input,.web-screen-picker select{height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;color:var(--ink);background:#fff}
+    #bulkUsers{min-height:38px}.web-perm-quickbar{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px;align-items:center}.web-perm-module-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:12px}.module-card{border:1px solid var(--line);background:#fff;border-radius:8px;padding:12px;cursor:pointer}.module-card.active{border-color:#0f766e;box-shadow:0 0 0 2px rgba(15,118,110,.12)}.module-card strong{display:block;margin-bottom:5px}.module-card small{color:var(--muted)}.module-bar{height:6px;background:#e2e8f0;border-radius:999px;margin-top:10px;overflow:hidden}.module-bar span{display:block;height:100%;background:#0f766e}
+    .web-perm-panel{display:none;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}.web-perm-panel.active{display:block}.web-perm-toolbar{align-items:center;padding:14px;border-bottom:1px solid var(--line)}.web-perm-toolbar h2,.web-perm-form-card h2{margin:0;font-size:18px}.web-perm-table-wrap{overflow:auto;max-height:58vh}.web-perm-table{width:100%;border-collapse:separate;border-spacing:0;min-width:1040px}.web-perm-table th{position:sticky;top:0;background:#f3f6fa;z-index:1;color:#334155;font-size:12px;text-align:center;padding:10px;border-bottom:1px solid var(--line)}.web-perm-table td{padding:10px;border-bottom:1px solid #edf1f6;text-align:center;vertical-align:middle}.web-perm-table tr.full-row{background:#f0fdf4}.web-perm-table tr.partial-row{background:#fffbeb}.web-perm-table td:first-child,.web-perm-table th:first-child{text-align:right;min-width:280px}
+    .screen-title{border:0;background:transparent;color:var(--ink);font-weight:900;cursor:pointer;text-align:right;padding:0}.screen-title small{display:block;color:var(--muted);font-weight:600;font-size:11px;margin-top:3px;direction:ltr;text-align:right}.module-chip{display:inline-flex;border-radius:999px;background:var(--soft);color:#0f766e;padding:4px 9px;font-weight:900;font-size:12px}.perm-toggle,.full-toggle{inline-size:20px;block-size:20px;accent-color:#0f766e;cursor:pointer}.danger-toggle{accent-color:#b91c1c}.web-perm-empty{padding:24px;text-align:center;color:var(--muted)}.web-perm-footer{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;padding:10px 14px;background:#fafbfd}
+    .web-perm-user-list{padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}.web-user-card{border:1px solid var(--line);border-radius:8px;padding:12px;background:#fff}.web-user-card.full{border-color:#bbf7d0;background:#f0fdf4}.web-user-card.partial{border-color:#fde68a;background:#fffbeb}.web-user-card strong{display:block}.web-user-card small{color:var(--muted)}.web-perm-form-card{padding:16px;display:grid;grid-template-columns:minmax(220px,360px) minmax(220px,360px) auto;gap:12px;align-items:end}.web-perm-toast{position:fixed;left:24px;bottom:24px;background:#102a43;color:#fff;border-radius:8px;padding:12px 14px;box-shadow:0 16px 36px rgba(15,23,42,.22);opacity:0;transform:translateY(12px);transition:.2s;pointer-events:none;z-index:50}.web-perm-toast.show{opacity:1;transform:translateY(0)}
+    @@media(max-width:1200px){.web-perm-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.web-perm-filters{grid-template-columns:1fr 1fr}.web-perm-header,.web-perm-toolbar,.web-perm-quickbar{flex-direction:column;align-items:stretch}}@@media(max-width:640px){.web-perm-kpis,.web-perm-filters{grid-template-columns:1fr}.web-perm-tabs button{flex:1}.web-perm-header h1{font-size:22px}}
 </style>
 
 <script>
@@ -233,41 +216,42 @@
         save: "@Url.Action("Save", endpointController, new { area = endpointArea })",
         copy: "@Url.Action("Copy", endpointController, new { area = endpointArea })",
         template: "@Url.Action("ApplyTemplate", endpointController, new { area = endpointArea })",
+        bulk: "@Url.Action("BulkApply", endpointController, new { area = endpointArea })",
         exportUrl: "@Url.Action("Export", endpointController, new { area = endpointArea })"
     };
     var dirty = {};
     var lastScreens = [];
+    var selectedScreenId = 0;
+    var flags = ["CanView", "CanAdd", "CanEdit", "CanDelete", "CanPrint", "CanExport", "CanApprove"];
 
     function byId(id) { return document.getElementById(id); }
     function val(id) { var el = byId(id); return el ? el.value : ""; }
-    function toast(text) {
-        var el = byId("permissionToast");
-        el.textContent = text || "";
-        el.classList.add("show");
-        window.clearTimeout(el._t);
-        el._t = window.setTimeout(function () { el.classList.remove("show"); }, 2800);
+    function prop(o, name) { return o[name] || o[name.charAt(0).toLowerCase() + name.slice(1)] || ""; }
+    function escapeHtml(text) { return String(text == null ? "" : text).replace(/[&<>"']/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]; }); }
+    function toast(text) { var el = byId("permissionToast"); el.textContent = text || ""; el.classList.add("show"); window.clearTimeout(el._t); el._t = window.setTimeout(function () { el.classList.remove("show"); }, 2800); }
+    function activeArea() { return val("areaFilter") || root.getAttribute("data-area") || "MainERP"; }
+    function selectedUsers() {
+        var ids = Array.prototype.slice.call(byId("bulkUsers").selectedOptions || []).map(function (o) { return parseInt(o.value, 10) || 0; }).filter(Boolean);
+        var single = parseInt(val("userFilter"), 10) || 0;
+        if (!ids.length && single) ids.push(single);
+        return ids.filter(function (id, i, arr) { return arr.indexOf(id) === i; });
     }
-    function activeArea() {
-        var area = val("areaFilter");
-        if (area === "All") return "";
-        return area || root.getAttribute("data-area") || "MainERP";
-    }
-    function query() {
+    function query(screenId) {
         return {
             userId: val("userFilter"),
             areaName: activeArea(),
             moduleKey: val("moduleFilter"),
             searchText: val("searchFilter"),
             permissionFilter: val("permissionFilter") || "all",
-            showAllAreas: val("areaFilter") === "All",
             host: root.getAttribute("data-host") || "",
+            screenId: screenId || "",
             page: 1,
-            pageSize: 120
+            pageSize: 180
         };
     }
     function loadMatrix(screenId) {
-        var q = query();
-        if (screenId) q.screenId = screenId;
+        if (screenId) selectedScreenId = parseInt(screenId, 10) || 0;
+        var q = query(screenId || selectedScreenId || 0);
         var qs = Object.keys(q).map(function (k) { return encodeURIComponent(k) + "=" + encodeURIComponent(q[k] == null ? "" : q[k]); }).join("&");
         fetch(endpoints.matrix + "?" + qs, { credentials: "same-origin" })
             .then(function (r) { return r.json(); })
@@ -275,7 +259,7 @@
                 if (!data.success && data.Success !== true) throw new Error(data.message || data.Message || "تعذر التحميل");
                 renderKpis(data.dashboard || data.Dashboard || {});
                 renderMatrix(data.screens || data.Screens || []);
-                renderScreenUsers(data.users || data.Users || []);
+                renderScreenUsers(data.users || data.Users || [], !!q.screenId);
                 updateExportLink();
             })
             .catch(function (err) { toast(err.message || "تعذر تحميل البيانات"); });
@@ -288,16 +272,19 @@
         var p = screen.Permissions || screen.permissions || {};
         return !!(p[name] || p[name.charAt(0).toLowerCase() + name.slice(1)]);
     }
-    function prop(screen, name) {
-        return screen[name] || screen[name.charAt(0).toLowerCase() + name.slice(1)] || "";
+    function rowState(screen) {
+        var count = flags.filter(function (f) { return flag(screen, f); }).length;
+        return count === flags.length ? "full-row" : (count > 0 ? "partial-row" : "");
     }
     function renderMatrix(screens) {
         lastScreens = screens;
         dirty = {};
+        populateScreens(screens);
+        renderModuleCards(screens);
         var tbody = document.querySelector("#matrixTable tbody");
         var hasUser = !!val("userFilter");
         if (!screens.length) {
-            tbody.innerHTML = '<tr><td colspan="9" class="web-perm-empty">لا توجد شاشات مطابقة.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" class="web-perm-empty">لا توجد شاشات مطابقة.</td></tr>';
             byId("matrixCount").textContent = "0 شاشة";
             setDirty(false);
             return;
@@ -308,38 +295,82 @@
             var route = prop(s, "RouteUrl") || prop(s, "ScreenKey");
             var moduleKey = prop(s, "ModuleKey");
             var area = prop(s, "AreaName");
-            return '<tr data-screen-id="' + id + '" data-module="' + moduleKey + '">' +
+            var all = flags.every(function (f) { return flag(s, f); });
+            return '<tr class="' + rowState(s) + '" data-screen-id="' + id + '" data-module="' + escapeHtml(moduleKey) + '">' +
                 '<td><button type="button" class="screen-title" data-screen="' + id + '">' + escapeHtml(caption) + '<small>' + escapeHtml(route) + ' · ' + escapeHtml(prop(s, "ScreenKey")) + '</small></button></td>' +
                 '<td><span class="module-chip">' + escapeHtml(area + " / " + moduleKey) + '</span></td>' +
+                '<td><input class="full-toggle" type="checkbox" data-id="' + id + '"' + (all ? " checked" : "") + (!hasUser ? " disabled" : "") + ' /></td>' +
                 toggle(id, "CanView", flag(s, "CanView"), !hasUser) +
                 toggle(id, "CanAdd", flag(s, "CanAdd"), !hasUser) +
                 toggle(id, "CanEdit", flag(s, "CanEdit"), !hasUser) +
-                toggle(id, "CanDelete", flag(s, "CanDelete"), !hasUser) +
+                toggle(id, "CanDelete", flag(s, "CanDelete"), !hasUser, true) +
                 toggle(id, "CanPrint", flag(s, "CanPrint"), !hasUser) +
                 toggle(id, "CanExport", flag(s, "CanExport"), !hasUser) +
                 toggle(id, "CanApprove", flag(s, "CanApprove"), !hasUser) +
                 '</tr>';
         }).join("");
+        updateFullStates();
         byId("matrixCount").textContent = screens.length + " شاشة";
         setDirty(false);
-    }    function toggle(id, name, checked, disabled) {
-        return '<td><input class="perm-toggle" type="checkbox" data-id="' + id + '" data-flag="' + name + '"' + (checked ? " checked" : "") + (disabled ? " disabled" : "") + ' /></td>';
     }
-    function renderScreenUsers(users) {
+    function toggle(id, name, checked, disabled, danger) {
+        return '<td><input class="perm-toggle' + (danger ? " danger-toggle" : "") + '" type="checkbox" data-id="' + id + '" data-flag="' + name + '"' + (checked ? " checked" : "") + (disabled ? " disabled" : "") + ' /></td>';
+    }
+    function populateScreens(screens) {
+        var select = byId("screenSelect");
+        var current = String(selectedScreenId || select.value || "");
+        select.innerHTML = '<option value="">اختر شاشة</option>' + screens.map(function (s) {
+            var id = prop(s, "WebScreenId");
+            var title = (prop(s, "ArabicCaption") || prop(s, "ScreenKey")) + " - " + prop(s, "ModuleKey") + " - " + prop(s, "RouteUrl");
+            return '<option value="' + id + '">' + escapeHtml(title) + '</option>';
+        }).join("");
+        if (current) select.value = current;
+    }
+    function renderModuleCards(screens) {
+        var map = {};
+        screens.forEach(function (s) {
+            var key = prop(s, "ModuleKey");
+            map[key] = map[key] || { key: key, count: 0, granted: 0, name: key };
+            map[key].count++;
+            if (flags.some(function (f) { return flag(s, f); })) map[key].granted++;
+        });
+        var active = val("moduleFilter");
+        byId("moduleCards").innerHTML = Object.keys(map).sort().map(function (k) {
+            var m = map[k], pct = m.count ? Math.round((m.granted / m.count) * 100) : 0;
+            return '<article class="module-card ' + (active === k ? "active" : "") + '" data-module-card="' + escapeHtml(k) + '">' +
+                '<strong>' + escapeHtml(k) + '</strong><small>' + m.granted + '/' + m.count + ' شاشة مفعلة</small><div class="module-bar"><span style="width:' + pct + '%"></span></div></article>';
+        }).join("");
+    }
+    function renderScreenUsers(users, hasScreen) {
         var box = byId("screenUsersList");
+        if (!hasScreen) {
+            box.innerHTML = '<div class="web-perm-empty">اختر شاشة من القائمة لعرض مستخدميها.</div>';
+            return;
+        }
         if (!users || !users.length) {
             box.innerHTML = '<div class="web-perm-empty">لا توجد صلاحيات ممنوحة لهذه الشاشة.</div>';
             return;
         }
         box.innerHTML = users.map(function (u) {
             var p = u.Permissions || u.permissions || {};
-            var flags = ["View", "Add", "Edit", "Delete", "Print", "Export", "Approve"].filter(function (f) { return p["Can" + f] || p["can" + f]; }).join(" / ");
-            return '<article class="web-user-card"><strong>' + escapeHtml(prop(u, "UserName")) + '</strong><small>#' + escapeHtml(prop(u, "UserId")) + ' · ' + escapeHtml(flags || "عرض") + '</small></article>';
+            var active = flags.filter(function (f) { return p[f] || p[f.charAt(0).toLowerCase() + f.slice(1)]; });
+            var cls = active.length === flags.length ? "full" : "partial";
+            return '<article class="web-user-card ' + cls + '"><strong>' + escapeHtml(prop(u, "UserName")) + '</strong><small>#' + escapeHtml(prop(u, "UserId")) + ' · ' + escapeHtml(active.map(function (f) { return f.replace("Can", ""); }).join(" / ") || "عرض") + '</small></article>';
         }).join("");
     }
-    function setDirty(isDirty) {
-        byId("dirtyState").textContent = isDirty ? "توجد تغييرات غير محفوظة" : "لا توجد تغييرات";
+    function updateFullStates() {
+        document.querySelectorAll("#matrixTable tbody tr").forEach(function (tr) {
+            var toggles = Array.prototype.slice.call(tr.querySelectorAll(".perm-toggle"));
+            var full = tr.querySelector(".full-toggle");
+            if (!full || !toggles.length) return;
+            var checked = toggles.filter(function (cb) { return cb.checked; }).length;
+            full.checked = checked === toggles.length;
+            full.indeterminate = checked > 0 && checked < toggles.length;
+            tr.classList.toggle("full-row", checked === toggles.length);
+            tr.classList.toggle("partial-row", checked > 0 && checked < toggles.length);
+        });
     }
+    function setDirty(isDirty) { byId("dirtyState").textContent = isDirty ? "توجد تغييرات غير محفوظة" : "لا توجد تغييرات"; }
     function collectRows() {
         var map = {};
         document.querySelectorAll(".perm-toggle").forEach(function (cb) {
@@ -363,33 +394,59 @@
     function postJson(url, body, done) {
         fetch(url, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
             .then(function (r) { return r.json().then(function (j) { if (!r.ok || j.success === false) throw new Error(j.message || j.Message || "تعذر تنفيذ العملية"); return j; }); })
-            .then(done)
-            .catch(function (err) { toast(err.message || "تعذر تنفيذ العملية"); });
+            .then(done).catch(function (err) { toast(err.message || "تعذر تنفيذ العملية"); });
     }
     function updateExportLink() {
-        byId("exportMatrixLink").href = endpoints.exportUrl + "?userId=" + encodeURIComponent(val("userFilter") || "0") + "&areaName=" + encodeURIComponent(activeArea()) + "&showAllAreas=" + (val("areaFilter") === "All") + "&host=" + encodeURIComponent(root.getAttribute("data-host") || "");
+        byId("exportMatrixLink").href = endpoints.exportUrl + "?userId=" + encodeURIComponent(val("userFilter") || "0") + "&areaName=" + encodeURIComponent(activeArea()) + "&host=" + encodeURIComponent(root.getAttribute("data-host") || "");
     }
-    function moduleAction(checked) {
+    function applyRowMode(row, mode) {
+        var values = {
+            full: { CanView: 1, CanAdd: 1, CanEdit: 1, CanDelete: 1, CanPrint: 1, CanExport: 1, CanApprove: 1 },
+            view: { CanView: 1 },
+            nodelete: { CanView: 1, CanAdd: 1, CanEdit: 1, CanPrint: 1, CanExport: 1, CanApprove: 1 },
+            clear: {}
+        }[mode] || {};
+        row.querySelectorAll(".perm-toggle").forEach(function (cb) {
+            cb.checked = !!values[cb.getAttribute("data-flag")];
+            dirty[cb.getAttribute("data-id")] = true;
+        });
+    }
+    function moduleAction(mode) {
         var moduleKey = val("moduleFilter");
         document.querySelectorAll("#matrixTable tbody tr").forEach(function (tr) {
             if (moduleKey && tr.getAttribute("data-module") !== moduleKey) return;
-            tr.querySelectorAll(".perm-toggle").forEach(function (cb) {
-                cb.checked = checked;
-                dirty[cb.getAttribute("data-id")] = true;
-            });
+            applyRowMode(tr, mode);
         });
+        updateFullStates();
         setDirty(true);
     }
-    function escapeHtml(text) {
-        return String(text == null ? "" : text).replace(/[&<>"']/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]; });
+    function bulkApply(mode) {
+        var users = selectedUsers();
+        if (!users.length) return toast("اختر مستخدما أو أكثر للتطبيق الجماعي.");
+        var moduleKey = val("moduleFilter");
+        var screenId = parseInt(val("screenSelect"), 10) || 0;
+        if (!moduleKey && !screenId) return toast("اختر مجموعة أو شاشة أولا.");
+        if (!window.confirm("سيتم تطبيق الصلاحية على " + users.length + " مستخدم. هل تريد المتابعة؟")) return;
+        postJson(endpoints.bulk, { UserIds: users, AreaName: activeArea(), ModuleKey: moduleKey, WebScreenId: screenId || null, Mode: mode, Host: root.getAttribute("data-host") || "" }, function (data) {
+            toast(data.message || "تم التطبيق الجماعي");
+            loadMatrix(selectedScreenId);
+        });
     }
 
     document.addEventListener("change", function (e) {
         if (e.target.classList.contains("perm-toggle")) {
             dirty[e.target.getAttribute("data-id")] = true;
+            updateFullStates();
+            setDirty(true);
+        }
+        if (e.target.classList.contains("full-toggle")) {
+            var row = e.target.closest("tr");
+            applyRowMode(row, e.target.checked ? "full" : "clear");
+            updateFullStates();
             setDirty(true);
         }
         if (["userFilter", "areaFilter", "moduleFilter", "permissionFilter"].indexOf(e.target.id) >= 0) loadMatrix();
+        if (e.target.id === "screenSelect") selectedScreenId = parseInt(e.target.value, 10) || 0;
     });
     document.addEventListener("click", function (e) {
         var tab = e.target.closest("[data-tab]");
@@ -401,23 +458,39 @@
         }
         var screen = e.target.closest("[data-screen]");
         if (screen) {
+            selectedScreenId = parseInt(screen.getAttribute("data-screen"), 10) || 0;
+            byId("screenSelect").value = String(selectedScreenId);
             document.querySelector('[data-tab="screens"]').click();
-            loadMatrix(screen.getAttribute("data-screen"));
+            loadMatrix(selectedScreenId);
         }
+        var card = e.target.closest("[data-module-card]");
+        if (card) {
+            byId("moduleFilter").value = card.getAttribute("data-module-card");
+            loadMatrix();
+        }
+        var bulk = e.target.closest("[data-bulk-mode]");
+        if (bulk) bulkApply(bulk.getAttribute("data-bulk-mode"));
     });
     byId("reloadMatrixBtn").addEventListener("click", function () { loadMatrix(); });
     byId("saveMatrixBtn").addEventListener("click", save);
-    byId("selectModuleBtn").addEventListener("click", function () { moduleAction(true); });
-    byId("clearModuleBtn").addEventListener("click", function () { moduleAction(false); });
+    byId("selectModuleBtn").addEventListener("click", function () { moduleAction("full"); });
+    byId("viewOnlyModuleBtn").addEventListener("click", function () { moduleAction("view"); });
+    byId("noDeleteModuleBtn").addEventListener("click", function () { moduleAction("nodelete"); });
+    byId("clearModuleBtn").addEventListener("click", function () { moduleAction("clear"); });
+    byId("loadScreenUsersBtn").addEventListener("click", function () { selectedScreenId = parseInt(val("screenSelect"), 10) || 0; loadMatrix(selectedScreenId); });
+    byId("screenSearchBox").addEventListener("input", function () {
+        var term = this.value.toLowerCase();
+        Array.prototype.slice.call(byId("screenSelect").options).forEach(function (opt, i) { if (i) opt.hidden = term && opt.text.toLowerCase().indexOf(term) < 0; });
+    });
     byId("copyPermissionsBtn").addEventListener("click", function () {
         postJson(endpoints.copy, { SourceUserId: parseInt(val("copySourceUser"), 10) || 0, TargetUserId: parseInt(val("copyTargetUser"), 10) || 0, AreaName: activeArea() }, function (data) {
-            toast(data.message || data.Message || "تم النسخ");
+            toast(data.message || "تم النسخ");
             loadMatrix();
         });
     });
     byId("applyTemplateBtn").addEventListener("click", function () {
         postJson(endpoints.template, { TemplateId: parseInt(val("templateSelect"), 10) || 0, UserId: parseInt(val("userFilter"), 10) || 0 }, function (data) {
-            toast(data.message || data.Message || "تم تطبيق القالب");
+            toast(data.message || "تم تطبيق القالب");
             loadMatrix();
         });
     });

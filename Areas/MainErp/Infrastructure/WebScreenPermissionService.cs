@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 using MyERP.Areas.MainErp.Interfaces;
@@ -430,6 +431,69 @@ WHEN NOT MATCHED THEN INSERT
             }
         }
 
+        public int ApplyBulk(WebPermissionBulkApplyRequest request)
+        {
+            if (request == null || request.UserIds == null || request.UserIds.Count == 0)
+            {
+                throw new InvalidOperationException("Select at least one user.");
+            }
+
+            var mode = (request.Mode ?? string.Empty).Trim().ToLowerInvariant();
+            if (mode != "full" && mode != "view" && mode != "nodelete" && mode != "clear")
+            {
+                throw new InvalidOperationException("Invalid bulk permission mode.");
+            }
+
+            var flags = BulkFlags(mode);
+            var affected = 0;
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var transaction = connection.BeginTransaction())
+            {
+                foreach (var userId in request.UserIds.Where(id => id > 0).Distinct())
+                {
+                    using (var command = new SqlCommand(@"
+MERGE dbo.WebScreenPermissions AS target
+USING
+(
+    SELECT s.WebScreenId
+    FROM dbo.WebScreens s
+    INNER JOIN dbo.WebModules m ON m.WebModuleId = s.WebModuleId
+    WHERE s.IsActive = 1
+      AND m.AreaName = @AreaName
+      AND (@ModuleKey = N'' OR m.ModuleKey = @ModuleKey)
+      AND (@WebScreenId IS NULL OR s.WebScreenId = @WebScreenId)
+) AS source
+ON target.UserId = @UserId AND target.WebScreenId = source.WebScreenId
+WHEN MATCHED THEN UPDATE SET
+    CanView = @CanView,
+    CanAdd = @CanAdd,
+    CanEdit = @CanEdit,
+    CanDelete = @CanDelete,
+    CanPrint = @CanPrint,
+    CanExport = @CanExport,
+    CanApprove = @CanApprove,
+    SeedSource = N'Bulk',
+    UpdatedAt = GETDATE()
+WHEN NOT MATCHED THEN INSERT
+    (UserId, WebScreenId, CanView, CanAdd, CanEdit, CanDelete, CanPrint, CanExport, CanApprove, SeedSource, CreatedAt, UpdatedAt)
+    VALUES
+    (@UserId, source.WebScreenId, @CanView, @CanAdd, @CanEdit, @CanDelete, @CanPrint, @CanExport, @CanApprove, N'Bulk', GETDATE(), GETDATE());", connection, transaction))
+                    {
+                        command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+                        command.Parameters.Add("@AreaName", SqlDbType.NVarChar, 50).Value = EmptyToString(request.AreaName);
+                        command.Parameters.Add("@ModuleKey", SqlDbType.NVarChar, 80).Value = EmptyToString(request.ModuleKey);
+                        command.Parameters.Add("@WebScreenId", SqlDbType.Int).Value = request.WebScreenId.HasValue ? (object)request.WebScreenId.Value : DBNull.Value;
+                        AddFlags(command, flags);
+                        affected += command.ExecuteNonQuery();
+                    }
+                }
+
+                transaction.Commit();
+            }
+
+            return affected;
+        }
+
         public DataTable ExportMatrix(int userId, string areaName, bool showAllAreas)
         {
             var table = new DataTable("WebScreenPermissions");
@@ -597,6 +661,43 @@ ORDER BY u.UserName, u.UserID;", connection))
             command.Parameters.Add("@CanPrint", SqlDbType.Bit).Value = item.CanPrint;
             command.Parameters.Add("@CanExport", SqlDbType.Bit).Value = item.CanExport;
             command.Parameters.Add("@CanApprove", SqlDbType.Bit).Value = item.CanApprove;
+        }
+
+        private static WebPermissionFlags BulkFlags(string mode)
+        {
+            if (mode == "clear")
+            {
+                return new WebPermissionFlags();
+            }
+
+            if (mode == "view")
+            {
+                return new WebPermissionFlags { CanView = true };
+            }
+
+            if (mode == "nodelete")
+            {
+                return new WebPermissionFlags
+                {
+                    CanView = true,
+                    CanAdd = true,
+                    CanEdit = true,
+                    CanPrint = true,
+                    CanExport = true,
+                    CanApprove = true
+                };
+            }
+
+            return new WebPermissionFlags
+            {
+                CanView = true,
+                CanAdd = true,
+                CanEdit = true,
+                CanDelete = true,
+                CanPrint = true,
+                CanExport = true,
+                CanApprove = true
+            };
         }
 
         private static string ActionToColumn(string actionKey)

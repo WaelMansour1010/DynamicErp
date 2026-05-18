@@ -168,6 +168,35 @@ namespace MyERP.Areas.Pos.Controllers
             }
         }
 
+        [HttpPost]
+        public JsonResult BulkApply(WebPermissionBulkApplyRequest request)
+        {
+            var context = GetPosContext();
+            if (!IsAdmin(context))
+            {
+                Response.StatusCode = context == null ? 401 : 403;
+                return Json(new { success = false, message = "هذه الشاشة للمدير فقط." });
+            }
+
+            if (request == null || request.UserIds == null || request.UserIds.Count == 0)
+            {
+                Response.StatusCode = 400;
+                return Json(new { success = false, message = "اختر مستخدما واحدا على الأقل." });
+            }
+
+            try
+            {
+                request.AreaName = "POS";
+                var rows = _permissionService.ApplyBulk(request);
+                return Json(new { success = true, message = "تم تطبيق التعديل الجماعي على POS فقط.", affectedRows = rows });
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { success = false, message = "تعذر تطبيق التعديل الجماعي.", technicalMessage = ex.Message });
+            }
+        }
+
         [HttpGet]
         public FileResult Export(int userId)
         {

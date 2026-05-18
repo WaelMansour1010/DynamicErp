@@ -10,6 +10,7 @@
     var canOpenFinanceOperations = isAdmin || (posContext != null && (posContext.CanViewAccountingReports || posContext.CanOpenPayments || posContext.CanViewJournalEntry || posContext.CanCreateJournalEntry || posContext.CanEditJournalEntry || posContext.CanDeleteJournalEntry || legacyPermissionService.CanView(posContext, "FrmCashing")));
     var canManagePrintTemplates = isAdmin || (posContext != null && posContext.CanManagePrintTemplates);
     var canOpenWebPermissions = isAdmin || (posContext != null && webPermissionService.CanView(posContext, "POS.Admin.WebPermissions"));
+    var canOpenCriticalRecovery = isAdmin || (posContext != null && webPermissionService.CanView(posContext, "POS.CriticalRecovery.Index"));
     var hasReportMenuAccess = isAdmin || (posContext != null && (
         posContext.CanViewReports
         || posContext.CanViewAccountingReports
@@ -35,7 +36,7 @@
     var accountsOpen = sectionActive(new[] { "account-charts", "payments", "cashing", "payment-vouchers", "journal-entries", "discount-notifications", "branch-performance", "cash-flow", "expenses", "custody", "abnormal-journals", "root-cause" });
     var hrOpen = sectionActive(new[] { "employee-payroll", "salary-run", "medical-insurance", "medical-insurance-reports", "employee-receivables", "hr-advances", "hr-payroll-items", "hr-absences", "hr-vacations", "hr-allowances", "hr-end-service" });
     var settingsOpen = sectionActive(new[] { "legacy-branches-data", "print-templates", "branches", "options", "branch-account-linking" });
-    var systemOpen = sectionActive(new[] { "dashboard", "permissions", "main-erp-permissions", "legacy-users", "system-health", "system-error-log", "sql-updates" });
+    var systemOpen = sectionActive(new[] { "dashboard", "permissions", "main-erp-permissions", "legacy-users", "critical-recovery", "system-health", "system-error-log", "sql-updates" });
     var userStorageKey = posContext != null ? posContext.UserId.ToString(System.Globalization.CultureInfo.InvariantCulture) : "guest";
     if (!(excelOpen || salesOpen || reportsOpen || purchasesOpen || inventoryOpen || accountsOpen || hrOpen || settingsOpen || systemOpen))
     {
@@ -257,6 +258,10 @@
                 @if (canOpenWebPermissions)
                 {
                     <a class="pos-nav-link @(isActive("main-erp-permissions") ? "active" : "")" href="@Url.Action("Index", "WebPermissions", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/WebPermissions/Index")" data-nav-id="main-erp-permissions" data-nav-section="مدير النظام" data-nav-text="الصلاحيات على الشاشات POS permissions" title="الصلاحيات على الشاشات">@PosIcon("shield-check")<span>الصلاحيات على الشاشات</span></a>
+                }
+                @if (canOpenCriticalRecovery)
+                {
+                    <a class="pos-nav-link @(isActive("critical-recovery") ? "active" : "")" href="@Url.Content("~/Pos/CriticalRecovery/Index")" data-screen-url="@Url.Content("~/Pos/CriticalRecovery/Index")" data-nav-id="critical-recovery" data-nav-section="مدير النظام" data-nav-text="مركز الاسترجاع الحرج critical recovery invoice reversal rollback restore" title="مركز الاسترجاع الحرج">@PosIcon("alert-triangle")<span>مركز الاسترجاع الحرج</span></a>
                 }
                 <a class="pos-nav-link @(isActive("system-health") ? "active" : "")" href="@Url.Action("SystemHealth", "PosDashboard", new { area = "Pos" })" data-screen-url="@Url.Content("~/Pos/PosSystemHealth/Index")" data-nav-id="system-health" data-nav-section="مدير النظام" data-nav-text="مراقبة النظام system health monitor" title="مراقبة النظام">@PosIcon("monitor")<span>مراقبة النظام</span></a>
                 <a class="pos-nav-link @(isActive("system-error-log") ? "active" : "")" href="@Url.Content("~/Pos/PosSystemErrorLog/Index")" data-screen-url="@Url.Content("~/Pos/PosSystemErrorLog/Index")" data-nav-id="system-error-log" data-nav-section="مدير النظام" data-nav-text="سجل أخطاء النظام error log bugs" title="سجل أخطاء النظام">@PosIcon("bug")<span>سجل أخطاء النظام</span></a>

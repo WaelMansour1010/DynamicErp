@@ -36,6 +36,8 @@ namespace MyERP.Areas.Shared.CriticalRecovery
             return new CriticalRecoveryIndexViewModel
             {
                 AreaName = areaName,
+                Filter = BuildDefaultFilter(),
+                BranchOptions = GetBranchOptions(),
                 SnapshotBatches = GetSnapshotBatches(),
                 AuditItems = GetAuditItems()
             };
@@ -98,7 +100,7 @@ namespace MyERP.Areas.Shared.CriticalRecovery
 
             if (filter != null && filter.HasKycLink)
             {
-                model.Warnings.Add("KYC master data is protected. Only invoice-to-KYC references are captured for restore; KYC customer/card/attachment rows are not deleted.");
+                model.Warnings.Add("بيانات KYC الأساسية محمية. يتم حفظ روابط الفاتورة فقط للاسترجاع، ولا يتم حذف بيانات العميل أو الكارت أو المرفقات.");
             }
 
             return model;
@@ -213,8 +215,8 @@ namespace MyERP.Areas.Shared.CriticalRecovery
         {
             var html = new StringBuilder();
             html.Append("<html><head><meta charset=\"utf-8\" /></head><body>");
-            html.Append("<h2>Critical invoice recovery preview</h2>");
-            html.Append("<table border=\"1\"><tr><th>Transaction ID</th><th>Invoice No</th><th>Type</th><th>Branch</th><th>Date</th><th>Customer</th><th>Value</th><th>Posted</th><th>Closed</th><th>KYC refs</th></tr>");
+            html.Append("<h2>معاينة مركز الاسترجاع الحرج</h2>");
+            html.Append("<table border=\"1\"><tr><th>رقم الحركة</th><th>رقم الفاتورة</th><th>النوع</th><th>الفرع</th><th>التاريخ</th><th>العميل</th><th>القيمة</th><th>مرحل</th><th>مغلق</th><th>مراجع KYC</th></tr>");
             foreach (var invoice in impact.Invoices)
             {
                 html.Append("<tr><td>").Append(invoice.TransactionId).Append("</td><td>").Append(HttpUtility.HtmlEncode(invoice.InvoiceNo)).Append("</td><td>")
@@ -224,7 +226,7 @@ namespace MyERP.Areas.Shared.CriticalRecovery
                     .Append(HttpUtility.HtmlEncode(invoice.KycReferenceIds)).Append("</td></tr>");
             }
 
-            html.Append("</table><h2>Dependencies</h2><table border=\"1\"><tr><th>Transaction ID</th><th>Module</th><th>Table</th><th>Rows</th><th>Protected</th><th>Policy</th></tr>");
+            html.Append("</table><h2>التأثيرات المرتبطة</h2><table border=\"1\"><tr><th>رقم الحركة</th><th>الموديول</th><th>الجدول</th><th>عدد الصفوف</th><th>محمي</th><th>السياسة</th></tr>");
             foreach (var dependency in impact.Dependencies)
             {
                 html.Append("<tr><td>").Append(dependency.TransactionId).Append("</td><td>").Append(HttpUtility.HtmlEncode(dependency.ModuleName)).Append("</td><td>")
@@ -234,6 +236,48 @@ namespace MyERP.Areas.Shared.CriticalRecovery
 
             html.Append("</table></body></html>");
             return Encoding.UTF8.GetBytes(html.ToString());
+        }
+
+        private static CriticalRecoveryFilterViewModel BuildDefaultFilter()
+        {
+            var today = DateTime.Today;
+            return new CriticalRecoveryFilterViewModel
+            {
+                DateFrom = today,
+                DateTo = today,
+                InvoiceScope = "SalesOnly"
+            };
+        }
+
+        private IList<CriticalRecoveryLookupOption> GetBranchOptions()
+        {
+            var result = new List<CriticalRecoveryLookupOption>();
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(@"
+IF OBJECT_ID('dbo.TblBranchesData','U') IS NOT NULL
+BEGIN
+    SELECT CONVERT(nvarchar(20), branch_id) AS Value,
+           COALESCE(NULLIF(branch_name, N''), NULLIF(branch_namee, N''), N'فرع ' + CONVERT(nvarchar(20), branch_id)) AS Text
+    FROM dbo.TblBranchesData
+    WHERE branch_id IS NOT NULL
+    ORDER BY branch_id;
+END", connection))
+            {
+                connection.Open();
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        result.Add(new CriticalRecoveryLookupOption
+                        {
+                            Value = Convert.ToString(reader["Value"]),
+                            Text = Convert.ToString(reader["Text"])
+                        });
+                    }
+                }
+            }
+
+            return result;
         }
 
         private IList<CriticalRecoverySnapshotBatchViewModel> GetSnapshotBatches()
@@ -335,6 +379,7 @@ ORDER BY AuditId DESC", connection))
             command.Parameters.AddWithValue("@DateFrom", (object)filter.DateFrom ?? DBNull.Value);
             command.Parameters.AddWithValue("@DateTo", (object)filter.DateTo ?? DBNull.Value);
             command.Parameters.AddWithValue("@InvoiceType", (object)filter.InvoiceType ?? DBNull.Value);
+            command.Parameters.AddWithValue("@InvoiceScope", filter.InvoiceScope ?? "SalesOnly");
             command.Parameters.AddWithValue("@InvoiceNo", filter.InvoiceNo ?? string.Empty);
             command.Parameters.AddWithValue("@CashierUserId", filter.CashierUserId ?? string.Empty);
             command.Parameters.AddWithValue("@CustomerSearch", filter.CustomerSearch ?? string.Empty);

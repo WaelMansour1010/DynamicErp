@@ -5,6 +5,7 @@
     function qs(id) { return document.getElementById(id); }
     function value(id) { var el = qs(id); return el ? el.value : ''; }
     function number(id) { var raw = value(id); return raw === '' ? 0 : Number(raw); }
+    function numberOrNull(id) { var raw = value(id); return raw === '' ? null : Number(raw); }
     function intOrNull(id) { var raw = value(id); return raw === '' ? null : parseInt(raw, 10); }
     function checked(id) { var el = qs(id); return !!(el && el.checked); }
     function isPosHosted() { return page.getAttribute('data-pos-hosted') === '1'; }
@@ -31,6 +32,29 @@
         if (el) el.checked = !!isChecked;
     }
 
+    function setValue(id, val) {
+        var el = qs(id);
+        if (el) el.value = val == null ? '' : val;
+    }
+
+    function updateImageState(hasImage, itemId) {
+        var preview = qs('itemImagePreview');
+        var placeholder = qs('itemImagePlaceholder');
+        if (!preview || !placeholder) return;
+        if (hasImage && itemId) {
+            preview.src = withPosRoute(addQuery(page.getAttribute('data-image-url'), 'id', itemId)) + '&t=' + Date.now();
+            preview.classList.add('has-image');
+            placeholder.hidden = true;
+            setValue('removeItemImage', '0');
+        } else {
+            preview.removeAttribute('src');
+            preview.classList.remove('has-image');
+            placeholder.hidden = false;
+            setValue('removeItemImage', '1');
+        }
+        setValue('itemImageBase64', '');
+    }
+
     function clearForm() {
         [
             'itemId', 'itemCode', 'itemName', 'itemNameEn', 'itemBarcode', 'partNo', 'catalogNo',
@@ -45,12 +69,17 @@
         qs('guaranteeType').value = '';
         qs('haveSerial').checked = false;
         qs('haveGuarantee').checked = false;
-        setChecked('posCommissionEnabled', false);
-        setChecked('posExcludeCommission', false);
-        ['defaultSupplierId', 'posDefaultSalesEmployeeId', 'posDefaultCommissionCustomerId', 'posCommissionType', 'posCommissionPercent', 'posCommissionValue', 'posCommissionNetValue'].forEach(function (id) {
+        ['defaultSupplierId', 'percentVisa', 'minVisa', 'maxVisa', 'percentVisaPur', 'minVisaPur', 'maxVisaPur'].forEach(function (id) {
             var el = qs(id);
             if (el) el.value = '';
         });
+        ['chkLot', 'otherItems', 'installmentService', 'trafficViolations', 'isNotShowAlarm', 'isPriceIsPerview', 'isPriceIsLenthW'].forEach(function (id) {
+            setChecked(id, false);
+        });
+        if (qs('cashRangesBody')) qs('cashRangesBody').innerHTML = '';
+        if (qs('imageItemName')) qs('imageItemName').textContent = 'صنف جديد';
+        if (qs('imageItemCode')) qs('imageItemCode').textContent = 'بدون كود';
+        updateImageState(false, null);
         qs('itemUnitsBody').innerHTML = '';
         addUnitRow(true);
         showStatus('جاهز لإدخال صنف جديد.', true);
@@ -77,6 +106,32 @@
                 WholeSalePrice: 0,
                 IsDefault: row.querySelector('.unit-default').checked,
                 Barcode: row.querySelector('.unit-barcode').value
+            };
+        });
+    }
+
+    function addCashRangeRow(range) {
+        var body = qs('cashRangesBody');
+        var template = qs('cashRangeRowTemplate');
+        if (!body || !template) return;
+        body.insertAdjacentHTML('beforeend', template.innerHTML);
+        var row = body.querySelector('tr:last-child');
+        if (!row || !range) return;
+        row.querySelector('.cash-from').value = range.FromPrice || 0;
+        row.querySelector('.cash-to').value = range.ToPrice || 0;
+        row.querySelector('.cash-price').value = range.Price || 0;
+        row.querySelector('.cash-cost').value = range.Cost || 0;
+        row.querySelector('.cash-back').value = range.CashBack || 0;
+    }
+
+    function collectCashRanges() {
+        return Array.prototype.map.call(document.querySelectorAll('#cashRangesBody tr'), function (row) {
+            return {
+                FromPrice: Number(row.querySelector('.cash-from').value || 0),
+                ToPrice: Number(row.querySelector('.cash-to').value || 0),
+                Price: Number(row.querySelector('.cash-price').value || 0),
+                Cost: Number(row.querySelector('.cash-cost').value || 0),
+                CashBack: Number(row.querySelector('.cash-back').value || 0)
             };
         });
     }
@@ -110,14 +165,22 @@
             BinLocation: value('binLocation'),
             Notes: value('itemNotes'),
             DefaultSupplierId: intOrNull('defaultSupplierId'),
-            PosDefaultSalesEmployeeId: intOrNull('posDefaultSalesEmployeeId'),
-            PosDefaultCommissionCustomerId: intOrNull('posDefaultCommissionCustomerId'),
-            PosCommissionEnabled: checked('posCommissionEnabled'),
-            PosCommissionType: value('posCommissionType'),
-            PosCommissionPercent: number('posCommissionPercent'),
-            PosCommissionValue: number('posCommissionValue'),
-            PosCommissionNetValue: number('posCommissionNetValue'),
-            PosExcludeCommission: checked('posExcludeCommission'),
+            PercentVisa: numberOrNull('percentVisa'),
+            MinVisa: numberOrNull('minVisa'),
+            MaxVisa: numberOrNull('maxVisa'),
+            PercentVisaPur: numberOrNull('percentVisaPur'),
+            MinVisaPur: numberOrNull('minVisaPur'),
+            MaxVisaPur: numberOrNull('maxVisaPur'),
+            ChkLot: checked('chkLot'),
+            OtherItems: checked('otherItems'),
+            InstallmentService: checked('installmentService'),
+            TrafficViolations: checked('trafficViolations'),
+            IsNotShowAlarm: checked('isNotShowAlarm'),
+            IsPriceIsPerview: checked('isPriceIsPerview'),
+            IsPriceIsLenthW: checked('isPriceIsLenthW'),
+            ItemImageBase64: value('itemImageBase64'),
+            RemoveItemImage: value('removeItemImage') === '1',
+            CashCommissionRanges: collectCashRanges(),
             Units: collectUnits()
         };
     }
@@ -149,14 +212,26 @@
         qs('binLocation').value = data.BinLocation || '';
         qs('itemNotes').value = data.Notes || '';
         if (qs('defaultSupplierId')) qs('defaultSupplierId').value = data.DefaultSupplierId || '';
-        if (qs('posDefaultSalesEmployeeId')) qs('posDefaultSalesEmployeeId').value = data.PosDefaultSalesEmployeeId || '';
-        if (qs('posDefaultCommissionCustomerId')) qs('posDefaultCommissionCustomerId').value = data.PosDefaultCommissionCustomerId || '';
-        if (qs('posCommissionType')) qs('posCommissionType').value = data.PosCommissionType || '';
-        if (qs('posCommissionPercent')) qs('posCommissionPercent').value = data.PosCommissionPercent || 0;
-        if (qs('posCommissionValue')) qs('posCommissionValue').value = data.PosCommissionValue || 0;
-        if (qs('posCommissionNetValue')) qs('posCommissionNetValue').value = data.PosCommissionNetValue || 0;
-        setChecked('posCommissionEnabled', data.PosCommissionEnabled);
-        setChecked('posExcludeCommission', data.PosExcludeCommission);
+        if (qs('percentVisa')) qs('percentVisa').value = data.PercentVisa == null ? '' : data.PercentVisa;
+        if (qs('minVisa')) qs('minVisa').value = data.MinVisa == null ? '' : data.MinVisa;
+        if (qs('maxVisa')) qs('maxVisa').value = data.MaxVisa == null ? '' : data.MaxVisa;
+        if (qs('percentVisaPur')) qs('percentVisaPur').value = data.PercentVisaPur == null ? '' : data.PercentVisaPur;
+        if (qs('minVisaPur')) qs('minVisaPur').value = data.MinVisaPur == null ? '' : data.MinVisaPur;
+        if (qs('maxVisaPur')) qs('maxVisaPur').value = data.MaxVisaPur == null ? '' : data.MaxVisaPur;
+        setChecked('chkLot', data.ChkLot);
+        setChecked('otherItems', data.OtherItems);
+        setChecked('installmentService', data.InstallmentService);
+        setChecked('trafficViolations', data.TrafficViolations);
+        setChecked('isNotShowAlarm', data.IsNotShowAlarm);
+        setChecked('isPriceIsPerview', data.IsPriceIsPerview);
+        setChecked('isPriceIsLenthW', data.IsPriceIsLenthW);
+        if (qs('imageItemName')) qs('imageItemName').textContent = data.Name || 'صنف جديد';
+        if (qs('imageItemCode')) qs('imageItemCode').textContent = data.Code || 'بدون كود';
+        updateImageState(!!data.HasImage, data.Id);
+        if (qs('cashRangesBody')) {
+            qs('cashRangesBody').innerHTML = '';
+            (data.CashCommissionRanges || []).forEach(function (range) { addCashRangeRow(range); });
+        }
         qs('itemUnitsBody').innerHTML = '';
         (data.Units || []).forEach(function (unit) {
             addUnitRow(unit.IsDefault);
@@ -259,6 +334,13 @@
         }
 
         if (event.target.closest('#addUnitBtn')) addUnitRow(false);
+        if (event.target.closest('#addCashRangeBtn')) addCashRangeRow();
+        if (event.target.closest('.js-remove-cash-range')) event.target.closest('tr').remove();
+        if (event.target.closest('#changeItemImageBtn')) {
+            var imageFile = qs('itemImageFile');
+            if (imageFile) imageFile.click();
+        }
+        if (event.target.closest('#removeItemImageBtn')) updateImageState(false, null);
         if (event.target.closest('.js-remove-unit')) {
             event.target.closest('tr').remove();
             if (!qs('itemUnitsBody').querySelector('tr')) addUnitRow(true);
@@ -325,7 +407,33 @@
         }
     });
 
+    var imageInput = qs('itemImageFile');
+    if (imageInput) {
+        imageInput.addEventListener('change', function () {
+            var file = imageInput.files && imageInput.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function () {
+                var preview = qs('itemImagePreview');
+                var placeholder = qs('itemImagePlaceholder');
+                if (preview) {
+                    preview.src = reader.result;
+                    preview.classList.add('has-image');
+                }
+                if (placeholder) placeholder.hidden = true;
+                setValue('itemImageBase64', reader.result);
+                setValue('removeItemImage', '0');
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
     if (!qs('itemUnitsBody').querySelector('tr')) addUnitRow(true);
+    if (qs('itemImagePreview') && qs('itemImagePreview').getAttribute('src')) {
+        qs('itemImagePreview').classList.add('has-image');
+        if (qs('itemImagePlaceholder')) qs('itemImagePlaceholder').hidden = true;
+        setValue('removeItemImage', '0');
+    }
     if (isPosHosted()) {
         Array.prototype.forEach.call(page.querySelectorAll('a[href*="/MainErp/Items"], form[action*="/MainErp/Items"]'), function (el) {
             var attr = el.tagName === 'FORM' ? 'action' : 'href';

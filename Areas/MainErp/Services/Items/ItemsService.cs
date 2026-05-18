@@ -24,6 +24,11 @@ namespace MyERP.Areas.MainErp.Services.Items
             return _repository.GetDetails(id);
         }
 
+        public byte[] LoadItemImage(int id)
+        {
+            return _repository.LoadItemImage(id);
+        }
+
         public IList<ItemLookupViewModel> LoadGroups()
         {
             return _repository.LoadGroups();

@@ -25,6 +25,7 @@ namespace MyERP.Areas.Shared.CriticalRecovery
             Impact = new CriticalRecoveryImpactViewModel();
             SnapshotBatches = new List<CriticalRecoverySnapshotBatchViewModel>();
             AuditItems = new List<CriticalRecoveryAuditViewModel>();
+            BranchOptions = new List<CriticalRecoveryLookupOption>();
         }
 
         public string AreaName { get; set; }
@@ -34,14 +35,21 @@ namespace MyERP.Areas.Shared.CriticalRecovery
         public CriticalRecoveryImpactViewModel Impact { get; set; }
         public IList<CriticalRecoverySnapshotBatchViewModel> SnapshotBatches { get; set; }
         public IList<CriticalRecoveryAuditViewModel> AuditItems { get; set; }
+        public IList<CriticalRecoveryLookupOption> BranchOptions { get; set; }
     }
 
     public class CriticalRecoveryFilterViewModel
     {
+        public CriticalRecoveryFilterViewModel()
+        {
+            InvoiceScope = "SalesOnly";
+        }
+
         public int? BranchId { get; set; }
         public DateTime? DateFrom { get; set; }
         public DateTime? DateTo { get; set; }
         public int? InvoiceType { get; set; }
+        public string InvoiceScope { get; set; }
         public string InvoiceNo { get; set; }
         public string CashierUserId { get; set; }
         public string CustomerSearch { get; set; }
@@ -156,5 +164,11 @@ namespace MyERP.Areas.Shared.CriticalRecovery
         public long? SnapshotBatchId { get; set; }
         public int? RequestId { get; set; }
         public string Message { get; set; }
+    }
+
+    public class CriticalRecoveryLookupOption
+    {
+        public string Value { get; set; }
+        public string Text { get; set; }
     }
 }

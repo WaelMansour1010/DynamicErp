@@ -54,7 +54,8 @@
     { "order": 103, "file": "103_POS_CustodyPayment_Idempotency.sql", "autoApply": true, "purpose": "Custody replenishment and treasury funding save idempotency table." },
     { "order": 104, "file": "104_POS_CustodyPayment_AccountingValidation.sql", "autoApply": true, "purpose": "Custody replenishment accounting validation and preview procedures." },
     { "order": 105, "file": "105_POS_KycFollowUp_ReportIndexes.sql", "autoApply": true, "purpose": "KYC follow-up report indexes and optimized stored procedure." },
-    { "order": 106, "file": "106_WebScreenPermissions_Catalog.sql", "autoApply": true, "purpose": "Area-isolated web screen permission catalog, role templates, and POS/MainERP seed data." }
+    { "order": 106, "file": "106_WebScreenPermissions_Catalog.sql", "autoApply": true, "purpose": "Area-isolated web screen permission catalog, role templates, and POS/MainERP seed data." },
+    { "order": 107, "file": "107_POS_CriticalInvoiceRecoveryCenter.sql", "autoApply": true, "purpose": "Critical invoice recovery center archive, audit, workflow, restore, and POS menu registration." }
   ],
   "manualScripts": [
     { "file": "35_POS_SystemHealthPermissions.sql", "reason": "Requires sysadmin/master login and replacing the app SQL login placeholder." },

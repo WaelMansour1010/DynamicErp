@@ -614,6 +614,10 @@
     <Compile Include="Common\StoreData\StoreDataRepository.cs" />
     <Compile Include="Common\Users\SharedUserModels.cs" />
     <Compile Include="Common\Users\SharedUsersRepository.cs" />
+    <Compile Include="Areas\Shared\CriticalRecovery\CriticalRecoveryAuthorizeAttribute.cs" />
+    <Compile Include="Areas\Shared\CriticalRecovery\CriticalRecoveryPermissions.cs" />
+    <Compile Include="Areas\Shared\CriticalRecovery\CriticalRecoveryService.cs" />
+    <Compile Include="Areas\Shared\CriticalRecovery\CriticalRecoveryViewModels.cs" />
     <Compile Include="Areas\Pos\PosAreaRegistration.cs" />
     <Compile Include="Areas\Pos\Controllers\DynamicReportsAdminController.cs" />
     <Compile Include="Areas\Pos\Controllers\DynamicReportsController.cs" />
@@ -629,6 +633,7 @@
     <Compile Include="Areas\Pos\Controllers\PosLoginController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosSystemHealthController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosSqlUpdatesController.cs" />
+    <Compile Include="Areas\Pos\Controllers\CriticalRecoveryController.cs" />
     <Compile Include="Areas\Pos\Controllers\PosSystemErrorLogController.cs" />
     <Compile Include="Areas\Pos\Controllers\PaymentsController.cs" />
     <Compile Include="Areas\Pos\Controllers\CashingController.cs" />
@@ -4432,6 +4437,10 @@
     <Content Include="Areas\Pos\Views\PosSystemErrorLog\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosSystemHealth\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PosSqlUpdates\Index.cshtml" />
+    <Content Include="Areas\Shared\CriticalRecovery\Views\Index.cshtml" />
+    <Content Include="Areas\Shared\CriticalRecovery\Views\_CriticalRecoveryMenuItem.cshtml" />
+    <Content Include="Areas\Pos\Views\CriticalRecovery\Index.cshtml" />
+    <Content Include="Areas\Pos\Views\CriticalRecovery\_CriticalRecoveryMenuItem.cshtml" />
     <Content Include="Areas\Pos\Views\DiscountNotifications\Index.cshtml" />
     <Content Include="Areas\Pos\Views\PurchaseInvoice\Index.cshtml" />
     <Content Include="Areas\Pos\Views\StockTransfer\Index.cshtml" />
@@ -4491,6 +4500,7 @@
     <Content Include="Areas\Pos\Sql\76_POS_OperationalSalesReports_Performance.sql" />
     <Content Include="Areas\Pos\Sql\77_POS_SalesAndKycSearch_Performance.sql" />
     <Content Include="Areas\Pos\Sql\106_WebScreenPermissions_Catalog.sql" />
+    <Content Include="Areas\Pos\Sql\107_POS_CriticalInvoiceRecoveryCenter.sql" />
     <Content Include="Areas\Pos\Sql\README_POS_Dashboard_DailySnapshots.md" />
     <Content Include="Areas\Pos\Sql\README_POS_FinancialIntelligenceReports.md" />
     <Content Include="Areas\Pos\Sql\POS_SQL_AutoUpdate_Manifest.json" />

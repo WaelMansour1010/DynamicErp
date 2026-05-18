@@ -62,6 +62,7 @@ namespace MyERP.Areas.MainErp.ViewModels.Items
         public ItemDetailsViewModel()
         {
             Units = new List<ItemUnitLineViewModel>();
+            CashCommissionRanges = new List<ItemCashCommissionRangeViewModel>();
         }
 
         public int Id { get; set; }
@@ -97,7 +98,16 @@ namespace MyERP.Areas.MainErp.ViewModels.Items
         public decimal? PercentVisaPur { get; set; }
         public decimal? MinVisaPur { get; set; }
         public decimal? MaxVisaPur { get; set; }
+        public bool ChkLot { get; set; }
+        public bool OtherItems { get; set; }
+        public bool InstallmentService { get; set; }
+        public bool TrafficViolations { get; set; }
+        public bool IsNotShowAlarm { get; set; }
+        public bool IsPriceIsPerview { get; set; }
+        public bool IsPriceIsLenthW { get; set; }
+        public bool HasImage { get; set; }
         public IList<ItemUnitLineViewModel> Units { get; set; }
+        public IList<ItemCashCommissionRangeViewModel> CashCommissionRanges { get; set; }
     }
 
     public class ItemUnitLineViewModel
@@ -119,6 +129,15 @@ namespace MyERP.Areas.MainErp.ViewModels.Items
         public string Id { get; set; }
         public string Text { get; set; }
         public string Extra { get; set; }
+    }
+
+    public class ItemCashCommissionRangeViewModel
+    {
+        public decimal FromPrice { get; set; }
+        public decimal ToPrice { get; set; }
+        public decimal Price { get; set; }
+        public decimal Cost { get; set; }
+        public decimal CashBack { get; set; }
     }
 
     public class GroupListItemViewModel
@@ -207,7 +226,17 @@ namespace MyERP.Areas.MainErp.ViewModels.Items
         public decimal? PercentVisaPur { get; set; }
         public decimal? MinVisaPur { get; set; }
         public decimal? MaxVisaPur { get; set; }
+        public bool ChkLot { get; set; }
+        public bool OtherItems { get; set; }
+        public bool InstallmentService { get; set; }
+        public bool TrafficViolations { get; set; }
+        public bool IsNotShowAlarm { get; set; }
+        public bool IsPriceIsPerview { get; set; }
+        public bool IsPriceIsLenthW { get; set; }
+        public string ItemImageBase64 { get; set; }
+        public bool RemoveItemImage { get; set; }
         public IList<ItemUnitLineViewModel> Units { get; set; }
+        public IList<ItemCashCommissionRangeViewModel> CashCommissionRanges { get; set; }
     }
 
     public class ItemSaveResult

@@ -60,6 +60,23 @@ namespace MyERP.Areas.MainErp.Controllers
         }
 
         [HttpGet]
+        public ActionResult Image(int id)
+        {
+            if (!_permissionService.CanView(MainErpUserContext, ScreenName))
+            {
+                return new HttpUnauthorizedResult();
+            }
+
+            var image = _service.LoadItemImage(id);
+            if (image == null || image.Length == 0)
+            {
+                return HttpNotFound();
+            }
+
+            return File(image, "image/jpeg");
+        }
+
+        [HttpGet]
         public JsonResult LookupGroups()
         {
             return Json(new { success = true, items = _service.LoadGroups() }, JsonRequestBehavior.AllowGet);

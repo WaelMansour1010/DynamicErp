@@ -145,4 +145,19 @@ namespace MyERP.Areas.MainErp.ViewModels.Security
         public int TemplateId { get; set; }
         public int UserId { get; set; }
     }
+
+    public class WebPermissionBulkApplyRequest
+    {
+        public IList<int> UserIds { get; set; }
+        public string Host { get; set; }
+        public string AreaName { get; set; }
+        public string ModuleKey { get; set; }
+        public int? WebScreenId { get; set; }
+        public string Mode { get; set; }
+
+        public WebPermissionBulkApplyRequest()
+        {
+            UserIds = new List<int>();
+        }
+    }
 }

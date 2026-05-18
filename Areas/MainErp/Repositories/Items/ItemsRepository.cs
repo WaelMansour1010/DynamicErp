@@ -134,6 +134,8 @@ SELECT TOP (1)
     PurchasePrice, SallingPrice, CustomerPrice, DealerPrice, CostPrice, minvalueqty, MaxValueqty,
     RequestLimit, HaveSerial, HaveGuarantee, GuaranteeValue, GuaranteeType, IsArchive, shortName,
     BinLocation, DefaultSupplier, PercentVisa, MinVisa, MaxVisa, PercentVisaPur, MinVisaPur, MaxVisaPur,
+    ChkLot, OtherItems, InstallmentService, TrafficViolations, IsNotShowAlarm, IsPriceIsPerview, IsPriceIsLenthW,
+    CASE WHEN ItemPhoto IS NULL THEN CONVERT(bit, 0) ELSE CONVERT(bit, 1) END AS HasImage,
     CAST(ItemComment AS nvarchar(max)) AS ItemComment
 FROM dbo.TblItems
 WHERE ItemID = @Id;";
@@ -175,14 +177,40 @@ WHERE ItemID = @Id;";
                             model.PercentVisaPur = ReadNullableDecimal(reader, "PercentVisaPur");
                             model.MinVisaPur = ReadNullableDecimal(reader, "MinVisaPur");
                             model.MaxVisaPur = ReadNullableDecimal(reader, "MaxVisaPur");
+                            model.ChkLot = ReadBool(reader, "ChkLot");
+                            model.OtherItems = ReadBool(reader, "OtherItems");
+                            model.InstallmentService = ReadBool(reader, "InstallmentService");
+                            model.TrafficViolations = ReadBool(reader, "TrafficViolations");
+                            model.IsNotShowAlarm = ReadBool(reader, "IsNotShowAlarm");
+                            model.IsPriceIsPerview = ReadBool(reader, "IsPriceIsPerview");
+                            model.IsPriceIsLenthW = ReadBool(reader, "IsPriceIsLenthW");
+                            model.HasImage = ReadBool(reader, "HasImage");
                         }
                     }
                 }
 
                 model.Units = LoadItemUnits(connection, id);
+                model.CashCommissionRanges = LoadCashCommissionRanges(connection, id);
             }
 
             return model;
+        }
+
+        public byte[] LoadItemImage(int id)
+        {
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var command = connection.CreateCommand())
+            {
+                if (!ColumnExists(connection, "TblItems", "ItemPhoto"))
+                {
+                    return null;
+                }
+
+                command.CommandText = "SELECT ItemPhoto FROM dbo.TblItems WHERE ItemID = @Id;";
+                command.Parameters.Add("@Id", SqlDbType.Int).Value = id;
+                var raw = command.ExecuteScalar();
+                return raw == null || raw == DBNull.Value ? null : (byte[])raw;
+            }
         }
 
         public IList<ItemLookupViewModel> LoadGroups()
@@ -493,6 +521,7 @@ WHERE g.GroupID = @Id;";
                     }
 
                     SaveUnits(connection, transaction, id, request);
+                    SaveCashCommissionRanges(connection, transaction, id, request);
                     transaction.Commit();
                     return new ItemSaveResult { Success = true, Id = id, Code = code, Message = "تم الحفظ بنجاح." };
                 }
@@ -554,6 +583,41 @@ ORDER BY ISNULL(iu.DefaultUnit, 0) DESC, ISNULL(iu.SecOrder, 0), iu.UnitID;";
             return lines;
         }
 
+        private static IList<ItemCashCommissionRangeViewModel> LoadCashCommissionRanges(SqlConnection connection, int itemId)
+        {
+            var lines = new List<ItemCashCommissionRangeViewModel>();
+            if (!TableExists(connection, "tblItemsCash"))
+            {
+                return lines;
+            }
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = @"
+SELECT FromPrice, ToPrice, Price, Cost, CashBack
+FROM dbo.tblItemsCash
+WHERE ItemID = @ItemID
+ORDER BY ISNULL(FromPrice, 0), ISNULL(ToPrice, 0);";
+                command.Parameters.Add("@ItemID", SqlDbType.Int).Value = itemId;
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        lines.Add(new ItemCashCommissionRangeViewModel
+                        {
+                            FromPrice = ReadDecimal(reader, "FromPrice"),
+                            ToPrice = ReadDecimal(reader, "ToPrice"),
+                            Price = ReadDecimal(reader, "Price"),
+                            Cost = ReadDecimal(reader, "Cost"),
+                            CashBack = ReadDecimal(reader, "CashBack")
+                        });
+                    }
+                }
+            }
+
+            return lines;
+        }
+
         private static void Normalize(ItemSaveRequest request)
         {
             if (request == null) return;
@@ -562,6 +626,7 @@ ORDER BY ISNULL(iu.DefaultUnit, 0) DESC, ISNULL(iu.SecOrder, 0), iu.UnitID;";
             request.NameEn = (request.NameEn ?? string.Empty).Trim();
             request.Barcode = (request.Barcode ?? string.Empty).Trim();
             request.Units = request.Units ?? new List<ItemUnitLineViewModel>();
+            request.CashCommissionRanges = request.CashCommissionRanges ?? new List<ItemCashCommissionRangeViewModel>();
             foreach (var unit in request.Units)
             {
                 unit.Barcode = (unit.Barcode ?? string.Empty).Trim();
@@ -587,7 +652,26 @@ ORDER BY ISNULL(iu.DefaultUnit, 0) DESC, ISNULL(iu.SecOrder, 0), iu.UnitID;";
 
             var duplicateBarcode = request.Units.Where(u => !string.IsNullOrWhiteSpace(u.Barcode)).GroupBy(u => u.Barcode).FirstOrDefault(g => g.Count() > 1);
             if (duplicateBarcode != null) return "يوجد باركود مكرر داخل وحدات الصنف.";
+            var cashRanges = request.CashCommissionRanges
+                .Where(IsActiveCashRange)
+                .OrderBy(x => x.FromPrice)
+                .ThenBy(x => x.ToPrice)
+                .ToList();
+            ItemCashCommissionRangeViewModel previous = null;
+            foreach (var range in cashRanges)
+            {
+                if (range.FromPrice < 0 || range.ToPrice < 0 || range.Price < 0 || range.Cost < 0 || range.CashBack < 0) return "ظ†ط·ط§ظ‚ط§طھ ط¹ظ…ظˆظ„ط© POS ظ„ط§ طھظ‚ط¨ظ„ ظ‚ظٹظ…ط§ ط³ط§ظ„ط¨ط©.";
+                if (range.ToPrice < range.FromPrice) return "ظ†ظ‡ط§ظٹط© ظ†ط·ط§ظ‚ ط¹ظ…ظˆظ„ط© POS ظٹط¬ط¨ ط£ظ† طھظƒظˆظ† ط£ظƒط¨ط± ظ…ظ† ط§ظ„ط¨ط¯ط§ظٹط©.";
+                if (previous != null && range.FromPrice <= previous.ToPrice) return "ظٹظˆط¬ط¯ طھط¯ط§ط®ظ„ ظپظٹ ظ†ط·ط§ظ‚ط§طھ ط¹ظ…ظˆظ„ط© POS.";
+                previous = range;
+            }
             return null;
+        }
+
+        private static bool IsActiveCashRange(ItemCashCommissionRangeViewModel range)
+        {
+            return range != null &&
+                (range.FromPrice != 0 || range.ToPrice != 0 || range.Price != 0 || range.Cost != 0 || range.CashBack != 0);
         }
 
         private static void AcquireItemLock(SqlConnection connection, SqlTransaction transaction)
@@ -854,7 +938,8 @@ INSERT INTO dbo.TblItems
     PurchasePrice, SallingPrice, CustomerPrice, DealerPrice, CostPrice, minvalueqty, MaxValueqty,
     RequestLimit, HaveSerial, HaveGuarantee, GuaranteeValue, GuaranteeType, IsArchive, shortName,
     BinLocation, DefaultSupplier, PercentVisa, MinVisa, MaxVisa, PercentVisaPur, MinVisaPur, MaxVisaPur,
-    ItemComment, LastUpdate, UserID, Fullcode
+    ChkLot, OtherItems, InstallmentService, TrafficViolations, IsNotShowAlarm, IsPriceIsPerview, IsPriceIsLenthW,
+    ItemPhoto, ItemComment, LastUpdate, UserID, Fullcode
 )
 VALUES
 (
@@ -862,7 +947,8 @@ VALUES
     @PurchasePrice, @SalePrice, @CustomerPrice, @DealerPrice, @CostPrice, @MinQty, @MaxQty,
     @RequestLimit, @HaveSerial, @HaveGuarantee, @GuaranteeValue, @GuaranteeType, @IsArchive, @ShortName,
     @BinLocation, @DefaultSupplier, @PercentVisa, @MinVisa, @MaxVisa, @PercentVisaPur, @MinVisaPur, @MaxVisaPur,
-    @Notes, GETDATE(), @UserID, @ItemCode
+    @ChkLot, @OtherItems, @InstallmentService, @TrafficViolations, @IsNotShowAlarm, @IsPriceIsPerview, @IsPriceIsLenthW,
+    @ItemPhoto, @Notes, GETDATE(), @UserID, @ItemCode
 );", connection, transaction))
             {
                 AddItemParameters(command, id, code, request, user);
@@ -905,6 +991,14 @@ SET ItemCode = @ItemCode,
     PercentVisaPur = @PercentVisaPur,
     MinVisaPur = @MinVisaPur,
     MaxVisaPur = @MaxVisaPur,
+    ChkLot = @ChkLot,
+    OtherItems = @OtherItems,
+    InstallmentService = @InstallmentService,
+    TrafficViolations = @TrafficViolations,
+    IsNotShowAlarm = @IsNotShowAlarm,
+    IsPriceIsPerview = @IsPriceIsPerview,
+    IsPriceIsLenthW = @IsPriceIsLenthW,
+    ItemPhoto = CASE WHEN @RemoveItemImage = 1 THEN NULL WHEN @ItemPhoto IS NULL THEN ItemPhoto ELSE @ItemPhoto END,
     ItemComment = @Notes,
     LastUpdate = GETDATE(),
     UserID = @UserID,
@@ -950,6 +1044,16 @@ WHERE ItemID = @ItemID;", connection, transaction))
             command.Parameters.Add("@PercentVisaPur", SqlDbType.Float).Value = NullableDecimalToDbValue(request.PercentVisaPur);
             command.Parameters.Add("@MinVisaPur", SqlDbType.Float).Value = NullableDecimalToDbValue(request.MinVisaPur);
             command.Parameters.Add("@MaxVisaPur", SqlDbType.Float).Value = NullableDecimalToDbValue(request.MaxVisaPur);
+            command.Parameters.Add("@ChkLot", SqlDbType.Bit).Value = request.ChkLot;
+            command.Parameters.Add("@OtherItems", SqlDbType.Bit).Value = request.OtherItems;
+            command.Parameters.Add("@InstallmentService", SqlDbType.Bit).Value = request.InstallmentService;
+            command.Parameters.Add("@TrafficViolations", SqlDbType.Bit).Value = request.TrafficViolations;
+            command.Parameters.Add("@IsNotShowAlarm", SqlDbType.Bit).Value = request.IsNotShowAlarm;
+            command.Parameters.Add("@IsPriceIsPerview", SqlDbType.Bit).Value = request.IsPriceIsPerview;
+            command.Parameters.Add("@IsPriceIsLenthW", SqlDbType.Bit).Value = request.IsPriceIsLenthW;
+            command.Parameters.Add("@RemoveItemImage", SqlDbType.Bit).Value = request.RemoveItemImage;
+            var image = DecodeImage(request.ItemImageBase64);
+            command.Parameters.Add("@ItemPhoto", SqlDbType.VarBinary, -1).Value = image == null || image.Length == 0 ? (object)DBNull.Value : image;
             command.Parameters.Add("@Notes", SqlDbType.NVarChar).Value = EmptyToDbNull(request.Notes);
             command.Parameters.Add("@UserID", SqlDbType.Int).Value = user != null ? user.UserId : 0;
         }
@@ -996,6 +1100,36 @@ VALUES
             }
         }
 
+        private static void SaveCashCommissionRanges(SqlConnection connection, SqlTransaction transaction, int itemId, ItemSaveRequest request)
+        {
+            if (!TableExists(connection, "tblItemsCash"))
+            {
+                return;
+            }
+
+            using (var delete = new SqlCommand("DELETE FROM dbo.tblItemsCash WHERE ItemID = @ItemID;", connection, transaction))
+            {
+                delete.Parameters.Add("@ItemID", SqlDbType.Int).Value = itemId;
+                delete.ExecuteNonQuery();
+            }
+
+            foreach (var range in request.CashCommissionRanges.Where(IsActiveCashRange).OrderBy(x => x.FromPrice).ThenBy(x => x.ToPrice))
+            {
+                using (var command = new SqlCommand(@"
+INSERT INTO dbo.tblItemsCash (ItemID, FromPrice, ToPrice, Price, Cost, CashBack)
+VALUES (@ItemID, @FromPrice, @ToPrice, @Price, @Cost, @CashBack);", connection, transaction))
+                {
+                    command.Parameters.Add("@ItemID", SqlDbType.Int).Value = itemId;
+                    command.Parameters.Add("@FromPrice", SqlDbType.Float).Value = Convert.ToDouble(range.FromPrice);
+                    command.Parameters.Add("@ToPrice", SqlDbType.Float).Value = Convert.ToDouble(range.ToPrice);
+                    command.Parameters.Add("@Price", SqlDbType.Float).Value = Convert.ToDouble(range.Price);
+                    command.Parameters.Add("@Cost", SqlDbType.Float).Value = Convert.ToDouble(range.Cost);
+                    command.Parameters.Add("@CashBack", SqlDbType.Float).Value = Convert.ToDouble(range.CashBack);
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
+
         private static object EmptyToDbNull(string value)
         {
             return string.IsNullOrWhiteSpace(value) ? (object)DBNull.Value : value.Trim();
@@ -1004,6 +1138,25 @@ VALUES
         private static object NullableDecimalToDbValue(decimal? value)
         {
             return value.HasValue ? (object)Convert.ToDouble(value.Value) : DBNull.Value;
+        }
+
+        private static byte[] DecodeImage(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            var commaIndex = value.IndexOf(',');
+            var payload = commaIndex >= 0 ? value.Substring(commaIndex + 1) : value;
+            try
+            {
+                return Convert.FromBase64String(payload);
+            }
+            catch (FormatException)
+            {
+                return null;
+            }
         }
 
         private static GroupListItemViewModel ReadGroup(IDataRecord reader)

@@ -1,4 +1,4 @@
-@model MyERP.Areas.MainErp.ViewModels.Items.ItemsIndexViewModel
+﻿@model MyERP.Areas.MainErp.ViewModels.Items.ItemsIndexViewModel
 @using System.Linq
 @using System.Web.Routing
 @{
@@ -24,6 +24,7 @@
          data-pos-hosted="@posRouteInfo"
          data-save-url="@Url.Action("Save", "Items", itemRoute)"
          data-details-url="@Url.Action("Details", "Items", itemRoute)"
+         data-image-url="@Url.Action("Image", "Items", itemRoute)"
          data-delete-url="@Url.Action("Delete", "Items", itemRoute)"
          data-group-details-url="@Url.Action("GroupDetails", "Items", itemRoute)"
          data-group-save-url="@Url.Action("SaveGroup", "Items", itemRoute)"
@@ -303,53 +304,90 @@
             @if (isPosHosted)
             {
                 <section class="main-erp-premium-card items-section items-pos-commission-section" id="itemPosCommissionSection">
-                    <div class="erp-section-title"><h2>افتراضات عمولات POS</h2></div>
-                    <div class="items-commission-layout">
-                        <label class="items-check"><input type="checkbox" id="posCommissionEnabled" @(selected.PosCommissionEnabled ? "checked" : "") /> تفعيل افتراضات العمولة للصنف</label>
-                        <label>موظف البيع الافتراضي
-                            <select id="posDefaultSalesEmployeeId">
-                                <option value="">بدون افتراضي</option>
-                                @foreach (var emp in Model.SalesEmployees)
-                                {
-                                    <option value="@emp.Id" @(selected.PosDefaultSalesEmployeeId.HasValue && selected.PosDefaultSalesEmployeeId.Value.ToString() == emp.Id ? "selected" : "")>@emp.Text</option>
-                                }
-                            </select>
-                        </label>
-                        <label>عميل العمولة الافتراضي
-                            <select id="posDefaultCommissionCustomerId">
-                                <option value="">بدون افتراضي</option>
-                                @foreach (var customer in Model.Customers)
-                                {
-                                    <option value="@customer.Id" @(selected.PosDefaultCommissionCustomerId.HasValue && selected.PosDefaultCommissionCustomerId.Value.ToString() == customer.Id ? "selected" : "")>@customer.Text</option>
-                                }
-                            </select>
-                        </label>
-                        <label>المورد الافتراضي للسطر
-                            <select id="defaultSupplierId">
-                                <option value="">بدون افتراضي</option>
-                                @foreach (var supplier in Model.Suppliers)
-                                {
-                                    <option value="@supplier.Id" @(selected.DefaultSupplierId.HasValue && selected.DefaultSupplierId.Value.ToString() == supplier.Id ? "selected" : "")>@supplier.Text</option>
-                                }
-                            </select>
-                        </label>
-                        <label>طريقة الحساب
-                            <select id="posCommissionType">
-                                <option value="" @(String.IsNullOrWhiteSpace(selected.PosCommissionType) ? "selected" : "")>حسب إعداد الفاتورة / الموظف</option>
-                                <option value="Percentage" @(selected.PosCommissionType == "Percentage" ? "selected" : "")>نسبة</option>
-                                <option value="Value" @(selected.PosCommissionType == "Value" ? "selected" : "")>قيمة ثابتة</option>
-                                <option value="None" @(selected.PosCommissionType == "None" ? "selected" : "")>بدون عمولة</option>
-                            </select>
-                        </label>
-                        <label>نسبة العمولة %<input type="number" step="0.01" min="0" id="posCommissionPercent" value="@selected.PosCommissionPercent" /></label>
-                        <label>قيمة العمولة<input type="number" step="0.01" min="0" id="posCommissionValue" value="@selected.PosCommissionValue" /></label>
-                        <label>صافي العمولة<input type="number" step="0.01" min="0" id="posCommissionNetValue" value="@selected.PosCommissionNetValue" /></label>
-                        <label class="items-check"><input type="checkbox" id="posExcludeCommission" @(selected.PosExcludeCommission ? "checked" : "") /> استبعاد الصنف من العمولة</label>
+                    <div class="erp-section-title">
+                        <h2>افتراضات عمولات POS</h2>
+                        <button type="button" class="main-erp-inline-action is-secondary" id="addCashRangeBtn"><i class="fas fa-plus"></i> نطاق عمولة</button>
                     </div>
-                    <p class="items-commission-note">هذه التابة تظهر في POS فقط. المورد الافتراضي يحفظ في TblItems.DefaultSupplier، وباقي حقول العمولة تحفظ فقط إذا كانت أعمدتها موجودة بدون إنشاء جداول أو أعمدة جديدة.</p>
+                    <div class="items-pos-premium-grid">
+                        <aside class="items-product-media-card">
+                            <div class="items-product-image-frame">
+                                <img id="itemImagePreview" alt="صورة الصنف" @(selected.HasImage && selected.Id > 0 ? "src=\"" + Url.Action("Image", "Items", new { area = "MainErp", id = selected.Id, fromPos = "1", host = "pos" }) + "\"" : "") />
+                                <div class="items-image-placeholder" id="itemImagePlaceholder">
+                                    <i class="fas fa-image"></i>
+                                    <span>صورة المنتج</span>
+                                </div>
+                            </div>
+                            <div class="items-product-media-copy">
+                                <strong id="imageItemName">@(String.IsNullOrWhiteSpace(selected.Name) ? "صنف جديد" : selected.Name)</strong>
+                                <small id="imageItemCode">@(String.IsNullOrWhiteSpace(selected.Code) ? "بدون كود" : selected.Code)</small>
+                            </div>
+                            <input type="file" id="itemImageFile" accept="image/*" hidden />
+                            <input type="hidden" id="itemImageBase64" value="" />
+                            <input type="hidden" id="removeItemImage" value="0" />
+                            <div class="items-image-actions">
+                                <button type="button" class="main-erp-inline-action is-secondary" id="changeItemImageBtn"><i class="fas fa-upload"></i> تغيير</button>
+                                <button type="button" class="main-erp-inline-action is-danger" id="removeItemImageBtn"><i class="fas fa-trash"></i> حذف</button>
+                            </div>
+                        </aside>
+                        <div class="items-pos-commission-workspace">
+                            <section class="items-commission-panel">
+                                <div class="items-panel-head"><span>القواعد الافتراضية</span><strong>البيع والشراء</strong></div>
+                                <div class="items-commission-layout">
+                                    <label>المورد الافتراضي للسطر
+                                        <select id="defaultSupplierId">
+                                            <option value="">بدون افتراضي</option>
+                                            @foreach (var supplier in Model.Suppliers)
+                                            {
+                                                <option value="@supplier.Id" @(selected.DefaultSupplierId.HasValue && selected.DefaultSupplierId.Value.ToString() == supplier.Id ? "selected" : "")>@supplier.Text</option>
+                                            }
+                                        </select>
+                                    </label>
+                                    <label>نسبة عمولة البيع %<input type="number" step="0.01" min="0" id="percentVisa" value="@selected.PercentVisa" /></label>
+                                    <label>أقل عمولة بيع<input type="number" step="0.01" min="0" id="minVisa" value="@selected.MinVisa" /></label>
+                                    <label>أقصى عمولة بيع<input type="number" step="0.01" min="0" id="maxVisa" value="@selected.MaxVisa" /></label>
+                                    <label>نسبة عمولة الشراء / Cash Out %<input type="number" step="0.01" min="0" id="percentVisaPur" value="@selected.PercentVisaPur" /></label>
+                                    <label>أقل عمولة شراء<input type="number" step="0.01" min="0" id="minVisaPur" value="@selected.MinVisaPur" /></label>
+                                    <label>أقصى عمولة شراء<input type="number" step="0.01" min="0" id="maxVisaPur" value="@selected.MaxVisaPur" /></label>
+                                </div>
+                            </section>
+                            <section class="items-commission-panel">
+                                <div class="items-panel-head"><span>تشغيل POS</span><strong>خصائص الصنف</strong></div>
+                                <div class="items-toggle-grid">
+                                    <label class="items-toggle-card"><input type="checkbox" id="chkLot" @(selected.ChkLot ? "checked" : "") /><span>خدمات كيشني</span><small>يعامل كخدمة تشغيل داخل POS</small></label>
+                                    <label class="items-toggle-card"><input type="checkbox" id="otherItems" @(selected.OtherItems ? "checked" : "") /><span>أصناف أخرى</span><small>تصنيف خاص للفواتير السريعة</small></label>
+                                    <label class="items-toggle-card"><input type="checkbox" id="installmentService" @(selected.InstallmentService ? "checked" : "") /><span>خدمة تقسيط</span><small>يرتبط بحسابات التقسيط</small></label>
+                                    <label class="items-toggle-card"><input type="checkbox" id="trafficViolations" @(selected.TrafficViolations ? "checked" : "") /><span>مخالفات</span><small>خدمات المخالفات والمعاملات</small></label>
+                                    <label class="items-toggle-card"><input type="checkbox" id="isNotShowAlarm" @(selected.IsNotShowAlarm ? "checked" : "") /><span>لا يظهر في التنبيهات</span><small>إخفاء الصنف من تنبيهات النظام</small></label>
+                                    <label class="items-toggle-card"><input type="checkbox" id="isPriceIsPerview" @(selected.IsPriceIsPerview ? "checked" : "") /><span>العمولة نسبة</span><small>قراءة النطاق كسعر نسبي</small></label>
+                                    <label class="items-toggle-card"><input type="checkbox" id="isPriceIsLenthW" @(selected.IsPriceIsLenthW ? "checked" : "") /><span>السعر حسب العرض والطول</span><small>نفس خيار شاشة VB6</small></label>
+                                </div>
+                            </section>
+                            <section class="items-commission-panel items-range-panel">
+                                <div class="items-panel-head"><span>tblItemsCash</span><strong>نطاقات العمولة حسب مبلغ الفاتورة</strong></div>
+                                <div class="main-erp-table-wrap">
+                                    <table class="main-erp-table items-ranges-table">
+                                        <thead><tr><th>من</th><th>إلى</th><th>المبلغ / العمولة</th><th>التكلفة</th><th>Cash Back</th><th></th></tr></thead>
+                                        <tbody id="cashRangesBody">
+                                            @foreach (var range in selected.CashCommissionRanges)
+                                            {
+                                                <tr>
+                                                    <td><input type="number" step="0.01" min="0" class="cash-from" value="@range.FromPrice" /></td>
+                                                    <td><input type="number" step="0.01" min="0" class="cash-to" value="@range.ToPrice" /></td>
+                                                    <td><input type="number" step="0.01" min="0" class="cash-price" value="@range.Price" /></td>
+                                                    <td><input type="number" step="0.01" min="0" class="cash-cost" value="@range.Cost" /></td>
+                                                    <td><input type="number" step="0.01" min="0" class="cash-back" value="@range.CashBack" /></td>
+                                                    <td><button type="button" class="main-erp-link-btn js-remove-cash-range">حذف</button></td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
                 </section>
             }
-<section class="main-erp-premium-card items-section" id="itemGroupsSection">
+            <section class="main-erp-premium-card items-section" id="itemGroupsSection">
                 <div class="erp-section-title">
                     <h2>مجموعات الأصناف</h2>
                     <div>
@@ -447,6 +485,18 @@
     </tr>
 </template>
 
+<template id="cashRangeRowTemplate">
+    <tr>
+        <td><input type="number" step="0.01" min="0" class="cash-from" value="0" /></td>
+        <td><input type="number" step="0.01" min="0" class="cash-to" value="0" /></td>
+        <td><input type="number" step="0.01" min="0" class="cash-price" value="0" /></td>
+        <td><input type="number" step="0.01" min="0" class="cash-cost" value="0" /></td>
+        <td><input type="number" step="0.01" min="0" class="cash-back" value="0" /></td>
+        <td><button type="button" class="main-erp-link-btn js-remove-cash-range">حذف</button></td>
+    </tr>
+</template>
+
 @section scripts {
     <script src="~/Areas/MainErp/Scripts/items.js?v=20260518-pos-items"></script>
 }
+

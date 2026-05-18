@@ -1,0 +1,324 @@
+@model MyERP.Areas.Shared.CriticalRecovery.CriticalRecoveryIndexViewModel
+@{
+    Layout = null;
+    var title = "مركز الاسترجاع والتحكم الحرج في الفواتير";
+    var areaName = Model.AreaName ?? "MainErp";
+    var branchItems = new List<SelectListItem> { new SelectListItem { Value = "", Text = "كل الفروع" } };
+    if (Model.BranchOptions != null)
+    {
+        foreach (var branch in Model.BranchOptions)
+        {
+            branchItems.Add(new SelectListItem
+            {
+                Value = branch.Value,
+                Text = branch.Text,
+                Selected = Model.Filter != null && Model.Filter.BranchId.HasValue && branch.Value == Model.Filter.BranchId.Value.ToString()
+            });
+        }
+    }
+    var invoiceScopeItems = new[]
+    {
+        new SelectListItem { Value = "SalesOnly", Text = "فواتير فقط", Selected = Model.Filter == null || string.IsNullOrWhiteSpace(Model.Filter.InvoiceScope) || Model.Filter.InvoiceScope == "SalesOnly" },
+        new SelectListItem { Value = "SalesAndReturns", Text = "فواتير ومرتجعات", Selected = Model.Filter != null && Model.Filter.InvoiceScope == "SalesAndReturns" }
+    };
+    var modeItems = new[]
+    {
+        new SelectListItem { Value = "CancelOnly", Text = "إلغاء فقط" },
+        new SelectListItem { Value = "ReverseAccountingOnly", Text = "عكس المحاسبة فقط" },
+        new SelectListItem { Value = "ReverseInventoryOnly", Text = "عكس المخزون فقط" },
+        new SelectListItem { Value = "FullRollback", Text = "استرجاع كامل" },
+        new SelectListItem { Value = "PeriodCleanup", Text = "تنظيف فترة" },
+        new SelectListItem { Value = "BranchCleanup", Text = "تنظيف فرع" }
+    };
+    var restoreScopeItems = new[]
+    {
+        new SelectListItem { Value = "Full", Text = "استرجاع كامل" },
+        new SelectListItem { Value = "AccountingOnly", Text = "محاسبة فقط" },
+        new SelectListItem { Value = "InventoryOnly", Text = "مخزون فقط" },
+        new SelectListItem { Value = "InvoiceOnly", Text = "الفاتورة فقط" }
+    };
+}
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@title</title>
+    <style>
+        body { margin:0; background:#15171c; color:#f4f1ed; font-family:Tahoma,Arial,sans-serif; }
+        .shell { display:grid; grid-template-columns:250px 1fr; min-height:100vh; }
+        .side { background:#0d0f14; border-left:1px solid #3a2022; padding:24px 18px; }
+        .brand strong { display:block; color:#fff; font-size:20px; }
+        .brand span { color:#e25858; font-size:12px; text-transform:uppercase; letter-spacing:.08em; }
+        .side a { display:block; color:#d7d0cb; text-decoration:none; margin-top:18px; padding:10px 12px; border-radius:6px; background:#1b1e25; }
+        .main { padding:24px; }
+        .top { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
+        h1,h2,h3 { margin:0; letter-spacing:0; }
+        h1 { font-size:28px; }
+        h2 { font-size:18px; margin-bottom:14px; }
+        .badge { display:inline-block; color:#ff9c9c; font-size:12px; margin-bottom:6px; }
+        .banner { border:1px solid #8d2a2a; background:#3a1417; color:#ffe5e5; padding:14px 16px; border-radius:6px; margin-bottom:18px; }
+        .alert { padding:12px 14px; border-radius:6px; margin-bottom:14px; }
+        .success { background:#143a2a; border:1px solid #28704f; }
+        .error { background:#461619; border:1px solid #b33a3a; }
+        .grid { display:grid; grid-template-columns:repeat(4,minmax(160px,1fr)); gap:12px; }
+        .panel { background:#1d2028; border:1px solid #343844; border-radius:8px; padding:16px; margin-bottom:16px; }
+        label { display:block; color:#cfc7c1; font-size:12px; margin-bottom:5px; }
+        input,select,textarea { width:100%; box-sizing:border-box; border:1px solid #4b4f5d; background:#111318; color:#fff; border-radius:6px; padding:9px 10px; min-height:38px; }
+        textarea { min-height:74px; resize:vertical; }
+        .checks { display:grid; grid-template-columns:repeat(4,minmax(180px,1fr)); gap:10px; margin-top:12px; }
+        .check { display:flex; align-items:center; gap:8px; background:#151821; border:1px solid #343844; padding:9px; border-radius:6px; }
+        .check input { width:auto; min-height:auto; }
+        .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+        button,.button { border:0; background:#a5282f; color:#fff; padding:10px 14px; border-radius:6px; cursor:pointer; text-decoration:none; font-weight:bold; }
+        button.secondary { background:#333945; }
+        button.warning { background:#d94c1a; }
+        button.safe { background:#28634c; }
+        .counters { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+        .counter { background:#101217; border:1px solid #343844; padding:14px; border-radius:8px; }
+        .counter strong { display:block; font-size:24px; color:#fff; }
+        .counter span { color:#c9c0ba; font-size:12px; }
+        table { width:100%; border-collapse:collapse; }
+        th,td { border-bottom:1px solid #333845; padding:10px; text-align:right; vertical-align:top; }
+        th { color:#ffb6b6; font-size:12px; background:#171a21; position:sticky; top:0; }
+        .scroll { overflow:auto; max-height:360px; border:1px solid #333845; border-radius:6px; }
+        .danger-note { color:#ffb6b6; font-size:12px; line-height:1.7; }
+        .ltr { direction:ltr; text-align:left; }
+        @@media (max-width: 900px) {
+            .shell { grid-template-columns:1fr; }
+            .side { border-left:0; border-bottom:1px solid #3a2022; }
+            .grid,.checks,.counters { grid-template-columns:1fr; }
+            .top { display:block; }
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <aside class="side">
+            <div class="brand">
+                <strong>@areaName</strong>
+                <span>عمليات حرجة</span>
+            </div>
+            @Html.ActionLink("البحث والتحليل", "Index", "CriticalRecovery", new { area = areaName }, null)
+            @Html.ActionLink("القيود اليومية", "Index", "JournalEntries", new { area = areaName }, null)
+            <p class="danger-note">للمديرين فقط. يتم أخذ Snapshot قبل أي إجراء. التنفيذ يتطلب اعتمادًا ثانيًا. بيانات KYC الأساسية محمية.</p>
+        </aside>
+        <main class="main">
+            <header class="top">
+                <div>
+                    <span class="badge">وحدة استرجاع مؤمنة</span>
+                    <h1>@title</h1>
+                </div>
+                <div>@User.Identity.Name</div>
+            </header>
+
+            <div class="banner">
+                هذه ليست شاشة حذف عادية. أي إجراء حرج يتطلب معاينة، أرشفة كاملة، كلمة مرور ثانوية، تأكيد خطر صريح، واعتماد مدير ثانٍ. بيانات KYC الأساسية لا يتم حذفها افتراضيًا.
+            </div>
+
+            @if (TempData["CriticalRecoveryMessage"] != null)
+            {
+                <div class="alert success">@TempData["CriticalRecoveryMessage"]</div>
+            }
+            @if (TempData["CriticalRecoveryError"] != null)
+            {
+                <div class="alert error">@TempData["CriticalRecoveryError"]</div>
+            }
+
+            @using (Html.BeginForm("Analyze", "CriticalRecovery", new { area = areaName }, FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <section class="panel">
+                    <h2>البحث والتحليل</h2>
+                    <div class="grid">
+                        <div><label>الفرع</label>@Html.DropDownListFor(m => m.Filter.BranchId, branchItems)</div>
+                        <div><label>من تاريخ</label>@Html.TextBoxFor(m => m.Filter.DateFrom, "{0:yyyy-MM-dd}", new { type = "date" })</div>
+                        <div><label>إلى تاريخ</label>@Html.TextBoxFor(m => m.Filter.DateTo, "{0:yyyy-MM-dd}", new { type = "date" })</div>
+                        <div><label>نطاق الفواتير</label>@Html.DropDownListFor(m => m.Filter.InvoiceScope, invoiceScopeItems)</div>
+                        <div><label>رقم الفاتورة</label>@Html.TextBoxFor(m => m.Filter.InvoiceNo)</div>
+                        <div><label>المستخدم / الكاشير</label>@Html.TextBoxFor(m => m.Filter.CashierUserId)</div>
+                        <div><label>الهاتف / التوكن / العميل</label>@Html.TextBoxFor(m => m.Filter.CustomerSearch)</div>
+                        <div><label>أرقام الحركات المحددة</label>@Html.TextBoxFor(m => m.Filter.SelectedTransactionIds, new { placeholder = "10235,10236" })</div>
+                    </div>
+                    <div class="checks">
+                        <label class="check">@Html.CheckBoxFor(m => m.Filter.HasAccountingEntry) لها قيد محاسبي</label>
+                        <label class="check">@Html.CheckBoxFor(m => m.Filter.HasStockMovement) لها حركة مخزون</label>
+                        <label class="check">@Html.CheckBoxFor(m => m.Filter.HasKycLink) مرتبطة بـ KYC</label>
+                        <label class="check">@Html.CheckBoxFor(m => m.Filter.HasGeneratedVoucher) لها سند مولد</label>
+                    </div>
+                    <div class="actions">
+                        <button type="submit" class="safe">معاينة فقط</button>
+                        <button type="submit" formaction="@Url.Action("Export", "CriticalRecovery", new { area = areaName })" class="secondary">تصدير الصفوف المتأثرة إلى Excel</button>
+                    </div>
+                </section>
+            }
+
+            <section class="counters">
+                <div class="counter"><strong>@Model.Impact.InvoiceCount</strong><span>الفواتير في المعاينة</span></div>
+                <div class="counter"><strong>@Model.Impact.DependencyCount</strong><span>الصفوف التابعة</span></div>
+                <div class="counter"><strong>@Model.Impact.TotalValue.ToString("0.00")</strong><span>إجمالي قيمة الفواتير</span></div>
+            </section>
+
+            <section class="panel">
+                <h2>التأثيرات المرتبطة</h2>
+                @foreach (var warning in Model.Impact.Warnings)
+                {
+                    <div class="alert error">@warning</div>
+                }
+                <div class="scroll">
+                    <table>
+                        <thead><tr><th>الفاتورة</th><th>الحركة</th><th>التاريخ</th><th>الفرع</th><th>العميل</th><th>القيمة</th><th>الحالة</th><th>KYC</th><th>مراجعة</th></tr></thead>
+                        <tbody>
+                        @foreach (var invoice in Model.Impact.Invoices)
+                        {
+                            <tr>
+                                <td>@invoice.InvoiceNo</td>
+                                <td>@invoice.TransactionId</td>
+                                <td>@invoice.TransactionDate.ToString("yyyy-MM-dd")</td>
+                                <td>@invoice.BranchId</td>
+                                <td>@invoice.CustomerName</td>
+                                <td>@invoice.Value.ToString("0.00")</td>
+                                <td>@(invoice.IsClosed ? "مغلق" : "مفتوح") / @(invoice.IsPosted ? "مرحل" : "غير مرحل")</td>
+                                <td>@invoice.KycReferenceIds</td>
+                                <td><a class="button secondary" target="_blank" href="@Url.Action("Index", "PosTransaction", new { area = "Pos", reviewTransactionId = invoice.TransactionId })">فتح</a></td>
+                            </tr>
+                        }
+                        @if (Model.Impact.Invoices.Count == 0)
+                        {
+                            <tr><td colspan="9">لا توجد نتائج معاينة. نفذ البحث أولًا.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="scroll" style="margin-top:12px">
+                    <table>
+                        <thead><tr><th>الحركة</th><th>الموديول</th><th>الجدول</th><th>عدد الصفوف</th><th>السياسة</th><th>محمي</th></tr></thead>
+                        <tbody>
+                        @foreach (var item in Model.Impact.Dependencies)
+                        {
+                            <tr>
+                                <td>@item.TransactionId</td>
+                                <td>@item.ModuleName</td>
+                                <td>@item.TableName</td>
+                                <td>@item.RowCount</td>
+                                <td>@item.ActionPolicy</td>
+                                <td>@item.IsProtected</td>
+                            </tr>
+                        }
+                        @if (Model.Impact.Dependencies.Count == 0)
+                        {
+                            <tr><td colspan="6">لا يوجد تحليل ارتباطات حتى الآن.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            @using (Html.BeginForm("Initiate", "CriticalRecovery", new { area = areaName }, FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.Filter.BranchId)
+                @Html.HiddenFor(m => m.Filter.DateFrom)
+                @Html.HiddenFor(m => m.Filter.DateTo)
+                @Html.HiddenFor(m => m.Filter.InvoiceType)
+                @Html.HiddenFor(m => m.Filter.InvoiceScope)
+                @Html.HiddenFor(m => m.Filter.InvoiceNo)
+                @Html.HiddenFor(m => m.Filter.CashierUserId)
+                @Html.HiddenFor(m => m.Filter.CustomerSearch)
+                @Html.HiddenFor(m => m.Filter.SelectedTransactionIds)
+                <section class="panel">
+                    <h2>المعالجة الحرجة</h2>
+                    <div class="grid">
+                        <div><label>نوع المعالجة</label>@Html.DropDownListFor(m => m.Request.Mode, modeItems)</div>
+                        <div><label>كلمة المرور الثانوية</label>@Html.PasswordFor(m => m.Request.SecondaryPassword)</div>
+                        <div><label>تأكيد الخطر</label>@Html.TextBoxFor(m => m.Request.DangerConfirmation, new { @class = "ltr", placeholder = "I UNDERSTAND" })</div>
+                        <div><label>رقم الطلب للاعتماد</label>@Html.TextBoxFor(m => m.Request.RequestId, new { type = "number" })</div>
+                    </div>
+                    <label>سبب إلزامي</label>
+                    @Html.TextAreaFor(m => m.Request.Reason)
+                    <div class="checks">
+                        <label class="check">@Html.CheckBoxFor(m => m.Request.DryRun) معاينة بدون تنفيذ</label>
+                        <label class="check">@Html.CheckBoxFor(m => m.Request.RequestHigherApprovalForClosedPeriod) اعتماد أعلى للفترات المغلقة</label>
+                        <label class="check">@Html.CheckBoxFor(m => m.Request.AllowPhysicalDelete) سماح حذف فعلي صريح</label>
+                        <label class="check">@Html.CheckBoxFor(m => m.Request.DeleteOrphanKycRecords) حذف KYC يتيم</label>
+                    </div>
+                    <p class="danger-note">حذف KYC اليتيم مغلق افتراضيًا ويظل محظورًا إلا بعد التحقق من عدم وجود أي فاتورة أو كارت/توكن أو سجل تدقيق أو إقفال أو تقرير أو مرجع امتثال.</p>
+                    <div class="actions">
+                        <button type="submit" class="warning">إنشاء طلب + Snapshot</button>
+                        <button type="submit" formaction="@Url.Action("ApproveAndExecute", "CriticalRecovery", new { area = areaName })">اعتماد مدير ثانٍ + تنفيذ</button>
+                    </div>
+                </section>
+            }
+
+            @using (Html.BeginForm("Restore", "CriticalRecovery", new { area = areaName }, FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <section class="panel">
+                    <h2>الأرشيف والاسترجاع</h2>
+                    <div class="grid">
+                        <div><label>دفعة الأرشيف</label>@Html.TextBoxFor(m => m.Restore.SnapshotBatchId, new { type = "number" })</div>
+                        <div><label>رقم حركة محدد</label>@Html.TextBoxFor(m => m.Restore.TransactionId, new { type = "number" })</div>
+                        <div><label>نطاق الاسترجاع</label>@Html.DropDownListFor(m => m.Restore.RestoreScope, restoreScopeItems)</div>
+                        <div><label>كلمة المرور الثانوية</label>@Html.PasswordFor(m => m.Restore.SecondaryPassword)</div>
+                    </div>
+                    <label>سبب الاسترجاع</label>
+                    @Html.TextAreaFor(m => m.Restore.Reason)
+                    <div class="actions">
+                        <button type="submit" class="safe">استرجاع العمليات المؤرشفة</button>
+                    </div>
+                </section>
+            }
+
+            <section class="panel">
+                <h2>سجل العمليات الحرجة</h2>
+                <div class="scroll">
+                    <table>
+                        <thead><tr><th>Batch</th><th>Date</th><th>Requested</th><th>Approved</th><th>Mode</th><th>Status</th><th>Invoices</th><th>Rows</th></tr></thead>
+                        <tbody>
+                        @foreach (var batch in Model.SnapshotBatches)
+                        {
+                            <tr>
+                                <td>@batch.SnapshotBatchId</td>
+                                <td>@batch.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>@batch.RequestedBy</td>
+                                <td>@batch.ApprovedBy</td>
+                                <td>@batch.Mode</td>
+                                <td>@batch.Status</td>
+                                <td>@batch.InvoiceCount</td>
+                                <td>@batch.SnapshotRowCount</td>
+                            </tr>
+                        }
+                        @if (Model.SnapshotBatches.Count == 0)
+                        {
+                            <tr><td colspan="8">No snapshot batches found.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="scroll" style="margin-top:12px">
+                    <table>
+                        <thead><tr><th>Time</th><th>Action</th><th>Operator</th><th>Approver</th><th>Result</th><th>Message</th></tr></thead>
+                        <tbody>
+                        @foreach (var item in Model.AuditItems)
+                        {
+                            <tr>
+                                <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>@item.ActionName</td>
+                                <td>@item.OperatorName</td>
+                                <td>@item.ApproverName</td>
+                                <td>@item.Result</td>
+                                <td>@item.Message</td>
+                            </tr>
+                        }
+                        @if (Model.AuditItems.Count == 0)
+                        {
+                            <tr><td colspan="6">No audit events found.</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
