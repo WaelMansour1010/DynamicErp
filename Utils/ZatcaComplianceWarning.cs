@@ -1,5 +1,5 @@
 using MyERP.Models;
-using System.Data.Entity;
+using MyERP.Common.DatabaseUpdates;
 using System.Linq;
 using System.Web.Mvc;
 
@@ -26,10 +26,18 @@ namespace MyERP
 
         private static bool IsLinked(MySoftERPEntity db)
         {
-            return db.SystemSettings
-                .AsNoTracking()
-                .Select(setting => setting.IsZatcaLinked)
-                .FirstOrDefault() == true;
+            SharedDatabaseSchemaBootstrapper.EnsureRequiredColumns(db);
+            return db.Database.SqlQuery<bool>(@"
+IF OBJECT_ID(N'dbo.SystemSetting', N'U') IS NULL
+   OR COL_LENGTH(N'dbo.SystemSetting', N'IsZatcaLinked') IS NULL
+BEGIN
+    SELECT CAST(0 AS bit);
+END
+ELSE
+BEGIN
+    SELECT TOP (1) CAST(ISNULL(IsZatcaLinked, 0) AS bit)
+    FROM dbo.SystemSetting;
+END").FirstOrDefault();
         }
     }
 }

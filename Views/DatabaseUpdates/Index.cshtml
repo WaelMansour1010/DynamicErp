@@ -1,0 +1,97 @@
+@model MyERP.Common.DatabaseUpdates.SharedDatabaseUpdateDashboard
+@using System.Globalization
+@{
+    ViewBag.Title = "تحديثات قاعدة البيانات";
+    var inv = CultureInfo.InvariantCulture;
+}
+
+<style>
+    .dbu-page { direction: rtl; text-align: right; padding: 12px 0 28px; }
+    .dbu-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 16px; }
+    .dbu-head h2 { margin: 0 0 8px; font-size: 24px; }
+    .dbu-muted { color: #667085; }
+    .dbu-pill { border-radius: 6px; padding: 10px 14px; font-weight: 700; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .dbu-pill.pending { background: #fff7ed; color: #9a3412; border-color: #fed7aa; }
+    .dbu-alert { border-radius: 6px; padding: 12px 14px; margin-bottom: 14px; border: 1px solid #bbf7d0; background: #f0fdf4; color: #166534; }
+    .dbu-alert.error { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+    .dbu-cards { display: grid; grid-template-columns: repeat(3, minmax(130px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .dbu-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; }
+    .dbu-card span { display: block; color: #667085; margin-bottom: 8px; }
+    .dbu-card strong { font-size: 24px; }
+    .dbu-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
+    .dbu-btn { border: 0; border-radius: 6px; background: #b42318; color: #fff; padding: 10px 14px; font-weight: 700; cursor: pointer; }
+    .dbu-table-wrap { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: auto; margin-bottom: 16px; }
+    .dbu-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+    .dbu-table th, .dbu-table td { padding: 10px; border-bottom: 1px solid #eef2f7; vertical-align: top; }
+    .dbu-table th { background: #f8fafc; }
+    .dbu-hash { direction: ltr; text-align: left; font-family: Consolas, monospace; max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dbu-status { display: inline-block; border-radius: 999px; padding: 4px 8px; font-weight: 700; font-size: 12px; }
+    .dbu-status.Pending { background: #ffedd5; color: #9a3412; }
+    .dbu-status.Applied { background: #dcfce7; color: #166534; }
+    .dbu-status.HashMismatch { background: #fee2e2; color: #991b1b; }
+</style>
+
+<section class="dbu-page">
+    <div class="dbu-head">
+        <div>
+            <h2>تحديثات قاعدة البيانات المشتركة</h2>
+            <div class="dbu-muted">قاعدة البيانات: <strong>@Model.DatabaseName</strong> | السيرفر: <strong>@Model.ServerName</strong></div>
+        </div>
+        <div class="dbu-pill @(Model.PendingCount > 0 ? "pending" : "")">
+            @(Model.PendingCount > 0 ? "تحديثات منتظرة" : "محدثة")
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <div class="dbu-alert @(Model.IsError ? "error" : "")">@Model.Message</div>
+    }
+
+    <div class="dbu-cards">
+        <div class="dbu-card"><span>تم تطبيقها</span><strong>@Model.AppliedCount</strong></div>
+        <div class="dbu-card"><span>منتظرة</span><strong>@Model.PendingCount</strong></div>
+        <div class="dbu-card"><span>اختلاف Hash</span><strong>@Model.HashMismatchCount</strong></div>
+    </div>
+
+    <div class="dbu-actions">
+        @using (Html.BeginForm("ApplyPending", "DatabaseUpdates", FormMethod.Post))
+        {
+            @Html.AntiForgeryToken()
+            <label>
+                <input type="checkbox" name="confirmBackup" value="true" />
+                أؤكد أنه تم أخذ نسخة احتياطية كاملة قبل تطبيق التحديثات.
+            </label>
+            <button type="submit" class="dbu-btn">تطبيق التحديثات المنتظرة</button>
+        }
+    </div>
+
+    <div class="dbu-table-wrap">
+        <table class="dbu-table">
+            <thead>
+                <tr>
+                    <th>السكربت</th>
+                    <th>الغرض</th>
+                    <th>المسار</th>
+                    <th>الحالة</th>
+                    <th>آخر تطبيق</th>
+                    <th>بواسطة</th>
+                    <th>Hash</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var script in Model.Scripts)
+                {
+                    <tr>
+                        <td>@script.ScriptName</td>
+                        <td>@script.Purpose</td>
+                        <td>@script.RelativePath</td>
+                        <td><span class="dbu-status @script.Status">@script.Status</span></td>
+                        <td>@(script.AppliedOn.HasValue ? script.AppliedOn.Value.ToString("yyyy-MM-dd HH:mm:ss", inv) : "-")</td>
+                        <td>@(string.IsNullOrWhiteSpace(script.AppliedBy) ? "-" : script.AppliedBy)</td>
+                        <td class="dbu-hash" title="@script.Hash">@script.Hash</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

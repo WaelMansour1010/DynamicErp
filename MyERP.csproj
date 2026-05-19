@@ -600,6 +600,9 @@
     <Compile Include="Areas\Sync\Worker\SyncAdminOperationWorker.cs" />
     <Compile Include="Common\DiscountNotifications\DiscountNotificationModels.cs" />
     <Compile Include="Common\DiscountNotifications\DiscountNotificationReadRepository.cs" />
+    <Compile Include="Common\DatabaseUpdates\SharedDatabaseSchemaBootstrapper.cs" />
+    <Compile Include="Common\DatabaseUpdates\SharedDatabaseUpdateModels.cs" />
+    <Compile Include="Common\DatabaseUpdates\SharedDatabaseUpdateService.cs" />
     <Compile Include="Common\EmployeePayroll\EmployeePayrollModels.cs" />
     <Compile Include="Common\EmployeePayroll\EmployeePayrollRepository.cs" />
     <Compile Include="Common\EnterpriseHr\EnterpriseHrRepository.cs" />
@@ -843,6 +846,7 @@
     <Compile Include="Controllers\JobFollowUpController.cs" />
     <Compile Include="Controllers\JournalEntriesController.cs" />
     <Compile Include="Controllers\LogController.cs" />
+    <Compile Include="Controllers\DatabaseUpdatesController.cs" />
     <Compile Include="Controllers\LogInController.cs" />
     <Compile Include="Controllers\MaintenancesController.cs" />
     <Compile Include="Controllers\ManageController.cs" />
@@ -4738,6 +4742,7 @@
     <Content Include="Database\Migrations\POS\0002_POS_Example_StoredProcedure.sql" />
     <Content Include="Database\Migrations\Shared\0001_Shared_Example_AddColumn.sql" />
     <Content Include="Database\Migrations\Shared\0002_SystemSetting_IsZatcaLinked.sql" />
+    <Content Include="Database\Migrations\Shared\0003_ServiceInvoice_CashReceiptVoucher.sql" />
     <Content Include="Docs\Database_Migration_Audit.md" />
     <Content Include="Docs\Database_Migration_System.md" />
     <Content Include="Docs\Database_Update_Manager.md" />
@@ -4837,6 +4842,7 @@
     <Content Include="Views\Shared\_LoginPartial.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Shared\_ZatcaComplianceWarning.cshtml" />
+    <Content Include="Views\DatabaseUpdates\Index.cshtml" />
     <Content Include="Views\AccountStatement\Edit.cshtml" />
     <Content Include="Views\AccountStatement\GETAccountStatementDetails.cshtml" />
     <Content Include="Views\AdvertisingCompaigns\AddEdit.cshtml" />

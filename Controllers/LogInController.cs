@@ -17,6 +17,7 @@ using System.Data.Entity;
 using System.Threading.Tasks;
 using System.Net.Mail;
 using System.Configuration;
+using MyERP.Common.DatabaseUpdates;
 
 namespace MyERP.Controllers
 {
@@ -40,10 +41,11 @@ namespace MyERP.Controllers
                     return RedirectAfterLogin(returnUrl);
                 }
                 string domainName = Request.Url.GetLeftPart(UriPartial.Authority);
-                var systemSetting = db.SystemSettings.FirstOrDefault();
-                if (systemSetting != null && systemSetting.Logo != null)
+                SharedDatabaseSchemaBootstrapper.EnsureRequiredColumns(db);
+                var logo = db.Database.SqlQuery<string>("SELECT TOP (1) Logo FROM dbo.SystemSetting WHERE Logo IS NOT NULL").FirstOrDefault();
+                if (!string.IsNullOrWhiteSpace(logo))
                 {
-                    ViewBag.Logo = db.SystemSettings.FirstOrDefault().Logo;
+                    ViewBag.Logo = logo;
                 }
                 else
                 {
@@ -103,6 +105,8 @@ namespace MyERP.Controllers
                 //if (password == "mysoft")
                 //    return RedirectToAction("ResetPassword", "LogIn");
 
+                SharedDatabaseSchemaBootstrapper.EnsureRequiredColumns(db);
+
                 // Two Factor Authentication
                 if (user.EnableTwoFactorAuthentication == true)
                 {
@@ -147,6 +151,11 @@ namespace MyERP.Controllers
                         ViewBag.Error = e;
                     }
                    // return View();
+                }
+
+                if (user.Id == 1 && !SharedDatabaseSchemaBootstrapper.AreRequiredColumnsAvailable(db))
+                {
+                    return RedirectToAction("Index", "DatabaseUpdates");
                 }
 
                 if (IsSafeLocalReturnUrl(returnUrl))
@@ -351,6 +360,16 @@ namespace MyERP.Controllers
 
         private ActionResult RedirectAfterLogin(string returnUrl)
         {
+            SharedDatabaseSchemaBootstrapper.EnsureRequiredColumns(db);
+
+            var claim = ((ClaimsIdentity)User.Identity).FindFirst("Id");
+            int userId;
+            if (claim != null && int.TryParse(claim.Value, out userId) && userId == 1
+                && !SharedDatabaseSchemaBootstrapper.AreRequiredColumnsAvailable(db))
+            {
+                return RedirectToAction("Index", "DatabaseUpdates");
+            }
+
             if (IsSafeLocalReturnUrl(returnUrl))
             {
                 return Redirect(returnUrl);

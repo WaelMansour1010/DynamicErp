@@ -1387,7 +1387,37 @@ SELECT * FROM (
             model.Employees = LoadEmployees(connection, null, searchText, employeeStatus, employeeId, 50);
             using (var command = new SqlCommand(@"
 SELECT * FROM (
- SELECT ROW_NUMBER() OVER (ORDER BY a.AdvanceID DESC) RowNo,
+ SELECT ROW_NUMBER() OVER (ORDER BY q.AdvanceDate DESC, q.AdvanceID DESC) RowNo,
+        q.AdvanceID,
+        q.EmployeeId,
+        q.EmployeeCode,
+        q.Emp_Name,
+        q.BranchId,
+        q.BranchName,
+        q.DepartmentId,
+        q.DepartmentName,
+        q.AdvanceDate,
+        q.AdvanceValue,
+        q.PaymentCounts,
+        q.FirstMonthPayment,
+        q.FirstYearPayment,
+        q.FirstDate,
+        q.AutoDiscount,
+        q.Approved,
+        q.Posted,
+        q.AccAproved,
+        q.notok,
+        q.reason,
+        q.basicSalary,
+        q.oldAdvance,
+        q.Balance,
+        q.PartsCount,
+        q.PaidPartsCount,
+        q.PaidAmount,
+        q.RemainingAmount,
+        q.ActualAdvanceId
+ FROM (
+ SELECT
         a.AdvanceID,
         CONVERT(INT, a.Emp_id) AS EmployeeId,
         COALESCE(NULLIF(e.Fullcode,N''), NULLIF(e.Emp_Code,N''), CONVERT(NVARCHAR(30), e.Emp_ID)) AS EmployeeCode,
@@ -1458,6 +1488,78 @@ SELECT * FROM (
         OR (@AdvanceStatus = N'rejected' AND ISNULL(a.notok,0)=1)
    )
    AND (@Search = N'' OR ISNULL(e.Emp_Name,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Fullcode,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Emp_Code,N'') LIKE N'%' + @Search + N'%' OR ISNULL(a.reason,N'') LIKE N'%' + @Search + N'%' OR CONVERT(NVARCHAR(30), a.AdvanceID) = @Search)
+ UNION ALL
+ SELECT
+        a.AdvanceID,
+        a.Emp_ID AS EmployeeId,
+        COALESCE(NULLIF(e.Fullcode,N''), NULLIF(e.Emp_Code,N''), CONVERT(NVARCHAR(30), e.Emp_ID)) AS EmployeeCode,
+        e.Emp_Name,
+        COALESCE(CONVERT(INT, a.branch_no), e.BranchId) AS BranchId,
+        b.branch_name AS BranchName,
+        e.DepartmentID AS DepartmentId,
+        d.DepartmentName,
+        a.AdvanceDate,
+        CONVERT(FLOAT, ISNULL(a.AdvanceValue,0)) AS AdvanceValue,
+        CONVERT(FLOAT, ISNULL(a.PaymentCounts,0)) AS PaymentCounts,
+        CONVERT(FLOAT, ISNULL(a.FirstMonthPayment,0)) AS FirstMonthPayment,
+        CONVERT(FLOAT, ISNULL(a.FirstYearPayment,0)) AS FirstYearPayment,
+        a.AdvanceDate AS FirstDate,
+        ISNULL(a.AutoDiscount,0) AS AutoDiscount,
+        CONVERT(BIT, 1) AS Approved,
+        CONVERT(INT, 1) AS Posted,
+        CASE WHEN a.NoteID IS NULL THEN NULL ELSE 1 END AS AccAproved,
+        CONVERT(BIT, 0) AS notok,
+        N'سلفة فعلية محفوظة تاريخياً' AS reason,
+        COALESCE(
+            NULLIF(CONVERT(FLOAT, e.Emp_Salary), 0),
+            NULLIF(CONVERT(FLOAT, e.BasicSalary), 0),
+            NULLIF(CONVERT(FLOAT, e.TotalSalary), 0),
+            NULLIF(CONVERT(FLOAT, lastSalary.Emp_Salary), 0),
+            NULLIF(CONVERT(FLOAT, lastSalary.total1), 0),
+            NULLIF(CONVERT(FLOAT, lastSalary.Comp13), 0),
+            NULLIF(CONVERT(FLOAT, lastSalary.EmpTotalNet), 0),
+            0
+        ) AS basicSalary,
+        CONVERT(FLOAT, ISNULL(a.OpenBalance,0)) AS oldAdvance,
+        CONVERT(FLOAT, ISNULL(a.AdvanceValue,0) - ISNULL(px.PaidAmount,0)) AS Balance,
+        ISNULL(px.PartsCount,0) AS PartsCount,
+        ISNULL(px.PaidPartsCount,0) AS PaidPartsCount,
+        ISNULL(px.PaidAmount,0) AS PaidAmount,
+        ISNULL(a.AdvanceValue,0) - ISNULL(px.PaidAmount,0) AS RemainingAmount,
+        a.AdvanceID AS ActualAdvanceId
+ FROM dbo.TblEmpAdvance a WITH (NOLOCK)
+ LEFT JOIN dbo.TblEmployee e WITH (NOLOCK) ON e.Emp_ID = a.Emp_ID
+ LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = COALESCE(CONVERT(INT, a.branch_no), e.BranchId)
+ LEFT JOIN dbo.TblEmpDepartments d WITH (NOLOCK) ON d.DeparmentID = e.DepartmentID
+ OUTER APPLY (
+     SELECT TOP (1) s.Emp_Salary, s.total1, s.Comp13, s.EmpTotalNet
+     FROM dbo.emp_salary s WITH (NOLOCK)
+     WHERE s.emp_id = e.Emp_ID
+     ORDER BY ISNULL(s.RecordDate, '19000101') DESC, s.id DESC
+ ) lastSalary
+ LEFT JOIN (
+     SELECT AdvanceID,
+            COUNT(1) AS PartsCount,
+            SUM(CASE WHEN ISNULL(Payed,0)=1 OR Payed1 IS NOT NULL OR EmpAdPaID IS NOT NULL THEN 1 ELSE 0 END) AS PaidPartsCount,
+            SUM(CASE WHEN ISNULL(Payed,0)=1 OR Payed1 IS NOT NULL OR EmpAdPaID IS NOT NULL THEN ISNULL(PartValue,0) ELSE 0 END) AS PaidAmount
+     FROM dbo.TblEmpAdvanceDetails WITH (NOLOCK)
+     GROUP BY AdvanceID
+ ) px ON px.AdvanceID = a.AdvanceID
+ WHERE " + EmployeeStatusPredicate("e") + @"
+   AND NOT EXISTS (
+       SELECT 1
+       FROM dbo.TblEmpAdvanceRequest r WITH (NOLOCK)
+       WHERE ISNULL(a.orderNO,0) <> 0
+         AND r.AdvanceID = CONVERT(INT, a.orderNO)
+   )
+   AND (@EmployeeId IS NULL OR a.Emp_ID = @EmployeeId)
+   AND (@BranchId IS NULL OR COALESCE(CONVERT(INT, a.branch_no), e.BranchId) = @BranchId)
+   AND (@DepartmentId IS NULL OR e.DepartmentID = @DepartmentId)
+   AND (@DateFrom IS NULL OR a.AdvanceDate >= @DateFrom)
+   AND (@DateTo IS NULL OR a.AdvanceDate < DATEADD(DAY, 1, @DateTo))
+   AND (@AdvanceStatus IN (N'all', N'approved', N'posted', N'accounting-approved'))
+   AND (@Search = N'' OR ISNULL(e.Emp_Name,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Fullcode,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Emp_Code,N'') LIKE N'%' + @Search + N'%' OR CONVERT(NVARCHAR(30), a.AdvanceID) = @Search)
+ ) q
 ) q WHERE RowNo BETWEEN @Start AND @End ORDER BY RowNo;", connection))
             {
                 AddSearch(command, searchText, page, pageSize);
@@ -2538,10 +2640,25 @@ SELECT TOP (1)
        b.branch_name AS BranchName,
        e.DepartmentID,
        d.DepartmentName,
-       e.Emp_Salary
+       COALESCE(
+           NULLIF(CONVERT(money, e.Emp_Salary), 0),
+           NULLIF(CONVERT(money, e.BasicSalary), 0),
+           NULLIF(CONVERT(money, e.TotalSalary), 0),
+           NULLIF(CONVERT(money, lastSalary.Emp_Salary), 0),
+           NULLIF(CONVERT(money, lastSalary.total1), 0),
+           NULLIF(CONVERT(money, lastSalary.Comp13), 0),
+           NULLIF(CONVERT(money, lastSalary.EmpTotalNet), 0),
+           0
+       ) AS Emp_Salary
 FROM dbo.TblEmployee e WITH (NOLOCK)
 LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = e.BranchId
 LEFT JOIN dbo.TblEmpDepartments d WITH (NOLOCK) ON d.DeparmentID = e.DepartmentID
+OUTER APPLY (
+    SELECT TOP (1) s.Emp_Salary, s.total1, s.Comp13, s.EmpTotalNet
+    FROM dbo.emp_salary s WITH (NOLOCK)
+    WHERE s.emp_id = e.Emp_ID
+    ORDER BY ISNULL(s.RecordDate, '19000101') DESC, s.id DESC
+) lastSalary
 WHERE e.Emp_ID = @EmployeeId
   AND (@ActiveOnly = 0 OR (ISNULL(e.chkStop,0)=0 AND ISNULL(e.workstate,0)=1));", connection, transaction))
             {
@@ -2577,10 +2694,25 @@ SELECT TOP (@Take)
        b.branch_name AS BranchName,
        e.DepartmentID,
        d.DepartmentName,
-       e.Emp_Salary
+       COALESCE(
+           NULLIF(CONVERT(money, e.Emp_Salary), 0),
+           NULLIF(CONVERT(money, e.BasicSalary), 0),
+           NULLIF(CONVERT(money, e.TotalSalary), 0),
+           NULLIF(CONVERT(money, lastSalary.Emp_Salary), 0),
+           NULLIF(CONVERT(money, lastSalary.total1), 0),
+           NULLIF(CONVERT(money, lastSalary.Comp13), 0),
+           NULLIF(CONVERT(money, lastSalary.EmpTotalNet), 0),
+           0
+       ) AS Emp_Salary
 FROM dbo.TblEmployee e WITH (NOLOCK)
 LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = e.BranchId
 LEFT JOIN dbo.TblEmpDepartments d WITH (NOLOCK) ON d.DeparmentID = e.DepartmentID
+OUTER APPLY (
+    SELECT TOP (1) s.Emp_Salary, s.total1, s.Comp13, s.EmpTotalNet
+    FROM dbo.emp_salary s WITH (NOLOCK)
+    WHERE s.emp_id = e.Emp_ID
+    ORDER BY ISNULL(s.RecordDate, '19000101') DESC, s.id DESC
+) lastSalary
 WHERE " + EmployeeStatusPredicate("e") + @"
   AND (@SelectedEmployeeId IS NULL OR e.Emp_ID = @SelectedEmployeeId OR @Search <> N'')
   AND (@Search = N'' OR ISNULL(e.Emp_Name,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Fullcode,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Emp_Code,N'') LIKE N'%' + @Search + N'%' OR CONVERT(NVARCHAR(30), e.Emp_ID) = @Search)
@@ -4190,27 +4322,74 @@ WHERE d.Payed IS NULL
         {
             using (var command = new SqlCommand(@"
 SELECT COUNT(1) AS TotalCount,
-       ISNULL(SUM(ISNULL(a.AdvanceValue,0)),0) AS TotalValue,
-       SUM(CASE WHEN ISNULL(a.Approved,0)=1 THEN 1 ELSE 0 END) AS ApprovedCount,
-       SUM(CASE WHEN ISNULL(a.AccAproved,0)=1 OR a.Posted IS NOT NULL THEN 1 ELSE 0 END) AS LockedCount
-FROM dbo.TblEmpAdvanceRequest a WITH (NOLOCK)
-LEFT JOIN dbo.TblEmployee e WITH (NOLOCK) ON e.Emp_ID = CONVERT(INT, a.Emp_id)
-WHERE " + EmployeeStatusPredicate("e") + @"
-  AND (@EmployeeId IS NULL OR CONVERT(INT, a.Emp_id) = @EmployeeId)
-  AND (@BranchId IS NULL OR CONVERT(INT, a.Branch_NO) = @BranchId)
-  AND (@DepartmentId IS NULL OR CONVERT(INT, a.DeparmentID) = @DepartmentId)
-  AND (@DateFrom IS NULL OR a.AdvanceDate >= @DateFrom)
-  AND (@DateTo IS NULL OR a.AdvanceDate < DATEADD(DAY, 1, @DateTo))
-  AND (
-       @AdvanceStatus = N'all'
-       OR (@AdvanceStatus = N'draft' AND ISNULL(a.Approved,0)=0 AND a.Posted IS NULL AND ISNULL(a.AccAproved,0)=0 AND ISNULL(a.notok,0)=0)
-       OR (@AdvanceStatus = N'pending' AND ISNULL(a.Approved,0)=0 AND a.Posted IS NOT NULL AND ISNULL(a.AccAproved,0)=0 AND ISNULL(a.notok,0)=0)
-       OR (@AdvanceStatus = N'approved' AND ISNULL(a.Approved,0)=1)
-       OR (@AdvanceStatus = N'posted' AND a.Posted IS NOT NULL)
-       OR (@AdvanceStatus = N'accounting-approved' AND ISNULL(a.AccAproved,0)=1)
-       OR (@AdvanceStatus = N'rejected' AND ISNULL(a.notok,0)=1)
-  )
-  AND (@Search = N'' OR ISNULL(e.Emp_Name,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Fullcode,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Emp_Code,N'') LIKE N'%' + @Search + N'%' OR ISNULL(a.reason,N'') LIKE N'%' + @Search + N'%' OR CONVERT(NVARCHAR(30), a.AdvanceID) = @Search);", connection))
+       ISNULL(SUM(ISNULL(q.AdvanceValue,0)),0) AS TotalValue,
+       SUM(CASE WHEN ISNULL(q.Approved,0)=1 THEN 1 ELSE 0 END) AS ApprovedCount,
+       SUM(CASE WHEN ISNULL(q.AccAproved,0)=1 OR q.Posted IS NOT NULL THEN 1 ELSE 0 END) AS LockedCount
+FROM (
+    SELECT a.AdvanceID,
+           CONVERT(INT, a.Emp_id) AS EmployeeId,
+           CONVERT(INT, a.Branch_NO) AS BranchId,
+           CONVERT(INT, a.DeparmentID) AS DepartmentId,
+           a.AdvanceDate,
+           a.AdvanceValue,
+           a.Approved,
+           a.Posted,
+           a.AccAproved,
+           a.notok,
+           a.reason,
+           e.Emp_Name,
+           e.Fullcode,
+           e.Emp_Code
+    FROM dbo.TblEmpAdvanceRequest a WITH (NOLOCK)
+    LEFT JOIN dbo.TblEmployee e WITH (NOLOCK) ON e.Emp_ID = CONVERT(INT, a.Emp_id)
+    WHERE " + EmployeeStatusPredicate("e") + @"
+      AND (@EmployeeId IS NULL OR CONVERT(INT, a.Emp_id) = @EmployeeId)
+      AND (@BranchId IS NULL OR CONVERT(INT, a.Branch_NO) = @BranchId)
+      AND (@DepartmentId IS NULL OR CONVERT(INT, a.DeparmentID) = @DepartmentId)
+      AND (@DateFrom IS NULL OR a.AdvanceDate >= @DateFrom)
+      AND (@DateTo IS NULL OR a.AdvanceDate < DATEADD(DAY, 1, @DateTo))
+      AND (
+           @AdvanceStatus = N'all'
+           OR (@AdvanceStatus = N'draft' AND ISNULL(a.Approved,0)=0 AND a.Posted IS NULL AND ISNULL(a.AccAproved,0)=0 AND ISNULL(a.notok,0)=0)
+           OR (@AdvanceStatus = N'pending' AND ISNULL(a.Approved,0)=0 AND a.Posted IS NOT NULL AND ISNULL(a.AccAproved,0)=0 AND ISNULL(a.notok,0)=0)
+           OR (@AdvanceStatus = N'approved' AND ISNULL(a.Approved,0)=1)
+           OR (@AdvanceStatus = N'posted' AND a.Posted IS NOT NULL)
+           OR (@AdvanceStatus = N'accounting-approved' AND ISNULL(a.AccAproved,0)=1)
+           OR (@AdvanceStatus = N'rejected' AND ISNULL(a.notok,0)=1)
+      )
+      AND (@Search = N'' OR ISNULL(e.Emp_Name,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Fullcode,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Emp_Code,N'') LIKE N'%' + @Search + N'%' OR ISNULL(a.reason,N'') LIKE N'%' + @Search + N'%' OR CONVERT(NVARCHAR(30), a.AdvanceID) = @Search)
+    UNION ALL
+    SELECT a.AdvanceID,
+           a.Emp_ID AS EmployeeId,
+           COALESCE(CONVERT(INT, a.branch_no), e.BranchId) AS BranchId,
+           e.DepartmentID AS DepartmentId,
+           a.AdvanceDate,
+           CONVERT(FLOAT, ISNULL(a.AdvanceValue,0)) AS AdvanceValue,
+           CONVERT(BIT, 1) AS Approved,
+           CONVERT(INT, 1) AS Posted,
+           CASE WHEN a.NoteID IS NULL THEN NULL ELSE 1 END AS AccAproved,
+           CONVERT(BIT, 0) AS notok,
+           N'سلفة فعلية محفوظة تاريخياً' AS reason,
+           e.Emp_Name,
+           e.Fullcode,
+           e.Emp_Code
+    FROM dbo.TblEmpAdvance a WITH (NOLOCK)
+    LEFT JOIN dbo.TblEmployee e WITH (NOLOCK) ON e.Emp_ID = a.Emp_ID
+    WHERE " + EmployeeStatusPredicate("e") + @"
+      AND NOT EXISTS (
+          SELECT 1
+          FROM dbo.TblEmpAdvanceRequest r WITH (NOLOCK)
+          WHERE ISNULL(a.orderNO,0) <> 0
+            AND r.AdvanceID = CONVERT(INT, a.orderNO)
+      )
+      AND (@EmployeeId IS NULL OR a.Emp_ID = @EmployeeId)
+      AND (@BranchId IS NULL OR COALESCE(CONVERT(INT, a.branch_no), e.BranchId) = @BranchId)
+      AND (@DepartmentId IS NULL OR e.DepartmentID = @DepartmentId)
+      AND (@DateFrom IS NULL OR a.AdvanceDate >= @DateFrom)
+      AND (@DateTo IS NULL OR a.AdvanceDate < DATEADD(DAY, 1, @DateTo))
+      AND (@AdvanceStatus IN (N'all', N'approved', N'posted', N'accounting-approved'))
+      AND (@Search = N'' OR ISNULL(e.Emp_Name,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Fullcode,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Emp_Code,N'') LIKE N'%' + @Search + N'%' OR CONVERT(NVARCHAR(30), a.AdvanceID) = @Search)
+) q;", connection))
             {
                 AddEmployeeStatus(command, employeeStatus);
                 command.Parameters.Add("@EmployeeId", SqlDbType.Int).Value = employeeId.HasValue ? (object)employeeId.Value : DBNull.Value;
