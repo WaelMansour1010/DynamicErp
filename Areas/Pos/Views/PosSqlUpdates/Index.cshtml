@@ -116,7 +116,8 @@
                 if (status != null && status.HashMismatchCount > 0)
                 {
                     <label class="confirm warn">
-                        <input type="checkbox" name="ignoreHashMismatch" value="true" />
+                        <input type="hidden" name="ignoreHashMismatch" value="false" />
+                        <input type="checkbox" id="ignoreHashMismatch" name="ignoreHashMismatch" value="true" />
                         تجاهل اختلافات Hash مؤقتا وتطبيق التحديثات المنتظرة فقط
                     </label>
                 }

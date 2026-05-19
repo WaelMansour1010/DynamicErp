@@ -7,6 +7,7 @@
     var enterpriseDependents = [];
     var employeeInsuranceDependents = [];
     var enterpriseRules = [];
+    var planPricingTiers = [];
     var enterpriseCoverageRows = [];
     var actionLocks = {};
     var currentEmployee = null;
@@ -394,7 +395,16 @@
                 DependentName: x.DependentName || x.Name || "",
                 Relation: x.Relation || "Child",
                 BirthDate: dateInput(x.BirthDate),
+                NationalId: x.NationalId || "",
+                IsCovered: x.IsCovered !== false,
+                CoverageStartDate: dateInput(x.CoverageStartDate || mi.StartDate),
+                CoverageEndDate: dateInput(x.CoverageEndDate || mi.EndDate),
+                Status: x.Status || (x.IsActive === false ? "Stopped" : "Active"),
                 CoveragePercent: x.CoveragePercent || 100,
+                CalculatedPremium: x.CalculatedPremium || 0,
+                ManualPremium: x.ManualPremium || 0,
+                ExceptionReason: x.ExceptionReason || "",
+                Notes: x.Notes || "",
                 IsActive: x.IsActive !== false
             };
         });
@@ -1017,9 +1027,25 @@
             setText("epPlanAccountingState", "سيقوم النظام بتهيئة حسابات التأمين تلقائيا عند الحفظ، ثم يعرضها بأسماء واضحة في معاينة قيد الرواتب.");
         }
         box.innerHTML = errors.map(function (x) { return "<div>" + html(x) + "</div>"; }).join("");
+        planPricingTiers.forEach(function (tier) {
+            if (tier.PremiumAmount < 0 || tier.AgeFrom < 0 || number(tier.AgeTo) < number(tier.AgeFrom)) {
+                errors.push("راجع شرائح التسعير العمرية: يوجد مدى عمر أو سعر غير صحيح.");
+            }
+        });
+        if (planPricingTiers.some(function (tier, index) { return pricingTierOverlaps(tier, index); })) {
+            errors.push("يوجد تداخل في شرائح التسعير العمرية لنفس نوع المستفيد/صلة القرابة.");
+        }
+        box.innerHTML = errors.map(function (x) { return "<div>" + html(x) + "</div>"; }).join("");
         return errors.length === 0;
     }
     function relationLabel(value) {
+        if (value === "Son") { return "ابن"; }
+        if (value === "Daughter") { return "ابنة"; }
+        if (value === "Father") { return "أب"; }
+        if (value === "Mother") { return "أم"; }
+        if (value === "Other") { return "أخرى"; }
+        if (value === "Employee") { return "موظف"; }
+        if (value === "Dependent") { return "تابع عام"; }
         if (value === "Child") { return "ابن/ابنة"; }
         if (value === "Parent") { return "والد/والدة"; }
         return "زوجة/زوج";
@@ -1034,9 +1060,9 @@
         return Math.max(0, age);
     }
     function dependentCost(relation) {
-        if (relation === "Child") { return number(byId("epChildCost").value); }
-        if (relation === "Parent") { return number(byId("epParentCost").value); }
-        return number(byId("epSpouseCost").value);
+        if (relation === "Child" || relation === "Son" || relation === "Daughter") { return byId("epChildCost") ? number(byId("epChildCost").value) : 0; }
+        if (relation === "Parent" || relation === "Father" || relation === "Mother") { return byId("epParentCost") ? number(byId("epParentCost").value) : 0; }
+        return byId("epSpouseCost") ? number(byId("epSpouseCost").value) : 0;
     }
     function renderDependents() {
         var tbody = byId("epDependentsRows");
@@ -1078,6 +1104,78 @@
                 '<button type="button" title="حذف التابع من اشتراك الموظف" data-remove-employee-dependent="' + i + '"><i class="fas fa-trash"></i></button>' +
                 '</article>');
         });
+    }
+    function tierDateMatches(tier, dateValue) {
+        if (!dateValue) { return true; }
+        var date = new Date(dateValue);
+        if (isNaN(date.getTime())) { return true; }
+        if (tier.EffectiveFrom && new Date(tier.EffectiveFrom) > date) { return false; }
+        if (tier.EffectiveTo && new Date(tier.EffectiveTo) < date) { return false; }
+        return true;
+    }
+    function tierMatchesDependent(tier, relation, age, dateValue) {
+        var beneficiary = tier.BeneficiaryType || "Dependent";
+        var tierRelation = tier.Relation || "";
+        var child = relation === "Child" || relation === "Son" || relation === "Daughter";
+        if (tierRelation && tierRelation !== relation) { return false; }
+        if (beneficiary === "Child" && !child) { return false; }
+        if (beneficiary !== "Dependent" && beneficiary !== "Child" && beneficiary !== relation) { return false; }
+        return age >= number(tier.AgeFrom) && age <= number(tier.AgeTo || 120) && tierDateMatches(tier, dateValue);
+    }
+    function calculateDependentPremium(relation, birthDate, coverageDate, plan) {
+        var age = ageFromDate(birthDate);
+        var tiers = (plan && plan.PricingTiers) || [];
+        for (var i = 0; i < tiers.length; i++) {
+            if (tiers[i].IsActive !== false && tierMatchesDependent(tiers[i], relation, age, coverageDate)) {
+                return { found: true, amount: number(tiers[i].PremiumAmount), tier: tiers[i], age: age };
+            }
+        }
+        return { found: false, amount: 0, age: age };
+    }
+    function refreshEmployeeInsuranceCostFromDependents(plan) {
+        if (!byId("epInsuranceMonthlyCost")) { return; }
+        plan = plan || root._selectedInsurancePlan || {};
+        var baseCost = number(plan.DefaultMonthlyCost || byId("epInsuranceMonthlyCost").value);
+        var dependentsCost = employeeInsuranceDependents.reduce(function (sum, x) {
+            if (x.IsCovered === false || x.IsActive === false || x.Status === "Stopped" || x.Status === "Expired") { return sum; }
+            return sum + number(x.ManualPremium || x.CalculatedPremium || 0);
+        }, 0);
+        byId("epInsuranceMonthlyCost").value = money(baseCost + dependentsCost);
+        updateInsurancePreview();
+    }
+    function pricingTierOverlaps(candidate, indexToSkip) {
+        var candidateFrom = number(candidate.AgeFrom);
+        var candidateTo = number(candidate.AgeTo || 120);
+        var cStart = candidate.EffectiveFrom ? new Date(candidate.EffectiveFrom) : new Date("1900-01-01");
+        var cEnd = candidate.EffectiveTo ? new Date(candidate.EffectiveTo) : new Date("2999-12-31");
+        return planPricingTiers.some(function (x, index) {
+            if (index === indexToSkip || x.IsActive === false) { return false; }
+            if ((x.BeneficiaryType || "Dependent") !== (candidate.BeneficiaryType || "Dependent")) { return false; }
+            if ((x.Relation || "") !== (candidate.Relation || "")) { return false; }
+            var ageOverlap = candidateFrom <= number(x.AgeTo || 120) && number(x.AgeFrom) <= candidateTo;
+            var xStart = x.EffectiveFrom ? new Date(x.EffectiveFrom) : new Date("1900-01-01");
+            var xEnd = x.EffectiveTo ? new Date(x.EffectiveTo) : new Date("2999-12-31");
+            return ageOverlap && cStart <= xEnd && xStart <= cEnd;
+        });
+    }
+    function renderPricingTiers() {
+        var tbody = byId("epPricingTierRows");
+        var cards = byId("epPricingTierCards");
+        if (!tbody) { return; }
+        tbody.innerHTML = "";
+        if (cards) { cards.innerHTML = ""; }
+        if (!planPricingTiers.length) {
+            tbody.innerHTML = '<tr><td colspan="8" class="ep-empty-row">لا توجد شرائح تسعير عمرية لهذه الخطة.</td></tr>';
+        }
+        planPricingTiers.forEach(function (x, i) {
+            var title = relationLabel(x.BeneficiaryType || "Dependent") + (x.Relation ? " - " + relationLabel(x.Relation) : "");
+            var line = html(x.AgeFrom || 0) + " - " + html(x.AgeTo || 120) + " سنة";
+            if (cards) {
+                cards.insertAdjacentHTML("beforeend", '<article class="ep-pricing-tier-card"><div><strong>' + html(title) + '</strong><span>' + line + ' / ' + html(x.PriceMode === "Annual" ? "سنوي" : "شهري") + '</span></div><div class="ep-dependent-metrics"><span>' + formatMoney(x.PremiumAmount) + '</span><span>م: ' + html(x.EmployeeSharePercent || 0) + '%</span><span>ش: ' + html(x.CompanySharePercent || 0) + '%</span></div><button type="button" title="حذف شريحة التسعير" data-remove-pricing-tier="' + i + '"><i class="fas fa-trash"></i></button></article>');
+            }
+            tbody.insertAdjacentHTML("beforeend", '<tr><td>' + html(title) + '</td><td>' + line + '</td><td>' + formatMoney(x.PremiumAmount) + '</td><td>' + html(x.EmployeeSharePercent || 0) + '%</td><td>' + html(x.CompanySharePercent || 0) + '%</td><td>' + html(x.PriceMode === "Annual" ? "سنوي" : "شهري") + '</td><td>' + html(dateInput(x.EffectiveFrom)) + ' - ' + html(dateInput(x.EffectiveTo)) + '</td><td><button type="button" data-remove-pricing-tier="' + i + '"><i class="fas fa-trash"></i></button></td></tr>');
+        });
+        if (cards && !cards.innerHTML) { cards.innerHTML = '<div class="ep-empty-card">لا توجد شرائح تسعير عمرية لهذه الخطة.</div>'; }
     }
     function renderRules() {
         var tbody = byId("epRulesRows");
@@ -1240,6 +1338,7 @@
             AutoEnrollCriteria: byId("epAutoEnrollCriteria") ? byId("epAutoEnrollCriteria").value : "",
             RulesJson: JSON.stringify(enterpriseRules),
             DependentsTemplateJson: JSON.stringify(enterpriseDependents),
+            PricingTiers: planPricingTiers,
             IsActive: byId("epPlanActive").checked,
             Notes: byId("epPlanNotes").value
         };
@@ -1291,10 +1390,16 @@
         if (byId("epAutoEnrollCriteria")) { byId("epAutoEnrollCriteria").value = x.AutoEnrollCriteria || ""; }
         try { enterpriseRules = x.RulesJson ? JSON.parse(x.RulesJson) : []; } catch (ignoreRules) { enterpriseRules = []; }
         try { enterpriseDependents = x.DependentsTemplateJson ? JSON.parse(x.DependentsTemplateJson) : []; } catch (ignoreDeps) { enterpriseDependents = []; }
+        planPricingTiers = (x.PricingTiers || []).map(function (tier) {
+            tier.EffectiveFrom = dateInput(tier.EffectiveFrom);
+            tier.EffectiveTo = dateInput(tier.EffectiveTo);
+            return tier;
+        });
         byId("epPlanActive").checked = x.IsActive !== false;
         byId("epPlanNotes").value = x.Notes || "";
         renderRules();
         renderDependents();
+        renderPricingTiers();
         updateLifecycleBadge();
         calculatePlanPreview();
     }
@@ -1789,14 +1894,58 @@
         if (btn.id === "epCancelPlan") {
             byId("epPlanForm").reset();
             byId("epPlanId").value = "";
-            enterpriseDependents = [];
-            enterpriseRules = [];
-            renderDependents();
-            renderRules();
-            updateHeroSummary();
+        enterpriseDependents = [];
+        enterpriseRules = [];
+        planPricingTiers = [];
+        renderDependents();
+        renderRules();
+        renderPricingTiers();
+        updateHeroSummary();
             message("تم إلغاء التعديلات غير المحفوظة");
         }
         if (btn.id === "epPrintPlan") { window.print(); }
+        if (btn.id === "epAddPricingTier") {
+            var tier = {
+                BeneficiaryType: byId("epPricingBeneficiaryType").value,
+                Relation: byId("epPricingRelation").value,
+                AgeFrom: parseInt(byId("epPricingAgeFrom").value || "0", 10),
+                AgeTo: parseInt(byId("epPricingAgeTo").value || "120", 10),
+                PremiumAmount: number(byId("epPricingPremium").value),
+                EmployeeSharePercent: number(byId("epPricingEmployeePercent").value),
+                CompanySharePercent: number(byId("epPricingCompanyPercent").value),
+                PriceMode: byId("epPricingMode").value,
+                EffectiveFrom: byId("epPricingEffectiveFrom").value || null,
+                EffectiveTo: byId("epPricingEffectiveTo").value || null,
+                Notes: byId("epPricingNotes").value,
+                IsActive: true
+            };
+            if (tier.AgeTo < tier.AgeFrom) { message("إلى عمر يجب أن تكون أكبر من أو تساوي من عمر.", true); return; }
+            if (tier.PremiumAmount <= 0) { message("ادخل قيمة الاشتراك أو القسط للشريحة.", true); return; }
+            if (pricingTierOverlaps(tier, -1)) { message("لا يمكن إضافة شريحة متداخلة لنفس الخطة ونفس نوع المستفيد/صلة القرابة.", true); return; }
+            planPricingTiers.push(tier);
+            if (byId("epPricingPremium")) { byId("epPricingPremium").value = ""; }
+            if (byId("epPricingNotes")) { byId("epPricingNotes").value = ""; }
+            renderPricingTiers();
+            validateEnterpriseInsurance();
+            return;
+        }
+        if (btn.id === "epAddDependent" && byId("epDependentAllowed")) {
+            var ruleRelation = byId("epDependentRelation").value;
+            enterpriseDependents.push({
+                Name: relationLabel(ruleRelation) + " - " + (byId("epDependentAllowed").value !== "false" ? "مسموح" : "غير مسموح") + " - حد العدد " + (byId("epDependentMaxCount") ? byId("epDependentMaxCount").value || "0" : "0") + (byId("epDependentMaxAge") && byId("epDependentMaxAge").value ? " - حد العمر " + byId("epDependentMaxAge").value : ""),
+                Relation: ruleRelation,
+                IsAllowed: byId("epDependentAllowed").value !== "false",
+                MaxCount: byId("epDependentMaxCount") ? parseInt(byId("epDependentMaxCount").value || "0", 10) : 0,
+                MaxAge: byId("epDependentMaxAge") ? parseInt(byId("epDependentMaxAge").value || "0", 10) : 0,
+                AllowException: byId("epDependentAllowException") ? byId("epDependentAllowException").checked : false,
+                Notes: byId("epDependentNotes") ? byId("epDependentNotes").value : "",
+                CoveragePercent: number(byId("epDefaultCoveragePercent").value) || 100
+            });
+            if (byId("epDependentNotes")) { byId("epDependentNotes").value = ""; }
+            renderDependents();
+            calculatePlanPreview();
+            return;
+        }
         if (btn.id === "epExportPlan") { message("يمكن استخدام تقارير التأمين للتصدير التفصيلي."); }
         if (btn.id === "epAddDependent") {
             var depName = byId("epDependentName").value;
@@ -1810,6 +1959,26 @@
             byId("epDependentBirthDate").value = "";
             renderDependents();
             calculatePlanPreview();
+        }
+        if (btn.id === "epAddEmployeeDependent" && byId("epEmployeeDependentStatus")) {
+            var employeeDependentName2 = byId("epEmployeeDependentName") ? byId("epEmployeeDependentName").value : "";
+            var employeeDependentRelation2 = byId("epEmployeeDependentRelation") ? byId("epEmployeeDependentRelation").value : "Child";
+            var employeeDependentBirthDate2 = byId("epEmployeeDependentBirthDate") ? byId("epEmployeeDependentBirthDate").value : "";
+            var selectedPlan2 = root._selectedInsurancePlan || (root._plans || []).filter(function (x) { return String(x.PlanId) === String(byId("epInsurancePlan") ? byId("epInsurancePlan").value : ""); })[0] || {};
+            var maxDependentsForEmployee2 = parseInt(selectedPlan2.MaxDependents || "0", 10);
+            var maxChildAgeForEmployee2 = parseInt(selectedPlan2.ChildrenMaxAge || "0", 10);
+            var coverageStart2 = byId("epEmployeeDependentStart") ? byId("epEmployeeDependentStart").value : "";
+            var calculated2 = calculateDependentPremium(employeeDependentRelation2, employeeDependentBirthDate2, coverageStart2 || byId("epInsuranceStart").value, selectedPlan2);
+            var manualPremium2 = byId("epEmployeeDependentManualPremium") ? number(byId("epEmployeeDependentManualPremium").value) : 0;
+            if (!employeeDependentName2) { message("اكتب اسم التابع أولا.", true); return; }
+            if (maxDependentsForEmployee2 > 0 && employeeInsuranceDependents.length >= maxDependentsForEmployee2) { message("عدد التابعين يتجاوز الحد الأقصى المسموح في الخطة.", true); return; }
+            if ((employeeDependentRelation2 === "Child" || employeeDependentRelation2 === "Son" || employeeDependentRelation2 === "Daughter") && maxChildAgeForEmployee2 > 0 && ageFromDate(employeeDependentBirthDate2) > maxChildAgeForEmployee2) { message("عمر الابن/الابنة يتجاوز حد الخطة.", true); return; }
+            if (!calculated2.found && manualPremium2 <= 0) { message("لا توجد شريحة تسعير مناسبة لهذا العمر/صلة القرابة ضمن الخطة المختارة.", true); return; }
+            employeeInsuranceDependents.push({ DependentName: employeeDependentName2, Relation: employeeDependentRelation2, BirthDate: employeeDependentBirthDate2, NationalId: byId("epEmployeeDependentNationalId") ? byId("epEmployeeDependentNationalId").value : "", IsCovered: !byId("epEmployeeDependentCovered") || byId("epEmployeeDependentCovered").value !== "false", CoverageStartDate: coverageStart2 || byId("epInsuranceStart").value || null, CoverageEndDate: byId("epEmployeeDependentEnd") ? byId("epEmployeeDependentEnd").value || byId("epInsuranceEnd").value || null : null, Status: byId("epEmployeeDependentStatus").value || "Active", CoveragePercent: byId("epEmployeeDependentCoverage") ? number(byId("epEmployeeDependentCoverage").value) || 100 : 100, CalculatedPremium: calculated2.amount, ManualPremium: manualPremium2, ExceptionReason: byId("epEmployeeDependentExceptionReason") ? byId("epEmployeeDependentExceptionReason").value : "", Notes: byId("epEmployeeDependentNotes") ? byId("epEmployeeDependentNotes").value : "", IsActive: byId("epEmployeeDependentStatus").value === "Active" });
+            ["epEmployeeDependentName", "epEmployeeDependentBirthDate", "epEmployeeDependentNationalId", "epEmployeeDependentManualPremium", "epEmployeeDependentExceptionReason", "epEmployeeDependentNotes"].forEach(function (id) { if (byId(id)) { byId(id).value = ""; } });
+            renderEmployeeInsuranceDependents();
+            refreshEmployeeInsuranceCostFromDependents(selectedPlan2);
+            return;
         }
         if (btn.id === "epAddEmployeeDependent") {
             var employeeDependentName = byId("epEmployeeDependentName") ? byId("epEmployeeDependentName").value : "";
@@ -1835,6 +2004,13 @@
         if (btn.hasAttribute("data-remove-employee-dependent")) {
             employeeInsuranceDependents.splice(parseInt(btn.getAttribute("data-remove-employee-dependent"), 10), 1);
             renderEmployeeInsuranceDependents();
+            refreshEmployeeInsuranceCostFromDependents();
+            return;
+        }
+        if (btn.hasAttribute("data-remove-pricing-tier")) {
+            planPricingTiers.splice(parseInt(btn.getAttribute("data-remove-pricing-tier"), 10), 1);
+            renderPricingTiers();
+            validateEnterpriseInsurance();
             return;
         }
         if (btn.hasAttribute("data-insurance-section")) {
@@ -1890,6 +2066,7 @@
         if (e.target && e.target.id === "epInsurancePlan" && e.target.value) {
             getJson(root.getAttribute("data-plan-defaults-url") + "?id=" + encodeURIComponent(e.target.value)).then(function (res) {
                 var p = res.plan || {};
+                root._selectedInsurancePlan = p;
                 byId("epInsuranceMonthlyCost").value = p.DefaultMonthlyCost || 0;
                 byId("epEmployeeShareType").value = p.DefaultEmployeeShareType || "Amount";
                 byId("epEmployeeShareValue").value = p.DefaultEmployeeShareValue || 0;

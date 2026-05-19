@@ -186,11 +186,22 @@
                             <input id="epEmployeeDependentName" placeholder="اسم التابع" />
                             <select id="epEmployeeDependentRelation">
                                 <option value="Spouse">زوجة/زوج</option>
-                                <option value="Child">ابن/ابنة</option>
-                                <option value="Parent">والد/والدة</option>
+                                <option value="Son">ابن</option>
+                                <option value="Daughter">ابنة</option>
+                                <option value="Father">أب</option>
+                                <option value="Mother">أم</option>
+                                <option value="Other">أخرى</option>
                             </select>
                             <input id="epEmployeeDependentBirthDate" type="date" aria-label="تاريخ الميلاد" />
+                            <input id="epEmployeeDependentNationalId" maxlength="50" placeholder="الرقم القومي/الإقامة" />
+                            <select id="epEmployeeDependentCovered"><option value="true">مشمول</option><option value="false">غير مشمول</option></select>
+                            <input id="epEmployeeDependentStart" type="date" aria-label="بداية التغطية" />
+                            <input id="epEmployeeDependentEnd" type="date" aria-label="نهاية التغطية" />
+                            <select id="epEmployeeDependentStatus"><option value="Active">نشط</option><option value="Stopped">موقوف</option><option value="Expired">منتهي</option></select>
                             <input id="epEmployeeDependentCoverage" type="number" min="0" max="100" step="0.01" value="100" aria-label="نسبة التغطية" />
+                            <input id="epEmployeeDependentManualPremium" type="number" min="0" step="0.01" placeholder="سعر يدوي/استثناء" />
+                            <input id="epEmployeeDependentExceptionReason" placeholder="سبب الاستثناء" />
+                            <input id="epEmployeeDependentNotes" placeholder="ملاحظات" />
                             <button type="button" id="epAddEmployeeDependent"><i class="fas fa-plus"></i> إضافة تابع</button>
                         </div>
                         <div class="ep-employee-dependent-grid" id="epEmployeeDependentsCards"></div>

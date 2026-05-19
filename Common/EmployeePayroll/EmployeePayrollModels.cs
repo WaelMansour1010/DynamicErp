@@ -140,8 +140,32 @@ namespace MyERP.Common.EmployeePayroll
         public string AutoEnrollCriteria { get; set; }
         public string RulesJson { get; set; }
         public string DependentsTemplateJson { get; set; }
+        public IList<MedicalInsurancePlanPricingTier> PricingTiers { get; set; }
         public bool IsActive { get; set; }
         public string Notes { get; set; }
+
+        public MedicalInsurancePlan()
+        {
+            PricingTiers = new List<MedicalInsurancePlanPricingTier>();
+        }
+    }
+
+    public class MedicalInsurancePlanPricingTier
+    {
+        public int? TierId { get; set; }
+        public int PlanId { get; set; }
+        public string BeneficiaryType { get; set; }
+        public string Relation { get; set; }
+        public int AgeFrom { get; set; }
+        public int AgeTo { get; set; }
+        public decimal PremiumAmount { get; set; }
+        public decimal EmployeeSharePercent { get; set; }
+        public decimal CompanySharePercent { get; set; }
+        public string PriceMode { get; set; }
+        public DateTime? EffectiveFrom { get; set; }
+        public DateTime? EffectiveTo { get; set; }
+        public string Notes { get; set; }
+        public bool IsActive { get; set; }
     }
 
     public class EmployeeMedicalInsurance
@@ -211,7 +235,16 @@ namespace MyERP.Common.EmployeePayroll
         public string DependentName { get; set; }
         public string Relation { get; set; }
         public DateTime? BirthDate { get; set; }
+        public string NationalId { get; set; }
+        public bool IsCovered { get; set; }
+        public DateTime? CoverageStartDate { get; set; }
+        public DateTime? CoverageEndDate { get; set; }
+        public string Status { get; set; }
         public decimal CoveragePercent { get; set; }
+        public decimal CalculatedPremium { get; set; }
+        public decimal ManualPremium { get; set; }
+        public string ExceptionReason { get; set; }
+        public string Notes { get; set; }
         public bool IsActive { get; set; }
     }
 

@@ -474,7 +474,11 @@ button, .ep-link { border:1px solid #cfd7e6; background:#fff; color:#172033; bor
     font-size:13px;
 }
 
-.ep-employee-dependent-add { grid-template-columns:minmax(220px, 1.5fr) minmax(140px, .8fr) minmax(150px, .9fr) minmax(120px, .7fr) auto; }
+.ep-employee-dependent-add,
+.ep-pricing-add,
+.ep-dependent-add { grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); align-items:end; }
+
+.ep-inline-checkbox { align-self:center; min-height:42px; display:flex; align-items:center; gap:8px; }
 
 .ep-employee-dependent-grid {
     display:grid;
@@ -509,6 +513,30 @@ button, .ep-link { border:1px solid #cfd7e6; background:#fff; color:#172033; bor
 .ep-employee-dependent-card strong { display:block; color:#0f172a; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ep-employee-dependent-card span { display:block; color:#64748b; font-size:12px; margin-top:2px; }
 .ep-employee-dependent-card button { border:1px solid #fee2e2; background:#fff1f2; color:#be123c; border-radius:8px; width:34px; height:34px; }
+
+.ep-pricing-tier-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+    gap:10px;
+    margin-top:12px;
+}
+
+.ep-pricing-tier-card {
+    border:1px solid #e2e8f0;
+    background:#fff;
+    border-radius:10px;
+    padding:12px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    box-shadow:0 8px 18px rgba(15, 23, 42, .04);
+}
+
+.ep-pricing-tier-card strong,
+.ep-pricing-tier-card span { display:block; }
+.ep-pricing-tier-card span { color:#64748b; font-size:12px; margin-top:2px; }
+.ep-pricing-tier-card button { border:1px solid #fee2e2; background:#fff1f2; color:#be123c; border-radius:8px; width:34px; height:34px; }
 .ep-med-safe-mode { border-radius:999px; padding:6px 10px; color:var(--med-blue); background:var(--med-blue-soft); white-space:nowrap; }
 .ep-med-donut-wrap { display:flex; align-items:center; gap:18px; margin-bottom:14px; }
 .ep-med-donut { width:148px; height:148px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:conic-gradient(#137333 0 55%, #d99b22 55% 70%, #b42318 70% 84%, #64748b 84% 100%); position:relative; flex-shrink:0; }

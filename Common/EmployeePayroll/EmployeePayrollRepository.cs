@@ -118,6 +118,8 @@ ORDER BY p.IsActive DESC, pr.ProviderNameAr, p.PlanNameAr;";
                     }
                 }
                 }
+
+                AttachPlanPricingTiers(connection, rows);
             }
 
             return rows;
@@ -149,10 +151,19 @@ FROM dbo.MedicalInsurancePlans p WITH (NOLOCK)
 INNER JOIN dbo.MedicalInsuranceProviders pr WITH (NOLOCK) ON pr.ProviderId = p.ProviderId
 WHERE p.PlanId = @PlanId;";
                 command.Parameters.Add("@PlanId", SqlDbType.Int).Value = planId;
+                MedicalInsurancePlan plan = null;
                 using (var reader = command.ExecuteReader())
                 {
-                    return reader.Read() ? ReadPlan(reader) : null;
+                    if (reader.Read())
+                    {
+                        plan = ReadPlan(reader);
+                    }
                 }
+                if (plan != null)
+                {
+                    plan.PricingTiers = GetMedicalInsurancePlanPricingTiers(connection, plan.PlanId.GetValueOrDefault());
+                }
+                return plan;
                 }
             }
         }
@@ -217,6 +228,7 @@ WHERE ProviderId = @Id;"))
             ValidateShare("Employee", plan.DefaultMonthlyCost, plan.DefaultEmployeeShareType, plan.DefaultEmployeeShareValue);
             ValidateShare("Company", plan.DefaultMonthlyCost, plan.DefaultCompanyShareType, plan.DefaultCompanyShareValue);
             ValidatePlanLifecycle(plan);
+            ValidateMedicalInsurancePricingTiers(plan.PricingTiers);
 
             using (var connection = OpenConnection())
             using (var transaction = connection.BeginTransaction())
@@ -310,8 +322,124 @@ WHERE PlanId = @Id;"))
                     }
                 }
 
+                SaveMedicalInsurancePlanPricingTiers(connection, transaction, id, plan.PricingTiers);
                 transaction.Commit();
                 return id;
+            }
+        }
+
+        private void AttachPlanPricingTiers(SqlConnection connection, IList<MedicalInsurancePlan> plans)
+        {
+            if (plans == null || plans.Count == 0 || !TableExists(connection, "MedicalInsurancePlanAgePricing"))
+            {
+                return;
+            }
+
+            var ids = plans.Where(x => x.PlanId.HasValue).Select(x => x.PlanId.Value).Distinct().ToList();
+            if (ids.Count == 0)
+            {
+                return;
+            }
+
+            var map = plans.Where(x => x.PlanId.HasValue).ToDictionary(x => x.PlanId.Value, x => x);
+            using (var command = connection.CreateCommand())
+            {
+                var names = new List<string>();
+                for (var i = 0; i < ids.Count; i++)
+                {
+                    var name = "@Plan" + i.ToString();
+                    names.Add(name);
+                    command.Parameters.Add(name, SqlDbType.Int).Value = ids[i];
+                }
+
+                command.CommandText = @"
+SELECT TierId, PlanId, BeneficiaryType, Relation, AgeFrom, AgeTo, PremiumAmount,
+       EmployeeSharePercent, CompanySharePercent, PriceMode, EffectiveFrom, EffectiveTo, Notes, IsActive
+FROM dbo.MedicalInsurancePlanAgePricing WITH (NOLOCK)
+WHERE PlanId IN (" + string.Join(",", names.ToArray()) + @")
+ORDER BY PlanId, BeneficiaryType, Relation, AgeFrom;";
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var tier = ReadMedicalInsurancePlanPricingTier(reader);
+                        MedicalInsurancePlan plan;
+                        if (map.TryGetValue(tier.PlanId, out plan))
+                        {
+                            plan.PricingTiers.Add(tier);
+                        }
+                    }
+                }
+            }
+        }
+
+        private IList<MedicalInsurancePlanPricingTier> GetMedicalInsurancePlanPricingTiers(SqlConnection connection, int planId)
+        {
+            var rows = new List<MedicalInsurancePlanPricingTier>();
+            if (planId <= 0 || !TableExists(connection, "MedicalInsurancePlanAgePricing"))
+            {
+                return rows;
+            }
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = @"
+SELECT TierId, PlanId, BeneficiaryType, Relation, AgeFrom, AgeTo, PremiumAmount,
+       EmployeeSharePercent, CompanySharePercent, PriceMode, EffectiveFrom, EffectiveTo, Notes, IsActive
+FROM dbo.MedicalInsurancePlanAgePricing WITH (NOLOCK)
+WHERE PlanId = @PlanId
+ORDER BY BeneficiaryType, Relation, AgeFrom;";
+                command.Parameters.Add("@PlanId", SqlDbType.Int).Value = planId;
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rows.Add(ReadMedicalInsurancePlanPricingTier(reader));
+                    }
+                }
+            }
+
+            return rows;
+        }
+
+        private void SaveMedicalInsurancePlanPricingTiers(SqlConnection connection, SqlTransaction transaction, int planId, IList<MedicalInsurancePlanPricingTier> tiers)
+        {
+            if (!TableExists(connection, transaction, "MedicalInsurancePlanAgePricing"))
+            {
+                return;
+            }
+
+            using (var command = CreateCommand(connection, transaction, "DELETE FROM dbo.MedicalInsurancePlanAgePricing WHERE PlanId = @PlanId;"))
+            {
+                command.Parameters.Add("@PlanId", SqlDbType.Int).Value = planId;
+                command.ExecuteNonQuery();
+            }
+
+            foreach (var tier in (tiers ?? new List<MedicalInsurancePlanPricingTier>()).Where(x => x != null && x.PremiumAmount > 0))
+            {
+                using (var command = CreateCommand(connection, transaction, @"
+INSERT INTO dbo.MedicalInsurancePlanAgePricing
+(PlanId, BeneficiaryType, Relation, AgeFrom, AgeTo, PremiumAmount, EmployeeSharePercent, CompanySharePercent,
+ PriceMode, EffectiveFrom, EffectiveTo, Notes, IsActive, CreatedAt)
+VALUES
+(@PlanId, @BeneficiaryType, @Relation, @AgeFrom, @AgeTo, @PremiumAmount, @EmployeeSharePercent, @CompanySharePercent,
+ @PriceMode, @EffectiveFrom, @EffectiveTo, @Notes, @IsActive, GETDATE());"))
+                {
+                    command.Parameters.Add("@PlanId", SqlDbType.Int).Value = planId;
+                    AddNullable(command, "@BeneficiaryType", SqlDbType.NVarChar, FirstNonEmpty(tier.BeneficiaryType, "Dependent"));
+                    AddNullable(command, "@Relation", SqlDbType.NVarChar, tier.Relation);
+                    command.Parameters.Add("@AgeFrom", SqlDbType.Int).Value = Math.Max(0, tier.AgeFrom);
+                    command.Parameters.Add("@AgeTo", SqlDbType.Int).Value = Math.Max(tier.AgeFrom, tier.AgeTo);
+                    command.Parameters.Add("@PremiumAmount", SqlDbType.Money).Value = tier.PremiumAmount;
+                    command.Parameters.Add("@EmployeeSharePercent", SqlDbType.Money).Value = Math.Max(0, tier.EmployeeSharePercent);
+                    command.Parameters.Add("@CompanySharePercent", SqlDbType.Money).Value = Math.Max(0, tier.CompanySharePercent);
+                    AddNullable(command, "@PriceMode", SqlDbType.NVarChar, string.IsNullOrWhiteSpace(tier.PriceMode) ? "Monthly" : tier.PriceMode);
+                    AddNullable(command, "@EffectiveFrom", SqlDbType.DateTime, tier.EffectiveFrom);
+                    AddNullable(command, "@EffectiveTo", SqlDbType.DateTime, tier.EffectiveTo);
+                    AddNullable(command, "@Notes", SqlDbType.NVarChar, tier.Notes);
+                    command.Parameters.Add("@IsActive", SqlDbType.Bit).Value = tier.IsActive;
+                    command.ExecuteNonQuery();
+                }
             }
         }
 
@@ -7095,7 +7223,9 @@ SELECT CONVERT(INT, SCOPE_IDENTITY());"))
             using (var command = connection.CreateCommand())
             {
                 command.CommandText = @"
-SELECT DependentId, EmpId, EmployeeInsuranceId, DependentName, Relation, BirthDate, CoveragePercent, IsActive
+SELECT DependentId, EmpId, EmployeeInsuranceId, DependentName, Relation, BirthDate,
+       NationalId, IsCovered, CoverageStartDate, CoverageEndDate, Status,
+       CoveragePercent, CalculatedPremium, ManualPremium, ExceptionReason, Notes, IsActive
 FROM dbo.MedicalInsuranceDependents WITH (NOLOCK)
 WHERE EmpId = @EmpId
   AND IsActive = 1
@@ -7115,7 +7245,16 @@ ORDER BY Relation, DependentName;";
                             DependentName = ReadString(reader, "DependentName"),
                             Relation = ReadString(reader, "Relation"),
                             BirthDate = ReadNullableDate(reader, "BirthDate"),
+                            NationalId = ReadString(reader, "NationalId"),
+                            IsCovered = ReadBool(reader, "IsCovered"),
+                            CoverageStartDate = ReadNullableDate(reader, "CoverageStartDate"),
+                            CoverageEndDate = ReadNullableDate(reader, "CoverageEndDate"),
+                            Status = ReadString(reader, "Status"),
                             CoveragePercent = ReadDecimal(reader, "CoveragePercent"),
+                            CalculatedPremium = ReadDecimal(reader, "CalculatedPremium"),
+                            ManualPremium = ReadDecimal(reader, "ManualPremium"),
+                            ExceptionReason = ReadString(reader, "ExceptionReason"),
+                            Notes = ReadString(reader, "Notes"),
                             IsActive = ReadBool(reader, "IsActive")
                         });
                     }
@@ -7147,16 +7286,27 @@ WHERE EmpId = @EmpId
             {
                 using (var command = CreateCommand(connection, transaction, @"
 INSERT INTO dbo.MedicalInsuranceDependents
-(EmpId, EmployeeInsuranceId, DependentName, Relation, BirthDate, CoveragePercent, IsActive, CreatedAt)
+(EmpId, EmployeeInsuranceId, DependentName, Relation, BirthDate, NationalId, IsCovered, CoverageStartDate, CoverageEndDate, Status,
+ CoveragePercent, CalculatedPremium, ManualPremium, ExceptionReason, Notes, IsActive, CreatedAt)
 VALUES
-(@EmpId, @EmployeeInsuranceId, @DependentName, @Relation, @BirthDate, @CoveragePercent, @IsActive, GETDATE());"))
+(@EmpId, @EmployeeInsuranceId, @DependentName, @Relation, @BirthDate, @NationalId, @IsCovered, @CoverageStartDate, @CoverageEndDate, @Status,
+ @CoveragePercent, @CalculatedPremium, @ManualPremium, @ExceptionReason, @Notes, @IsActive, GETDATE());"))
                 {
                     command.Parameters.Add("@EmpId", SqlDbType.Int).Value = employeeId;
                     command.Parameters.Add("@EmployeeInsuranceId", SqlDbType.Int).Value = insurance.Id.Value;
                     AddNullable(command, "@DependentName", SqlDbType.NVarChar, dependent.DependentName);
                     AddNullable(command, "@Relation", SqlDbType.NVarChar, string.IsNullOrWhiteSpace(dependent.Relation) ? "Child" : dependent.Relation);
                     AddNullable(command, "@BirthDate", SqlDbType.DateTime, dependent.BirthDate);
+                    AddNullable(command, "@NationalId", SqlDbType.NVarChar, dependent.NationalId);
+                    command.Parameters.Add("@IsCovered", SqlDbType.Bit).Value = dependent.IsCovered;
+                    AddNullable(command, "@CoverageStartDate", SqlDbType.DateTime, dependent.CoverageStartDate);
+                    AddNullable(command, "@CoverageEndDate", SqlDbType.DateTime, dependent.CoverageEndDate);
+                    AddNullable(command, "@Status", SqlDbType.NVarChar, string.IsNullOrWhiteSpace(dependent.Status) ? (dependent.IsActive ? "Active" : "Stopped") : dependent.Status);
                     command.Parameters.Add("@CoveragePercent", SqlDbType.Money).Value = dependent.CoveragePercent <= 0 ? 100 : dependent.CoveragePercent;
+                    command.Parameters.Add("@CalculatedPremium", SqlDbType.Money).Value = Math.Max(0, dependent.CalculatedPremium);
+                    command.Parameters.Add("@ManualPremium", SqlDbType.Money).Value = Math.Max(0, dependent.ManualPremium);
+                    AddNullable(command, "@ExceptionReason", SqlDbType.NVarChar, dependent.ExceptionReason);
+                    AddNullable(command, "@Notes", SqlDbType.NVarChar, dependent.Notes);
                     command.Parameters.Add("@IsActive", SqlDbType.Bit).Value = dependent.IsActive && insurance.IsActive;
                     command.ExecuteNonQuery();
                 }
@@ -7347,6 +7497,60 @@ WHERE p.PlanId = @PlanId;"))
             }
         }
 
+        private static void ValidateMedicalInsurancePricingTiers(IList<MedicalInsurancePlanPricingTier> tiers)
+        {
+            var activeRows = (tiers ?? new List<MedicalInsurancePlanPricingTier>())
+                .Where(x => x != null && x.IsActive && x.PremiumAmount > 0)
+                .ToList();
+
+            foreach (var tier in activeRows)
+            {
+                if (tier.AgeFrom < 0 || tier.AgeTo < 0 || tier.AgeTo < tier.AgeFrom)
+                {
+                    throw new InvalidOperationException("شرائح التسعير العمرية تحتوي على مدى عمر غير صحيح.");
+                }
+
+                if (tier.EmployeeSharePercent < 0 || tier.EmployeeSharePercent > 100 || tier.CompanySharePercent < 0 || tier.CompanySharePercent > 100)
+                {
+                    throw new InvalidOperationException("نسب تحمل شرائح التسعير يجب أن تكون بين 0 و 100.");
+                }
+
+                if (tier.EffectiveFrom.HasValue && tier.EffectiveTo.HasValue && tier.EffectiveTo.Value.Date < tier.EffectiveFrom.Value.Date)
+                {
+                    throw new InvalidOperationException("تاريخ نهاية شريحة التسعير لا يمكن أن يكون قبل تاريخ البداية.");
+                }
+            }
+
+            for (var i = 0; i < activeRows.Count; i++)
+            {
+                for (var j = i + 1; j < activeRows.Count; j++)
+                {
+                    var a = activeRows[i];
+                    var b = activeRows[j];
+                    if (!string.Equals(FirstNonEmpty(a.BeneficiaryType, "Dependent"), FirstNonEmpty(b.BeneficiaryType, "Dependent"), StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    if (!string.Equals(FirstNonEmpty(a.Relation, string.Empty), FirstNonEmpty(b.Relation, string.Empty), StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    var ageOverlap = a.AgeFrom <= b.AgeTo && b.AgeFrom <= a.AgeTo;
+                    var aFrom = a.EffectiveFrom.HasValue ? a.EffectiveFrom.Value.Date : DateTime.MinValue;
+                    var aTo = a.EffectiveTo.HasValue ? a.EffectiveTo.Value.Date : DateTime.MaxValue;
+                    var bFrom = b.EffectiveFrom.HasValue ? b.EffectiveFrom.Value.Date : DateTime.MinValue;
+                    var bTo = b.EffectiveTo.HasValue ? b.EffectiveTo.Value.Date : DateTime.MaxValue;
+                    var dateOverlap = aFrom <= bTo && bFrom <= aTo;
+                    if (ageOverlap && dateOverlap)
+                    {
+                        throw new InvalidOperationException("يوجد تداخل في شرائح التسعير لنفس نوع المستفيد/صلة القرابة ونفس فترة السريان.");
+                    }
+                }
+            }
+        }
+
         private void ValidateMedicalInsurancePlanAccounts(SqlConnection connection, SqlTransaction transaction, MedicalInsurancePlan plan)
         {
             if (plan == null || !plan.IsActive || !plan.ShowInPayroll)
@@ -7514,6 +7718,19 @@ ORDER BY Account_Serial;"))
             if (insurance.CoveragePercent < 0 || insurance.CoveragePercent > 100)
             {
                 throw new InvalidOperationException("نسبة تغطية التأمين الطبي يجب أن تكون بين 0 و 100.");
+            }
+
+            foreach (var dependent in (insurance.Dependents ?? new List<EmployeeMedicalInsuranceDependent>()).Where(x => x != null && !string.IsNullOrWhiteSpace(x.DependentName)))
+            {
+                if (dependent.CoverageEndDate.HasValue && dependent.CoverageStartDate.HasValue && dependent.CoverageEndDate.Value.Date < dependent.CoverageStartDate.Value.Date)
+                {
+                    throw new InvalidOperationException("تاريخ نهاية تغطية التابع لا يمكن أن يكون قبل تاريخ البداية: " + dependent.DependentName + ".");
+                }
+
+                if (dependent.ManualPremium < 0 || dependent.CalculatedPremium < 0)
+                {
+                    throw new InvalidOperationException("سعر التأمين للتابع لا يقبل قيمة سالبة: " + dependent.DependentName + ".");
+                }
             }
         }
 
@@ -7901,6 +8118,27 @@ ORDER BY Account_Serial;"))
                 DependentsTemplateJson = ReadString(reader, "DependentsTemplateJson"),
                 IsActive = ReadBool(reader, "IsActive"),
                 Notes = ReadString(reader, "Notes")
+            };
+        }
+
+        private static MedicalInsurancePlanPricingTier ReadMedicalInsurancePlanPricingTier(IDataRecord reader)
+        {
+            return new MedicalInsurancePlanPricingTier
+            {
+                TierId = ReadNullableInt(reader, "TierId"),
+                PlanId = ReadInt(reader, "PlanId"),
+                BeneficiaryType = ReadString(reader, "BeneficiaryType"),
+                Relation = ReadString(reader, "Relation"),
+                AgeFrom = ReadInt(reader, "AgeFrom"),
+                AgeTo = ReadInt(reader, "AgeTo"),
+                PremiumAmount = ReadDecimal(reader, "PremiumAmount"),
+                EmployeeSharePercent = ReadDecimal(reader, "EmployeeSharePercent"),
+                CompanySharePercent = ReadDecimal(reader, "CompanySharePercent"),
+                PriceMode = ReadString(reader, "PriceMode"),
+                EffectiveFrom = ReadNullableDate(reader, "EffectiveFrom"),
+                EffectiveTo = ReadNullableDate(reader, "EffectiveTo"),
+                Notes = ReadString(reader, "Notes"),
+                IsActive = ReadBool(reader, "IsActive")
             };
         }
 

@@ -16,7 +16,6 @@ namespace MyERP.Areas.Pos.Services
     {
         private const int HeaderRowIndex = 2;
         private const int FirstDataRowIndex = 3;
-        private const int MaxDataRowIndex = 225;
         private const int ImportStatusColumnIndex = 13;
 
         public PosExcelImportPreviewResult Parse(Stream stream, string fileName, PosExcelImportMappingDraft mapping)
@@ -85,7 +84,7 @@ namespace MyERP.Areas.Pos.Services
                 SheetDateText = ReadText(sheet, HeaderRowIndex, 12)
             };
 
-            var lastRow = Math.Min(sheet.Rows.Count - 1, MaxDataRowIndex);
+            var lastRow = FindLastMeaningfulDataRow(sheet);
             for (var rowIndex = FirstDataRowIndex; rowIndex <= lastRow; rowIndex++)
             {
                 var row = ParseTransactionRow(sheet, rowIndex, mapping);
@@ -108,6 +107,36 @@ namespace MyERP.Areas.Pos.Services
             {
                 result.Sheets.Add(sheetSummary);
             }
+        }
+
+        private static int FindLastMeaningfulDataRow(DataTable sheet)
+        {
+            if (sheet == null || sheet.Rows.Count <= FirstDataRowIndex)
+            {
+                return FirstDataRowIndex - 1;
+            }
+
+            for (var rowIndex = sheet.Rows.Count - 1; rowIndex >= FirstDataRowIndex; rowIndex--)
+            {
+                if (HasMeaningfulDataRow(sheet, rowIndex))
+                {
+                    return rowIndex;
+                }
+            }
+
+            return FirstDataRowIndex - 1;
+        }
+
+        private static bool HasMeaningfulDataRow(DataTable sheet, int rowIndex)
+        {
+            return !string.IsNullOrWhiteSpace(ReadText(sheet, rowIndex, 1))
+                || !string.IsNullOrWhiteSpace(ReadText(sheet, rowIndex, 2))
+                || !string.IsNullOrWhiteSpace(ReadText(sheet, rowIndex, 3))
+                || !string.IsNullOrWhiteSpace(ReadText(sheet, rowIndex, 4))
+                || !string.IsNullOrWhiteSpace(ReadText(sheet, rowIndex, 5))
+                || !string.IsNullOrWhiteSpace(ReadText(sheet, rowIndex, 8))
+                || !string.IsNullOrWhiteSpace(ReadText(sheet, rowIndex, 9))
+                || !string.IsNullOrWhiteSpace(ReadText(sheet, rowIndex, 12));
         }
 
         private static PosExcelImportRowPreview ParseTransactionRow(DataTable sheet, int rowIndex, PosExcelImportMappingDraft mapping)
@@ -506,15 +535,15 @@ namespace MyERP.Areas.Pos.Services
                 return;
             }
 
-            var maxRow = Math.Min(sheet.Rows.Count - 1, HeaderRowIndex);
-            var maxColumn = Math.Min(sheet.Columns.Count - 1, 10);
+            var maxRow = Math.Min(sheet.Rows.Count - 1, 50);
+            var maxColumn = sheet.Columns.Count - 1;
             for (var rowIndex = 0; rowIndex <= maxRow; rowIndex++)
             {
                 var rowValues = new List<string>();
                 for (var columnIndex = 0; columnIndex <= maxColumn; columnIndex++)
                 {
                     var text = ReadText(sheet, rowIndex, columnIndex);
-                    if (IsBranchHintCell(text))
+                    if (IsBranchCodeCell(text) || (rowIndex <= HeaderRowIndex && columnIndex <= 10 && IsBranchHintCell(text)))
                     {
                         AddBranchHint(result, text);
                         rowValues.Add(text);
@@ -549,6 +578,12 @@ namespace MyERP.Areas.Pos.Services
             };
 
             return !blockedTokens.Any(token => normalized.Contains(token));
+        }
+
+        private static bool IsBranchCodeCell(string value)
+        {
+            var text = Regex.Replace((value ?? string.Empty).Trim(), @"\s+", string.Empty);
+            return Regex.IsMatch(text, @"^[A-Za-z]{1,4}\d{2,6}$");
         }
 
         private static void AddBranchHint(PosExcelImportPreviewResult result, string hint)

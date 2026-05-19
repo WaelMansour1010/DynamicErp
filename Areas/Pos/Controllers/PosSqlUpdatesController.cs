@@ -80,10 +80,15 @@ namespace MyERP.Areas.Pos.Controllers
                 return AccessDenied();
             }
 
+            var ignoreHashMismatchValue = ignoreHashMismatch.GetValueOrDefault(false)
+                || IsPostedTrue("ignoreHashMismatch")
+                || IsPostedTrue("IgnoreHashMismatch")
+                || IsPostedTrue("forceIgnoreHashMismatch");
+
             var run = _updateService.ApplyPending(new PosSqlUpdateRunRequest
             {
                 ConfirmBackup = confirmBackup.GetValueOrDefault(false),
-                IgnoreHashMismatch = ignoreHashMismatch.GetValueOrDefault(false),
+                IgnoreHashMismatch = ignoreHashMismatchValue,
                 UserId = context.UserId,
                 UserName = context.UserName,
                 ClientIp = GetClientIp(),
@@ -124,6 +129,29 @@ namespace MyERP.Areas.Pos.Controllers
         {
             Response.TrySkipIisCustomErrors = true;
             return new HttpStatusCodeResult(403, "ليست لديك صلاحية إدارة تحديثات قاعدة البيانات");
+        }
+
+        private bool IsPostedTrue(string key)
+        {
+            var value = Request == null || Request.Form == null ? null : Request.Form[key];
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            foreach (var part in value.Split(','))
+            {
+                var normalized = (part ?? string.Empty).Trim();
+                if (string.Equals(normalized, "true", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(normalized, "on", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(normalized, "1", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(normalized, "yes", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool IsAdmin(PosUserContext context)

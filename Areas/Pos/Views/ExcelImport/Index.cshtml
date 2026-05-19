@@ -38,6 +38,7 @@
         .status-rejected { background: #fee2e2; color: #991b1b; }
         .import-progress { background:#e2e8f0; border-radius:999px; display:none; height:10px; margin-top:10px; overflow:hidden; }
         .import-progress span { animation: importMove 1.2s infinite linear; background:#2563eb; display:block; height:100%; width:35%; }
+        .import-progress.is-determinate span { animation:none; margin-right:0; transition:width .25s ease; width:0%; }
         @@keyframes importMove { from { margin-right:-35%; } to { margin-right:100%; } }
         @@media (max-width: 900px) { .excel-import-grid { grid-template-columns: 1fr; } }
     </style>
@@ -100,7 +101,7 @@
             <span class="status-chip status-draft">Token invoices</span>
         </div>
 
-        <form method="post" action="@Url.Action("TokenInvoicePreview", "ExcelImport", new { area = "Pos" })" enctype="multipart/form-data">
+        <form method="post" action="@Url.Action("TokenInvoicePreview", "ExcelImport", new { area = "Pos" })" enctype="multipart/form-data" id="tokenInvoicePreviewForm" data-async-preview-url="@Url.Action("StartTokenInvoicePreview", "ExcelImport", new { area = "Pos" })" data-progress-url="@Url.Action("TokenInvoicePreviewProgress", "ExcelImport", new { area = "Pos" })">
             @Html.AntiForgeryToken()
             <div class="file-picker">
                 <i class="fas fa-file-excel" aria-hidden="true"></i>
@@ -119,7 +120,8 @@
                 <button type="submit" class="erp-btn erp-btn-primary">معاينة فواتير التوكنات</button>
                 <a class="erp-btn erp-btn-secondary" href="@Url.Action("DownloadTokenInvoiceTemplate", "ExcelImport", new { area = "Pos" })">تحميل نموذج</a>
             </div>
-            <div class="import-progress"><span></span></div>
+            <div class="import-progress token-preview-progress"><span></span></div>
+            <div class="import-note token-preview-progress-text" style="display:none;margin-top:10px;"></div>
         </form>
 
         @if (!string.IsNullOrWhiteSpace(tokenInvoiceErrorMessage))
@@ -183,7 +185,7 @@
                 </table>
             </div>
 
-            <form method="post" action="@Url.Action("TokenInvoiceCommit", "ExcelImport", new { area = "Pos" })" style="margin-top:14px;">
+            <form method="post" action="@Url.Action("TokenInvoiceCommit", "ExcelImport", new { area = "Pos" })" style="margin-top:14px;" id="tokenInvoiceCommitForm" data-start-url="@Url.Action("StartTokenInvoiceCommit", "ExcelImport", new { area = "Pos" })" data-progress-url="@Url.Action("TokenInvoiceCommitProgress", "ExcelImport", new { area = "Pos" })">
                 @Html.AntiForgeryToken()
                 <div class="excel-import-grid">
                     <label class="excel-import-field">
@@ -194,7 +196,14 @@
                 <div class="erp-actions erp-actions-inline" style="margin-top:14px;">
                     <button type="submit" class="erp-btn erp-btn-primary">ترحيل الصفوف الجاهزة كفواتير كارت</button>
                 </div>
-                <div class="import-progress"><span></span></div>
+                <div class="import-progress token-commit-progress"><span></span></div>
+                <div class="kyc-import-note token-commit-progress-text" style="display:none;margin-top:10px;"></div>
+                <div class="excel-import-grid token-commit-kpis" style="display:none;margin-top:10px;">
+                    <div class="excel-import-field"><span>المعالج</span><strong data-token-commit-processed>0 / 0</strong></div>
+                    <div class="excel-import-field"><span>تم ترحيله</span><strong data-token-commit-imported>0</strong></div>
+                    <div class="excel-import-field"><span>فشل</span><strong data-token-commit-failed>0</strong></div>
+                    <div class="excel-import-field"><span>مكرر</span><strong data-token-commit-skipped>0</strong></div>
+                </div>
                 <div class="import-note" style="margin-top:10px;">
                     سيتم ترحيل الصفوف الجاهزة فقط. الصف الذي يفشل لا يوقف باقي الصفوف، ولن يتم تعديل KYC متعارض أو بيع توكن مكرر.
                 </div>
@@ -334,7 +343,7 @@
                 </table>
             </div>
 
-            <form method="post" action="@Url.Action("KycCommit", "ExcelImport", new { area = "Pos" })" style="margin-top:14px;">
+            <form method="post" action="@Url.Action("KycCommit", "ExcelImport", new { area = "Pos" })" style="margin-top:14px;" id="kycCommitForm" data-start-url="@Url.Action("StartKycCommit", "ExcelImport", new { area = "Pos" })" data-progress-url="@Url.Action("KycCommitProgress", "ExcelImport", new { area = "Pos" })">
                 @Html.AntiForgeryToken()
                 <div class="excel-import-grid">
                     <label class="excel-import-field">
@@ -347,6 +356,13 @@
                         <i class="fas fa-check" aria-hidden="true"></i>
                         حفظ وتفعيل عملاء KYC الجاهزين
                     </button>
+                </div>
+                <div class="import-progress kyc-commit-progress"><span></span></div>
+                <div class="kyc-import-note kyc-commit-progress-text" style="display:none;margin-top:10px;"></div>
+                <div class="excel-import-grid kyc-commit-kpis" style="display:none;margin-top:10px;">
+                    <div class="excel-import-field"><span>المعالج</span><strong data-kyc-commit-processed>0 / 0</strong></div>
+                    <div class="excel-import-field"><span>تم حفظه</span><strong data-kyc-commit-imported>0</strong></div>
+                    <div class="excel-import-field"><span>فشل</span><strong data-kyc-commit-failed>0</strong></div>
                 </div>
                 <div class="kyc-import-note" style="margin-top:10px;">
                     سيتم حفظ كل صف صالح كعميل KYC بنفس منطق تفعيل الكارت الحالي. الصف الذي يفشل لا يوقف باقي الصفوف، وسيظهر سبب الرفض في النتيجة.
@@ -441,9 +457,344 @@
 </main>
 <script>
     (function () {
+        var previewForm = document.getElementById("tokenInvoicePreviewForm");
+        if (previewForm && window.FormData && window.fetch) {
+            previewForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+                var form = this;
+                var button = form.querySelector('button[type="submit"]');
+                var progress = form.querySelector(".token-preview-progress");
+                var progressBar = progress ? progress.querySelector("span") : null;
+                var progressText = form.querySelector(".token-preview-progress-text");
+                var startUrl = form.getAttribute("data-async-preview-url");
+                var progressUrl = form.getAttribute("data-progress-url");
+
+                if (progress) {
+                    progress.className = progress.className + " is-determinate";
+                    progress.style.display = "block";
+                }
+                if (progressBar) {
+                    progressBar.style.width = "1%";
+                }
+                if (progressText) {
+                    progressText.style.display = "block";
+                    progressText.innerText = "جاري رفع الملف وبدء المعاينة...";
+                }
+                if (button) {
+                    button.disabled = true;
+                    button.innerText = "جاري قراءة الملف...";
+                }
+
+                fetch(startUrl, {
+                    method: "POST",
+                    body: new FormData(form),
+                    credentials: "same-origin"
+                }).then(function (response) {
+                    return response.json();
+                }).then(function (data) {
+                    if (!data || !data.ok) {
+                        throw new Error(data && data.message ? data.message : "تعذر بدء معاينة فواتير التوكنات.");
+                    }
+
+                    pollTokenInvoicePreview(data.jobId, progressUrl, progressBar, progressText, button);
+                }).catch(function (error) {
+                    if (progressText) {
+                        progressText.style.display = "block";
+                        progressText.innerText = error.message || "تعذر بدء معاينة فواتير التوكنات.";
+                    }
+                    if (button) {
+                        button.disabled = false;
+                        button.innerText = "معاينة فواتير التوكنات";
+                    }
+                });
+            });
+        }
+
+        function pollTokenInvoicePreview(jobId, progressUrl, progressBar, progressText, button) {
+            fetch(progressUrl + "?jobId=" + encodeURIComponent(jobId), {
+                credentials: "same-origin"
+            }).then(function (response) {
+                return response.json();
+            }).then(function (data) {
+                if (!data || !data.ok) {
+                    throw new Error(data && data.message ? data.message : "تعذر متابعة تقدم المعاينة.");
+                }
+
+                var percent = Math.max(0, Math.min(100, parseInt(data.percent || 0, 10)));
+                if (progressBar) {
+                    progressBar.style.width = Math.max(1, percent) + "%";
+                }
+
+                if (progressText) {
+                    var rowPart = data.totalRows > 0
+                        ? " (" + (data.processedRows || 0) + " / " + data.totalRows + " صف)"
+                        : "";
+                    progressText.innerText = (data.currentMessage || "جاري قراءة الملف...") + rowPart + " - " + percent + "%";
+                }
+
+                if (data.isDone) {
+                    if (data.isSuccess && data.resultUrl) {
+                        window.location.href = data.resultUrl;
+                        return;
+                    }
+
+                    throw new Error(data.errorMessage || "فشلت معاينة ملف فواتير التوكنات.");
+                }
+
+                window.setTimeout(function () {
+                    pollTokenInvoicePreview(jobId, progressUrl, progressBar, progressText, button);
+                }, 900);
+            }).catch(function (error) {
+                if (progressText) {
+                    progressText.style.display = "block";
+                    progressText.innerText = error.message || "تعذر متابعة تقدم المعاينة.";
+                }
+                if (button) {
+                    button.disabled = false;
+                    button.innerText = "معاينة فواتير التوكنات";
+                }
+            });
+        }
+
+        var tokenCommitForm = document.getElementById("tokenInvoiceCommitForm");
+        if (tokenCommitForm && window.FormData && window.fetch) {
+            tokenCommitForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+                var form = this;
+                var button = form.querySelector('button[type="submit"]');
+                var progress = form.querySelector(".token-commit-progress");
+                var progressBar = progress ? progress.querySelector("span") : null;
+                var progressText = form.querySelector(".token-commit-progress-text");
+                var kpis = form.querySelector(".token-commit-kpis");
+                var startUrl = form.getAttribute("data-start-url");
+                var progressUrl = form.getAttribute("data-progress-url");
+
+                if (progress) {
+                    progress.className = progress.className + " is-determinate";
+                    progress.style.display = "block";
+                }
+                if (progressBar) {
+                    progressBar.style.width = "1%";
+                }
+                if (progressText) {
+                    progressText.style.display = "block";
+                    progressText.innerText = "جاري بدء ترحيل فواتير التوكنات...";
+                }
+                if (kpis) {
+                    kpis.style.display = "grid";
+                }
+                if (button) {
+                    button.disabled = true;
+                    button.innerText = "جاري الترحيل...";
+                }
+
+                fetch(startUrl, {
+                    method: "POST",
+                    body: new FormData(form),
+                    credentials: "same-origin"
+                }).then(function (response) {
+                    return response.json();
+                }).then(function (data) {
+                    if (!data || !data.ok) {
+                        throw new Error(data && data.message ? data.message : "تعذر بدء ترحيل فواتير التوكنات.");
+                    }
+
+                    pollTokenInvoiceCommit(data.jobId, progressUrl, form, progressBar, progressText, button);
+                }).catch(function (error) {
+                    if (progressText) {
+                        progressText.style.display = "block";
+                        progressText.innerText = error.message || "تعذر بدء ترحيل فواتير التوكنات.";
+                    }
+                    if (button) {
+                        button.disabled = false;
+                        button.innerText = "ترحيل الصفوف الجاهزة كفواتير كارت";
+                    }
+                });
+            });
+        }
+
+        function pollTokenInvoiceCommit(jobId, progressUrl, form, progressBar, progressText, button) {
+            fetch(progressUrl + "?jobId=" + encodeURIComponent(jobId), {
+                credentials: "same-origin"
+            }).then(function (response) {
+                return response.json();
+            }).then(function (data) {
+                if (!data || !data.ok) {
+                    throw new Error(data && data.message ? data.message : "تعذر متابعة تقدم الترحيل.");
+                }
+
+                var percent = Math.max(0, Math.min(100, parseInt(data.percent || 0, 10)));
+                if (progressBar) {
+                    progressBar.style.width = Math.max(1, percent) + "%";
+                }
+
+                var processed = form.querySelector("[data-token-commit-processed]");
+                var imported = form.querySelector("[data-token-commit-imported]");
+                var failed = form.querySelector("[data-token-commit-failed]");
+                var skipped = form.querySelector("[data-token-commit-skipped]");
+                if (processed) { processed.innerText = (data.processedCount || 0) + " / " + (data.totalCount || 0); }
+                if (imported) { imported.innerText = data.importedCount || 0; }
+                if (failed) { failed.innerText = data.failedCount || 0; }
+                if (skipped) { skipped.innerText = data.skippedCount || 0; }
+
+                if (progressText) {
+                    var rowPart = data.totalCount > 0
+                        ? " (" + (data.processedCount || 0) + " / " + data.totalCount + " صف)"
+                        : "";
+                    var tokenPart = data.currentServiceType ? " - التوكن: " + data.currentServiceType : "";
+                    progressText.innerText = (data.currentMessage || "جاري الترحيل...") + rowPart + tokenPart + " - " + percent + "%";
+                }
+
+                if (data.isDone) {
+                    if (data.resultUrl) {
+                        window.location.href = data.resultUrl;
+                        return;
+                    }
+
+                    if (button) {
+                        button.disabled = false;
+                        button.innerText = "ترحيل الصفوف الجاهزة كفواتير كارت";
+                    }
+                    return;
+                }
+
+                window.setTimeout(function () {
+                    pollTokenInvoiceCommit(jobId, progressUrl, form, progressBar, progressText, button);
+                }, 900);
+            }).catch(function (error) {
+                if (progressText) {
+                    progressText.style.display = "block";
+                    progressText.innerText = error.message || "تعذر متابعة تقدم الترحيل.";
+                }
+                if (button) {
+                    button.disabled = false;
+                    button.innerText = "ترحيل الصفوف الجاهزة كفواتير كارت";
+                }
+            });
+        }
+
+        var kycCommitForm = document.getElementById("kycCommitForm");
+        if (kycCommitForm && window.FormData && window.fetch) {
+            kycCommitForm.addEventListener("submit", function (event) {
+                event.preventDefault();
+                var form = this;
+                var button = form.querySelector('button[type="submit"]');
+                var progress = form.querySelector(".kyc-commit-progress");
+                var progressBar = progress ? progress.querySelector("span") : null;
+                var progressText = form.querySelector(".kyc-commit-progress-text");
+                var kpis = form.querySelector(".kyc-commit-kpis");
+                var startUrl = form.getAttribute("data-start-url");
+                var progressUrl = form.getAttribute("data-progress-url");
+
+                if (progress) {
+                    progress.className = progress.className + " is-determinate";
+                    progress.style.display = "block";
+                }
+                if (progressBar) {
+                    progressBar.style.width = "1%";
+                }
+                if (progressText) {
+                    progressText.style.display = "block";
+                    progressText.innerText = "جاري بدء حفظ بيانات KYC...";
+                }
+                if (kpis) {
+                    kpis.style.display = "grid";
+                }
+                if (button) {
+                    button.disabled = true;
+                    button.innerText = "جاري الحفظ...";
+                }
+
+                fetch(startUrl, {
+                    method: "POST",
+                    body: new FormData(form),
+                    credentials: "same-origin"
+                }).then(function (response) {
+                    return response.json();
+                }).then(function (data) {
+                    if (!data || !data.ok) {
+                        throw new Error(data && data.message ? data.message : "تعذر بدء حفظ بيانات KYC.");
+                    }
+
+                    pollKycCommit(data.jobId, progressUrl, form, progressBar, progressText, button);
+                }).catch(function (error) {
+                    if (progressText) {
+                        progressText.style.display = "block";
+                        progressText.innerText = error.message || "تعذر بدء حفظ بيانات KYC.";
+                    }
+                    if (button) {
+                        button.disabled = false;
+                        button.innerText = "حفظ وتفعيل عملاء KYC الجاهزين";
+                    }
+                });
+            });
+        }
+
+        function pollKycCommit(jobId, progressUrl, form, progressBar, progressText, button) {
+            fetch(progressUrl + "?jobId=" + encodeURIComponent(jobId), {
+                credentials: "same-origin"
+            }).then(function (response) {
+                return response.json();
+            }).then(function (data) {
+                if (!data || !data.ok) {
+                    throw new Error(data && data.message ? data.message : "تعذر متابعة تقدم حفظ KYC.");
+                }
+
+                var percent = Math.max(0, Math.min(100, parseInt(data.percent || 0, 10)));
+                if (progressBar) {
+                    progressBar.style.width = Math.max(1, percent) + "%";
+                }
+
+                var processed = form.querySelector("[data-kyc-commit-processed]");
+                var imported = form.querySelector("[data-kyc-commit-imported]");
+                var failed = form.querySelector("[data-kyc-commit-failed]");
+                if (processed) { processed.innerText = (data.processedCount || 0) + " / " + (data.totalCount || 0); }
+                if (imported) { imported.innerText = data.importedCount || 0; }
+                if (failed) { failed.innerText = data.failedCount || 0; }
+
+                if (progressText) {
+                    var rowPart = data.totalCount > 0
+                        ? " (" + (data.processedCount || 0) + " / " + data.totalCount + " صف)"
+                        : "";
+                    var tokenPart = data.currentServiceType ? " - التوكن: " + data.currentServiceType : "";
+                    progressText.innerText = (data.currentMessage || "جاري حفظ KYC...") + rowPart + tokenPart + " - " + percent + "%";
+                }
+
+                if (data.isDone) {
+                    if (data.resultUrl) {
+                        window.location.href = data.resultUrl;
+                        return;
+                    }
+
+                    if (button) {
+                        button.disabled = false;
+                        button.innerText = "حفظ وتفعيل عملاء KYC الجاهزين";
+                    }
+                    return;
+                }
+
+                window.setTimeout(function () {
+                    pollKycCommit(jobId, progressUrl, form, progressBar, progressText, button);
+                }, 900);
+            }).catch(function (error) {
+                if (progressText) {
+                    progressText.style.display = "block";
+                    progressText.innerText = error.message || "تعذر متابعة تقدم حفظ KYC.";
+                }
+                if (button) {
+                    button.disabled = false;
+                    button.innerText = "حفظ وتفعيل عملاء KYC الجاهزين";
+                }
+            });
+        }
+
         var forms = document.querySelectorAll('form[action*="TokenInvoice"]');
         for (var i = 0; i < forms.length; i++) {
             forms[i].addEventListener("submit", function () {
+                if ((this.id === "tokenInvoicePreviewForm" || this.id === "tokenInvoiceCommitForm") && window.FormData && window.fetch) {
+                    return;
+                }
+
                 var progress = this.querySelector(".import-progress");
                 var button = this.querySelector('button[type="submit"]');
                 if (progress) { progress.style.display = "block"; }

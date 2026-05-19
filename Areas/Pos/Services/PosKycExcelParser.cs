@@ -116,7 +116,7 @@ namespace MyERP.Areas.Pos.Services
 
         private static PosKycExcelPreviewRow BuildRow(DataTable sheet, int rowIndex, IDictionary<string, int> headerMap, IList<PosBranchDto> branches, PosUserContext context)
         {
-            var cardNo = ReadColumn(sheet, rowIndex, headerMap, "CardNo");
+            var cardNo = NormalizeCardToken(ReadColumn(sheet, rowIndex, headerMap, "CardNo"));
             var arabicName = ReadColumn(sheet, rowIndex, headerMap, "ArabicName");
             var englishName = ReadColumn(sheet, rowIndex, headerMap, "EnglishName");
             var nationalId = DigitsOnly(ReadColumn(sheet, rowIndex, headerMap, "NationalId"));
@@ -132,6 +132,15 @@ namespace MyERP.Areas.Pos.Services
 
             var branchCode = ReadColumn(sheet, rowIndex, headerMap, "BranchCode");
             var resolvedBranch = ResolveBranch(branchCode, branches);
+            if (resolvedBranch == null)
+            {
+                var scannedBranchCode = FindBranchCodeInRow(sheet, rowIndex, branches);
+                if (!string.IsNullOrWhiteSpace(scannedBranchCode))
+                {
+                    branchCode = scannedBranchCode;
+                    resolvedBranch = ResolveBranch(branchCode, branches);
+                }
+            }
             var row = new PosKycExcelPreviewRow
             {
                 RowNumber = rowIndex + 1,
@@ -177,9 +186,9 @@ namespace MyERP.Areas.Pos.Services
                 EnglishName5 = ReadColumn(sheet, rowIndex, headerMap, "EnglishAddress"),
                 Phone = mobile,
                 Phone2 = mobile,
-                VisaNumber = DigitsOnly(cardNo),
-                CardNo = DigitsOnly(cardNo),
-                CardId = DigitsOnly(cardNo),
+                VisaNumber = cardNo,
+                CardNo = cardNo,
+                CardId = cardNo,
                 Tet_NumPoket = nationalId,
                 Address = ReadColumn(sheet, rowIndex, headerMap, "ArabicAddress"),
                 BirthDate = ReadDate(sheet, rowIndex, headerMap, "BirthDate"),
@@ -269,7 +278,28 @@ namespace MyERP.Areas.Pos.Services
             var code = NormalizeEnglishKey(branchCode);
             return string.IsNullOrWhiteSpace(code) || branches == null
                 ? null
-                : branches.FirstOrDefault(x => string.Equals(NormalizeEnglishKey(x.BranchCode), code, StringComparison.OrdinalIgnoreCase));
+                : branches.FirstOrDefault(x => string.Equals(NormalizeEnglishKey(x.BranchCode), code, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(NormalizeEnglishKey(x.BranchName), code, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static string FindBranchCodeInRow(DataTable sheet, int rowIndex, IList<PosBranchDto> branches)
+        {
+            if (sheet == null || branches == null || rowIndex < 0 || rowIndex >= sheet.Rows.Count)
+            {
+                return null;
+            }
+
+            for (var columnIndex = 0; columnIndex < sheet.Columns.Count; columnIndex++)
+            {
+                var text = ReadText(sheet, rowIndex, columnIndex);
+                var branch = ResolveBranch(text, branches);
+                if (branch != null)
+                {
+                    return branch.BranchCode;
+                }
+            }
+
+            return null;
         }
 
         private static string NormalizeHeader(string value)
@@ -293,6 +323,17 @@ namespace MyERP.Areas.Pos.Services
         private static string DigitsOnly(string value)
         {
             return Regex.Replace(value ?? string.Empty, @"\D+", string.Empty);
+        }
+
+        private static string NormalizeCardToken(string value)
+        {
+            value = NormalizeArabicDigits(value);
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            return Regex.Replace(value.Trim(), @"[^0-9A-Za-z]+", string.Empty).ToUpperInvariant();
         }
 
         private static string NormalizeExcelPhone(string value)

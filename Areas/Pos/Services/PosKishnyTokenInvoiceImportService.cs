@@ -27,7 +27,7 @@ namespace MyERP.Areas.Pos.Services
             _repository = repository;
         }
 
-        public PosKishnyTokenInvoiceImportPreview Preview(Stream stream, string fileName, DateTime? defaultImportDate, PosUserContext importContext)
+        public PosKishnyTokenInvoiceImportPreview Preview(Stream stream, string fileName, DateTime? defaultImportDate, PosUserContext importContext, Action<int, int, string> progressCallback = null)
         {
             var preview = new PosKishnyTokenInvoiceImportPreview
             {
@@ -35,8 +35,10 @@ namespace MyERP.Areas.Pos.Services
                 DefaultImportDate = defaultImportDate
             };
 
+            ReportPreviewProgress(progressCallback, 0, 0, "جاري استقبال الملف...");
             if (stream == null)
             {
+                ReportPreviewProgress(progressCallback, 0, 0, "لم يتم العثور على ملف للقراءة.");
                 return preview;
             }
 
@@ -47,6 +49,7 @@ namespace MyERP.Areas.Pos.Services
                 bytes = memory.ToArray();
             }
 
+            ReportPreviewProgress(progressCallback, 0, 0, "تم رفع الملف، جاري فتح ملف Excel...");
             preview.SourceFileHash = ComputeSha256(bytes);
             var branches = _repository.GetBranches();
             var defaultsCache = new Dictionary<int, PosUserContext>();
@@ -60,8 +63,16 @@ namespace MyERP.Areas.Pos.Services
 
                 if (dataSet == null)
                 {
+                    ReportPreviewProgress(progressCallback, 0, 0, "تعذر قراءة محتوى ملف Excel.");
                     return preview;
                 }
+
+                var totalRows = dataSet.Tables
+                    .Cast<DataTable>()
+                    .Where(x => x != null && x.Rows.Count > 0)
+                    .Sum(x => x.Rows.Count);
+                var processedRows = 0;
+                ReportPreviewProgress(progressCallback, processedRows, totalRows, "تم فتح الملف، جاري تحليل الأعمدة والصفوف...");
 
                 foreach (DataTable sheet in dataSet.Tables)
                 {
@@ -70,6 +81,7 @@ namespace MyERP.Areas.Pos.Services
                         continue;
                     }
 
+                    ReportPreviewProgress(progressCallback, processedRows, totalRows, "جاري قراءة شيت: " + sheet.TableName);
                     var mapping = DetectMapping(sheet);
                     preview.Mapping = mapping;
                     var firstDataRow = mapping.UsedHeaderRow ? 1 : 0;
@@ -80,15 +92,28 @@ namespace MyERP.Areas.Pos.Services
                         {
                             preview.Rows.Add(row);
                         }
+
+                        processedRows++;
+                        ReportPreviewProgress(progressCallback, processedRows, totalRows, "جاري فحص الصف " + (rowIndex + 1).ToString(CultureInfo.InvariantCulture) + " من شيت " + sheet.TableName);
                     }
                 }
             }
 
+            ReportPreviewProgress(progressCallback, preview.Rows.Count, preview.Rows.Count, "جاري تحديد التكرارات داخل الملف...");
             MarkExcelDuplicates(preview.Rows);
+            ReportPreviewProgress(progressCallback, preview.Rows.Count, preview.Rows.Count, "انتهت المعاينة.");
             return preview;
         }
 
-        public PosKishnyTokenInvoiceImportResult Commit(PosKishnyTokenInvoiceImportPreview preview, PosUserContext importContext)
+        private static void ReportPreviewProgress(Action<int, int, string> progressCallback, int processedRows, int totalRows, string message)
+        {
+            if (progressCallback != null)
+            {
+                progressCallback(processedRows, totalRows, message);
+            }
+        }
+
+        public PosKishnyTokenInvoiceImportResult Commit(PosKishnyTokenInvoiceImportPreview preview, PosUserContext importContext, Action<PosExcelImportCommitProgress> progressCallback = null)
         {
             var result = new PosKishnyTokenInvoiceImportResult();
             if (preview == null)
@@ -98,6 +123,7 @@ namespace MyERP.Areas.Pos.Services
             }
 
             result.TotalRows = preview.Rows.Count;
+            ReportCommitProgress(progressCallback, preview.Rows.Count, 0, 0, 0, 0, "بدأ ترحيل فواتير التوكنات", null);
             var batchBranchIds = preview.Rows
                 .Where(x => x != null && x.BranchId.HasValue)
                 .Select(x => x.BranchId.Value)
@@ -105,6 +131,7 @@ namespace MyERP.Areas.Pos.Services
                 .ToList();
             var batchBranchId = batchBranchIds.Count == 1 ? (int?)batchBranchIds[0] : null;
             result.BatchId = _repository.CreatePosExcelImportBatch(preview.SourceFileName, preview.SourceFileHash, importContext == null ? 0 : importContext.UserId, batchBranchId);
+            var processedCount = 0;
             foreach (var row in preview.Rows)
             {
                 var committed = Clone(row);
@@ -117,6 +144,8 @@ namespace MyERP.Areas.Pos.Services
                         result.FailedRowsCount++;
                         InsertTokenInvoiceAuditRow(result.BatchId, committed);
                         result.Rows.Add(committed);
+                        processedCount++;
+                        ReportCommitProgress(progressCallback, preview.Rows.Count, processedCount, result.ImportedInvoicesCount, result.FailedRowsCount, result.DuplicateTokenCount, "تم رفض الصف لأنه غير جاهز للترحيل", committed);
                         continue;
                     }
 
@@ -130,6 +159,8 @@ namespace MyERP.Areas.Pos.Services
                         result.FailedRowsCount++;
                         InsertTokenInvoiceAuditRow(result.BatchId, committed);
                         result.Rows.Add(committed);
+                        processedCount++;
+                        ReportCommitProgress(progressCallback, preview.Rows.Count, processedCount, result.ImportedInvoicesCount, result.FailedRowsCount, result.DuplicateTokenCount, "تم رفض الصف بسبب تكرار التوكن", committed);
                         continue;
                     }
 
@@ -184,13 +215,37 @@ namespace MyERP.Areas.Pos.Services
 
                 InsertTokenInvoiceAuditRow(result.BatchId, committed);
                 result.Rows.Add(committed);
+                processedCount++;
+                ReportCommitProgress(progressCallback, preview.Rows.Count, processedCount, result.ImportedInvoicesCount, result.FailedRowsCount, result.DuplicateTokenCount, committed.Status == "Imported" ? "تم ترحيل فاتورة التوكن" : "فشل ترحيل الصف", committed);
             }
 
             result.Status = result.FailedRowsCount > 0 && result.ImportedInvoicesCount > 0
                 ? "ImportedWithErrors"
                 : (result.FailedRowsCount > 0 ? "Failed" : "Imported");
             _repository.UpdatePosExcelImportBatch(result.BatchId, result.Status, result.ImportedInvoicesCount, result.FailedRowsCount);
+            ReportCommitProgress(progressCallback, preview.Rows.Count, preview.Rows.Count, result.ImportedInvoicesCount, result.FailedRowsCount, result.DuplicateTokenCount, "انتهى ترحيل فواتير التوكنات", null);
             return result;
+        }
+
+        private static void ReportCommitProgress(Action<PosExcelImportCommitProgress> progressCallback, int totalCount, int processedCount, int importedCount, int failedCount, int skippedCount, string message, PosKishnyTokenInvoiceImportRow row)
+        {
+            if (progressCallback == null)
+            {
+                return;
+            }
+
+            progressCallback(new PosExcelImportCommitProgress
+            {
+                TotalCount = totalCount,
+                ProcessedCount = processedCount,
+                ImportedCount = importedCount,
+                FailedCount = failedCount,
+                SkippedCount = skippedCount,
+                CurrentSheet = row == null ? null : row.SheetName,
+                CurrentRowNumber = row == null ? 0 : row.RowNumber,
+                CurrentServiceType = row == null ? null : row.Token,
+                CurrentMessage = message
+            });
         }
 
         private PosKishnyTokenInvoiceImportRow BuildRow(DataTable sheet, int rowIndex, PosKishnyTokenInvoiceColumnMapping mapping, IList<PosBranchDto> branches, DateTime? defaultImportDate, PosUserContext importContext, IDictionary<int, PosUserContext> defaultsCache)
@@ -199,13 +254,21 @@ namespace MyERP.Areas.Pos.Services
             {
                 SheetName = sheet.TableName,
                 RowNumber = rowIndex + 1,
-                Token = DigitsOnly(ReadCell(sheet, rowIndex, mapping.TokenColumn)),
+                Token = NormalizeCardToken(ReadCell(sheet, rowIndex, mapping.TokenColumn)),
                 NationalId = DigitsOnly(ReadCell(sheet, rowIndex, mapping.NationalIdColumn)),
                 Mobile = NormalizePhone(ReadCell(sheet, rowIndex, mapping.MobileColumn)),
                 FullName = CleanSpaces(ReadCell(sheet, rowIndex, mapping.FullNameColumn)),
                 BranchCode = CleanSpaces(ReadCell(sheet, rowIndex, mapping.BranchColumn)),
                 InvoiceDateText = CleanSpaces(ReadCell(sheet, rowIndex, mapping.DateColumn))
             };
+            if (ResolveBranch(row.BranchCode, branches) == null)
+            {
+                var scannedBranchCode = FindBranchCodeInRow(sheet, rowIndex, branches);
+                if (!string.IsNullOrWhiteSpace(scannedBranchCode))
+                {
+                    row.BranchCode = scannedBranchCode;
+                }
+            }
 
             if (string.IsNullOrWhiteSpace(row.Token)
                 && string.IsNullOrWhiteSpace(row.NationalId)
@@ -302,7 +365,7 @@ namespace MyERP.Areas.Pos.Services
             }
 
             var byNational = _repository.LookupKeshniCardCustomer(row.NationalId, row.BranchId, true);
-            if (byNational != null && !string.IsNullOrWhiteSpace(byNational.CardNo) && !string.Equals(DigitsOnly(byNational.CardNo), row.Token, StringComparison.OrdinalIgnoreCase))
+            if (byNational != null && !string.IsNullOrWhiteSpace(byNational.CardNo) && !string.Equals(NormalizeCardToken(byNational.CardNo), row.Token, StringComparison.OrdinalIgnoreCase))
             {
                 row.KycStatus = "Conflict";
                 Reject(row, "الرقم القومي موجود على KYC آخر بتوكن مختلف. لن يتم تحديث بيانات حساسة تلقائيا.");
@@ -517,7 +580,7 @@ namespace MyERP.Areas.Pos.Services
                 {
                     var header = NormalizeHeader(ReadCell(sheet, headerRow, c));
                     var columnName = c.ToString(CultureInfo.InvariantCulture);
-                    if (IsTokenHeader(header)) { mapping.TokenColumn = columnName; }
+                    if (IsTokenHeaderExtended(header)) { mapping.TokenColumn = columnName; }
                     else if (IsNationalHeader(header)) { mapping.NationalIdColumn = columnName; }
                     else if (IsMobileHeader(header)) { mapping.MobileColumn = columnName; }
                     else if (IsNameHeader(header)) { mapping.FullNameColumn = columnName; }
@@ -539,7 +602,7 @@ namespace MyERP.Areas.Pos.Services
                 for (var c = 0; c < sheet.Columns.Count; c++)
                 {
                     var h = NormalizeHeader(ReadCell(sheet, r, c));
-                    if (IsTokenHeader(h) || IsNationalHeader(h) || IsMobileHeader(h) || IsNameHeader(h) || IsBranchHeader(h) || IsDateHeader(h))
+                    if (IsTokenHeaderExtended(h) || IsNationalHeader(h) || IsMobileHeader(h) || IsNameHeader(h) || IsBranchHeader(h) || IsDateHeader(h))
                     {
                         score++;
                     }
@@ -570,12 +633,14 @@ namespace MyERP.Areas.Pos.Services
                 for (var c = 0; c < sheet.Columns.Count; c++)
                 {
                     var text = ReadCell(sheet, r, c);
+                    var tokenText = NormalizeCardToken(text);
                     var digits = DigitsOnly(text);
-                    if (digits.Length >= 6 && digits.Length <= 20) { scores["Token"][c]++; }
+                    var isDateValue = ParseDate(text).HasValue;
+                    if (!isDateValue && IsLikelyTokenValue(tokenText)) { scores["Token"][c]++; }
                     if (digits.Length == 14) { scores["National"][c] += 3; }
                     if (NormalizePhone(text).Length == 11) { scores["Mobile"][c] += 3; }
                     if (Regex.IsMatch(text ?? string.Empty, @"[A-Za-z]{1,8}\s*\d{1,8}")) { scores["Branch"][c] += 3; }
-                    if (ParseDate(text).HasValue) { scores["Date"][c] += 2; }
+                    if (isDateValue) { scores["Date"][c] += 2; }
                 }
             }
 
@@ -647,6 +712,26 @@ namespace MyERP.Areas.Pos.Services
                 ? null
                 : branches.FirstOrDefault(x => string.Equals(NormalizeEnglish(x.BranchCode), code, StringComparison.OrdinalIgnoreCase)
                     || string.Equals(NormalizeEnglish(x.BranchName), code, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static string FindBranchCodeInRow(DataTable sheet, int rowIndex, IList<PosBranchDto> branches)
+        {
+            if (sheet == null || branches == null || rowIndex < 0 || rowIndex >= sheet.Rows.Count)
+            {
+                return null;
+            }
+
+            for (var columnIndex = 0; columnIndex < sheet.Columns.Count; columnIndex++)
+            {
+                var text = ReadCell(sheet, rowIndex, columnIndex);
+                var branch = ResolveBranch(text, branches);
+                if (branch != null)
+                {
+                    return branch.BranchCode;
+                }
+            }
+
+            return null;
         }
 
         private static void MarkExcelDuplicates(IList<PosKishnyTokenInvoiceImportRow> rows)
@@ -739,6 +824,34 @@ namespace MyERP.Areas.Pos.Services
             return Regex.Replace(NormalizeArabicDigits(value) ?? string.Empty, @"\D+", string.Empty);
         }
 
+        private static string NormalizeCardToken(string value)
+        {
+            value = NormalizeArabicDigits(value);
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            return Regex.Replace(value.Trim(), @"[^0-9A-Za-z]+", string.Empty).ToUpperInvariant();
+        }
+
+        private static bool IsLikelyTokenValue(string tokenText)
+        {
+            if (string.IsNullOrWhiteSpace(tokenText))
+            {
+                return false;
+            }
+
+            if (tokenText.Length < 6 || tokenText.Length > 24)
+            {
+                return false;
+            }
+
+            return Regex.IsMatch(tokenText, @"[A-Za-z]")
+                || tokenText.Length == 8
+                || tokenText.Length == 18;
+        }
+
         private static string NormalizeArabicDigits(string value)
         {
             if (string.IsNullOrEmpty(value)) { return string.Empty; }
@@ -774,6 +887,18 @@ namespace MyERP.Areas.Pos.Services
         private static bool IsNameHeader(string h) { return h.Contains("fullname") || h == "name" || h.Contains("اسم") || h.Contains("الاسم"); }
         private static bool IsBranchHeader(string h) { return h.Contains("branchcode") || h.Contains("كودالفرع") || (h.Contains("branch") && h.Contains("code")); }
         private static bool IsDateHeader(string h) { return h == "date" || h.Contains("التاريخ") || h.Contains("invoicedate"); }
+
+        private static bool IsTokenHeaderExtended(string h)
+        {
+            return IsTokenHeader(h)
+                || h.Contains("barcode")
+                || h.Contains("scan")
+                || h.Contains("\u062a\u0648\u0643\u064a\u0646")
+                || h.Contains("\u0627\u0644\u062a\u0648\u0643\u064a\u0646")
+                || h.Contains("\u0628\u0627\u0631\u0643\u0648\u062f")
+                || h.Contains("\u0627\u0644\u0628\u0627\u0631\u0643\u0648\u062f")
+                || h.Contains("\u0633\u0643\u0627\u0646");
+        }
 
         private static string[] SplitNameParts(string value, int count)
         {

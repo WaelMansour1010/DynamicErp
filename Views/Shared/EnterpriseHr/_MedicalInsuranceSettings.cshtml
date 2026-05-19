@@ -150,7 +150,8 @@
             <nav class="ep-drawer-tabs">
                 <button type="button" class="active" data-drawer-tab="general">البيانات الأساسية</button>
                 <button type="button" data-drawer-tab="payroll">أثر الراتب</button>
-                <button type="button" data-drawer-tab="dependents">قواعد التابعين</button>
+                <button type="button" data-drawer-tab="dependents">قواعد التابعين الافتراضية</button>
+                <button type="button" data-drawer-tab="pricing">شرائح التسعير العمرية</button>
                 <button type="button" data-drawer-tab="rules">قواعد التحمل</button>
                 <button type="button" data-drawer-tab="accounting">الحسابات</button>
                 <button type="button" data-drawer-tab="history">السجل</button>
@@ -205,29 +206,47 @@
                 <section class="ep-drawer-panel" data-drawer-panel="dependents">
                     <div class="ep-plan-rule-explainer">
                         <strong>هذه قواعد الخطة وليست تابعين حقيقيين لموظف محدد.</strong>
-                        <span>هنا يتم تحديد العدد المسموح والتكلفة الافتراضية لأنواع التابعين. إضافة الزوج أو الأبناء الفعليين تتم من ملف الموظف داخل تبويب التأمين الطبي.</span>
+                        <span>الخطة تحتوي على قواعد السماح والتسعير فقط، أما التابعون الفعليون فيتم تسجيلهم من شاشة الموظف.</span>
                     </div>
                     <div class="ep-form-grid rescue-grid-3">
                         <label class="ep-field"><span>أقصى عدد تابعين للموظف</span><input id="epMaxDependents" type="number" min="0" value="4" /></label>
                         <label class="ep-field"><span>العمر الأقصى للأبناء</span><input id="epChildrenMaxAge" type="number" min="0" value="21" /></label>
                         <label class="ep-field"><span>نسبة التغطية الافتراضية</span><input id="epDefaultCoveragePercent" type="number" min="0" max="100" value="100" /></label>
                     </div>
-                    <details class="ep-advanced">
-                        <summary>تكلفة أنواع التابعين</summary>
-                        <div class="ep-form-grid rescue-grid-3">
-                            <label class="ep-field"><span>تكلفة الزوج/الزوجة</span><input id="epSpouseCost" type="number" step="0.01" min="0" value="0" /></label>
-                            <label class="ep-field"><span>تكلفة الطفل</span><input id="epChildCost" type="number" step="0.01" min="0" value="0" /></label>
-                            <label class="ep-field"><span>تكلفة الوالدين</span><input id="epParentCost" type="number" step="0.01" min="0" value="0" /></label>
-                        </div>
-                    </details>
                     <div class="ep-inline-add ep-dependent-add">
-                        <input id="epDependentName" placeholder="اسم/نوع القاعدة مثال: زوجة أو ابن" />
-                        <select id="epDependentRelation"><option value="Spouse">زوجة/زوج</option><option value="Child">ابن/ابنة</option><option value="Parent">والد/والدة</option></select>
-                        <input id="epDependentBirthDate" type="date" />
+                        <select id="epDependentRelation"><option value="Spouse">زوجة/زوج</option><option value="Son">ابن</option><option value="Daughter">ابنة</option><option value="Father">أب</option><option value="Mother">أم</option><option value="Other">أخرى</option></select>
+                        <select id="epDependentAllowed"><option value="true">مسموح</option><option value="false">غير مسموح</option></select>
+                        <input id="epDependentMaxCount" type="number" min="0" value="1" placeholder="الحد الأقصى للعدد" />
+                        <input id="epDependentMaxAge" type="number" min="0" placeholder="الحد الأقصى للعمر" />
+                        <label class="ep-switch ep-inline-checkbox"><input id="epDependentAllowException" type="checkbox" /> يسمح باستثناء</label>
+                        <input id="epDependentNotes" placeholder="ملاحظات القاعدة" />
                         <button type="button" id="epAddDependent"><i class="fas fa-plus"></i> إضافة قاعدة تابع</button>
                     </div>
                     <div class="ep-dependent-card-grid" id="epDependentsCards"></div>
                     <table class="ep-table ep-md-hidden-table"><tbody id="epDependentsRows"></tbody></table>
+                </section>
+
+                <section class="ep-drawer-panel" data-drawer-panel="pricing">
+                    <div class="ep-plan-rule-explainer">
+                        <strong>شرائح التسعير حسب العمر داخل نفس الخطة.</strong>
+                        <span>أضف أسعار مختلفة للموظف أو الزوج/الزوجة أو الأبناء أو الوالدين بدون إنشاء خطط جديدة. يمنع النظام تداخل الشرائح لنفس النوع/صلة القرابة.</span>
+                    </div>
+                    <div class="ep-inline-add ep-pricing-add">
+                        <select id="epPricingBeneficiaryType"><option value="Employee">موظف</option><option value="Spouse">زوج/زوجة</option><option value="Child">طفل</option><option value="Father">أب</option><option value="Mother">أم</option><option value="Dependent">تابع عام</option></select>
+                        <select id="epPricingRelation"><option value="">صلة القرابة إن وجدت</option><option value="Spouse">زوجة/زوج</option><option value="Son">ابن</option><option value="Daughter">ابنة</option><option value="Father">أب</option><option value="Mother">أم</option><option value="Other">أخرى</option></select>
+                        <input id="epPricingAgeFrom" type="number" min="0" value="0" placeholder="من عمر" />
+                        <input id="epPricingAgeTo" type="number" min="0" value="120" placeholder="إلى عمر" />
+                        <input id="epPricingPremium" type="number" min="0" step="0.01" placeholder="قيمة القسط" />
+                        <input id="epPricingEmployeePercent" type="number" min="0" max="100" step="0.01" placeholder="تحمل الموظف %" />
+                        <input id="epPricingCompanyPercent" type="number" min="0" max="100" step="0.01" placeholder="تحمل الشركة %" />
+                        <select id="epPricingMode"><option value="Monthly">شهري</option><option value="Annual">سنوي</option></select>
+                        <input id="epPricingEffectiveFrom" type="date" />
+                        <input id="epPricingEffectiveTo" type="date" />
+                        <input id="epPricingNotes" placeholder="ملاحظات" />
+                        <button type="button" id="epAddPricingTier"><i class="fas fa-plus"></i> إضافة شريحة</button>
+                    </div>
+                    <div class="ep-pricing-tier-grid" id="epPricingTierCards"></div>
+                    <table class="ep-table ep-md-hidden-table"><tbody id="epPricingTierRows"></tbody></table>
                 </section>
 
                 <section class="ep-drawer-panel" data-drawer-panel="rules">

@@ -19,6 +19,9 @@ namespace MyERP.Areas.Pos.Controllers
         private const string TokenInvoicePreviewSessionKey = "POS_TOKEN_INVOICE_EXCEL_IMPORT_PREVIEW";
         private const string TokenInvoiceResultSessionKey = "POS_TOKEN_INVOICE_EXCEL_IMPORT_RESULT";
         private static readonly ConcurrentDictionary<string, PosExcelImportCommitProgress> CommitJobs = new ConcurrentDictionary<string, PosExcelImportCommitProgress>(StringComparer.OrdinalIgnoreCase);
+        private static readonly ConcurrentDictionary<string, TokenInvoicePreviewJobState> TokenInvoicePreviewJobs = new ConcurrentDictionary<string, TokenInvoicePreviewJobState>(StringComparer.OrdinalIgnoreCase);
+        private static readonly ConcurrentDictionary<string, TokenInvoiceCommitJobState> TokenInvoiceCommitJobs = new ConcurrentDictionary<string, TokenInvoiceCommitJobState>(StringComparer.OrdinalIgnoreCase);
+        private static readonly ConcurrentDictionary<string, KycCommitJobState> KycCommitJobs = new ConcurrentDictionary<string, KycCommitJobState>(StringComparer.OrdinalIgnoreCase);
         private readonly PosSqlRepository _repository;
         private readonly PosExcelImportParser _parser;
         private readonly PosExcelImportPreflightService _preflightService;
@@ -26,6 +29,40 @@ namespace MyERP.Areas.Pos.Controllers
         private readonly PosExcelImportWorkbookMarker _workbookMarker;
         private readonly PosKycExcelParser _kycExcelParser;
         private readonly PosKishnyTokenInvoiceImportService _tokenInvoiceImportService;
+
+        private class TokenInvoicePreviewJobState
+        {
+            public string JobId { get; set; }
+            public string Status { get; set; }
+            public int TotalRows { get; set; }
+            public int ProcessedRows { get; set; }
+            public int Percent { get; set; }
+            public string CurrentMessage { get; set; }
+            public string ErrorMessage { get; set; }
+            public string SourceFileName { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public PosKishnyTokenInvoiceImportPreview Preview { get; set; }
+        }
+
+        private class TokenInvoiceCommitJobState
+        {
+            public string JobId { get; set; }
+            public string Status { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public PosExcelImportCommitProgress Progress { get; set; }
+            public PosKishnyTokenInvoiceImportResult Result { get; set; }
+            public string ErrorMessage { get; set; }
+        }
+
+        private class KycCommitJobState
+        {
+            public string JobId { get; set; }
+            public string Status { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public PosExcelImportCommitProgress Progress { get; set; }
+            public PosKycExcelCommitResult Result { get; set; }
+            public string ErrorMessage { get; set; }
+        }
 
         public ExcelImportController()
         {
@@ -344,6 +381,117 @@ namespace MyERP.Areas.Pos.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public ActionResult StartTokenInvoicePreview(HttpPostedFileBase tokenInvoiceExcelFile, DateTime? defaultImportDate)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return Json(new { ok = false, message = "يجب تسجيل دخول نقطة البيع قبل قراءة الملف." });
+            }
+
+            if (!CanExecuteExcelImport(context))
+            {
+                return Json(new { ok = false, message = "ليست لديك صلاحية استيراد العمليات من Excel." });
+            }
+
+            if (tokenInvoiceExcelFile == null || tokenInvoiceExcelFile.ContentLength == 0)
+            {
+                return Json(new { ok = false, message = "اختر ملف Excel يحتوي على التوكنات والفروع." });
+            }
+
+            var extension = Path.GetExtension(tokenInvoiceExcelFile.FileName ?? string.Empty);
+            if (!string.Equals(extension, ".xlsx", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(extension, ".xls", StringComparison.OrdinalIgnoreCase))
+            {
+                return Json(new { ok = false, message = "صيغة الملف غير مدعومة. اختر ملف Excel فقط." });
+            }
+
+            CleanupTokenInvoicePreviewJobs();
+            var storedPath = SaveUploadedWorkbook(tokenInvoiceExcelFile);
+            var jobId = Guid.NewGuid().ToString("N");
+            var sourceFileName = Path.GetFileName(tokenInvoiceExcelFile.FileName ?? string.Empty);
+            TokenInvoicePreviewJobs[jobId] = new TokenInvoicePreviewJobState
+            {
+                JobId = jobId,
+                Status = "Queued",
+                Percent = 0,
+                SourceFileName = sourceFileName,
+                CreatedAt = DateTime.Now,
+                CurrentMessage = "تم رفع الملف، وسيبدأ فحصه الآن..."
+            };
+
+            Task.Run(() => RunTokenInvoicePreviewJob(jobId, storedPath, sourceFileName, defaultImportDate, context));
+            return Json(new { ok = true, jobId = jobId });
+        }
+
+        [HttpGet]
+        public ActionResult TokenInvoicePreviewProgress(string jobId)
+        {
+            TokenInvoicePreviewJobState job;
+            if (string.IsNullOrWhiteSpace(jobId) || !TokenInvoicePreviewJobs.TryGetValue(jobId, out job))
+            {
+                return Json(new { ok = false, message = "لم يتم العثور على عملية المعاينة." }, JsonRequestBehavior.AllowGet);
+            }
+
+            var isDone = string.Equals(job.Status, "Completed", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(job.Status, "Failed", StringComparison.OrdinalIgnoreCase);
+
+            return Json(new
+            {
+                ok = true,
+                jobId = job.JobId,
+                status = job.Status,
+                totalRows = job.TotalRows,
+                processedRows = job.ProcessedRows,
+                percent = job.Percent,
+                currentMessage = job.CurrentMessage,
+                errorMessage = job.ErrorMessage,
+                isDone = isDone,
+                isSuccess = string.Equals(job.Status, "Completed", StringComparison.OrdinalIgnoreCase),
+                resultUrl = Url.Action("TokenInvoicePreviewJobResult", "ExcelImport", new { area = "Pos", jobId = job.JobId })
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public ActionResult TokenInvoicePreviewJobResult(string jobId)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            ViewBag.PosContext = context;
+            ViewBag.ActiveScreen = "excel-import";
+            ViewBag.CanImportExcel = CanExecuteExcelImport(context);
+
+            TokenInvoicePreviewJobState job;
+            if (string.IsNullOrWhiteSpace(jobId) || !TokenInvoicePreviewJobs.TryGetValue(jobId, out job))
+            {
+                ViewBag.TokenInvoiceErrorMessage = "لم يتم العثور على نتيجة المعاينة.";
+                return View("Index", new PosExcelImportIndexViewModel());
+            }
+
+            if (!string.Equals(job.Status, "Completed", StringComparison.OrdinalIgnoreCase) || job.Preview == null)
+            {
+                ViewBag.TokenInvoiceErrorMessage = string.IsNullOrWhiteSpace(job.ErrorMessage) ? "لم تكتمل معاينة الملف." : job.ErrorMessage;
+                return View("Index", new PosExcelImportIndexViewModel());
+            }
+
+            Session[TokenInvoicePreviewSessionKey] = job.Preview;
+            Session.Remove(TokenInvoiceResultSessionKey);
+            ViewBag.TokenInvoicePreview = job.Preview;
+            ViewBag.TokenInvoiceFileName = job.SourceFileName;
+            if (job.Preview.Rows.Count == 0)
+            {
+                ViewBag.TokenInvoiceErrorMessage = "لم يتم العثور على صفوف صالحة داخل الملف.";
+            }
+
+            return View("Index", new PosExcelImportIndexViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult TokenInvoiceCommit(string adminPassword)
         {
             var context = GetPosContext();
@@ -378,6 +526,119 @@ namespace MyERP.Areas.Pos.Controllers
             var result = _tokenInvoiceImportService.Commit(preview, context);
             Session[TokenInvoiceResultSessionKey] = result;
             ViewBag.TokenInvoiceResult = result;
+            return View("Index", new PosExcelImportIndexViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult StartTokenInvoiceCommit(string adminPassword)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return Json(new { ok = false, message = "يجب تسجيل دخول نقطة البيع قبل الترحيل." });
+            }
+
+            if (!CanExecuteExcelImport(context))
+            {
+                return Json(new { ok = false, message = "ليست لديك صلاحية استيراد العمليات من Excel." });
+            }
+
+            var preview = Session[TokenInvoicePreviewSessionKey] as PosKishnyTokenInvoiceImportPreview;
+            if (preview == null || preview.Rows == null || preview.Rows.Count == 0)
+            {
+                return Json(new { ok = false, message = "لا توجد معاينة محفوظة. ارفع الملف واعمل معاينة أولا." });
+            }
+
+            if (!_repository.ValidatePosUserPassword(context.UserId, adminPassword))
+            {
+                return Json(new { ok = false, message = "كلمة المرور غير صحيحة. لا يمكن ترحيل فواتير التوكنات." });
+            }
+
+            CleanupTokenInvoiceCommitJobs();
+            var jobId = Guid.NewGuid().ToString("N");
+            TokenInvoiceCommitJobs[jobId] = new TokenInvoiceCommitJobState
+            {
+                JobId = jobId,
+                Status = "Queued",
+                CreatedAt = DateTime.Now,
+                Progress = new PosExcelImportCommitProgress
+                {
+                    JobId = jobId,
+                    Status = "Queued",
+                    TotalCount = preview.Rows.Count,
+                    CurrentMessage = "تم وضع ترحيل فواتير التوكنات في قائمة التنفيذ"
+                }
+            };
+
+            Task.Run(() => RunTokenInvoiceCommitJob(jobId, preview, context));
+            return Json(new { ok = true, jobId = jobId });
+        }
+
+        [HttpGet]
+        public ActionResult TokenInvoiceCommitProgress(string jobId)
+        {
+            TokenInvoiceCommitJobState job;
+            if (string.IsNullOrWhiteSpace(jobId) || !TokenInvoiceCommitJobs.TryGetValue(jobId, out job))
+            {
+                return Json(new { ok = false, message = "لم يتم العثور على عملية ترحيل فواتير التوكنات." }, JsonRequestBehavior.AllowGet);
+            }
+
+            var progress = job.Progress ?? new PosExcelImportCommitProgress();
+            var isDone = string.Equals(job.Status, "Imported", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(job.Status, "ImportedWithErrors", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(job.Status, "Failed", StringComparison.OrdinalIgnoreCase);
+
+            return Json(new
+            {
+                ok = true,
+                jobId = job.JobId,
+                status = job.Status,
+                totalCount = progress.TotalCount,
+                processedCount = progress.ProcessedCount,
+                importedCount = progress.ImportedCount,
+                failedCount = progress.FailedCount,
+                skippedCount = progress.SkippedCount,
+                percent = progress.Percent,
+                currentSheet = progress.CurrentSheet,
+                currentRowNumber = progress.CurrentRowNumber,
+                currentServiceType = progress.CurrentServiceType,
+                currentMessage = string.IsNullOrWhiteSpace(job.ErrorMessage) ? progress.CurrentMessage : job.ErrorMessage,
+                isDone = isDone,
+                isSuccess = job.Result != null && !string.Equals(job.Status, "Failed", StringComparison.OrdinalIgnoreCase),
+                resultUrl = Url.Action("TokenInvoiceCommitJobResult", "ExcelImport", new { area = "Pos", jobId = job.JobId })
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public ActionResult TokenInvoiceCommitJobResult(string jobId)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            ViewBag.PosContext = context;
+            ViewBag.ActiveScreen = "excel-import";
+            ViewBag.CanImportExcel = CanExecuteExcelImport(context);
+            ViewBag.TokenInvoicePreview = Session[TokenInvoicePreviewSessionKey] as PosKishnyTokenInvoiceImportPreview;
+
+            TokenInvoiceCommitJobState job;
+            if (string.IsNullOrWhiteSpace(jobId) || !TokenInvoiceCommitJobs.TryGetValue(jobId, out job))
+            {
+                ViewBag.TokenInvoiceErrorMessage = "لم يتم العثور على نتيجة الترحيل.";
+                return View("Index", new PosExcelImportIndexViewModel());
+            }
+
+            if (job.Result == null)
+            {
+                ViewBag.TokenInvoiceErrorMessage = string.IsNullOrWhiteSpace(job.ErrorMessage) ? "لم يكتمل ترحيل فواتير التوكنات." : job.ErrorMessage;
+                return View("Index", new PosExcelImportIndexViewModel());
+            }
+
+            Session[TokenInvoiceResultSessionKey] = job.Result;
+            ViewBag.TokenInvoiceResult = job.Result;
             return View("Index", new PosExcelImportIndexViewModel());
         }
 
@@ -443,6 +704,116 @@ namespace MyERP.Areas.Pos.Controllers
 
             var result = CommitKycRows(rows, context);
             ViewBag.KycCommitResult = result;
+            return View("Index", new PosExcelImportIndexViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult StartKycCommit(string adminPassword)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return Json(new { ok = false, message = "يجب تسجيل دخول نقطة البيع قبل حفظ KYC." });
+            }
+
+            if (!CanExecuteExcelImport(context))
+            {
+                return Json(new { ok = false, message = "ليست لديك صلاحية استيراد العمليات من Excel." });
+            }
+
+            var rows = Session[KycPreviewSessionKey] as IList<PosKycExcelPreviewRow>;
+            if (rows == null || rows.Count == 0)
+            {
+                return Json(new { ok = false, message = "لا توجد معاينة KYC محفوظة. ارفع ملف KYC أولا." });
+            }
+
+            if (!_repository.ValidatePosUserPassword(context.UserId, adminPassword))
+            {
+                return Json(new { ok = false, message = "كلمة المرور غير صحيحة. لا يمكن حفظ بيانات KYC." });
+            }
+
+            CleanupKycCommitJobs();
+            var jobId = Guid.NewGuid().ToString("N");
+            KycCommitJobs[jobId] = new KycCommitJobState
+            {
+                JobId = jobId,
+                Status = "Queued",
+                CreatedAt = DateTime.Now,
+                Progress = new PosExcelImportCommitProgress
+                {
+                    JobId = jobId,
+                    Status = "Queued",
+                    TotalCount = rows.Count,
+                    CurrentMessage = "تم وضع حفظ KYC في قائمة التنفيذ"
+                }
+            };
+
+            Task.Run(() => RunKycCommitJob(jobId, rows.ToList(), context));
+            return Json(new { ok = true, jobId = jobId });
+        }
+
+        [HttpGet]
+        public ActionResult KycCommitProgress(string jobId)
+        {
+            KycCommitJobState job;
+            if (string.IsNullOrWhiteSpace(jobId) || !KycCommitJobs.TryGetValue(jobId, out job))
+            {
+                return Json(new { ok = false, message = "لم يتم العثور على عملية حفظ KYC." }, JsonRequestBehavior.AllowGet);
+            }
+
+            var progress = job.Progress ?? new PosExcelImportCommitProgress();
+            var isDone = string.Equals(job.Status, "Imported", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(job.Status, "ImportedWithErrors", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(job.Status, "Failed", StringComparison.OrdinalIgnoreCase);
+
+            return Json(new
+            {
+                ok = true,
+                jobId = job.JobId,
+                status = job.Status,
+                totalCount = progress.TotalCount,
+                processedCount = progress.ProcessedCount,
+                importedCount = progress.ImportedCount,
+                failedCount = progress.FailedCount,
+                skippedCount = progress.SkippedCount,
+                percent = progress.Percent,
+                currentRowNumber = progress.CurrentRowNumber,
+                currentServiceType = progress.CurrentServiceType,
+                currentMessage = string.IsNullOrWhiteSpace(job.ErrorMessage) ? progress.CurrentMessage : job.ErrorMessage,
+                isDone = isDone,
+                resultUrl = Url.Action("KycCommitJobResult", "ExcelImport", new { area = "Pos", jobId = job.JobId })
+            }, JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public ActionResult KycCommitJobResult(string jobId)
+        {
+            var context = GetPosContext();
+            if (context == null)
+            {
+                return RedirectToAction("Index", "PosLogin", new { area = "Pos" });
+            }
+
+            ViewBag.PosContext = context;
+            ViewBag.ActiveScreen = "excel-import";
+            ViewBag.CanImportExcel = CanExecuteExcelImport(context);
+            ViewBag.KycRows = Session[KycPreviewSessionKey] as IList<PosKycExcelPreviewRow>;
+
+            KycCommitJobState job;
+            if (string.IsNullOrWhiteSpace(jobId) || !KycCommitJobs.TryGetValue(jobId, out job))
+            {
+                ViewBag.KycErrorMessage = "لم يتم العثور على نتيجة حفظ KYC.";
+                return View("Index", new PosExcelImportIndexViewModel());
+            }
+
+            if (job.Result == null)
+            {
+                ViewBag.KycErrorMessage = string.IsNullOrWhiteSpace(job.ErrorMessage) ? "لم يكتمل حفظ بيانات KYC." : job.ErrorMessage;
+                return View("Index", new PosExcelImportIndexViewModel());
+            }
+
+            ViewBag.KycCommitResult = job.Result;
             return View("Index", new PosExcelImportIndexViewModel());
         }
 
@@ -576,9 +947,12 @@ namespace MyERP.Areas.Pos.Controllers
             return PosLoginController.RestorePosContext(Request, Session, _repository);
         }
 
-        private PosKycExcelCommitResult CommitKycRows(IList<PosKycExcelPreviewRow> rows, PosUserContext context)
+        private PosKycExcelCommitResult CommitKycRows(IList<PosKycExcelPreviewRow> rows, PosUserContext context, Action<PosExcelImportCommitProgress> progressCallback = null)
         {
             var result = new PosKycExcelCommitResult { Status = "Completed" };
+            var totalCount = rows == null ? 0 : rows.Count(x => x != null && x.Customer != null);
+            var processedCount = 0;
+            ReportKycCommitProgress(progressCallback, totalCount, processedCount, result.ImportedCount, result.FailedCount, "بدأ حفظ بيانات KYC", null);
             var duplicateTokens = rows
                 .Where(x => x != null && x.Customer != null && !string.IsNullOrWhiteSpace(x.Customer.CardNo))
                 .GroupBy(x => NormalizeToken(x.Customer.CardNo))
@@ -599,16 +973,19 @@ namespace MyERP.Areas.Pos.Controllers
 
                 try
                 {
-                    var validation = ValidateKycExcelRow(row, context, duplicateTokens);
+                    var defaults = ResolveKycImportDefaults(row, context);
+                    var validation = ValidateKycExcelRow(row, defaults, duplicateTokens);
                     if (!string.IsNullOrWhiteSpace(validation))
                     {
                         rowResult.Message = validation;
                         result.FailedCount++;
                         result.Rows.Add(rowResult);
+                        processedCount++;
+                        ReportKycCommitProgress(progressCallback, totalCount, processedCount, result.ImportedCount, result.FailedCount, rowResult.Message, row);
                         continue;
                     }
 
-                    var request = BuildKycSaveRequest(row, context);
+                    var request = BuildKycSaveRequest(row, context, defaults);
                     var saved = _repository.SaveKeshniCardCustomer(request);
                     rowResult.Status = "Imported";
                     rowResult.CustomerId = saved.CustomerID;
@@ -622,6 +999,8 @@ namespace MyERP.Areas.Pos.Controllers
                 }
 
                 result.Rows.Add(rowResult);
+                processedCount++;
+                ReportKycCommitProgress(progressCallback, totalCount, processedCount, result.ImportedCount, result.FailedCount, rowResult.Message, row);
             }
 
             if (result.FailedCount > 0 && result.ImportedCount > 0)
@@ -637,12 +1016,54 @@ namespace MyERP.Areas.Pos.Controllers
                 result.Status = "Imported";
             }
 
+            ReportKycCommitProgress(progressCallback, totalCount, totalCount, result.ImportedCount, result.FailedCount, "انتهى حفظ بيانات KYC", null);
             return result;
         }
 
-        private static PosCashCustomerSaveRequest BuildKycSaveRequest(PosKycExcelPreviewRow row, PosUserContext context)
+        private static void ReportKycCommitProgress(Action<PosExcelImportCommitProgress> progressCallback, int totalCount, int processedCount, int importedCount, int failedCount, string message, PosKycExcelPreviewRow row)
+        {
+            if (progressCallback == null)
+            {
+                return;
+            }
+
+            var customer = row == null ? null : row.Customer;
+            progressCallback(new PosExcelImportCommitProgress
+            {
+                TotalCount = totalCount,
+                ProcessedCount = processedCount,
+                ImportedCount = importedCount,
+                FailedCount = failedCount,
+                SkippedCount = 0,
+                CurrentRowNumber = row == null ? 0 : row.RowNumber,
+                CurrentServiceType = customer == null ? null : customer.CardNo,
+                CurrentMessage = message
+            });
+        }
+
+        private PosUserContext ResolveKycImportDefaults(PosKycExcelPreviewRow row, PosUserContext context)
+        {
+            var customer = row == null ? null : row.Customer;
+            var branchId = context != null && context.CanChangeDefaults && customer != null && customer.BranchId.HasValue
+                ? customer.BranchId
+                : (context == null ? null : context.BranchId);
+
+            if (branchId.HasValue)
+            {
+                var branchDefaults = _repository.GetDefaultPosUserContextForBranch(branchId.Value);
+                if (branchDefaults != null)
+                {
+                    return branchDefaults;
+                }
+            }
+
+            return context;
+        }
+
+        private static PosCashCustomerSaveRequest BuildKycSaveRequest(PosKycExcelPreviewRow row, PosUserContext context, PosUserContext defaults)
         {
             var customer = row.Customer;
+            var effective = defaults ?? context;
             return new PosCashCustomerSaveRequest
             {
                 CustomerID = null,
@@ -668,10 +1089,10 @@ namespace MyERP.Areas.Pos.Controllers
                 CardEndDate = customer.CardEndDate,
                 OrderDate = customer.OrderDate ?? DateTime.Today,
                 EasyCashType = 0,
-                EmpId = context.EmpId,
-                BranchId = context.CanChangeDefaults && customer.BranchId.HasValue ? customer.BranchId : context.BranchId,
-                StoreId = context.StoreId,
-                UserId = context.UserId
+                EmpId = effective == null ? null : effective.EmpId,
+                BranchId = effective == null ? null : effective.BranchId,
+                StoreId = effective == null ? null : effective.StoreId,
+                UserId = context != null && context.UserId > 0 ? context.UserId : (effective == null ? 0 : effective.UserId)
             };
         }
 
@@ -691,7 +1112,7 @@ namespace MyERP.Areas.Pos.Controllers
 
             if (token.Length != 8 && token.Length != 18)
             {
-                return "رقم التوكن/الكارت يجب أن يكون 8 أو 18 رقم.";
+                return "رقم التوكن/الكارت يجب أن يكون 8 أو 18 خانة من حروف أو أرقام.";
             }
 
             if (string.IsNullOrWhiteSpace(customer.Phone2) || !System.Text.RegularExpressions.Regex.IsMatch(customer.Phone2, @"^(010|011|012|015)[0-9]{8}$"))
@@ -732,7 +1153,21 @@ namespace MyERP.Areas.Pos.Controllers
 
         private static string NormalizeToken(string value)
         {
-            return System.Text.RegularExpressions.Regex.Replace(value ?? string.Empty, @"\D+", string.Empty);
+            var text = value ?? string.Empty;
+            var chars = text.ToCharArray();
+            for (var i = 0; i < chars.Length; i++)
+            {
+                if (chars[i] >= '\u0660' && chars[i] <= '\u0669')
+                {
+                    chars[i] = (char)('0' + (chars[i] - '\u0660'));
+                }
+                else if (chars[i] >= '\u06F0' && chars[i] <= '\u06F9')
+                {
+                    chars[i] = (char)('0' + (chars[i] - '\u06F0'));
+                }
+            }
+
+            return System.Text.RegularExpressions.Regex.Replace(new string(chars).Trim(), @"[^0-9A-Za-z]+", string.Empty).ToUpperInvariant();
         }
 
         private static string FriendlyKycImportMessage(Exception ex)
@@ -760,6 +1195,253 @@ namespace MyERP.Areas.Pos.Controllers
         {
             return context != null
                 && (context.UserType.GetValueOrDefault(-1) == 0 || context.IsFullAccess || context.CanImportExcel);
+        }
+
+        private static void RunTokenInvoicePreviewJob(string jobId, string storedPath, string sourceFileName, DateTime? defaultImportDate, PosUserContext context)
+        {
+            try
+            {
+                TokenInvoicePreviewJobs[jobId] = new TokenInvoicePreviewJobState
+                {
+                    JobId = jobId,
+                    Status = "Running",
+                    SourceFileName = sourceFileName,
+                    CreatedAt = DateTime.Now,
+                    CurrentMessage = "بدأت قراءة ملف فواتير التوكنات..."
+                };
+
+                var repository = new PosSqlRepository();
+                var service = new PosKishnyTokenInvoiceImportService(repository);
+                PosKishnyTokenInvoiceImportPreview preview;
+                using (var stream = System.IO.File.OpenRead(storedPath))
+                {
+                    preview = service.Preview(stream, sourceFileName, defaultImportDate, context, (processedRows, totalRows, message) =>
+                    {
+                        var percent = totalRows > 0
+                            ? (int)Math.Round((processedRows * 100.0) / totalRows, MidpointRounding.AwayFromZero)
+                            : 0;
+                        if (percent < 0) { percent = 0; }
+                        if (percent > 99) { percent = 99; }
+                        TokenInvoicePreviewJobs[jobId] = new TokenInvoicePreviewJobState
+                        {
+                            JobId = jobId,
+                            Status = "Running",
+                            SourceFileName = sourceFileName,
+                            CreatedAt = DateTime.Now,
+                            TotalRows = totalRows,
+                            ProcessedRows = processedRows,
+                            Percent = percent,
+                            CurrentMessage = message
+                        };
+                    });
+                }
+
+                preview.StoredWorkbookPath = storedPath;
+                TokenInvoicePreviewJobs[jobId] = new TokenInvoicePreviewJobState
+                {
+                    JobId = jobId,
+                    Status = "Completed",
+                    SourceFileName = sourceFileName,
+                    CreatedAt = DateTime.Now,
+                    TotalRows = preview.Rows.Count,
+                    ProcessedRows = preview.Rows.Count,
+                    Percent = 100,
+                    CurrentMessage = "انتهت المعاينة. جاري فتح النتيجة...",
+                    Preview = preview
+                };
+            }
+            catch (Exception ex)
+            {
+                TokenInvoicePreviewJobs[jobId] = new TokenInvoicePreviewJobState
+                {
+                    JobId = jobId,
+                    Status = "Failed",
+                    SourceFileName = sourceFileName,
+                    CreatedAt = DateTime.Now,
+                    Percent = 100,
+                    CurrentMessage = "فشلت معاينة ملف فواتير التوكنات.",
+                    ErrorMessage = "تعذر قراءة ملف فواتير التوكنات: " + ex.Message
+                };
+            }
+        }
+
+        private static void CleanupTokenInvoicePreviewJobs()
+        {
+            var cutoff = DateTime.Now.AddHours(-2);
+            foreach (var pair in TokenInvoicePreviewJobs.ToArray())
+            {
+                if (pair.Value == null || pair.Value.CreatedAt < cutoff)
+                {
+                    TokenInvoicePreviewJobState removed;
+                    TokenInvoicePreviewJobs.TryRemove(pair.Key, out removed);
+                }
+            }
+        }
+
+        private static void RunTokenInvoiceCommitJob(string jobId, PosKishnyTokenInvoiceImportPreview preview, PosUserContext context)
+        {
+            try
+            {
+                TokenInvoiceCommitJobs[jobId] = new TokenInvoiceCommitJobState
+                {
+                    JobId = jobId,
+                    Status = "Running",
+                    CreatedAt = DateTime.Now,
+                    Progress = new PosExcelImportCommitProgress
+                    {
+                        JobId = jobId,
+                        Status = "Running",
+                        TotalCount = preview == null || preview.Rows == null ? 0 : preview.Rows.Count,
+                        CurrentMessage = "بدأ ترحيل فواتير التوكنات"
+                    }
+                };
+
+                var repository = new PosSqlRepository();
+                var service = new PosKishnyTokenInvoiceImportService(repository);
+                var result = service.Commit(preview, context, progress =>
+                {
+                    progress.JobId = jobId;
+                    progress.Status = "Running";
+                    TokenInvoiceCommitJobs[jobId] = new TokenInvoiceCommitJobState
+                    {
+                        JobId = jobId,
+                        Status = "Running",
+                        CreatedAt = DateTime.Now,
+                        Progress = progress
+                    };
+                });
+
+                TokenInvoiceCommitJobs[jobId] = new TokenInvoiceCommitJobState
+                {
+                    JobId = jobId,
+                    Status = result.Status,
+                    CreatedAt = DateTime.Now,
+                    Result = result,
+                    Progress = new PosExcelImportCommitProgress
+                    {
+                        JobId = jobId,
+                        Status = result.Status,
+                        TotalCount = result.TotalRows,
+                        ProcessedCount = result.TotalRows,
+                        ImportedCount = result.ImportedInvoicesCount,
+                        FailedCount = result.FailedRowsCount,
+                        SkippedCount = result.DuplicateTokenCount,
+                        CurrentMessage = "انتهى ترحيل فواتير التوكنات"
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                TokenInvoiceCommitJobs[jobId] = new TokenInvoiceCommitJobState
+                {
+                    JobId = jobId,
+                    Status = "Failed",
+                    CreatedAt = DateTime.Now,
+                    ErrorMessage = "تعذر ترحيل فواتير التوكنات: " + ex.Message,
+                    Progress = new PosExcelImportCommitProgress
+                    {
+                        JobId = jobId,
+                        Status = "Failed",
+                        TotalCount = preview == null || preview.Rows == null ? 0 : preview.Rows.Count,
+                        CurrentMessage = "تعذر ترحيل فواتير التوكنات: " + ex.Message
+                    }
+                };
+            }
+        }
+
+        private static void CleanupTokenInvoiceCommitJobs()
+        {
+            var cutoff = DateTime.Now.AddHours(-2);
+            foreach (var pair in TokenInvoiceCommitJobs.ToArray())
+            {
+                if (pair.Value == null || pair.Value.CreatedAt < cutoff)
+                {
+                    TokenInvoiceCommitJobState removed;
+                    TokenInvoiceCommitJobs.TryRemove(pair.Key, out removed);
+                }
+            }
+        }
+
+        private static void RunKycCommitJob(string jobId, IList<PosKycExcelPreviewRow> rows, PosUserContext context)
+        {
+            try
+            {
+                KycCommitJobs[jobId] = new KycCommitJobState
+                {
+                    JobId = jobId,
+                    Status = "Running",
+                    CreatedAt = DateTime.Now,
+                    Progress = new PosExcelImportCommitProgress
+                    {
+                        JobId = jobId,
+                        Status = "Running",
+                        TotalCount = rows == null ? 0 : rows.Count,
+                        CurrentMessage = "بدأ حفظ بيانات KYC"
+                    }
+                };
+
+                var controller = new ExcelImportController();
+                var result = controller.CommitKycRows(rows, context, progress =>
+                {
+                    progress.JobId = jobId;
+                    progress.Status = "Running";
+                    KycCommitJobs[jobId] = new KycCommitJobState
+                    {
+                        JobId = jobId,
+                        Status = "Running",
+                        CreatedAt = DateTime.Now,
+                        Progress = progress
+                    };
+                });
+
+                KycCommitJobs[jobId] = new KycCommitJobState
+                {
+                    JobId = jobId,
+                    Status = result.Status,
+                    CreatedAt = DateTime.Now,
+                    Result = result,
+                    Progress = new PosExcelImportCommitProgress
+                    {
+                        JobId = jobId,
+                        Status = result.Status,
+                        TotalCount = result.ImportedCount + result.FailedCount,
+                        ProcessedCount = result.ImportedCount + result.FailedCount,
+                        ImportedCount = result.ImportedCount,
+                        FailedCount = result.FailedCount,
+                        CurrentMessage = "انتهى حفظ بيانات KYC"
+                    }
+                };
+            }
+            catch (Exception ex)
+            {
+                KycCommitJobs[jobId] = new KycCommitJobState
+                {
+                    JobId = jobId,
+                    Status = "Failed",
+                    CreatedAt = DateTime.Now,
+                    ErrorMessage = "تعذر حفظ بيانات KYC: " + ex.Message,
+                    Progress = new PosExcelImportCommitProgress
+                    {
+                        JobId = jobId,
+                        Status = "Failed",
+                        TotalCount = rows == null ? 0 : rows.Count,
+                        CurrentMessage = "تعذر حفظ بيانات KYC: " + ex.Message
+                    }
+                };
+            }
+        }
+
+        private static void CleanupKycCommitJobs()
+        {
+            var cutoff = DateTime.Now.AddHours(-2);
+            foreach (var pair in KycCommitJobs.ToArray())
+            {
+                if (pair.Value == null || pair.Value.CreatedAt < cutoff)
+                {
+                    KycCommitJobState removed;
+                    KycCommitJobs.TryRemove(pair.Key, out removed);
+                }
+            }
         }
 
         private static void RunCommitJob(string jobId, PosExcelImportPreviewResult preview, PosUserContext context, string outputDirectory)
