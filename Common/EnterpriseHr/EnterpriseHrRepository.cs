@@ -1541,8 +1541,22 @@ SELECT * FROM (
 
         private LegacyHrFinancePageViewModel LoadChangedComponents(SqlConnection connection, string searchText, int page, int pageSize, string employeeStatus, int? employeeId, DateTime? dateFrom, DateTime? dateTo, string status, int? componentId, int? branchId, int? departmentId, int? yearFilter, int? monthFilter, string componentType)
         {
-            var model = Base("changed-components", "تسجيل المفردات المتغيرة", "شؤون الموظفين", "FrmChangedComponentData", "TblChangedComponentRegister / TblChangedComponentRegisterDetails", null, searchText, page, pageSize, employeeStatus);
-            model.Employees = LoadEmployees(connection, null, searchText, employeeStatus, employeeId, 80);
+            var normalizedStatus = NormalizeChangedComponentStatus(status);
+            var normalizedComponentType = NormalizeChangedComponentType(componentType);
+            var defaultedToCurrentMonth = false;
+            if (!HasExplicitChangedComponentScope(searchText, employeeId, dateFrom, dateTo, normalizedStatus, componentId, branchId, departmentId, yearFilter, monthFilter, normalizedComponentType))
+            {
+                var today = DateTime.Today;
+                yearFilter = today.Year;
+                monthFilter = today.Month;
+                defaultedToCurrentMonth = true;
+            }
+
+            var warning = defaultedToCurrentMonth
+                ? "تم عرض الشهر الحالي تلقائياً لتسريع فتح الشاشة على قواعد البيانات الكبيرة. غيّر الشهر أو السنة من الفلاتر عند الحاجة."
+                : null;
+            var model = Base("changed-components", "تسجيل المفردات المتغيرة", "شؤون الموظفين", "FrmChangedComponentData", "TblChangedComponentRegister / TblChangedComponentRegisterDetails", warning, searchText, page, pageSize, employeeStatus);
+            model.Employees = LoadEmployees(connection, null, employeeId.HasValue ? searchText : string.Empty, employeeStatus, employeeId, employeeId.HasValue ? 10 : 25);
             model.Components = LoadVariableComponents(connection);
             model.Branches = LoadBranches(connection);
             model.Departments = LoadDepartments(connection);
@@ -1552,8 +1566,8 @@ SELECT * FROM (
             model.DepartmentId = departmentId;
             model.YearFilter = yearFilter;
             model.MonthFilter = monthFilter;
-            model.ComponentType = NormalizeChangedComponentType(componentType);
-            model.StatusFilter = NormalizeChangedComponentStatus(status);
+            model.ComponentType = normalizedComponentType;
+            model.StatusFilter = normalizedStatus;
             model.DateFrom = dateFrom.HasValue ? dateFrom.Value.ToString("yyyy-MM-dd") : string.Empty;
             model.DateTo = dateTo.HasValue ? dateTo.Value.ToString("yyyy-MM-dd") : string.Empty;
             model.AdvanceStatus = model.StatusFilter;
@@ -1594,55 +1608,16 @@ SELECT * FROM (
    AND (@Search = N'' OR ISNULL(e.Emp_Name,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Fullcode,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Emp_Code,N'') LIKE N'%' + @Search + N'%' OR ISNULL(m.name,N'') LIKE N'%' + @Search + N'%' OR ISNULL(d.Remarks,N'') LIKE N'%' + @Search + N'%' OR CONVERT(NVARCHAR(30), r.ChangedComponentid) = @Search)
 ) q WHERE RowNo BETWEEN @Start AND @End ORDER BY RowNo;", connection))
             {
+                command.CommandTimeout = 30;
                 AddSearch(command, searchText, page, pageSize);
                 AddEmployeeStatus(command, employeeStatus);
-                AddChangedComponentFilters(command, employeeId, componentId, branchId, departmentId, dateFrom, dateTo, yearFilter, monthFilter, status, componentType, searchText);
+                AddChangedComponentFilters(command, employeeId, componentId, branchId, departmentId, dateFrom, dateTo, yearFilter, monthFilter, normalizedStatus, normalizedComponentType, searchText);
                 using (var reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
                         var row = MapChangedComponent(reader);
                         model.ChangedComponents.Add(row);
-                    }
-                }
-            }
-
-            using (var command = new SqlCommand(@"
-SELECT COUNT(1) AS TotalRows,
-       ISNULL(SUM(CASE WHEN ISNULL(m.AddOrDiscount,0)=0 THEN ISNULL(d.[value],0) ELSE 0 END),0) AS Additions,
-       ISNULL(SUM(CASE WHEN ISNULL(m.AddOrDiscount,0)=1 THEN ISNULL(d.[value],0) ELSE 0 END),0) AS Deductions,
-       SUM(CASE WHEN payroll.UsedCount > 0 OR runTrace.PayrollRunId IS NOT NULL THEN 1 ELSE 0 END) AS UsedRows,
-       SUM(CASE WHEN payroll.UsedCount = 0 AND runTrace.PayrollRunId IS NULL THEN 1 ELSE 0 END) AS OpenRows
-FROM dbo.TblChangedComponentRegister r WITH (NOLOCK)
-INNER JOIN dbo.TblChangedComponentRegisterDetails d WITH (NOLOCK) ON d.ChangedComponentid = r.ChangedComponentid
-LEFT JOIN dbo.TblEmployee e WITH (NOLOCK) ON e.Emp_ID = d.Emp_id
-LEFT JOIN dbo.mofrad m WITH (NOLOCK) ON m.id = r.ComponentID
-OUTER APPLY (" + payrollUsageSql + @") payroll
-OUTER APPLY (" + payrollRunSql + @") runTrace
-WHERE " + EmployeeStatusPredicate("e") + @"
-  AND (@EmployeeId IS NULL OR d.Emp_id = @EmployeeId)
-  AND (@ComponentId IS NULL OR r.ComponentID = @ComponentId)
-  AND (@BranchId IS NULL OR ISNULL(NULLIF(r.BranchId,0), e.BranchId) = @BranchId)
-  AND (@DepartmentId IS NULL OR e.DepartmentID = @DepartmentId)
-  AND (@DateFrom IS NULL OR r.RecordDate >= @DateFrom)
-  AND (@DateTo IS NULL OR r.RecordDate < DATEADD(day, 1, @DateTo))
-  AND (@YearFilter IS NULL OR r.Actualyear = @YearFilter)
-  AND (@MonthFilter IS NULL OR r.Actualmonth = @MonthFilter)
-  AND (@ComponentType = N'all' OR (@ComponentType = N'addition' AND ISNULL(m.AddOrDiscount,0)=0) OR (@ComponentType = N'deduction' AND ISNULL(m.AddOrDiscount,0)=1))
-  AND (@Status = N'all' OR (@Status = N'used' AND (payroll.UsedCount > 0 OR runTrace.PayrollRunId IS NOT NULL)) OR (@Status = N'open' AND payroll.UsedCount = 0 AND runTrace.PayrollRunId IS NULL))
-  AND (@Search = N'' OR ISNULL(e.Emp_Name,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Fullcode,N'') LIKE N'%' + @Search + N'%' OR ISNULL(e.Emp_Code,N'') LIKE N'%' + @Search + N'%' OR ISNULL(m.name,N'') LIKE N'%' + @Search + N'%' OR ISNULL(d.Remarks,N'') LIKE N'%' + @Search + N'%');", connection))
-            {
-                AddEmployeeStatus(command, employeeStatus);
-                AddChangedComponentFilters(command, employeeId, componentId, branchId, departmentId, dateFrom, dateTo, yearFilter, monthFilter, status, componentType, searchText);
-                using (var reader = command.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-                        model.Metrics.Add(Metric("عدد السطور", ReadInt(reader, "TotalRows").ToString("N0"), "حسب الفلاتر الحالية"));
-                        model.Metrics.Add(Metric("إجمالي الإضافات", ReadDecimal(reader, "Additions").ToString("N2"), "مفردات موجبة"));
-                        model.Metrics.Add(Metric("إجمالي الخصومات", ReadDecimal(reader, "Deductions").ToString("N2"), "مفردات سالبة"));
-                        model.Metrics.Add(Metric("مستخدم في المسير", ReadInt(reader, "UsedRows").ToString("N0"), "مقفلة عن التعديل والحذف"));
-                        model.Metrics.Add(Metric("مفتوح", ReadInt(reader, "OpenRows").ToString("N0"), "قابل للمراجعة حسب الصلاحية"));
                     }
                 }
             }
@@ -4420,6 +4395,21 @@ WHERE d.id = @DetailId;", connection, transaction))
         {
             componentType = (componentType ?? "all").Trim().ToLowerInvariant();
             return componentType == "addition" || componentType == "deduction" ? componentType : "all";
+        }
+
+        private static bool HasExplicitChangedComponentScope(string searchText, int? employeeId, DateTime? dateFrom, DateTime? dateTo, string status, int? componentId, int? branchId, int? departmentId, int? yearFilter, int? monthFilter, string componentType)
+        {
+            return !string.IsNullOrWhiteSpace(searchText)
+                || employeeId.HasValue
+                || dateFrom.HasValue
+                || dateTo.HasValue
+                || componentId.HasValue
+                || branchId.HasValue
+                || departmentId.HasValue
+                || yearFilter.HasValue
+                || monthFilter.HasValue
+                || !string.Equals(NormalizeChangedComponentStatus(status), "all", StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(NormalizeChangedComponentType(componentType), "all", StringComparison.OrdinalIgnoreCase);
         }
 
         private static void FillRows(SqlCommand command, LegacyHrFinancePageViewModel model, string idCol, string primaryCol, string detailsCol, string amountCol, string dateCol, string tag1Col, string tag2Col, string tag3Col)
