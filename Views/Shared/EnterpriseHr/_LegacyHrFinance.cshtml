@@ -281,21 +281,31 @@
         <div class="lhf-warning"><i class="fas fa-exclamation-triangle"></i><span>@Model.Warning</span></div>
     }
 
-    <div class="lhf-metrics">
-        @foreach (var metric in Model.Metrics)
-        {
-            <article><span>@metric.Label</span><strong>@metric.Value</strong><small>@metric.Hint</small></article>
-        }
-    </div>
+    @if (Model.ModuleKey != "changed-components")
+    {
+        <div class="lhf-metrics">
+            @foreach (var metric in Model.Metrics)
+            {
+                <article><span>@metric.Label</span><strong>@metric.Value</strong><small>@metric.Hint</small></article>
+            }
+        </div>
+    }
 
     @if (Model.ModuleKey == "changed-components")
     {
         <section class="lhf-changed-snapshot" aria-label="ملخص المفردات المتغيرة">
-            <article class="addition"><span>إضافات الشهر</span><strong>@changedAdditions.ToString("N2")</strong><small>@changedRows.Count(x => x.AddOrDiscount).ToString("N0") سطر</small></article>
-            <article class="deduction"><span>خصومات الشهر</span><strong>@changedDeductions.ToString("N2")</strong><small>@changedRows.Count(x => !x.AddOrDiscount).ToString("N0") سطر</small></article>
-            <article class="@(changedLocked > 0 ? "locked" : "")"><span>مقفلة بالمسير</span><strong>@changedLocked.ToString("N0")</strong><small>لا تعدل من هنا</small></article>
-            <article><span>مفتوحة</span><strong>@changedOpen.ToString("N0")</strong><small>قابلة للحفظ حسب الصلاحية</small></article>
-            <article class="net"><span>صافي المعروض</span><strong>@(changedAdditions - changedDeductions).ToString("N2")</strong><small>@changedCount.ToString("N0") سطر حسب الفلاتر</small></article>
+            <article class="addition"><span>إجمالي الإضافات</span><strong>@changedAdditions.ToString("N2")</strong><small>@changedRows.Count(x => x.AddOrDiscount).ToString("N0") حركة إضافة</small></article>
+            <article class="deduction"><span>إجمالي الخصومات</span><strong>@changedDeductions.ToString("N2")</strong><small>@changedRows.Count(x => !x.AddOrDiscount).ToString("N0") حركة خصم</small></article>
+            <article class="net"><span>صافي التأثير</span><strong>@((changedAdditions - changedDeductions).ToString("N2"))</strong><small>الإضافات ناقص الخصومات</small></article>
+            <article><span>الموظفون المتأثرون</span><strong>@changedRows.Select(x => x.EmployeeId).Distinct().Count().ToString("N0")</strong><small>@changedCount.ToString("N0") سطر حسب الفلاتر</small></article>
+        </section>
+
+        <section class="lhf-changed-lock-guide @(changedLocked > 0 ? "has-locks" : "is-clear")">
+            <div>
+                <strong>@(changedLocked > 0 ? "توجد مفردات مقفلة بالمسير" : "كل السطور المعروضة قابلة للمراجعة")</strong>
+                <span>@(changedLocked > 0 ? "السطر المقفل تم استخدامه في مسير رواتب أو سند راتب، لذلك يظهر للقراءة فقط لحماية نتيجة payroll." : "أي قفل سيظهر هنا بوضوح عند ارتباط السطر بمسير رواتب أو سند راتب.")</span>
+            </div>
+            <small>@changedLocked.ToString("N0") مقفل / @changedOpen.ToString("N0") مفتوح</small>
         </section>
 
         if (changedEmployeeGroups.Any())
@@ -504,13 +514,12 @@
         <section class="lhf-panel lhf-changed-components">
             <header>
                 <div>
-                    <h3>تسجيل المفردات المتغيرة</h3>
-                    <span>القيم الشهرية المتغيرة التي يقرأها مسير الرواتب من TblChangedComponentRegister وتفاصيلها.</span>
+                    <h3>نتائج المفردات المتغيرة</h3>
+                    <span>راجع السطور حسب الفلاتر. السطور المقفلة تظهر للقراءة فقط لحماية مسير الرواتب.</span>
                 </div>
                 @if (Model.Permissions.CanAdd)
                 {
                     <div class="lhf-panel-tools">
-                        <button type="button" class="lhf-primary" data-new-changed-component><i class="fas fa-plus"></i><span>مفردة متغيرة جديدة</span></button>
                         <button type="button" data-open-changed-bulk="bulk"><i class="fas fa-layer-group"></i><span>إدخال جماعي</span></button>
                         <button type="button" data-open-changed-bulk="copy"><i class="fas fa-copy"></i><span>نسخ شهر</span></button>
                     </div>
@@ -534,9 +543,9 @@
                     <tbody>
                         @foreach (var row in Model.ChangedComponents)
                         {
-                            <tr data-changed-component-id="@row.Id" class="@(row.CanEdit ? "" : "lhf-row-locked") @(row.PayrollUsed ? "lhf-row-payroll-locked" : "")">
+                            <tr data-changed-component-id="@row.Id" class="@(row.CanEdit ? "" : "lhf-row-locked") @(row.PayrollUsed ? "lhf-row-payroll-locked" : "") @(row.AddOrDiscount ? "lhf-row-addition" : "lhf-row-deduction")">
                                 <td><code>@row.HeaderId / @row.Id</code></td>
-                                <td>
+                                <td class="lhf-employee-cell">
                                     <strong>@row.EmployeeName</strong>
                                     <small>@row.EmployeeCode</small>
                                     <small>@row.BranchName @(!string.IsNullOrWhiteSpace(row.DepartmentName) ? " / " + row.DepartmentName : "")</small>
@@ -545,8 +554,8 @@
                                     <strong>@row.ComponentName</strong>
                                     <span class="lhf-badge @(row.AddOrDiscount ? "success" : "danger")">@(row.AddOrDiscount ? "إضافة" : "خصم")</span>
                                 </td>
-                                <td>@row.Month / @row.Year<br /><small>@row.RecordDate</small></td>
-                                <td class="lhf-num">@row.Value.ToString("N2")</td>
+                                <td><strong>@row.Month.ToString("00") / @row.Year</strong><small>@row.RecordDate</small></td>
+                                <td class="lhf-num @(row.AddOrDiscount ? "lhf-value-addition" : "lhf-value-deduction")">@row.Value.ToString("N2")</td>
                                 <td>
                                     @if (row.NoOfDays > 0) { <small>أيام: @row.NoOfDays.ToString("N2")</small> }
                                     @if (row.NoOfHours > 0 || row.NoOfMinutes > 0) { <small>ساعات: @row.NoOfHours.ToString("N2") : @row.NoOfMinutes.ToString("N2")</small> }
@@ -554,8 +563,8 @@
                                     @if (row.Salary > 0) { <small>أساس: @row.Salary.ToString("N2")</small> }
                                 </td>
                                 <td>
-                                    @if (row.PayrollUsed) { <span class="lhf-badge locked">مستخدم في المسير</span> }
-                                    else { <span class="lhf-badge info">مفتوح</span> }
+                                    @if (row.PayrollUsed) { <span class="lhf-badge locked">مقفلة بالمسير</span> }
+                                    else { <span class="lhf-badge info">قابلة للتعديل</span> }
                                     @if (row.PayrollRunId.HasValue && !string.IsNullOrWhiteSpace(Model.PayrollRunUrl))
                                     {
                                         <a class="lhf-run-link" href="@(Model.PayrollRunUrl + "?payrollRunId=" + row.PayrollRunId.Value + "&year=" + row.Year + "&month=" + row.Month)">
@@ -585,27 +594,38 @@
                                     }
                                     @if (!row.CanEdit)
                                     {
-                                        <span class="lhf-action-note">مقفلة</span>
+                                        <span class="lhf-action-note">للقراءة فقط</span>
                                     }
                                 </td>
                             </tr>
                         }
                         @if (!Model.ChangedComponents.Any())
                         {
-                            <tr><td colspan="9" class="lhf-empty">لا توجد مفردات متغيرة مطابقة للفلاتر الحالية.</td></tr>
+                            <tr><td colspan="9" class="lhf-empty"><strong>لا توجد مفردات متغيرة</strong><span>غيّر الفلاتر أو استخدم لوحة الإدخال السريع لتسجيل حركة جديدة.</span></td></tr>
                         }
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <div class="lhf-editor" id="lhfChangedComponentEditor" hidden>
+        <div class="lhf-editor lhf-quick-entry" id="lhfChangedComponentEditor">
             <form id="lhfChangedComponentForm" class="lhf-editor-card">
                 <input type="hidden" id="lhfChangedDetailId" name="Id" />
                 <header>
-                    <h3>بيانات المفردة المتغيرة</h3>
-                    <button type="button" data-close-changed-component aria-label="إغلاق">×</button>
+                    <div>
+                        <span>إدخال سريع</span>
+                        <h3>سجل مفردة متغيرة</h3>
+                        <small>اختر الموظف ثم المفردة والقيمة. نفس قواعد التحقق وقفل المسير ما زالت تعمل من الخادم.</small>
+                    </div>
+                    <button type="button" data-new-changed-component title="تفريغ الحقول"><i class="fas fa-rotate-right"></i></button>
                 </header>
+                <ol class="lhf-entry-steps" aria-label="ترتيب الإدخال">
+                    <li>اختر الموظف</li>
+                    <li>اختر المفردة</li>
+                    <li>حدد إضافة أو خصم</li>
+                    <li>أدخل القيمة والفترة</li>
+                    <li>احفظ</li>
+                </ol>
                 <div class="lhf-form-grid">
                     <label><span>الموظف</span>
                         <input type="search" id="lhfChangedEmployeeSearch" class="lhf-select-search lhf-editor-search" data-filter-select="lhfChangedEmployeeId" placeholder="بحث سريع بالاسم أو الكود" autocomplete="off" />
@@ -641,7 +661,7 @@
                 <div class="lhf-changed-entry-preview" id="lhfChangedEntryPreview">اختر الموظف والمفردة لمراجعة اتجاه التأثير قبل الحفظ.</div>
                 <div id="lhfChangedMessage" class="lhf-editor-message"></div>
                 <footer>
-                    <button type="button" data-close-changed-component>إلغاء</button>
+                    <button type="button" data-new-changed-component>تفريغ</button>
                     <button type="submit" class="lhf-primary">حفظ</button>
                 </footer>
             </form>

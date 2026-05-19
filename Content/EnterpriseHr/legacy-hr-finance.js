@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
     "use strict";
     var root = document.querySelector("[data-lhf-page]");
     if (!root) { return; }
@@ -30,7 +30,7 @@
     }
     function days(value) {
         var number = Number(value || 0);
-        return number.toLocaleString("ar-EG", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " ظٹظˆظ…";
+        return number.toLocaleString("ar-EG", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " يوم";
     }
     function today() {
         var d = new Date();
@@ -70,9 +70,9 @@
     function message(res, fallback) { return (res && (res.Message || res.message)) || fallback; }
     function normalize(value) {
         return String(value == null ? "" : value).toLowerCase()
-            .replace(/[ط£ط¥ط¢]/g, "ط§")
-            .replace(/ظ‰/g, "ظٹ")
-            .replace(/ط©/g, "ظ‡");
+            .replace(/[أإآ]/g, "ا")
+            .replace(/ى/g, "ي")
+            .replace(/ة/g, "ه");
     }
     function filterSelect(selectId, term) {
         var select = byId(selectId);
@@ -169,7 +169,7 @@
             var firstMonth = parseInt(val("lhfFirstMonthPayment") || "0", 10);
             var firstYear = parseInt(val("lhfFirstYearPayment") || "0", 10);
             if (!(amount > 0 && count > 0 && firstMonth > 0 && firstYear > 0)) {
-                grid.innerHTML = "<tr><td colspan='4'>ط³ظٹط¸ظ‡ط± ط¬ط¯ظˆظ„ ط§ظ„ط£ظ‚ط³ط§ط· ط¨ط¹ط¯ ط¥ط¯ط®ط§ظ„ ط§ظ„ظ‚ظٹظ…ط© ظˆط¹ط¯ط¯ ط§ظ„ط£ظ‚ط³ط§ط·.</td></tr>";
+                grid.innerHTML = "<tr><td colspan='4'>سيظهر جدول الأقساط بعد إدخال القيمة وعدد الأقساط.</td></tr>";
                 return;
             }
             var partValue = amount / count;
@@ -191,7 +191,7 @@
             tr.innerHTML = "<td>" + (part.PartNo || "-") + "</td>" +
                 "<td>" + due + "</td>" +
                 "<td class='lhf-num'>" + money(part.PartValue) + "</td>" +
-                "<td>" + (part.Payed ? "<span class='lhf-badge success'>ظ…ط³ط¯ط¯</span>" : overdue ? "<span class='lhf-badge danger'>ظ…طھط£ط®ط±</span>" : "<span class='lhf-badge info'>ظ…ظپطھظˆط­</span>") + "</td>";
+                "<td>" + (part.Payed ? "<span class='lhf-badge success'>مسدد</span>" : overdue ? "<span class='lhf-badge danger'>متأخر</span>" : "<span class='lhf-badge info'>مفتوح</span>") + "</td>";
             grid.appendChild(tr);
         });
     }
@@ -205,7 +205,7 @@
             var firstMonth = parseInt(val("lhfFirstMonthPayment") || "0", 10);
             var firstYear = parseInt(val("lhfFirstYearPayment") || "0", 10);
             if (!(amount > 0 && count > 0 && firstMonth > 0 && firstYear > 0)) {
-                grid.innerHTML = "<tr><td colspan='7'>ط³ظٹط¸ظ‡ط± ط¬ط¯ظˆظ„ ط§ظ„ط£ظ‚ط³ط§ط· ط¨ط¹ط¯ ط¥ط¯ط®ط§ظ„ ط§ظ„ظ‚ظٹظ…ط© ظˆط¹ط¯ط¯ ط§ظ„ط£ظ‚ط³ط§ط·.</td></tr>";
+                grid.innerHTML = "<tr><td colspan='7'>سيظهر جدول الأقساط بعد إدخال القيمة وعدد الأقساط.</td></tr>";
                 return;
             }
             var partValue = amount / count;
@@ -236,17 +236,17 @@
             var tr = document.createElement("tr");
             if (overdue) { tr.className = "is-overdue"; }
             if (duplicateMap[part.PartNo] > 1) { tr.className = (tr.className ? tr.className + " " : "") + "lhf-row-error"; }
-            var status = part.PayrollPosted ? "<span class='lhf-badge success'>ظ…ط±ط­ظ„ ط¨ط§ظ„ظ…ط³ظٹط±</span>"
-                : payrollLinked ? "<span class='lhf-badge warning'>ظ…ط±طھط¨ط· ط¨ظ…ط³ظٹط±</span>"
-                    : isPaid ? "<span class='lhf-badge success'>ظ…ط³ط¯ط¯</span>"
-                        : overdue ? "<span class='lhf-badge danger'>ظ…طھط£ط®ط±</span>"
-                            : "<span class='lhf-badge info'>ظ…ظپطھظˆط­</span>";
+            var status = part.PayrollPosted ? "<span class='lhf-badge success'>مرحل بالمسير</span>"
+                : payrollLinked ? "<span class='lhf-badge warning'>مرتبط بمسير</span>"
+                    : isPaid ? "<span class='lhf-badge success'>مسدد</span>"
+                        : overdue ? "<span class='lhf-badge danger'>متأخر</span>"
+                            : "<span class='lhf-badge info'>مفتوح</span>";
             tr.innerHTML = "<td>" + (part.PartNo || "-") + "</td>" +
                 "<td>" + due + "</td>" +
                 "<td class='lhf-num'>" + money(part.PartValue) + "</td>" +
                 "<td class='lhf-num'>" + money(part.RemainingValue == null ? (isPaid ? 0 : partValue) : part.RemainingValue) + "</td>" +
                 "<td>" + status + "</td>" +
-                "<td>" + (part.PayrollRunId ? ("ظ…ط³ظٹط± #" + text(part.PayrollRunId)) : "-") + "</td>" +
+                "<td>" + (part.PayrollRunId ? ("مسير #" + text(part.PayrollRunId)) : "-") + "</td>" +
                 "<td>" + (part.PayrollPostedAt || part.PaidDate || "-") + "</td>";
             grid.appendChild(tr);
         });
@@ -254,7 +254,7 @@
         var duplicate = Object.keys(duplicateMap).some(function (key) { return duplicateMap[key] > 1; });
         var footer = document.createElement("tr");
         footer.className = duplicate ? "lhf-row-error lhf-total-row" : "lhf-total-row";
-        footer.innerHTML = "<td colspan='2'><strong>" + (duplicate ? "ظٹظˆط¬ط¯ طھظƒط±ط§ط± ظپظٹ ط£ط±ظ‚ط§ظ… ط§ظ„ط£ظ‚ط³ط§ط·" : "ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ط£ظ‚ط³ط§ط·") + "</strong></td>" +
+        footer.innerHTML = "<td colspan='2'><strong>" + (duplicate ? "يوجد تكرار في أرقام الأقساط" : "إجمالي الأقساط") + "</strong></td>" +
             "<td class='lhf-num'><strong>" + money(total) + "</strong></td>" +
             "<td class='lhf-num'><strong>" + money(Math.max(0, remaining)) + "</strong></td>" +
             "<td colspan='3'></td>";
@@ -265,12 +265,12 @@
         var el = byId("lhfAdvanceInstallmentValidation");
         if (!el) { return; }
         if (!data || !data.Id) {
-            el.textContent = "ط³ظٹطھظ… ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ط£ظ‚ط³ط§ط· ظˆط­ط§ظ„طھظ‡ط§ ط¹ظ†ط¯ طھط­ظ…ظٹظ„ ط§ظ„ط·ظ„ط¨.";
+            el.textContent = "سيتم التحقق من إجمالي الأقساط وحالتها عند تحميل الطلب.";
             el.className = "lhf-installment-validation";
             return;
         }
         var valid = data.InstallmentsValid !== false;
-        el.textContent = data.InstallmentValidationMessage || (valid ? "ط§ظ„ط£ظ‚ط³ط§ط· ظ…طھظˆط§ط²ظ†ط© ظ…ط¹ ظ‚ظٹظ…ط© ط§ظ„ط³ظ„ظپط©." : "ظٹظˆط¬ط¯ ط®ط·ط£ ظپظٹ ط¨ظٹط§ظ†ط§طھ ط§ظ„ط£ظ‚ط³ط§ط·.");
+        el.textContent = data.InstallmentValidationMessage || (valid ? "الأقساط متوازنة مع قيمة السلفة." : "يوجد خطأ في بيانات الأقساط.");
         el.className = "lhf-installment-validation " + (valid ? "success" : "danger");
     }
 
@@ -287,7 +287,7 @@
         var badge = byId("lhfAdvanceStatusBadge");
         if (badge) {
             badge.className = "lhf-badge " + advanceStatusClass(data);
-            badge.textContent = data.StatusText || (data.Id ? "ظ…ط³ظˆط¯ط©" : "ط·ظ„ط¨ ط¬ط¯ظٹط¯");
+            badge.textContent = data.StatusText || (data.Id ? "مسودة" : "طلب جديد");
         }
         var list = byId("lhfAdvanceTimeline");
         if (!list) { return; }
@@ -299,11 +299,11 @@
         var rejected = !!data.Rejected;
         list.innerHTML = "";
         [
-            { label: "ط¥ط¯ط®ط§ظ„ ط§ظ„ط·ظ„ط¨", done: !!data.Id, note: data.AdvanceDate || "" },
-            { label: "ط¥ط±ط³ط§ظ„ ظ„ظ„ط§ط¹طھظ…ط§ط¯", done: submitted, note: submitted ? "طھظ… ط¥ط±ط³ط§ظ„ ط§ظ„ط·ظ„ط¨ ظ„ظ„ظ…ط±ط§ط¬ط¹ط©" : "ظ„ظ… ظٹط±ط³ظ„ ط¨ط¹ط¯" },
-            { label: rejected ? "ظ…ط±ظپظˆط¶ / ظ…ظ„ط؛ظ‰" : "ط§ظ„ط§ط¹طھظ…ط§ط¯", done: approved || rejected, danger: rejected, note: data.StatusText || "" },
-            { label: "ط§ظ„طµط±ظپ", done: disbursed, note: disbursed ? ("ط³ظ„ظپط© ظپط¹ظ„ظٹط© ط±ظ‚ظ… " + text(data.ActualAdvanceId || "")) : "ظ„ظ… طھطµط±ظپ ط¨ط¹ط¯" },
-            { label: "ط®طµظ… ط§ظ„ط£ظ‚ط³ط§ط·", done: hasPaid, note: hasPaid ? (text(data.PaidPartsCount) + " ظ‚ط³ط· ظ…ط³ط¯ط¯/ظ…ط±ط­ظ„") : "ظ„ط§ طھظˆط¬ط¯ ط£ظ‚ط³ط§ط· ظ…ط³ط¯ط¯ط©" }
+            { label: "إدخال الطلب", done: !!data.Id, note: data.AdvanceDate || "" },
+            { label: "إرسال للاعتماد", done: submitted, note: submitted ? "تم إرسال الطلب للمراجعة" : "لم يرسل بعد" },
+            { label: rejected ? "مرفوض / ملغى" : "الاعتماد", done: approved || rejected, danger: rejected, note: data.StatusText || "" },
+            { label: "الصرف", done: disbursed, note: disbursed ? ("سلفة فعلية رقم " + text(data.ActualAdvanceId || "")) : "لم تصرف بعد" },
+            { label: "خصم الأقساط", done: hasPaid, note: hasPaid ? (text(data.PaidPartsCount) + " قسط مسدد/مرحل") : "لا توجد أقساط مسددة" }
         ].forEach(function (item) {
             var li = document.createElement("li");
             li.className = (item.done ? "done" : "") + (item.danger ? " danger" : "");
@@ -313,8 +313,8 @@
         if (history.length) {
             var historyItem = document.createElement("li");
             historyItem.className = "history";
-            historyItem.innerHTML = "<strong>ط³ط¬ظ„ ط§ظ„ط§ط¹طھظ…ط§ط¯</strong><small>" + history.map(function (row) {
-                return text((row.EmployeeName || row.FromUser || "ظ…ط³طھط®ط¯ظ…") + (row.ApprovedAt ? " - " + row.ApprovedAt : row.CancelledAt ? " - " + row.CancelledAt : ""));
+            historyItem.innerHTML = "<strong>سجل الاعتماد</strong><small>" + history.map(function (row) {
+                return text((row.EmployeeName || row.FromUser || "مستخدم") + (row.ApprovedAt ? " - " + row.ApprovedAt : row.CancelledAt ? " - " + row.CancelledAt : ""));
             }).join(" | ") + "</small>";
             list.appendChild(historyItem);
         }
@@ -329,21 +329,21 @@
         var preview = byId("lhfAdvancePartsPreview");
         var financials = byId("lhfAdvanceFinancialSummary");
         if (meta && selected && selected.value) {
-            meta.textContent = "ط§ظ„ظپط±ط¹: " + (selected.getAttribute("data-branch") || "-") + " | ط§ظ„ط¥ط¯ط§ط±ط©: " + (selected.getAttribute("data-department") || "-") + " | ط§ظ„ط±ط§طھط¨ ط§ظ„ط£ط³ط§ط³ظٹ: " + money(selected.getAttribute("data-salary") || 0);
+            meta.textContent = "الفرع: " + (selected.getAttribute("data-branch") || "-") + " | الإدارة: " + (selected.getAttribute("data-department") || "-") + " | الراتب الأساسي: " + money(selected.getAttribute("data-salary") || 0);
         } else if (meta) {
-            meta.textContent = "ط§ط®طھط± ظ…ظˆط¸ظپط§ظ‹ ظ„ط¹ط±ط¶ ط§ظ„ظپط±ط¹ ظˆط§ظ„ط¥ط¯ط§ط±ط© ظˆط§ظ„ط±ط§طھط¨ ط§ظ„ط£ط³ط§ط³ظٹ.";
+            meta.textContent = "اختر موظفاً لعرض الفرع والإدارة والراتب الأساسي.";
         }
         if (preview) {
-            preview.textContent = amount > 0 && count > 0 ? ("ظ‚ظٹظ…ط© ط§ظ„ظ‚ط³ط· ط§ظ„طھظ‚ط±ظٹط¨ظٹط©: " + money(amount / count)) : "ط³ظٹطھظ… ط­ط³ط§ط¨ ط§ظ„ط£ظ‚ط³ط§ط· ط¹ظ†ط¯ ط§ظ„ط­ظپط¸.";
+            preview.textContent = amount > 0 && count > 0 ? ("قيمة القسط التقريبية: " + money(amount / count)) : "سيتم حساب الأقساط عند الحفظ.";
         }
         if (financials) {
             var salary = selected && selected.value ? Number(selected.getAttribute("data-salary") || 0) : 0;
             var part = amount > 0 && count > 0 ? amount / count : 0;
             var ratio = salary > 0 && part > 0 ? ((part / salary) * 100).toFixed(1) + "%" : "-";
-            financials.innerHTML = "<span>ط§ظ„ط±ط§طھط¨ ط§ظ„ط£ط³ط§ط³ظٹ: <strong>" + money(salary) + "</strong></span>" +
-                "<span>ظ‚ظٹظ…ط© ط§ظ„ط³ظ„ظپط©: <strong>" + money(amount) + "</strong></span>" +
-                "<span>ط§ظ„ظ‚ط³ط· ط§ظ„ط´ظ‡ط±ظٹ: <strong>" + money(part) + "</strong></span>" +
-                "<span>ظ†ط³ط¨ط© ط§ظ„ظ‚ط³ط· ظ…ظ† ط§ظ„ط±ط§طھط¨: <strong>" + ratio + "</strong></span>";
+            financials.innerHTML = "<span>الراتب الأساسي: <strong>" + money(salary) + "</strong></span>" +
+                "<span>قيمة السلفة: <strong>" + money(amount) + "</strong></span>" +
+                "<span>القسط الشهري: <strong>" + money(part) + "</strong></span>" +
+                "<span>نسبة القسط من الراتب: <strong>" + ratio + "</strong></span>";
         }
         renderAdvanceParts(parts);
     }
@@ -358,7 +358,7 @@
         if (submit) { submit.disabled = !!isLocked; }
         if (banner) {
             banner.hidden = !isLocked;
-            banner.textContent = isLocked ? (reason || "ظ‡ط°ط§ ط§ظ„ط·ظ„ط¨ ظ…ظ‚ظپظ„ ظˆظ„ط§ ظٹظ…ظƒظ† طھط¹ط¯ظٹظ„ظ‡ ظ…ظ† ظ‡ط°ظ‡ ط§ظ„ط´ط§ط´ط©.") : "";
+            banner.textContent = isLocked ? (reason || "هذا الطلب مقفل ولا يمكن تعديله من هذه الشاشة.") : "";
         }
     }
     function setAdvanceBoundary(boundary) {
@@ -366,25 +366,25 @@
         if (!el) { return; }
         if (!boundary) {
             el.className = "lhf-accounting-boundary";
-            el.innerHTML = "<strong>ط§ظ„ط­ط¯ ط§ظ„ظ…ط­ط§ط³ط¨ظٹ ظ„ظ„ط³ظ„ظپط©</strong><span>ط³ظٹطھظ… ط¹ط±ط¶ ظ…طµط¯ط± ط§ظ„ط£ط«ط± ط§ظ„ظ…ط­ط§ط³ط¨ظٹ ط¨ط¹ط¯ ط­ظپط¸ ط£ظˆ طھط­ظ…ظٹظ„ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط©.</span>";
+            el.innerHTML = "<strong>الحد المحاسبي للسلفة</strong><span>سيتم عرض مصدر الأثر المحاسبي بعد حفظ أو تحميل طلب السلفة.</span>";
             return;
         }
 
         var level = boundary.HasUnsupportedAccountingTrace ? " danger" : (boundary.HasAnyAccountingTrace ? " warning" : " safe");
         el.className = "lhf-accounting-boundary" + level;
-        el.innerHTML = "<strong>ط§ظ„ط­ط¯ ط§ظ„ظ…ط­ط§ط³ط¨ظٹ ظ„ظ„ط³ظ„ظپط©</strong>" +
-            "<span>" + (boundary.BoundaryMessage || "ظ„ط§ طھظˆط¬ط¯ ط¨ظٹط§ظ†ط§طھ ط­ط¯ظˆط¯ ظ…ط­ط§ط³ط¨ظٹط©.") + "</span>" +
-            "<div><span>ط§ظ„ط³ظ„ظپط© ط§ظ„ظپط¹ظ„ظٹط©: <strong>" + (boundary.ActualAdvanceId || "-") + "</strong></span>" +
-            "<span>ظ‚ظٹظˆط¯ ظ…ط¨ط§ط´ط±ط©: <strong>" + (boundary.NormalJournalLineCount || 0) + "</strong></span>" +
-            "<span>ظ‚ظٹظˆط¯ ط§ظپطھطھط§ط­ظٹط©: <strong>" + (boundary.OpeningJournalLineCount || 0) + "</strong></span>" +
-            "<span>ط£ظ‚ط³ط§ط· ظ…ط±طھط¨ط·ط© ط¨ط§ظ„ظ…ط³ظٹط±: <strong>" + (boundary.PayrollDeductionLineCount || 0) + "</strong></span></div>";
+        el.innerHTML = "<strong>الحد المحاسبي للسلفة</strong>" +
+            "<span>" + (boundary.BoundaryMessage || "لا توجد بيانات حدود محاسبية.") + "</span>" +
+            "<div><span>السلفة الفعلية: <strong>" + (boundary.ActualAdvanceId || "-") + "</strong></span>" +
+            "<span>قيود مباشرة: <strong>" + (boundary.NormalJournalLineCount || 0) + "</strong></span>" +
+            "<span>قيود افتتاحية: <strong>" + (boundary.OpeningJournalLineCount || 0) + "</strong></span>" +
+            "<span>أقساط مرتبطة بالمسير: <strong>" + (boundary.PayrollDeductionLineCount || 0) + "</strong></span></div>";
     }
     function setAdvanceBoundary(boundary) {
         var el = byId("lhfAdvanceAccountingBoundary");
         if (!el) { return; }
         if (!boundary) {
             el.className = "lhf-accounting-boundary";
-            el.innerHTML = "<strong>ط­ط¯ظˆط¯ ط§ظ„ظ…ط­ط§ط³ط¨ط© ظˆط§ظ„ط³ط¯ط§ط¯ ظ„ظ„ط³ظ„ظپط©</strong><span>ط³ظٹطھظ… ط¹ط±ط¶ ط§ظ„ط£ط«ط± ط§ظ„ظ…ط­ط§ط³ط¨ظٹ ظˆط±ظˆط§ط¨ط· ط§ظ„ظ…ط³ظٹط± ط¨ط¹ط¯ ط­ظپط¸ ط£ظˆ طھط­ظ…ظٹظ„ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط©.</span>";
+            el.innerHTML = "<strong>حدود المحاسبة والسداد للسلفة</strong><span>سيتم عرض الأثر المحاسبي وروابط المسير بعد حفظ أو تحميل طلب السلفة.</span>";
             return;
         }
 
@@ -393,33 +393,33 @@
         var directLines = boundary.DirectJournalTraces || [];
         var openingLines = boundary.OpeningBalanceTraces || [];
         function traceLine(line) {
-            return "<li><strong>" + text(line.AccountSerial || "-") + " - " + text(line.AccountName || "ط­ط³ط§ط¨ ط؛ظٹط± ظ…ط¹ط±ظˆظپ") + "</strong>" +
+            return "<li><strong>" + text(line.AccountSerial || "-") + " - " + text(line.AccountName || "حساب غير معروف") + "</strong>" +
                 "<span>" + text(line.Description || "") + "</span>" +
-                "<b>ظ…ط¯ظٹظ† " + money(line.Debit) + " / ط¯ط§ط¦ظ† " + money(line.Credit) + "</b>" +
-                (line.NoteId ? "<small>ظ‚ظٹط¯ ط±ظ‚ظ… " + text(line.NoteId) + "</small>" : "") + "</li>";
+                "<b>مدين " + money(line.Debit) + " / دائن " + money(line.Credit) + "</b>" +
+                (line.NoteId ? "<small>قيد رقم " + text(line.NoteId) + "</small>" : "") + "</li>";
         }
         function payrollLine(line) {
             var period = line.PeriodMonth && line.PeriodYear ? (line.PeriodMonth + "/" + line.PeriodYear) : "-";
-            return "<li><strong>ظ…ط³ظٹط± #" + text(line.PayrollRunId) + " - " + text(line.RunName || period) + "</strong>" +
-                "<span>ط§ظ„ظ‚ط³ط· " + text(line.PartNo || "-") + " | ط§ظ„ط§ط³طھط­ظ‚ط§ظ‚ " + text(line.PartDate || "-") + " | ط§ظ„ظ‚ظٹظ…ط© " + money(line.PartValue) + "</span>" +
-                "<b class='" + (line.IsPosted ? "is-posted" : "is-draft") + "'>" + text(line.StatusText || (line.IsPosted ? "ظ…ط±ط­ظ„" : "ط؛ظٹط± ظ…ط±ط­ظ„")) + "</b>" +
-                (line.NoteId ? "<small>ظ‚ظٹط¯ ط§ظ„ظ…ط³ظٹط± ط±ظ‚ظ… " + text(line.NoteId) + "</small>" : "") +
-                (line.PostedAt ? "<small>طھط§ط±ظٹط® ط§ظ„طھط±ط­ظٹظ„ " + text(line.PostedAt) + "</small>" : "") + "</li>";
+            return "<li><strong>مسير #" + text(line.PayrollRunId) + " - " + text(line.RunName || period) + "</strong>" +
+                "<span>القسط " + text(line.PartNo || "-") + " | الاستحقاق " + text(line.PartDate || "-") + " | القيمة " + money(line.PartValue) + "</span>" +
+                "<b class='" + (line.IsPosted ? "is-posted" : "is-draft") + "'>" + text(line.StatusText || (line.IsPosted ? "مرحل" : "غير مرحل")) + "</b>" +
+                (line.NoteId ? "<small>قيد المسير رقم " + text(line.NoteId) + "</small>" : "") +
+                (line.PostedAt ? "<small>تاريخ الترحيل " + text(line.PostedAt) + "</small>" : "") + "</li>";
         }
         el.className = "lhf-accounting-boundary" + level;
-        el.innerHTML = "<strong>ط­ط¯ظˆط¯ ط§ظ„ظ…ط­ط§ط³ط¨ط© ظˆط§ظ„ط³ط¯ط§ط¯ ظ„ظ„ط³ظ„ظپط©</strong>" +
-            "<span>" + text(boundary.BoundaryMessage || "ظ„ط§ طھظˆط¬ط¯ ط¨ظٹط§ظ†ط§طھ ط£ط«ط± ظ…ط­ط§ط³ط¨ظٹ ظ…ط¤ظƒط¯ط©.") + "</span>" +
-            (boundary.HasUnsupportedAccountingTrace ? "<em>طھط­ط°ظٹط±: ظٹظˆط¬ط¯ ط£ط«ط± ظ…ط­ط§ط³ط¨ظٹ طھط§ط±ظٹط®ظٹ ظ…ط¨ط§ط´ط± ط؛ظٹط± ظ…ط¯ط¹ظˆظ… ظ„ظ„ط¥ظ†ط´ط§ط، ظ…ظ† ط´ط§ط´ط© ط§ظ„ط³ظ„ظپ. ظ„ط§ ظٹطھظ… ط¥ظ†ط´ط§ط، ظ‚ظٹظˆط¯ ظ…ط¨ط§ط´ط±ط© ظ…ظ† ظ‡ظ†ط§.</em>" : "") +
-            "<div class='lhf-boundary-metrics'><span>ط§ظ„ط³ظ„ظپط© ط§ظ„ظپط¹ظ„ظٹط©: <strong>" + text(boundary.ActualAdvanceId || "-") + "</strong></span>" +
-            "<span>ط£ظ‚ط³ط§ط· ظ…ط±طھط¨ط·ط© ط¨ط§ظ„ظ…ط³ظٹط±: <strong>" + text(boundary.PayrollDeductionLineCount || 0) + "</strong></span>" +
-            "<span>ط£ظ‚ط³ط§ط· ظ…ط±ط­ظ„ط©: <strong>" + text(boundary.PostedPayrollDeductionLineCount || 0) + "</strong></span>" +
-            "<span>ط¥ط¬ظ…ط§ظ„ظٹ ط®طµظ… ط§ظ„ظ…ط³ظٹط±: <strong>" + money(boundary.PayrollDeductionTotal) + "</strong></span>" +
-            "<span>ظ‚ظٹظˆط¯ ظ…ط¨ط§ط´ط±ط© طھط§ط±ظٹط®ظٹط©: <strong>" + text(boundary.NormalJournalLineCount || 0) + "</strong></span>" +
-            "<span>ظ‚ظٹظˆط¯ ط§ظپطھطھط§ط­ظٹط©: <strong>" + text(boundary.OpeningJournalLineCount || 0) + "</strong></span></div>" +
-            (payrollLinks.length ? "<section><h4>ط±ظˆط§ط¨ط· ط®طµظ… ظ…ط³ظٹط± ط§ظ„ط±ظˆط§طھط¨</h4><ul>" + payrollLinks.map(payrollLine).join("") + "</ul></section>" : "<section><h4>ط±ظˆط§ط¨ط· ط®طµظ… ظ…ط³ظٹط± ط§ظ„ط±ظˆط§طھط¨</h4><p>ظ„ط§ طھظˆط¬ط¯ ط£ظ‚ط³ط§ط· ظ…ط±طھط¨ط·ط© ط¨ظ…ط³ظٹط± ط±ظˆط§طھط¨ ط­طھظ‰ ط§ظ„ط¢ظ†.</p></section>") +
-            (directLines.length ? "<section><h4>ظ‚ظٹظˆط¯ ظ…ط¨ط§ط´ط±ط© طھط§ط±ظٹط®ظٹط©</h4><ul>" + directLines.map(traceLine).join("") + "</ul></section>" : "") +
-            (openingLines.length ? "<section><h4>ظ‚ظٹظˆط¯ ط§ظپطھطھط§ط­ظٹط©</h4><ul>" + openingLines.map(traceLine).join("") + "</ul></section>" : "") +
-            "<footer>ط´ط§ط´ط© ط§ظ„ط³ظ„ظپ طھط¹ط±ط¶ ط§ظ„ط£ط«ط± ظپظ‚ط· ظˆظ„ط§ طھظ†ط´ط¦ ط³ظ†ط¯ طµط±ظپ ط£ظˆ ظ‚ظٹط¯ ظٹظˆظ…ظٹط© ظ…ط¨ط§ط´ط±.</footer>";
+        el.innerHTML = "<strong>حدود المحاسبة والسداد للسلفة</strong>" +
+            "<span>" + text(boundary.BoundaryMessage || "لا توجد بيانات أثر محاسبي مؤكدة.") + "</span>" +
+            (boundary.HasUnsupportedAccountingTrace ? "<em>تحذير: يوجد أثر محاسبي تاريخي مباشر غير مدعوم للإنشاء من شاشة السلف. لا يتم إنشاء قيود مباشرة من هنا.</em>" : "") +
+            "<div class='lhf-boundary-metrics'><span>السلفة الفعلية: <strong>" + text(boundary.ActualAdvanceId || "-") + "</strong></span>" +
+            "<span>أقساط مرتبطة بالمسير: <strong>" + text(boundary.PayrollDeductionLineCount || 0) + "</strong></span>" +
+            "<span>أقساط مرحلة: <strong>" + text(boundary.PostedPayrollDeductionLineCount || 0) + "</strong></span>" +
+            "<span>إجمالي خصم المسير: <strong>" + money(boundary.PayrollDeductionTotal) + "</strong></span>" +
+            "<span>قيود مباشرة تاريخية: <strong>" + text(boundary.NormalJournalLineCount || 0) + "</strong></span>" +
+            "<span>قيود افتتاحية: <strong>" + text(boundary.OpeningJournalLineCount || 0) + "</strong></span></div>" +
+            (payrollLinks.length ? "<section><h4>روابط خصم مسير الرواتب</h4><ul>" + payrollLinks.map(payrollLine).join("") + "</ul></section>" : "<section><h4>روابط خصم مسير الرواتب</h4><p>لا توجد أقساط مرتبطة بمسير رواتب حتى الآن.</p></section>") +
+            (directLines.length ? "<section><h4>قيود مباشرة تاريخية</h4><ul>" + directLines.map(traceLine).join("") + "</ul></section>" : "") +
+            (openingLines.length ? "<section><h4>قيود افتتاحية</h4><ul>" + openingLines.map(traceLine).join("") + "</ul></section>" : "") +
+            "<footer>شاشة السلف تعرض الأثر فقط ولا تنشئ سند صرف أو قيد يومية مباشر.</footer>";
     }
 
     function loadAdvanceBoundary(id) {
@@ -430,7 +430,7 @@
             .then(function (res) {
                 if (res && res.success) { setAdvanceBoundary(res.data); }
             }).catch(function () {
-                setAdvanceBoundary({ BoundaryMessage: "طھط¹ط°ط± طھط­ظ…ظٹظ„ ط§ظ„ط­ط¯ظˆط¯ ط§ظ„ظ…ط­ط§ط³ط¨ظٹط© ط§ظ„ط¢ظ†.", HasUnsupportedAccountingTrace: true });
+                setAdvanceBoundary({ BoundaryMessage: "تعذر تحميل الحدود المحاسبية الآن.", HasUnsupportedAccountingTrace: true });
             });
     }
     function showAdvance(data) {
@@ -507,6 +507,9 @@
         var editor = byId("lhfChangedComponentEditor");
         if (editor) {
             editor.hidden = false;
+            if (editor.classList && editor.classList.contains("lhf-quick-entry")) {
+                editor.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
             setTimeout(function () {
                 var first = byId("lhfChangedEmployeeSearch") || byId("lhfChangedEmployeeId");
                 if (first) { first.focus(); }
@@ -532,7 +535,7 @@
             rootEditor.classList.toggle("is-bulk-mode", mode !== "copy");
         }
         var title = byId("lhfChangedBulkTitle");
-        if (title) { title.textContent = mode === "copy" ? "ظ†ط³ط® ظ…ظپط±ط¯ط§طھ ط´ظ‡ط± ط³ط§ط¨ظ‚" : "ط¥ط¯ط®ط§ظ„ ط¬ظ…ط§ط¹ظٹ ظ„ظ„ظ…ظپط±ط¯ط§طھ ط§ظ„ظ…طھط؛ظٹط±ط©"; }
+        if (title) { title.textContent = mode === "copy" ? "نسخ مفردات شهر سابق" : "إدخال جماعي للمفردات المتغيرة"; }
         var component = byId("lhfChangedBulkComponentId");
         if (component) { component.required = mode !== "copy"; }
         var value = byId("lhfChangedBulkValue");
@@ -591,17 +594,17 @@
         var year = parseInt(val("lhfChangedBulkYear") || "0", 10);
         var month = parseInt(val("lhfChangedBulkMonth") || "0", 10);
         var amount = Number(val("lhfChangedBulkValue") || 0);
-        if (year < 2006 || year > 3000) { return "ط³ظ†ط© ط§ظ„ظ‡ط¯ظپ ط؛ظٹط± طµط­ظٹط­ط©."; }
-        if (month < 1 || month > 12) { return "ط´ظ‡ط± ط§ظ„ظ‡ط¯ظپ ط؛ظٹط± طµط­ظٹط­."; }
+        if (year < 2006 || year > 3000) { return "سنة الهدف غير صحيحة."; }
+        if (month < 1 || month > 12) { return "شهر الهدف غير صحيح."; }
         if (mode === "bulk") {
-            if (!val("lhfChangedBulkEmployees")) { return "ط§ظƒطھط¨ ظ…ظˆط¸ظپط§ظ‹ ظˆط§ط­ط¯ط§ظ‹ ط¹ظ„ظ‰ ط§ظ„ط£ظ‚ظ„."; }
-            if (!val("lhfChangedBulkComponentId")) { return "ط§ط®طھط± ط§ظ„ظ…ظپط±ط¯ط©."; }
-            if (!(amount > 0)) { return "ط£ط¯ط®ظ„ ظ‚ظٹظ…ط© ط£ظƒط¨ط± ظ…ظ† طµظپط±."; }
+            if (!val("lhfChangedBulkEmployees")) { return "اكتب موظفاً واحداً على الأقل."; }
+            if (!val("lhfChangedBulkComponentId")) { return "اختر المفردة."; }
+            if (!(amount > 0)) { return "أدخل قيمة أكبر من صفر."; }
         } else {
             var sy = parseInt(val("lhfChangedBulkSourceYear") || "0", 10);
             var sm = parseInt(val("lhfChangedBulkSourceMonth") || "0", 10);
-            if (sy < 2006 || sy > 3000 || sm < 1 || sm > 12) { return "ظپطھط±ط© ط§ظ„ظ…طµط¯ط± ط؛ظٹط± طµط­ظٹط­ط©."; }
-            if (sy === year && sm === month) { return "ظ„ط§ ظٹظ…ظƒظ† ظ†ط³ط® ط§ظ„ط´ظ‡ط± ط¥ظ„ظ‰ ظ†ظپط³ ط§ظ„ظپطھط±ط©."; }
+            if (sy < 2006 || sy > 3000 || sm < 1 || sm > 12) { return "فترة المصدر غير صحيحة."; }
+            if (sy === year && sm === month) { return "لا يمكن نسخ الشهر إلى نفس الفترة."; }
         }
         return "";
     }
@@ -613,12 +616,12 @@
         if (!body || !summary) { return; }
         body.innerHTML = "";
         if (!data || !data.Rows || !data.Rows.length) {
-            summary.textContent = "ط§ظ„ظ…ط¹ط§ظٹظ†ط© ظ…ط·ظ„ظˆط¨ط© ظ‚ط¨ظ„ ط§ظ„ط­ظپط¸.";
+            summary.textContent = "المعاينة مطلوبة قبل الحفظ.";
             if (wrap) { wrap.hidden = true; }
             if (save) { save.disabled = true; }
             return;
         }
-        summary.textContent = "ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ط³ط·ظˆط±: " + data.TotalRows + "طŒ ط§ظ„طµط§ظ„ط­: " + data.ValidRows + "طŒ ط§ظ„ظ…ط±ظپظˆط¶: " + data.InvalidRows + "طŒ ط§ظ„ط¥ط¬ظ…ط§ظ„ظٹ: " + Number(data.TotalValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        summary.textContent = "إجمالي السطور: " + data.TotalRows + "، الصالح: " + data.ValidRows + "، المرفوض: " + data.InvalidRows + "، الإجمالي: " + Number(data.TotalValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         data.Rows.forEach(function (row) {
             var tr = document.createElement("tr");
             tr.className = row.IsValid ? "" : "lhf-row-locked";
@@ -666,18 +669,18 @@
             val("lhfChangedSalary", salary);
         }
         if (!employee || !employee.value || !component || !component.value) {
-            target.textContent = "ط§ط®طھط± ط§ظ„ظ…ظˆط¸ظپ ظˆط§ظ„ظ…ظپط±ط¯ط© ظ„ظ…ط±ط§ط¬ط¹ط© ط§طھط¬ط§ظ‡ ط§ظ„طھط£ط«ظٹط± ظ‚ط¨ظ„ ط§ظ„ط­ظپط¸.";
+            target.textContent = "اختر الموظف والمفردة لمراجعة اتجاه التأثير قبل الحفظ.";
             target.className = "lhf-changed-entry-preview";
             return;
         }
         var isAddition = component.getAttribute("data-add") === "true";
         var unit = parseInt(component.getAttribute("data-unit") || "0", 10);
-        var unitText = unit === 1 ? "ط£ظٹط§ظ…" : unit === 2 ? "ط³ط§ط¹ط§طھ" : "ظ‚ظٹظ…ط© ظ…ط¨ط§ط´ط±ط©";
+        var unitText = unit === 1 ? "أيام" : unit === 2 ? "ساعات" : "قيمة مباشرة";
         var parsedDate = recordDate && !isNaN(Date.parse(recordDate)) ? new Date(recordDate) : null;
         var periodWarning = parsedDate && year > 0 && month > 0 && (parsedDate.getFullYear() !== year || parsedDate.getMonth() + 1 !== month)
-            ? "<em>طھظ†ط¨ظٹظ‡: طھط§ط±ظٹط® ط§ظ„طھط³ط¬ظٹظ„ ط®ط§ط±ط¬ ط´ظ‡ط±/ط³ظ†ط© ط§ظ„ظ…ط³ظٹط±.</em>"
+            ? "<em>تنبيه: تاريخ التسجيل خارج شهر/سنة المسير.</em>"
             : "";
-        target.innerHTML = "<strong>" + text(isAddition ? "ط¥ط¶ط§ظپط©" : "ط®طµظ…") + "</strong>"
+        target.innerHTML = "<strong>" + text(isAddition ? "إضافة" : "خصم") + "</strong>"
             + "<span>" + text(component.textContent || "") + "</span>"
             + "<small>" + text(employee.textContent || "") + " - " + unitText + " - " + money(amount) + "</small>"
             + periodWarning;
@@ -696,7 +699,7 @@
                 var rows = (res && (res.data || res.Data)) || [];
                 if (!rows.length) { filterSelect("lhfChangedEmployeeId", term); return; }
                 var current = select.value;
-                select.innerHTML = '<option value="">ط§ط®طھط± ط§ظ„ظ…ظˆط¸ظپ</option>';
+                select.innerHTML = '<option value="">اختر الموظف</option>';
                 rows.forEach(function (employee) {
                     var option = document.createElement("option");
                     option.value = employee.Id || employee.id;
@@ -726,18 +729,18 @@
         var selectedComponent = componentSelect && componentSelect.options[componentSelect.selectedIndex];
         var unit = selectedComponent ? parseInt(selectedComponent.getAttribute("data-unit") || "0", 10) : 0;
 
-        if (!employeeId) { return "ظٹط¬ط¨ ط§ط®طھظٹط§ط± ط§ظ„ظ…ظˆط¸ظپ."; }
-        if (!componentId) { return "ظٹط¬ط¨ ط§ط®طھظٹط§ط± ط§ظ„ظ…ظپط±ط¯ط©."; }
-        if (!recordDate || isNaN(Date.parse(recordDate))) { return "طھط§ط±ظٹط® ط§ظ„طھط³ط¬ظٹظ„ ط؛ظٹط± طµط­ظٹط­."; }
-        if (year < 2006 || year > 3000) { return "ط³ظ†ط© ط§ظ„ظ…ط³ظٹط± ط؛ظٹط± طµط­ظٹط­ط©."; }
-        if (month < 1 || month > 12) { return "ط´ظ‡ط± ط§ظ„ظ…ط³ظٹط± ط؛ظٹط± طµط­ظٹط­."; }
-        if (!(amount > 0)) { return "ظٹط¬ط¨ ط¥ط¯ط®ط§ظ„ ظ‚ظٹظ…ط© ط£ظƒط¨ط± ظ…ظ† طµظپط±."; }
-        if (amount > 999999999) { return "ظ‚ظٹظ…ط© ط§ظ„ظ…ظپط±ط¯ط© ظƒط¨ظٹط±ط© ط¨ط´ظƒظ„ ط؛ظٹط± ظ…ظ†ط·ظ‚ظٹ."; }
-        if (daysValue < 0 || hoursValue < 0 || minutesValue < 0 || rate < 0 || salary < 0) { return "ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ‚ظٹط§ط³ ظ„ط§ طھظ‚ط¨ظ„ ظ‚ظٹظ…ط§ظ‹ ط³ط§ظ„ط¨ط©."; }
-        if (minutesValue >= 60) { return "ط§ظ„ط¯ظ‚ط§ط¦ظ‚ ظٹط¬ط¨ ط£ظ† طھظƒظˆظ† ط£ظ‚ظ„ ظ…ظ† 60."; }
-        if (unit === 1 && hoursValue > 0) { return "ظ‡ط°ظ‡ ط§ظ„ظ…ظپط±ط¯ط© ظ…ط­ط³ظˆط¨ط© ط¨ط§ظ„ط£ظٹط§ظ…. ظ„ط§ طھط³ط¬ظ„ ط³ط§ط¹ط§طھ ط¹ظ„ظٹظ‡ط§."; }
-        if (unit === 2 && daysValue > 0) { return "ظ‡ط°ظ‡ ط§ظ„ظ…ظپط±ط¯ط© ظ…ط­ط³ظˆط¨ط© ط¨ط§ظ„ط³ط§ط¹ط§طھ. ظ„ط§ طھط³ط¬ظ„ ط£ظٹط§ظ… ط¹ظ„ظٹظ‡ط§."; }
-        if (unit !== 1 && unit !== 2 && (daysValue > 0 || hoursValue > 0 || minutesValue > 0 || rate > 0)) { return "ظ‡ط°ظ‡ ط§ظ„ظ…ظپط±ط¯ط© ظ‚ظٹظ…طھظ‡ط§ ظ…ط¨ط§ط´ط±ط©. ظ„ط§ طھط­طھط§ط¬ ط£ظٹط§ظ… ط£ظˆ ط³ط§ط¹ط§طھ ط£ظˆ ظ…ط¹ط¯ظ„."; }
+        if (!employeeId) { return "يجب اختيار الموظف."; }
+        if (!componentId) { return "يجب اختيار المفردة."; }
+        if (!recordDate || isNaN(Date.parse(recordDate))) { return "تاريخ التسجيل غير صحيح."; }
+        if (year < 2006 || year > 3000) { return "سنة المسير غير صحيحة."; }
+        if (month < 1 || month > 12) { return "شهر المسير غير صحيح."; }
+        if (!(amount > 0)) { return "يجب إدخال قيمة أكبر من صفر."; }
+        if (amount > 999999999) { return "قيمة المفردة كبيرة بشكل غير منطقي."; }
+        if (daysValue < 0 || hoursValue < 0 || minutesValue < 0 || rate < 0 || salary < 0) { return "بيانات القياس لا تقبل قيماً سالبة."; }
+        if (minutesValue >= 60) { return "الدقائق يجب أن تكون أقل من 60."; }
+        if (unit === 1 && hoursValue > 0) { return "هذه المفردة محسوبة بالأيام. لا تسجل ساعات عليها."; }
+        if (unit === 2 && daysValue > 0) { return "هذه المفردة محسوبة بالساعات. لا تسجل أيام عليها."; }
+        if (unit !== 1 && unit !== 2 && (daysValue > 0 || hoursValue > 0 || minutesValue > 0 || rate > 0)) { return "هذه المفردة قيمتها مباشرة. لا تحتاج أيام أو ساعات أو معدل."; }
         return "";
     }
     function filterAdvanceEmployees(text) {
@@ -760,7 +763,7 @@
             alert(message(res, options.successText));
             window.location.reload();
         }).catch(function () {
-            alert("طھط¹ط°ط± ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ…. ط¨ط±ط¬ط§ط، ط§ظ„ظ…ط­ط§ظˆظ„ط© ظ…ط±ط© ط£ط®ط±ظ‰.");
+            alert("تعذر الاتصال بالخادم. برجاء المحاولة مرة أخرى.");
             setButtonBusy(button, false);
         });
     }
@@ -778,34 +781,34 @@
 
         var html = "<div class='lhf-vac-balance-status " + statusClass + "'>" +
             "<strong>" + statusText + "</strong>" +
-            "<span>" + (data.EmployeeName || data.employeeName || "ط§ظ„ظ…ظˆط¸ظپ ط§ظ„ظ…ط­ط¯ط¯") + "</span>" +
+            "<span>" + (data.EmployeeName || data.employeeName || "الموظف المحدد") + "</span>" +
             "</div>";
 
         html += "<div class='lhf-vac-balance-grid'>" +
-            "<article><span>ط§ظ„ط±طµظٹط¯ ط§ظ„ط³ظ†ظˆظٹ</span><strong>" + days(data.AnnualEntitlementDays || data.annualEntitlementDays) + "</strong></article>" +
-            "<article><span>ط§ظ„ظ…ط³طھط­ظ‚ ط­طھظ‰ ط§ظ„طھط§ط±ظٹط®</span><strong>" + days(data.AccruedDays || data.accruedDays) + "</strong></article>" +
-            "<article><span>ط§ظ„ط±طµظٹط¯ ط§ظ„ط§ظپطھطھط§ط­ظٹ</span><strong>" + days(data.OpeningBalanceDays || data.openingBalanceDays) + "</strong></article>" +
-            "<article><span>ط§ظ„ظ…ط±ط­ظ„ ظ…ظ† ط³ظ†ظˆط§طھ ط³ط§ط¨ظ‚ط©</span><strong>" + days(data.CarryOverDays || data.carryOverDays) + "</strong></article>" +
-            "<article><span>ط§ظ„ظ…ط³طھظ‡ظ„ظƒ ظˆط§ظ„ظ…ط¯ظپظˆط¹</span><strong>" + days(data.PaidVacationConsumedDays || data.paidVacationConsumedDays) + "</strong></article>" +
-            "<article><span>ط·ظ„ط¨ط§طھ ظ…ط¹طھظ…ط¯ط© ط؛ظٹط± ظ…ط³ظˆط§ط©</span><strong>" + days(data.PendingApprovedDays || data.pendingApprovedDays) + "</strong></article>" +
-            "<article><span>ط¨ط¯ظˆظ† ط±ط§طھط¨ / ط؛ظٹط§ط¨</span><strong>" + days(Number(data.UnpaidLeaveDays || data.unpaidLeaveDays || 0) + Number(data.AbsenceDeductionDays || data.absenceDeductionDays || 0)) + "</strong></article>" +
+            "<article><span>الرصيد السنوي</span><strong>" + days(data.AnnualEntitlementDays || data.annualEntitlementDays) + "</strong></article>" +
+            "<article><span>المستحق حتى التاريخ</span><strong>" + days(data.AccruedDays || data.accruedDays) + "</strong></article>" +
+            "<article><span>الرصيد الافتتاحي</span><strong>" + days(data.OpeningBalanceDays || data.openingBalanceDays) + "</strong></article>" +
+            "<article><span>المرحل من سنوات سابقة</span><strong>" + days(data.CarryOverDays || data.carryOverDays) + "</strong></article>" +
+            "<article><span>المستهلك والمدفوع</span><strong>" + days(data.PaidVacationConsumedDays || data.paidVacationConsumedDays) + "</strong></article>" +
+            "<article><span>طلبات معتمدة غير مسواة</span><strong>" + days(data.PendingApprovedDays || data.pendingApprovedDays) + "</strong></article>" +
+            "<article><span>بدون راتب / غياب</span><strong>" + days(Number(data.UnpaidLeaveDays || data.unpaidLeaveDays || 0) + Number(data.AbsenceDeductionDays || data.absenceDeductionDays || 0)) + "</strong></article>" +
             "<article><span>الأيام المطلوبة</span><strong>" + days(data.RequestedDays || data.requestedDays) + "</strong></article>" +
-            "<article><span>ط§ظ„ظ…طھط§ط­ ظ‚ط¨ظ„ ط§ظ„ط·ظ„ط¨</span><strong>" + days(data.AvailableBeforeRequest || data.availableBeforeRequest) + "</strong></article>" +
-            "<article class='lhf-vac-net'><span>ط§ظ„ظ…طھط§ط­ ط¨ط¹ط¯ ط§ظ„ط·ظ„ط¨</span><strong>" + days(data.AvailableAfterRequest || data.availableAfterRequest) + "</strong></article>" +
+            "<article><span>المتاح قبل الطلب</span><strong>" + days(data.AvailableBeforeRequest || data.availableBeforeRequest) + "</strong></article>" +
+            "<article class='lhf-vac-net'><span>المتاح بعد الطلب</span><strong>" + days(data.AvailableAfterRequest || data.availableAfterRequest) + "</strong></article>" +
             "</div>";
 
         if (errors.length) {
-            html += "<div class='lhf-vac-errors'><strong>ط£ط®ط·ط§ط، طھظ…ظ†ط¹ ط§ظ„ط§ط¹طھظ…ط§ط¯</strong><ul>" +
+            html += "<div class='lhf-vac-errors'><strong>أخطاء تمنع الاعتماد</strong><ul>" +
                 errors.map(function (item) { return "<li>" + item + "</li>"; }).join("") +
                 "</ul></div>";
         }
         if (warnings.length) {
-            html += "<div class='lhf-vac-warnings'><strong>طھظ†ط¨ظٹظ‡ط§طھ</strong><ul>" +
+            html += "<div class='lhf-vac-warnings'><strong>تنبيهات</strong><ul>" +
                 warnings.map(function (item) { return "<li>" + item + "</li>"; }).join("") +
                 "</ul></div>";
         }
         if (lines.length) {
-            html += "<div class='lhf-vac-line-list'><strong>طھظپط§طµظٹظ„ ط§ظ„ط­ط³ط§ط¨</strong><table><thead><tr><th>ط§ظ„ظ…طµط¯ط±</th><th>ط§ظ„ط¨ظٹط§ظ†</th><th>ط§ظ„ط£ط«ط±</th><th>ط§ظ„ط£ظٹط§ظ…</th></tr></thead><tbody>" +
+            html += "<div class='lhf-vac-line-list'><strong>تفاصيل الحساب</strong><table><thead><tr><th>المصدر</th><th>البيان</th><th>الأثر</th><th>الأيام</th></tr></thead><tbody>" +
                 lines.map(function (line) {
                     return "<tr><td>" + (line.Source || line.source || "-") + "</td>" +
                         "<td>" + (line.Description || line.description || "-") + "</td>" +
@@ -822,11 +825,11 @@
         var employeeId = val("lhfVacationEmployeeId");
         if (!result || !url) { return; }
         if (!employeeId) {
-            result.innerHTML = "<div class='lhf-vac-errors'>ط§ط®طھط± ط§ظ„ظ…ظˆط¸ظپ ط£ظˆظ„ط§ ظ„ط­ط³ط§ط¨ ط±طµظٹط¯ ط§ظ„ط¥ط¬ط§ط²ط§طھ.</div>";
+            result.innerHTML = "<div class='lhf-vac-errors'>اختر الموظف أولا لحساب رصيد الإجازات.</div>";
             return;
         }
-        if (!setButtonBusy(button, true, "ط¬ط§ط±ظٹ ط§ظ„ط­ط³ط§ط¨...")) { return; }
-        result.innerHTML = "<div class='lhf-vac-loading'>ط¬ط§ط±ظٹ ط­ط³ط§ط¨ ط§ظ„ط±طµظٹط¯ ظ…ظ† ط¨ظٹط§ظ†ط§طھ ط§ظ„ط¥ط¬ط§ط²ط§طھ ط§ظ„ظپط¹ظ„ظٹط©...</div>";
+        if (!setButtonBusy(button, true, "جاري الحساب...")) { return; }
+        result.innerHTML = "<div class='lhf-vac-loading'>جاري حساب الرصيد من بيانات الإجازات الفعلية...</div>";
         var params = new URLSearchParams();
         params.set("employeeId", employeeId);
         if (val("lhfVacationAsOfDate")) { params.set("asOfDate", val("lhfVacationAsOfDate")); }
@@ -840,7 +843,7 @@
                 renderVacationBalance(res);
                 setButtonBusy(button, false);
             }).catch(function () {
-                result.innerHTML = "<div class='lhf-vac-errors'>طھط¹ط°ط± ط­ط³ط§ط¨ ط±طµظٹط¯ ط§ظ„ط¥ط¬ط§ط²ط§طھ ط§ظ„ط¢ظ†. ط±ط§ط¬ط¹ ط§ظ„ط§طھطµط§ظ„ ط£ظˆ طµظ„ط§ط­ظٹط§طھ ط§ظ„ط´ط§ط´ط©.</div>";
+                result.innerHTML = "<div class='lhf-vac-errors'>تعذر حساب رصيد الإجازات الآن. راجع الاتصال أو صلاحيات الشاشة.</div>";
                 setButtonBusy(button, false);
             });
     }
@@ -894,8 +897,8 @@
         var selected = employee && employee.options[employee.selectedIndex];
         if (meta) {
             meta.innerHTML = selected && selected.value
-                ? "ط§ظ„ظپط±ط¹: <strong>" + text(selected.getAttribute("data-branch") || "-") + "</strong> | ط§ظ„ط¥ط¯ط§ط±ط©: <strong>" + text(selected.getAttribute("data-department") || "-") + "</strong> | ط§ظ„ط±ط§طھط¨ ط§ظ„ط£ط³ط§ط³ظٹ: <strong>" + money(selected.getAttribute("data-salary") || 0) + "</strong>"
-                : "ط§ط®طھط± ظ…ظˆط¸ظپظ‹ط§ ظ„ط¹ط±ط¶ ط§ظ„ظپط±ط¹ ظˆط§ظ„ط¥ط¯ط§ط±ط© ظˆط§ظ„ط±ط§طھط¨ ط§ظ„ط£ط³ط§ط³ظٹ.";
+                ? "الفرع: <strong>" + text(selected.getAttribute("data-branch") || "-") + "</strong> | الإدارة: <strong>" + text(selected.getAttribute("data-department") || "-") + "</strong> | الراتب الأساسي: <strong>" + money(selected.getAttribute("data-salary") || 0) + "</strong>"
+                : "اختر موظفًا لعرض الفرع والإدارة والراتب الأساسي.";
         }
         if (summary) {
             var from = val("lhfVacationRequestFromDate");
@@ -903,14 +906,14 @@
             var resume = val("lhfVacationRequestResumeWork");
             var count = dateDiffDays(from, to);
             summary.innerHTML = count > 0
-                ? "ط§ظ„ظپطھط±ط© ط§ظ„ظ…ط®طھط§ط±ط©: <strong>" + days(count) + "</strong>" + (resume ? " | ط¹ظˆط¯ط© ط§ظ„ط¹ظ…ظ„: <strong>" + text(resume) + "</strong>" : "")
-                : "ط­ط¯ط¯ ظپطھط±ط© ط§ظ„ط¥ط¬ط§ط²ط© ظ„ط­ط³ط§ط¨ ط§ظ„ط£ظٹط§ظ… ظˆظ…ظˆط¹ط¯ ط§ظ„ط¹ظˆط¯ط©.";
+                ? "الفترة المختارة: <strong>" + days(count) + "</strong>" + (resume ? " | عودة العمل: <strong>" + text(resume) + "</strong>" : "")
+                : "حدد فترة الإجازة لحساب الأيام وموعد العودة.";
         }
         if (conflict) {
             var conflicts = detectVacationConflict(val("lhfVacationRequestEmployeeId"), val("lhfVacationRequestFromDate"), val("lhfVacationRequestToDate"), val("lhfVacationId"));
             conflict.hidden = conflicts.length === 0;
             conflict.innerHTML = conflicts.length
-                ? "<strong>طھظ†ط¨ظٹظ‡ طھط¹ط§ط±ط¶ ظ…ط­طھظ…ظ„</strong><span>ظٹظˆط¬ط¯ ط·ظ„ط¨ ط¥ط¬ط§ط²ط© ظ„ظ†ظپط³ ط§ظ„ظ…ظˆط¸ظپ ط¯ط§ط®ظ„ ظ†ظپط³ ط§ظ„ظپطھط±ط©: " + conflicts.map(function (x) { return "#" + text(x.id) + " (" + text(x.from) + " - " + text(x.to) + ")"; }).join("طŒ ") + "</span>"
+                ? "<strong>تنبيه تعارض محتمل</strong><span>يوجد طلب إجازة لنفس الموظف داخل نفس الفترة: " + conflicts.map(function (x) { return "#" + text(x.id) + " (" + text(x.from) + " - " + text(x.to) + ")"; }).join("، ") + "</span>"
                 : "";
         }
     }
@@ -929,14 +932,14 @@
         if (!byId("lhfVacationEmployeeMeta")) {
             var summary = document.createElement("div");
             summary.className = "lhf-vacation-request-summary lhf-span-3";
-            summary.innerHTML = "<div id='lhfVacationEmployeeMeta'>ط§ط®طھط± ظ…ظˆط¸ظپظ‹ط§ ظ„ط¹ط±ط¶ ط§ظ„ظپط±ط¹ ظˆط§ظ„ط¥ط¯ط§ط±ط© ظˆط§ظ„ط±ط§طھط¨ ط§ظ„ط£ط³ط§ط³ظٹ.</div><div id='lhfVacationDateSummary'>ط­ط¯ط¯ ظپطھط±ط© ط§ظ„ط¥ط¬ط§ط²ط© ظ„ط­ط³ط§ط¨ ط§ظ„ط£ظٹط§ظ… ظˆظ…ظˆط¹ط¯ ط§ظ„ط¹ظˆط¯ط©.</div>";
+            summary.innerHTML = "<div id='lhfVacationEmployeeMeta'>اختر موظفًا لعرض الفرع والإدارة والراتب الأساسي.</div><div id='lhfVacationDateSummary'>حدد فترة الإجازة لحساب الأيام وموعد العودة.</div>";
             balance.parentNode.insertBefore(summary, balance);
         }
         if (!byId("lhfVacationTimeline")) {
             var timeline = document.createElement("div");
             timeline.className = "lhf-vacation-timeline lhf-span-3";
             timeline.id = "lhfVacationTimeline";
-            timeline.innerHTML = "<strong>ظ…ط³ط§ط± ط§ظ„ط§ط¹طھظ…ط§ط¯</strong><ol><li class='done'>ط¥ط±ط³ط§ظ„ ط§ظ„ط·ظ„ط¨</li><li>ط§ط¹طھظ…ط§ط¯ ط§ظ„ظ…ط¯ظٹط±</li><li>ط§ط¹طھظ…ط§ط¯ ط§ظ„ظ…ظˆط§ط±ط¯ ط§ظ„ط¨ط´ط±ظٹط©</li></ol>";
+            timeline.innerHTML = "<strong>مسار الاعتماد</strong><ol><li class='done'>إرسال الطلب</li><li>اعتماد المدير</li><li>اعتماد الموارد البشرية</li></ol>";
             balance.parentNode.insertBefore(timeline, balance.nextSibling);
         }
     }
@@ -948,10 +951,10 @@
         var managerDone = !!(data.ManagerApproved || data.managerApproved);
         var hrDone = !!(data.HrApproved || data.hrApproved);
         var rejected = !!(data.Rejected || data.rejected);
-        var html = "<strong>ظ…ط³ط§ط± ط§ظ„ط§ط¹طھظ…ط§ط¯</strong><ol>" +
-            "<li class='done'>ط¥ط±ط³ط§ظ„ ط§ظ„ط·ظ„ط¨</li>" +
-            "<li class='" + (managerDone ? "done" : rejected ? "danger" : "") + "'>ط§ط¹طھظ…ط§ط¯ ط§ظ„ظ…ط¯ظٹط±</li>" +
-            "<li class='" + (hrDone ? "done" : rejected ? "danger" : "") + "'>ط§ط¹طھظ…ط§ط¯ ط§ظ„ظ…ظˆط§ط±ط¯ ط§ظ„ط¨ط´ط±ظٹط©</li>" +
+        var html = "<strong>مسار الاعتماد</strong><ol>" +
+            "<li class='done'>إرسال الطلب</li>" +
+            "<li class='" + (managerDone ? "done" : rejected ? "danger" : "") + "'>اعتماد المدير</li>" +
+            "<li class='" + (hrDone ? "done" : rejected ? "danger" : "") + "'>اعتماد الموارد البشرية</li>" +
             "</ol>";
         if (history.length) {
             html += "<div class='lhf-vacation-history'>";
@@ -972,7 +975,7 @@
         val("lhfVacationRequestFromDate", isoDate(data.FromDate || today()));
         val("lhfVacationRequestToDate", isoDate(data.ToDate || today()));
         val("lhfVacationRequestResumeWork", isoDate(data.ResumeWork || ""));
-        val("lhfVacationRequestType", data.VacationType || "ط¥ط¬ط§ط²ط© ط³ظ†ظˆظٹط©");
+        val("lhfVacationRequestType", data.VacationType || "إجازة سنوية");
         val("lhfVacationWithSalary", data.WithSalary == null ? true : data.WithSalary);
         val("lhfVacationWithoutSalary", data.WithoutSalary || false);
         val("lhfVacationReason", data.Reason || "");
@@ -981,11 +984,11 @@
         var banner = byId("lhfVacationLockBanner");
         if (banner) {
             banner.hidden = data.CanEdit !== false;
-            banner.textContent = data.CanEdit === false ? (data.LockReason || "ظ‡ط°ط§ ط§ظ„ط·ظ„ط¨ ظ…ظ‚ظپظ„ ظˆظ„ط§ ظٹظ…ظƒظ† طھط¹ط¯ظٹظ„ظ‡.") : "";
+            banner.textContent = data.CanEdit === false ? (data.LockReason || "هذا الطلب مقفل ولا يمكن تعديله.") : "";
         }
         setVacationMessage("");
         var result = byId("lhfVacationRequestBalance");
-        if (result) { result.innerHTML = "ط³ظٹطھظ… ط­ط³ط§ط¨ ط§ظ„ط±طµظٹط¯ ظ‚ط¨ظ„ ط§ظ„ط­ظپط¸."; }
+        if (result) { result.innerHTML = "سيتم حساب الرصيد قبل الحفظ."; }
         updateVacationPreview();
         renderVacationTimeline(data);
         byId("lhfVacationEditor").hidden = false;
@@ -1010,14 +1013,14 @@
         if (!setButtonBusy(button, true, busyText)) { return; }
         postForm(url, { id: id, remarks: remarks, __RequestVerificationToken: token() }).then(function (res) {
             if (!success(res)) {
-                alert(message(res, "طھط¹ط°ط± طھظ†ظپظٹط° ط§ظ„ط¥ط¬ط±ط§ط، ط¹ظ„ظ‰ ط·ظ„ط¨ ط§ظ„ط¥ط¬ط§ط²ط©."));
+                alert(message(res, "تعذر تنفيذ الإجراء على طلب الإجازة."));
                 setButtonBusy(button, false);
                 return;
             }
             alert(message(res, successText));
             window.location.reload();
         }).catch(function () {
-            alert("طھط¹ط°ط± ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ….");
+            alert("تعذر الاتصال بالخادم.");
             setButtonBusy(button, false);
         });
     }
@@ -1034,20 +1037,20 @@
         if (previewChangedBulk) {
             var bulkError = validateChangedBulkClient();
             if (bulkError) { setChangedBulkMessage(bulkError, true); return; }
-            if (!setButtonBusy(previewChangedBulk, true, "ظ…ط¹ط§ظٹظ†ط©...")) { return; }
-            setChangedBulkMessage("ط¬ط§ط±ظٹ ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ط§ظ„ط³ط·ظˆط±...");
+            if (!setButtonBusy(previewChangedBulk, true, "معاينة...")) { return; }
+            setChangedBulkMessage("جاري التحقق من السطور...");
             postForm(root.getAttribute("data-preview-changed-component-bulk-url"), collectChangedBulk()).then(function (res) {
                 setButtonBusy(previewChangedBulk, false);
                 if (!success(res)) {
-                    setChangedBulkMessage(message(res, "طھط¹ط°ط± ط¥ظ†ط´ط§ط، ط§ظ„ظ…ط¹ط§ظٹظ†ط©."), true);
+                    setChangedBulkMessage(message(res, "تعذر إنشاء المعاينة."), true);
                     renderChangedBulkPreview(null);
                     return;
                 }
                 renderChangedBulkPreview(res.data || res.Data);
-                setChangedBulkMessage(message(res, "طھظ…طھ ط§ظ„ظ…ط¹ط§ظٹظ†ط©."));
+                setChangedBulkMessage(message(res, "تمت المعاينة."));
             }).catch(function () {
                 setButtonBusy(previewChangedBulk, false);
-                setChangedBulkMessage("طھط¹ط°ط± ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ….", true);
+                setChangedBulkMessage("تعذر الاتصال بالخادم.", true);
                 renderChangedBulkPreview(null);
             });
             return;
@@ -1055,18 +1058,18 @@
         var saveChangedBulk = event.target.closest("[data-save-changed-bulk]");
         if (saveChangedBulk) {
             if (saveChangedBulk.disabled) { return; }
-            if (!confirm("ط³ظٹطھظ… ط­ظپط¸ ط§ظ„ط³ط·ظˆط± ط§ظ„طµط§ظ„ط­ط© ظپظ‚ط· ط¨ط¹ط¯ ط¥ط¹ط§ط¯ط© ط§ظ„طھط­ظ‚ظ‚ ط¹ظ„ظ‰ ط§ظ„ط®ط§ط¯ظ…. ظ…طھط§ط¨ط¹ط©طں")) { return; }
-            if (!setButtonBusy(saveChangedBulk, true, "ط­ظپط¸...")) { return; }
-            setChangedBulkMessage("ط¬ط§ط±ظٹ ط§ظ„ط­ظپط¸...");
+            if (!confirm("سيتم حفظ السطور الصالحة فقط بعد إعادة التحقق على الخادم. متابعة؟")) { return; }
+            if (!setButtonBusy(saveChangedBulk, true, "حفظ...")) { return; }
+            setChangedBulkMessage("جاري الحفظ...");
             postForm(root.getAttribute("data-save-changed-component-bulk-url"), collectChangedBulk()).then(function (res) {
                 if (!success(res)) {
-                    setChangedBulkMessage(message(res, "طھط¹ط°ط± ط­ظپط¸ ط§ظ„ط¯ظپط¹ط©."), true);
+                    setChangedBulkMessage(message(res, "تعذر حفظ الدفعة."), true);
                     setButtonBusy(saveChangedBulk, false);
                     return;
                 }
                 window.location.reload();
             }).catch(function () {
-                setChangedBulkMessage("طھط¹ط°ط± ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ….", true);
+                setChangedBulkMessage("تعذر الاتصال بالخادم.", true);
                 setButtonBusy(saveChangedBulk, false);
             });
             return;
@@ -1080,44 +1083,44 @@
 
         var editVacation = event.target.closest("[data-edit-vacation]");
         if (editVacation) {
-            if (!setButtonBusy(editVacation, true, "طھط­ظ…ظٹظ„...")) { return; }
+            if (!setButtonBusy(editVacation, true, "تحميل...")) { return; }
             fetch(root.getAttribute("data-vacation-details-url") + "?id=" + encodeURIComponent(editVacation.getAttribute("data-edit-vacation")), { credentials: "same-origin" })
                 .then(function (r) { return r.json(); })
                 .then(function (res) {
                     setButtonBusy(editVacation, false);
-                    if (res.success) { showVacation(res.data); } else { alert(res.message || "طھط¹ط°ط± طھط­ظ…ظٹظ„ ط·ظ„ط¨ ط§ظ„ط¥ط¬ط§ط²ط©."); }
+                    if (res.success) { showVacation(res.data); } else { alert(res.message || "تعذر تحميل طلب الإجازة."); }
                 }).catch(function () {
                     setButtonBusy(editVacation, false);
-                    alert("طھط¹ط°ط± ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ….");
+                    alert("تعذر الاتصال بالخادم.");
                 });
             return;
         }
         var managerApproveVacation = event.target.closest("[data-manager-approve-vacation]");
         if (managerApproveVacation) {
-            runVacationAction(managerApproveVacation, root.getAttribute("data-manager-approve-vacation-url"), managerApproveVacation.getAttribute("data-manager-approve-vacation"), "ظ…ظ„ط§ط­ط¸ط§طھ ط§ط¹طھظ…ط§ط¯ ط§ظ„ظ…ط¯ظٹط±", "ط§ط¹طھظ…ط§ط¯...", "طھظ… ط§ط¹طھظ…ط§ط¯ ط·ظ„ط¨ ط§ظ„ط¥ط¬ط§ط²ط© ظ…ظ† ط§ظ„ظ…ط¯ظٹط±.");
+            runVacationAction(managerApproveVacation, root.getAttribute("data-manager-approve-vacation-url"), managerApproveVacation.getAttribute("data-manager-approve-vacation"), "ملاحظات اعتماد المدير", "اعتماد...", "تم اعتماد طلب الإجازة من المدير.");
             return;
         }
         var hrApproveVacation = event.target.closest("[data-hr-approve-vacation]");
         if (hrApproveVacation) {
-            runVacationAction(hrApproveVacation, root.getAttribute("data-hr-approve-vacation-url"), hrApproveVacation.getAttribute("data-hr-approve-vacation"), "ظ…ظ„ط§ط­ط¸ط§طھ ط§ط¹طھظ…ط§ط¯ ط§ظ„ظ…ظˆط§ط±ط¯ ط§ظ„ط¨ط´ط±ظٹط©", "ط§ط¹طھظ…ط§ط¯...", "طھظ… ط§ط¹طھظ…ط§ط¯ ط·ظ„ط¨ ط§ظ„ط¥ط¬ط§ط²ط© ظ…ظ† ط§ظ„ظ…ظˆط§ط±ط¯ ط§ظ„ط¨ط´ط±ظٹط©.");
+            runVacationAction(hrApproveVacation, root.getAttribute("data-hr-approve-vacation-url"), hrApproveVacation.getAttribute("data-hr-approve-vacation"), "ملاحظات اعتماد الموارد البشرية", "اعتماد...", "تم اعتماد طلب الإجازة من الموارد البشرية.");
             return;
         }
         var rejectVacation = event.target.closest("[data-reject-vacation]");
         if (rejectVacation) {
-            runVacationAction(rejectVacation, root.getAttribute("data-reject-vacation-url"), rejectVacation.getAttribute("data-reject-vacation"), "ط³ط¨ط¨ ط±ظپط¶ ط·ظ„ط¨ ط§ظ„ط¥ط¬ط§ط²ط©", "ط±ظپط¶...", "طھظ… ط±ظپط¶ ط·ظ„ط¨ ط§ظ„ط¥ط¬ط§ط²ط©.");
+            runVacationAction(rejectVacation, root.getAttribute("data-reject-vacation-url"), rejectVacation.getAttribute("data-reject-vacation"), "سبب رفض طلب الإجازة", "رفض...", "تم رفض طلب الإجازة.");
             return;
         }
         var createVacationEntitlement = event.target.closest("[data-create-vacation-entitlement]");
         if (createVacationEntitlement) {
-            if (!confirm("طھط£ظƒظٹط¯ ط¥ظ†ط´ط§ط، ظ…ط³طھظ†ط¯ ظ…ط³طھط­ظ‚ط§طھ ظ„ظ‡ط°ط§ ط§ظ„ط·ظ„ط¨طں ظ„ظ† ظٹطھظ… ط¥ظ†ط´ط§ط، ظ‚ظٹظˆط¯ ط£ظˆ طھط±ط­ظٹظ„ ط±ظˆط§طھط¨ ظ…ظ† ظ‡ط°ظ‡ ط§ظ„ط´ط§ط´ط©.")) { return; }
-            runVacationAction(createVacationEntitlement, root.getAttribute("data-create-vacation-entitlement-url"), createVacationEntitlement.getAttribute("data-create-vacation-entitlement"), "", "ط¥ظ†ط´ط§ط،...", "طھظ… ط¥ظ†ط´ط§ط، ظ…ط³طھظ†ط¯ ظ…ط³طھط­ظ‚ط§طھ ط§ظ„ط¥ط¬ط§ط²ط©.");
+            if (!confirm("تأكيد إنشاء مستند مستحقات لهذا الطلب؟ لن يتم إنشاء قيود أو ترحيل رواتب من هذه الشاشة.")) { return; }
+            runVacationAction(createVacationEntitlement, root.getAttribute("data-create-vacation-entitlement-url"), createVacationEntitlement.getAttribute("data-create-vacation-entitlement"), "", "إنشاء...", "تم إنشاء مستند مستحقات الإجازة.");
             return;
         }
         var deleteVacationEntitlement = event.target.closest("[data-delete-vacation-entitlement]");
         if (deleteVacationEntitlement) {
-            var typed = prompt("ظ„ط­ط°ظپ ظ…ط³طھظ†ط¯ ط§ظ„ظ…ط³طھط­ظ‚ط§طھ ط§ظƒطھط¨ ط­ط°ظپ. ظ„ظ† ظٹط³ظ…ط­ ط§ظ„ط­ط°ظپ ط¥ط°ط§ ظƒط§ظ† ظ…ط±طھط¨ط·ط§ ط¨ط¯ظپط¹ ط£ظˆ ظ…ط³ظٹط±.");
-            if (typed !== "ط­ط°ظپ") { return; }
-            runVacationAction(deleteVacationEntitlement, root.getAttribute("data-delete-vacation-entitlement-url"), deleteVacationEntitlement.getAttribute("data-delete-vacation-entitlement"), "", "ط­ط°ظپ...", "طھظ… ط­ط°ظپ ظ…ط³طھظ†ط¯ ظ…ط³طھط­ظ‚ط§طھ ط§ظ„ط¥ط¬ط§ط²ط©.");
+            var typed = prompt("لحذف مستند المستحقات اكتب حذف. لن يسمح الحذف إذا كان مرتبطا بدفع أو مسير.");
+            if (typed !== "حذف") { return; }
+            runVacationAction(deleteVacationEntitlement, root.getAttribute("data-delete-vacation-entitlement-url"), deleteVacationEntitlement.getAttribute("data-delete-vacation-entitlement"), "", "حذف...", "تم حذف مستند مستحقات الإجازة.");
             return;
         }
         var saveVacationReturn = event.target.closest("[data-save-vacation-return]");
@@ -1125,20 +1128,20 @@
             var entitlementId = saveVacationReturn.getAttribute("data-save-vacation-return");
             var startDate = saveVacationReturn.getAttribute("data-vacation-start") || "";
             var endDate = saveVacationReturn.getAttribute("data-vacation-end") || "";
-            var actualReturnDate = prompt("طھط§ط±ظٹط® ط§ظ„ظ…ط¨ط§ط´ط±ط© ط§ظ„ظپط¹ظ„ظٹ ط¨طµظٹط؛ط© yyyy-mm-dd", saveVacationReturn.getAttribute("data-vacation-actual") || endDate);
+            var actualReturnDate = prompt("تاريخ المباشرة الفعلي بصيغة yyyy-mm-dd", saveVacationReturn.getAttribute("data-vacation-actual") || endDate);
             if (actualReturnDate === null) { return; }
-            var actualDays = prompt("ط¹ط¯ط¯ ط£ظٹط§ظ… ط§ظ„ط¥ط¬ط§ط²ط© ط§ظ„ظپط¹ظ„ظٹط©", saveVacationReturn.getAttribute("data-vacation-actual-days") || "");
+            var actualDays = prompt("عدد أيام الإجازة الفعلية", saveVacationReturn.getAttribute("data-vacation-actual-days") || "");
             if (actualDays === null) { return; }
-            var delayDays = prompt("ط¹ط¯ط¯ ط£ظٹط§ظ… ط§ظ„طھط£ط®ظٹط±", saveVacationReturn.getAttribute("data-vacation-delay-days") || "0");
+            var delayDays = prompt("عدد أيام التأخير", saveVacationReturn.getAttribute("data-vacation-delay-days") || "0");
             if (delayDays === null) { return; }
             var treatment = "none";
             if (Number(delayDays || 0) > 0) {
-                treatment = prompt("ط·ط±ظٹظ‚ط© ظ…ط¹ط§ظ„ط¬ط© ط§ظ„طھط£ط®ظٹط±: unpaid = ط¨ط¯ظˆظ† ط±ط§طھط¨طŒ balance = ط®طµظ… ظ…ظ† ط§ظ„ط±طµظٹط¯", "unpaid");
+                treatment = prompt("طريقة معالجة التأخير: unpaid = بدون راتب، balance = خصم من الرصيد", "unpaid");
                 if (treatment === null) { return; }
             }
-            var remarks = prompt("ظ…ظ„ط§ط­ط¸ط§طھ ط§ظ„ظ…ط¨ط§ط´ط±ط©", "ظ…ط¨ط§ط´ط±ط© ط¹ظ…ظ„ ظ…ظ† ط§ظ„ظˆظٹط¨");
+            var remarks = prompt("ملاحظات المباشرة", "مباشرة عمل من الويب");
             if (remarks === null) { return; }
-            if (!setButtonBusy(saveVacationReturn, true, "ط­ظپط¸...")) { return; }
+            if (!setButtonBusy(saveVacationReturn, true, "حفظ...")) { return; }
             postForm(root.getAttribute("data-save-vacation-return-url"), {
                 EntitlementId: entitlementId,
                 ActualReturnDate: actualReturnDate,
@@ -1149,49 +1152,49 @@
                 __RequestVerificationToken: token()
             }).then(function (res) {
                 if (!success(res)) {
-                    alert(message(res, "طھط¹ط°ط± طھط³ط¬ظٹظ„ ظ…ط¨ط§ط´ط±ط© ط§ظ„ط¹ظ…ظ„."));
+                    alert(message(res, "تعذر تسجيل مباشرة العمل."));
                     setButtonBusy(saveVacationReturn, false);
                     return;
                 }
-                alert(message(res, "طھظ… طھط³ط¬ظٹظ„ ظ…ط¨ط§ط´ط±ط© ط§ظ„ط¹ظ…ظ„."));
+                alert(message(res, "تم تسجيل مباشرة العمل."));
                 window.location.reload();
             }).catch(function () {
-                alert("طھط¹ط°ط± ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ….");
+                alert("تعذر الاتصال بالخادم.");
                 setButtonBusy(saveVacationReturn, false);
             });
             return;
         }
         var deleteVacationReturn = event.target.closest("[data-delete-vacation-return]");
         if (deleteVacationReturn) {
-            var confirmDeleteReturn = prompt("ظ„ط­ط°ظپ ظ…ط¨ط§ط´ط±ط© ط§ظ„ط¹ظ…ظ„ ظˆط¹ظƒط³ ط£ط«ط±ظ‡ط§ ط¹ظ„ظ‰ ظ…ط³طھط­ظ‚ط§طھ ط§ظ„ط¥ط¬ط§ط²ط© ط§ظƒطھط¨ ط­ط°ظپ");
-            if (confirmDeleteReturn !== "ط­ط°ظپ") { return; }
-            runVacationAction(deleteVacationReturn, root.getAttribute("data-delete-vacation-return-url"), deleteVacationReturn.getAttribute("data-delete-vacation-return"), "", "ط­ط°ظپ...", "طھظ… ط­ط°ظپ ظ…ط¨ط§ط´ط±ط© ط§ظ„ط¹ظ…ظ„.");
+            var confirmDeleteReturn = prompt("لحذف مباشرة العمل وعكس أثرها على مستحقات الإجازة اكتب حذف");
+            if (confirmDeleteReturn !== "حذف") { return; }
+            runVacationAction(deleteVacationReturn, root.getAttribute("data-delete-vacation-return-url"), deleteVacationReturn.getAttribute("data-delete-vacation-return"), "", "حذف...", "تم حذف مباشرة العمل.");
             return;
         }
         var cancelVacation = event.target.closest("[data-cancel-vacation]");
         if (cancelVacation) {
-            runVacationAction(cancelVacation, root.getAttribute("data-cancel-vacation-url"), cancelVacation.getAttribute("data-cancel-vacation"), "ط³ط¨ط¨ ط¥ظ„ط؛ط§ط، ط·ظ„ط¨ ط§ظ„ط¥ط¬ط§ط²ط©", "ط¥ظ„ط؛ط§ط،...", "طھظ… ط¥ظ„ط؛ط§ط، ط·ظ„ط¨ ط§ظ„ط¥ط¬ط§ط²ط© ط¨ط£ظ…ط§ظ†.");
+            runVacationAction(cancelVacation, root.getAttribute("data-cancel-vacation-url"), cancelVacation.getAttribute("data-cancel-vacation"), "سبب إلغاء طلب الإجازة", "إلغاء...", "تم إلغاء طلب الإجازة بأمان.");
             return;
         }
 
         var deleteVacation = event.target.closest("[data-delete-vacation]");
         if (deleteVacation) {
-            var confirmDeleteVacation = prompt("ظ„ط­ط°ظپ ط·ظ„ط¨ ط§ظ„ط¥ط¬ط§ط²ط© ط؛ظٹط± ط§ظ„ظ…ط¹طھظ…ط¯ ظ†ظ‡ط§ط¦ظٹط§ظ‹ ط§ظƒطھط¨ ط­ط°ظپ. ط¥ط°ط§ ط¯ط®ظ„ ط§ظ„ط·ظ„ط¨ ظپظٹ ط§ط¹طھظ…ط§ط¯ ط£ظˆ طھط³ظˆظٹط© ط§ط³طھط®ط¯ظ… ط§ظ„ط¥ظ„ط؛ط§ط، ط§ظ„ط¢ظ…ظ†.");
-            if (confirmDeleteVacation !== "ط­ط°ظپ") { return; }
-            if (!setButtonBusy(deleteVacation, true, "ط­ط°ظپ...")) { return; }
+            var confirmDeleteVacation = prompt("لحذف طلب الإجازة غير المعتمد نهائياً اكتب حذف. إذا دخل الطلب في اعتماد أو تسوية استخدم الإلغاء الآمن.");
+            if (confirmDeleteVacation !== "حذف") { return; }
+            if (!setButtonBusy(deleteVacation, true, "حذف...")) { return; }
             postForm(root.getAttribute("data-delete-vacation-url"), {
                 id: deleteVacation.getAttribute("data-delete-vacation"),
                 __RequestVerificationToken: token()
             }).then(function (res) {
                 if (!success(res)) {
-                    alert(message(res, "طھط¹ط°ط± ط­ط°ظپ ط·ظ„ط¨ ط§ظ„ط¥ط¬ط§ط²ط©."));
+                    alert(message(res, "تعذر حذف طلب الإجازة."));
                     setButtonBusy(deleteVacation, false);
                     return;
                 }
-                alert(message(res, "طھظ… ط­ط°ظپ ط·ظ„ط¨ ط§ظ„ط¥ط¬ط§ط²ط©."));
+                alert(message(res, "تم حذف طلب الإجازة."));
                 window.location.reload();
             }).catch(function () {
-                alert("طھط¹ط°ط± ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ….");
+                alert("تعذر الاتصال بالخادم.");
                 setButtonBusy(deleteVacation, false);
             });
             return;
@@ -1199,116 +1202,116 @@
 
         var editAdvance = event.target.closest("[data-edit-advance]");
         if (editAdvance) {
-            if (!setButtonBusy(editAdvance, true, "طھط­ظ…ظٹظ„...")) { return; }
+            if (!setButtonBusy(editAdvance, true, "تحميل...")) { return; }
             fetch(root.getAttribute("data-advance-details-url") + "?id=" + encodeURIComponent(editAdvance.getAttribute("data-edit-advance")), { credentials: "same-origin" })
                 .then(function (r) { return r.json(); })
                 .then(function (res) {
                     setButtonBusy(editAdvance, false);
-                    if (res.success) { showAdvance(res.data); } else { alert(res.message || "طھط¹ط°ط± طھط­ظ…ظٹظ„ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط©"); }
+                    if (res.success) { showAdvance(res.data); } else { alert(res.message || "تعذر تحميل طلب السلفة"); }
                 }).catch(function () {
                     setButtonBusy(editAdvance, false);
-                    alert("طھط¹ط°ط± ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ….");
+                    alert("تعذر الاتصال بالخادم.");
                 });
             return;
         }
 
         var deleteAdvance = event.target.closest("[data-delete-advance]");
         if (deleteAdvance) {
-            var typed = prompt("ظ„ظ„ط­ط°ظپ ط§ظ„ظ†ظ‡ط§ط¦ظٹ ط§ظƒطھط¨ ظƒظ„ظ…ط© ط­ط°ظپ. ظٹظپط¶ظ„ ط§ط³طھط®ط¯ط§ظ… ط§ظ„ط¥ظ„ط؛ط§ط، ط§ظ„ط¢ظ…ظ† ط¥ط°ط§ ظƒط§ظ† ط§ظ„ط·ظ„ط¨ ط¯ط®ظ„ ط¯ظˆط±ط© ط§ط¹طھظ…ط§ط¯ ط£ظˆ طµط±ظپ.");
-            if (typed !== "ط­ط°ظپ") { return; }
+            var typed = prompt("للحذف النهائي اكتب كلمة حذف. يفضل استخدام الإلغاء الآمن إذا كان الطلب دخل دورة اعتماد أو صرف.");
+            if (typed !== "حذف") { return; }
             runAdvanceAction(deleteAdvance, {
                 url: root.getAttribute("data-delete-advance-url"),
                 body: { id: deleteAdvance.getAttribute("data-delete-advance"), __RequestVerificationToken: token() },
-                busyText: "ط­ط°ظپ...",
-                errorText: "طھط¹ط°ط± ط­ط°ظپ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط©",
-                successText: "طھظ… ط­ط°ظپ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط©"
+                busyText: "حذف...",
+                errorText: "تعذر حذف طلب السلفة",
+                successText: "تم حذف طلب السلفة"
             });
             return;
         }
 
         var disburseAdvance = event.target.closest("[data-disburse-advance]");
         if (disburseAdvance) {
-            if (!confirm("طھط£ظƒظٹط¯ طµط±ظپ ط§ظ„ط³ظ„ظپط©طں ط³ظٹطھظ… ط¥ظ†ط´ط§ط، ط§ظ„ط³ظ„ظپط© ط§ظ„ظپط¹ظ„ظٹط© ظˆط±ط¨ط·ظ‡ط§ ط¨ط§ظ„ط·ظ„ط¨ ط¨ط¯ظˆظ† ط¥ظ†ط´ط§ط، ظ‚ظٹط¯ ظ…ط­ط§ط³ط¨ظٹ ظ…ظ† ظ‡ط°ظ‡ ط§ظ„ط´ط§ط´ط©.")) { return; }
+            if (!confirm("تأكيد صرف السلفة؟ سيتم إنشاء السلفة الفعلية وربطها بالطلب بدون إنشاء قيد محاسبي من هذه الشاشة.")) { return; }
             runAdvanceAction(disburseAdvance, {
                 url: root.getAttribute("data-disburse-advance-url"),
                 body: { id: disburseAdvance.getAttribute("data-disburse-advance"), __RequestVerificationToken: token() },
-                busyText: "طµط±ظپ...",
-                errorText: "طھط¹ط°ط± طµط±ظپ ط§ظ„ط³ظ„ظپط©",
-                successText: "طھظ… طµط±ظپ ط§ظ„ط³ظ„ظپط©"
+                busyText: "صرف...",
+                errorText: "تعذر صرف السلفة",
+                successText: "تم صرف السلفة"
             });
             return;
         }
 
         var sendAdvanceApproval = event.target.closest("[data-send-advance-approval]");
         if (sendAdvanceApproval) {
-            if (!confirm("ط¥ط±ط³ط§ظ„ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط© ظ„ظ„ط§ط¹طھظ…ط§ط¯طں ط¨ط¹ط¯ ط§ظ„ط¥ط±ط³ط§ظ„ ط³ظٹطھظ… ظ‚ظپظ„ ط§ظ„طھط¹ط¯ظٹظ„ ط­طھظ‰ ط§ظ†طھظ‡ط§ط، ط¯ظˆط±ط© ط§ظ„ط§ط¹طھظ…ط§ط¯.")) { return; }
+            if (!confirm("إرسال طلب السلفة للاعتماد؟ بعد الإرسال سيتم قفل التعديل حتى انتهاء دورة الاعتماد.")) { return; }
             runAdvanceAction(sendAdvanceApproval, {
                 url: root.getAttribute("data-send-advance-approval-url"),
-                body: { id: sendAdvanceApproval.getAttribute("data-send-advance-approval"), remarks: "ط¥ط±ط³ط§ظ„ ظ„ظ„ط§ط¹طھظ…ط§ط¯ ظ…ظ† ط´ط§ط´ط© ط§ظ„ط³ظ„ظپ", __RequestVerificationToken: token() },
-                busyText: "ط¥ط±ط³ط§ظ„...",
-                errorText: "طھط¹ط°ط± ط¥ط±ط³ط§ظ„ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط© ظ„ظ„ط§ط¹طھظ…ط§ط¯",
-                successText: "طھظ… ط¥ط±ط³ط§ظ„ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط© ظ„ظ„ط§ط¹طھظ…ط§ط¯"
+                body: { id: sendAdvanceApproval.getAttribute("data-send-advance-approval"), remarks: "إرسال للاعتماد من شاشة السلف", __RequestVerificationToken: token() },
+                busyText: "إرسال...",
+                errorText: "تعذر إرسال طلب السلفة للاعتماد",
+                successText: "تم إرسال طلب السلفة للاعتماد"
             });
             return;
         }
 
         var approveAdvance = event.target.closest("[data-approve-advance]");
         if (approveAdvance) {
-            if (!confirm("طھط£ظƒظٹط¯ ط§ط¹طھظ…ط§ط¯ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط©طں ط¨ط¹ط¯ ط§ظ„ط§ط¹طھظ…ط§ط¯ ظٹطھظ… ظ‚ظپظ„ ظ…ط³ط§ط± ط§ظ„طھط¹ط¯ظٹظ„ ط­ط³ط¨ ط­ط§ظ„ط© ط§ظ„طµط±ظپ ظˆط§ظ„ط³ط¯ط§ط¯.")) { return; }
+            if (!confirm("تأكيد اعتماد طلب السلفة؟ بعد الاعتماد يتم قفل مسار التعديل حسب حالة الصرف والسداد.")) { return; }
             runAdvanceAction(approveAdvance, {
                 url: root.getAttribute("data-approve-advance-url"),
-                body: { id: approveAdvance.getAttribute("data-approve-advance"), remarks: "ط§ط¹طھظ…ط§ط¯ ظ…ظ† ط´ط§ط´ط© ط§ظ„ط³ظ„ظپ", __RequestVerificationToken: token() },
-                busyText: "ط§ط¹طھظ…ط§ط¯...",
-                errorText: "طھط¹ط°ط± ط§ط¹طھظ…ط§ط¯ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط©",
-                successText: "طھظ… ط§ط¹طھظ…ط§ط¯ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط©"
+                body: { id: approveAdvance.getAttribute("data-approve-advance"), remarks: "اعتماد من شاشة السلف", __RequestVerificationToken: token() },
+                busyText: "اعتماد...",
+                errorText: "تعذر اعتماد طلب السلفة",
+                successText: "تم اعتماد طلب السلفة"
             });
             return;
         }
 
         var cancelAdvance = event.target.closest("[data-cancel-advance]");
         if (cancelAdvance) {
-            var reason = prompt("ط³ط¨ط¨ ط¥ظ„ط؛ط§ط، ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط©");
+            var reason = prompt("سبب إلغاء طلب السلفة");
             if (reason === null) { return; }
             runAdvanceAction(cancelAdvance, {
                 url: root.getAttribute("data-cancel-advance-url"),
-                body: { id: cancelAdvance.getAttribute("data-cancel-advance"), remarks: reason || "ط¥ظ„ط؛ط§ط، ظ…ظ† ط´ط§ط´ط© ط§ظ„ط³ظ„ظپ", __RequestVerificationToken: token() },
-                busyText: "ط¥ظ„ط؛ط§ط،...",
-                errorText: "طھط¹ط°ط± ط¥ظ„ط؛ط§ط، ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط©",
-                successText: "طھظ… ط¥ظ„ط؛ط§ط، ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط©"
+                body: { id: cancelAdvance.getAttribute("data-cancel-advance"), remarks: reason || "إلغاء من شاشة السلف", __RequestVerificationToken: token() },
+                busyText: "إلغاء...",
+                errorText: "تعذر إلغاء طلب السلفة",
+                successText: "تم إلغاء طلب السلفة"
             });
             return;
         }
 
         var editChanged = event.target.closest("[data-edit-changed-component]");
         if (editChanged) {
-            if (!setButtonBusy(editChanged, true, "طھط­ظ…ظٹظ„...")) { return; }
+            if (!setButtonBusy(editChanged, true, "تحميل...")) { return; }
             fetch(root.getAttribute("data-changed-component-details-url") + "?id=" + encodeURIComponent(editChanged.getAttribute("data-edit-changed-component")), { credentials: "same-origin" })
                 .then(function (r) { return r.json(); })
                 .then(function (res) {
                     setButtonBusy(editChanged, false);
-                    if (res.success) { showChangedComponent(res.data); } else { alert(res.message || "طھط¹ط°ط± طھط­ظ…ظٹظ„ ط§ظ„ظ…ظپط±ط¯ط© ط§ظ„ظ…طھط؛ظٹط±ط©"); }
+                    if (res.success) { showChangedComponent(res.data); } else { alert(res.message || "تعذر تحميل المفردة المتغيرة"); }
                 }).catch(function () {
                     setButtonBusy(editChanged, false);
-                    alert("طھط¹ط°ط± ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ….");
+                    alert("تعذر الاتصال بالخادم.");
                 });
             return;
         }
 
         var deleteChanged = event.target.closest("[data-delete-changed-component]");
         if (deleteChanged) {
-            if (!confirm("طھط£ظƒظٹط¯ ط­ط°ظپ ط§ظ„ظ…ظپط±ط¯ط© ط§ظ„ظ…طھط؛ظٹط±ط©طں ظ„ط§ ظٹظ…ظƒظ† ط§ظ„ط­ط°ظپ ط¥ط°ط§ طھظ… ط§ط³طھط®ط¯ط§ظ…ظ‡ط§ ظپظٹ ط§ظ„ظ…ط³ظٹط±.")) { return; }
-            if (!setButtonBusy(deleteChanged, true, "ط­ط°ظپ...")) { return; }
+            if (!confirm("تأكيد حذف المفردة المتغيرة؟ لا يمكن الحذف إذا تم استخدامها في المسير.")) { return; }
+            if (!setButtonBusy(deleteChanged, true, "حذف...")) { return; }
             postForm(root.getAttribute("data-delete-changed-component-url"), { id: deleteChanged.getAttribute("data-delete-changed-component"), __RequestVerificationToken: token() })
                 .then(function (res) {
                     if (!success(res)) {
                         setButtonBusy(deleteChanged, false);
-                        alert(message(res, "طھط¹ط°ط± ط­ط°ظپ ط§ظ„ظ…ظپط±ط¯ط© ط§ظ„ظ…طھط؛ظٹط±ط©"));
+                        alert(message(res, "تعذر حذف المفردة المتغيرة"));
                         return;
                     }
                     window.location.reload();
                 }).catch(function () {
                     setButtonBusy(deleteChanged, false);
-                    alert("طھط¹ط°ط± ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ….");
+                    alert("تعذر الاتصال بالخادم.");
                 });
             return;
         }
@@ -1326,7 +1329,7 @@
         form.addEventListener("submit", function (event) {
             event.preventDefault();
             var submit = form.querySelector("button[type='submit']");
-            if (!setButtonBusy(submit, true, "ط­ظپط¸...")) { return; }
+            if (!setButtonBusy(submit, true, "حفظ...")) { return; }
             fetch(root.getAttribute("data-save-component-url"), {
                 method: "POST",
                 credentials: "same-origin",
@@ -1336,13 +1339,13 @@
                 return r.json().then(function (j) { j._ok = r.ok; return j; });
             }).then(function (res) {
                 if (!success(res)) {
-                    byId("lhfEditorMessage").textContent = message(res, "طھط¹ط°ط± ط§ظ„ط­ظپط¸");
+                    byId("lhfEditorMessage").textContent = message(res, "تعذر الحفظ");
                     setButtonBusy(submit, false);
                     return;
                 }
                 window.location.reload();
             }).catch(function () {
-                byId("lhfEditorMessage").textContent = "طھط¹ط°ط± ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ….";
+                byId("lhfEditorMessage").textContent = "تعذر الاتصال بالخادم.";
                 setButtonBusy(submit, false);
             });
         });
@@ -1358,17 +1361,17 @@
                 setChangedMessage(clientError, true);
                 return;
             }
-            if (!setButtonBusy(submit, true, "ط­ظپط¸...")) { return; }
-            setChangedMessage("ط¬ط§ط±ظٹ ط§ظ„ط­ظپط¸...");
+            if (!setButtonBusy(submit, true, "حفظ...")) { return; }
+            setChangedMessage("جاري الحفظ...");
             postForm(root.getAttribute("data-save-changed-component-url"), collectChangedComponent()).then(function (res) {
                 if (!success(res)) {
-                    setChangedMessage(message(res, "طھط¹ط°ط± ط­ظپط¸ ط§ظ„ظ…ظپط±ط¯ط© ط§ظ„ظ…طھط؛ظٹط±ط©"), true);
+                    setChangedMessage(message(res, "تعذر حفظ المفردة المتغيرة"), true);
                     setButtonBusy(submit, false);
                     return;
                 }
                 window.location.reload();
             }).catch(function () {
-                setChangedMessage("طھط¹ط°ط± ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ….", true);
+                setChangedMessage("تعذر الاتصال بالخادم.", true);
                 setButtonBusy(submit, false);
             });
         });
@@ -1400,6 +1403,10 @@
         }
     });
     if (changedForm) {
+        if (!val("lhfChangedRecordDate")) {
+            setCurrentPeriod("lhfChanged");
+            updateChangedEntryPreview();
+        }
         changedForm.addEventListener("keydown", function (event) {
             if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
                 event.preventDefault();
@@ -1436,18 +1443,18 @@
             event.preventDefault();
             var submit = advanceForm.querySelector("button[type='submit']");
             if (submit && submit.disabled) { return; }
-            if (!setButtonBusy(submit, true, "ط­ظپط¸...")) { return; }
-            setAdvanceMessage("ط¬ط§ط± ط§ظ„ط­ظپط¸...");
+            if (!setButtonBusy(submit, true, "حفظ...")) { return; }
+            setAdvanceMessage("جار الحفظ...");
             postForm(root.getAttribute("data-save-advance-url"), collectAdvance()).then(function (res) {
                 if (!success(res)) {
-                    setAdvanceMessage(message(res, "طھط¹ط°ط± ط­ظپط¸ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط©"), true);
+                    setAdvanceMessage(message(res, "تعذر حفظ طلب السلفة"), true);
                     setButtonBusy(submit, false);
                     return;
                 }
-                setAdvanceMessage(message(res, "طھظ… ط§ظ„ط­ظپط¸"));
+                setAdvanceMessage(message(res, "تم الحفظ"));
                 window.location.reload();
             }).catch(function () {
-                setAdvanceMessage("طھط¹ط°ط± ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ….", true);
+                setAdvanceMessage("تعذر الاتصال بالخادم.", true);
                 setButtonBusy(submit, false);
             });
         });
@@ -1496,7 +1503,7 @@
         searchForm.addEventListener("submit", function () {
             var submit = searchForm.querySelector("button[type='submit']");
             setPageLoading(true);
-            setButtonBusy(submit, true, "ط¨ط­ط«...");
+            setButtonBusy(submit, true, "بحث...");
         });
     }
     var vacationForm = byId("lhfVacationForm");
@@ -1504,18 +1511,18 @@
         vacationForm.addEventListener("submit", function (event) {
             event.preventDefault();
             var submit = vacationForm.querySelector("button[type='submit']");
-            if (!setButtonBusy(submit, true, "ط­ظپط¸...")) { return; }
-            setVacationMessage("ط¬ط§ط±ظٹ ط§ظ„طھط­ظ‚ظ‚ ظ…ظ† ط§ظ„ط±طµظٹط¯ ظˆط­ظپط¸ ط§ظ„ط·ظ„ط¨...");
+            if (!setButtonBusy(submit, true, "حفظ...")) { return; }
+            setVacationMessage("جاري التحقق من الرصيد وحفظ الطلب...");
             postForm(root.getAttribute("data-save-vacation-url"), collectVacation()).then(function (res) {
                 if (!success(res)) {
-                    setVacationMessage(message(res, "طھط¹ط°ط± ط­ظپط¸ ط·ظ„ط¨ ط§ظ„ط¥ط¬ط§ط²ط©."), true);
+                    setVacationMessage(message(res, "تعذر حفظ طلب الإجازة."), true);
                     setButtonBusy(submit, false);
                     return;
                 }
-                setVacationMessage(message(res, "طھظ… ط­ظپط¸ ط·ظ„ط¨ ط§ظ„ط¥ط¬ط§ط²ط©."));
+                setVacationMessage(message(res, "تم حفظ طلب الإجازة."));
                 window.location.reload();
             }).catch(function () {
-                setVacationMessage("طھط¹ط°ط± ط§ظ„ط§طھطµط§ظ„ ط¨ط§ظ„ط®ط§ط¯ظ….", true);
+                setVacationMessage("تعذر الاتصال بالخادم.", true);
                 setButtonBusy(submit, false);
             });
         });

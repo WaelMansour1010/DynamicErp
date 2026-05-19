@@ -1,4 +1,4 @@
-﻿@model MyERP.Areas.Pos.Models.PosLoginRequest
+@model MyERP.Areas.Pos.Models.PosLoginRequest
 @{
     Layout = null;
     ViewBag.Title = "تسجيل دخول نقطة البيع";
@@ -10,100 +10,134 @@
         : (System.IO.File.Exists(Server.MapPath(alternateLogoPath))
             ? alternateLogoPath
             : (System.IO.File.Exists(Server.MapPath(legacyLogoPath)) ? legacyLogoPath : null));
+    var userName = Model != null ? Model.UserName : "";
 }
 
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8" />
-<title>@ViewBag.Title</title>
-<script>
-    (function () {
-        var key = "kishny.pos.theme";
-        var resetKey = "kishny.pos.theme.defaultLight.20260513";
-        var saved = null;
-        try {
-            if (localStorage.getItem(resetKey) !== "true") {
-                localStorage.setItem(key, "light");
-                localStorage.setItem(resetKey, "true");
-            }
-            saved = localStorage.getItem(key);
-        } catch (e) { saved = null; }
-        document.documentElement.setAttribute("data-pos-theme", saved === "dark" ? "dark" : "light");
-    })();
-</script>
-<link href="@Url.Content("~/Areas/Pos/Content/pos-transaction.css?v=20260513-light-default")" rel="stylesheet" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewBag.Title</title>
+    <script>
+        (function () {
+            try {
+                localStorage.setItem("kishny.pos.theme", "light");
+                localStorage.setItem("kishny.pos.theme.defaultLight.20260513", "true");
+            } catch (e) { }
+            document.documentElement.setAttribute("data-pos-theme", "light");
+        })();
+    </script>
+    <link href="@Url.Content("~/Content/premium-login.css?v=20260519-pos-premium")" rel="stylesheet" />
 </head>
-<body>
-
-<div class="pos-page pos-mode-card pos-login-page" dir="rtl">
-    <div class="pos-shell login-shell">
-        <div class="login-brand-card">
-            @if (!string.IsNullOrWhiteSpace(companyLogoPath))
-            {
-                <img src="@Url.Content(companyLogoPath)"
-                     alt="Company Logo"
-                     class="login-company-logo" />
-            }
-            else
-            {
-                <span class="pos-company-logo-fallback">اسم الشركة</span>
-            }
-            <div>
-                <h1>كيشني - تسجيل دخول نقطة البيع</h1>
-                <p>أدخل بيانات مستخدم نقطة البيع للمتابعة</p>
-            </div>
-            <button type="button" class="pos-theme-toggle login-theme-toggle" id="posLoginThemeToggle" aria-label="تبديل الوضع" title="تبديل الوضع">
-                <span class="theme-sun" aria-hidden="true"></span>
-                <span class="theme-moon" aria-hidden="true"></span>
-                <b id="posLoginThemeText">Light</b>
-            </button>
-        </div>
-
-        <section class="pos-panel login-panel">
-            @using (Html.BeginForm("Index", "PosLogin", new { area = "Pos" }, FormMethod.Post, new { autocomplete = "off" }))
-            {
-                @Html.AntiForgeryToken()
-                <div class="pos-grid">
-                    <label>اسم المستخدم<input type="text" name="UserName" value="@Model.UserName" autofocus /></label>
-                    <label>كلمة المرور<input type="password" name="Password" /></label>
+<body class="premium-login-body">
+    <main class="premium-login-page" dir="rtl">
+        <section class="premium-login-shell" aria-label="تسجيل الدخول">
+            <aside class="premium-login-brand">
+                <div>
+                    <div class="premium-login-logo-wrap">
+                        @if (!string.IsNullOrWhiteSpace(companyLogoPath))
+                        {
+                            <img src="@Url.Content(companyLogoPath)" alt="شعار النظام" class="premium-login-logo" />
+                        }
+                        else
+                        {
+                            <span class="premium-login-logo-fallback">Dynamic ERP</span>
+                        }
+                    </div>
+                    <div class="premium-login-brand-copy">
+                        <h1>منصة أعمال موحدة</h1>
+                        <p>إدارة المبيعات، الموارد البشرية، الحسابات، والتقارير من تجربة ويب سريعة وواضحة.</p>
+                    </div>
                 </div>
 
-                if (ViewBag.ErrorMessage != null)
-                {
-                    <div class="pos-validation">@ViewBag.ErrorMessage</div>
-                }
+                <div class="premium-login-feature-grid" aria-label="مزايا النظام">
+                    <article class="premium-login-feature"><i>✓</i><strong>آمن وسريع</strong><span>جلسات محمية وصلاحيات واضحة</span></article>
+                    <article class="premium-login-feature"><i>↗</i><strong>تقارير ذكية</strong><span>متابعة مالية وتشغيلية لحظية</span></article>
+                    <article class="premium-login-feature"><i>◎</i><strong>إدارة متكاملة</strong><span>ربط POS و HR و Finance</span></article>
+                    <article class="premium-login-feature"><i>☁</i><strong>متاح دائما</strong><span>واجهة خفيفة لأجهزة العمل</span></article>
+                </div>
 
-                <footer class="pos-actions">
-                    <button type="submit" class="primary-action">دخول</button>
-                </footer>
-            }
+                <div class="premium-login-visual" aria-hidden="true">
+                    <div class="premium-login-visual-row">
+                        <span class="premium-login-block tall"></span>
+                        <span class="premium-login-block"></span>
+                        <span class="premium-login-block small"></span>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="premium-login-form-side">
+                <div class="premium-login-card">
+                    <div class="premium-login-topbar">
+                        <span class="premium-login-chip">Light</span>
+                        <span class="premium-login-chip">العربية</span>
+                    </div>
+
+                    <header>
+                        <h2><span class="premium-login-security-icon" aria-hidden="true">✓</span>تسجيل الدخول</h2>
+                        <p>أدخل بيانات مستخدم نقطة البيع للمتابعة.</p>
+                    </header>
+
+                    @if (ViewBag.ErrorMessage != null)
+                    {
+                        <div class="premium-login-alert">@ViewBag.ErrorMessage</div>
+                    }
+
+                    @using (Html.BeginForm("Index", "PosLogin", new { area = "Pos" }, FormMethod.Post, new { autocomplete = "off", @class = "premium-login-form", id = "premiumLoginForm" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        <label class="premium-login-field">
+                            <span>اسم المستخدم</span>
+                            <span class="premium-login-input-wrap">
+                                <b class="premium-field-icon">&#64;</b>
+                                <input type="text" name="UserName" value="@userName" autocomplete="username" autofocus required />
+                            </span>
+                        </label>
+
+                        <label class="premium-login-field">
+                            <span>كلمة المرور</span>
+                            <span class="premium-login-input-wrap">
+                                <b class="premium-field-icon">••</b>
+                                <input type="password" name="Password" autocomplete="current-password" required data-premium-password />
+                                <button type="button" class="premium-password-toggle" data-toggle-password aria-label="إظهار كلمة المرور">عرض</button>
+                            </span>
+                        </label>
+
+                        <button type="submit" class="premium-login-submit" data-login-submit>
+                            <span>دخول</span>
+                            <b aria-hidden="true">←</b>
+                        </button>
+                    }
+
+                    <div class="premium-login-footer"><i>آمن</i><span>جميع البيانات محمية ومشفرة أثناء الجلسة</span></div>
+                </div>
+            </section>
         </section>
-    </div>
-</div>
-<script>
-    (function () {
-        var key = "kishny.pos.theme";
-        var toggle = document.getElementById("posLoginThemeToggle");
-        var label = document.getElementById("posLoginThemeText");
-        function theme() { return document.documentElement.getAttribute("data-pos-theme") === "dark" ? "dark" : "light"; }
-        function apply(next) {
-            next = next === "dark" ? "dark" : "light";
-            document.documentElement.setAttribute("data-pos-theme", next);
-            try { localStorage.setItem(key, next); } catch (e) { }
-            if (toggle) {
-                toggle.setAttribute("aria-pressed", next === "dark" ? "true" : "false");
-                toggle.setAttribute("title", next === "dark" ? "الوضع الداكن" : "الوضع الفاتح");
+    </main>
+
+    <script>
+        (function () {
+            var form = document.getElementById("premiumLoginForm");
+            var toggle = document.querySelector("[data-toggle-password]");
+            var password = document.querySelector("[data-premium-password]");
+            if (toggle && password) {
+                toggle.addEventListener("click", function () {
+                    var show = password.type === "password";
+                    password.type = show ? "text" : "password";
+                    toggle.setAttribute("aria-label", show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور");
+                });
             }
-            if (label) { label.textContent = next === "dark" ? "Dark" : "Light"; }
-        }
-        apply(theme());
-        if (toggle) {
-            toggle.addEventListener("click", function () {
-                apply(theme() === "dark" ? "light" : "dark");
-            });
-        }
-    })();
-</script>
+            if (form) {
+                form.addEventListener("submit", function () {
+                    var submit = document.querySelector("[data-login-submit]");
+                    if (!submit) { return; }
+                    submit.classList.add("is-loading");
+                    submit.disabled = true;
+                    submit.querySelector("span").textContent = "جار تسجيل الدخول...";
+                });
+            }
+        })();
+    </script>
 </body>
 </html>

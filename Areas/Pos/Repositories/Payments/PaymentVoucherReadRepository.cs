@@ -5,8 +5,10 @@ namespace MyERP.Areas.Pos.Repositories.Payments
 {
     public class PaymentVoucherReadRepository : MyERP.Areas.MainErp.Repositories.Payments.PaymentVoucherReadRepository
     {
+        private const string PosFinanceConnectionStringName = "KishnyCashConnection";
+
         public PaymentVoucherReadRepository()
-            : base(new FinanceVoucherDbConnectionFactory())
+            : base(new FinanceVoucherDbConnectionFactory(PosFinanceConnectionStringName))
         {
         }
 

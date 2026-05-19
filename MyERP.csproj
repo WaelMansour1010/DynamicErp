@@ -4235,6 +4235,7 @@
     <Content Include="Areas\MainErp\Content\financial-administration.css" />
     <Content Include="Areas\MainErp\Content\legacy-hr-finance.css" />
     <Content Include="Content\EnterpriseHr\legacy-hr-finance.css" />
+    <Content Include="Content\premium-login.css" />
     <Content Include="Areas\MainErp\Content\items.css" />
     <Content Include="Areas\MainErp\Content\legacy-operations.css" />
     <Content Include="Areas\MainErp\Content\master-data-import.css" />

@@ -148,7 +148,7 @@ BEGIN
         bank.BankName AS BankDisplay,
         n.TxtChequeNumber1 AS ChequeNumber,
         n.DtpChequeDueDate1 AS ChequeDueDate,
-        CONVERT(decimal(18,6), ISNULL(n.Currency_rate, 0)) AS CurrencyRate,
+        CONVERT(decimal(18,6), 0) AS CurrencyRate,
         cur.name AS CurrencyDisplay,
         COALESCE(NULLIF(cost.Account_Serial, N'') + N' - ' + NULLIF(cost.Account_Name, N''), NULLIF(cost.Account_Name, N''), NULLIF(n.general_cost_center, N''), N'') AS CostCenterDisplay,
         COALESCE(NULLIF(pr.Project_name, N''), NULLIF(pr.Project_nameE, N''), CONVERT(nvarchar(30), NULLIF(n.ProjectID, 0)), CONVERT(nvarchar(30), NULLIF(n.project_id, 0)), N'') AS ProjectDisplay,
