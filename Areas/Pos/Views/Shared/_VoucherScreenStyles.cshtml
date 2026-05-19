@@ -329,6 +329,9 @@
         color: #334155;
         font-size: 12px;
         font-weight: 900;
+        position: sticky;
+        top: 0;
+        z-index: 1;
         white-space: nowrap;
     }
 
@@ -356,6 +359,18 @@
         min-height: 34px;
         padding: 7px 12px;
         text-decoration: none;
+    }
+
+    .voucher-pos-page .voucher-row-actions {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .voucher-pos-page .voucher-row-actions .voucher-details-link {
+        justify-content: center;
+        min-width: 74px;
     }
 
     .voucher-pos-page .voucher-pager {
@@ -455,6 +470,44 @@
         font-size: 22px;
         font-weight: 900;
         text-align: left;
+    }
+
+    .voucher-pos-page .voucher-form-grid label.is-hidden {
+        display: none;
+    }
+
+    .voucher-pos-page .voucher-form-grid label.is-invalid input,
+    .voucher-pos-page .voucher-form-grid label.is-invalid select,
+    .voucher-pos-page .voucher-form-grid label.is-invalid textarea {
+        background: #fff7ed;
+        border-color: #f97316;
+        box-shadow: 0 0 0 3px rgba(249, 115, 22, .14);
+    }
+
+    .voucher-pos-page .voucher-field-error,
+    .voucher-pos-page .voucher-account-filter-meta {
+        color: #b42318;
+        font-size: 12px;
+        font-weight: 900;
+        line-height: 1.6;
+    }
+
+    .voucher-pos-page .voucher-account-filter-meta {
+        color: #64748b;
+        display: block;
+        margin-top: 4px;
+    }
+
+    .voucher-pos-page .voucher-payment-warning {
+        align-self: end;
+        background: #fff7ed;
+        border: 1px solid #fed7aa;
+        border-radius: 10px;
+        color: #9a3412;
+        font-size: 13px;
+        font-weight: 900;
+        line-height: 1.7;
+        padding: 10px 12px;
     }
 
     .voucher-pos-page .voucher-form-grid label.is-voucher-source-active {
@@ -656,6 +709,19 @@
             background: #0b1220;
             border-color: #475569;
             color: #e5e7eb;
+        }
+
+        .voucher-pos-page .voucher-form-grid label.is-invalid input,
+        .voucher-pos-page .voucher-form-grid label.is-invalid select,
+        .voucher-pos-page .voucher-form-grid label.is-invalid textarea {
+            background: #1f1410;
+            border-color: #fb923c;
+        }
+
+        .voucher-pos-page .voucher-payment-warning {
+            background: #2b1d0d;
+            border-color: #92400e;
+            color: #fed7aa;
         }
 
         .voucher-pos-page .voucher-table th {

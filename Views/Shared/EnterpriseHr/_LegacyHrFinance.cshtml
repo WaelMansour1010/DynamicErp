@@ -1,4 +1,4 @@
-﻿@model MyERP.Common.EnterpriseHr.LegacyHrFinancePageViewModel
+@model MyERP.Common.EnterpriseHr.LegacyHrFinancePageViewModel
 @using System.Linq
 @using System.Globalization
 @{
@@ -57,6 +57,7 @@
          data-hr-approve-vacation-url="@Model.HrApproveVacationUrl"
          data-reject-vacation-url="@Model.RejectVacationUrl"
          data-cancel-vacation-url="@Model.CancelVacationUrl"
+         data-delete-vacation-url="@Model.DeleteVacationUrl"
          data-create-vacation-entitlement-url="@Model.CreateVacationEntitlementUrl"
          data-delete-vacation-entitlement-url="@Model.DeleteVacationEntitlementUrl"
          data-save-vacation-return-url="@Model.SaveVacationReturnToWorkUrl"
@@ -67,19 +68,19 @@
         <div>
             <span>@Model.SourceSystem</span>
             <h2>@Model.Title</h2>
-            <p>ط´ط§ط´ط© ظ…ط´طھط±ظƒط© ط¨ظٹظ† POS ظˆ MainERP ط¶ظ…ظ† ط´ط¤ظˆظ† ط§ظ„ظ…ظˆط¸ظپظٹظ†طŒ ظ…ط¹ ط§ظ„ط­ظپط§ط¸ ط¹ظ„ظ‰ ط³ظٹط§ظ‚ ط§ظ„ظ†ط¸ط§ظ… ط§ظ„ظ…ظپطھظˆط­.</p>
+            <p>شاشة مشتركة بين POS و MainERP ضمن شؤون الموظفين، مع الحفاظ على سياق النظام المفتوح.</p>
         </div>
         <form method="get" class="lhf-search @(Model.ModuleKey == "advances" || Model.ModuleKey == "vacations" ? "lhf-search-wide" : Model.ModuleKey == "changed-components" ? "lhf-search-changed lhf-filter-panel" : "") @(Model.ModuleKey == "vacations" ? "lhf-search-vacations lhf-filter-panel" : "")">
-            <input type="search" name="searchText" value="@Model.SearchText" placeholder="ط¨ط­ط« ط¨ط§ظ„ظƒظˆط¯ ط£ظˆ ط§ظ„ظ…ظˆط¸ظپ ط£ظˆ ط§ظ„ط¨ظٹط§ظ†" />
-            <select name="employeeStatus" title="ط­ط§ظ„ط© ط§ظ„ظ…ظˆط¸ظپ">
-                <option value="active" @(Model.EmployeeStatus == "active" ? "selected" : "")>ط§ظ„ظ…ظˆط¸ظپظˆظ† ط§ظ„ظ†ط´ط·ظˆظ†</option>
-                <option value="stopped" @(Model.EmployeeStatus == "stopped" ? "selected" : "")>ط§ظ„ظ…ظˆط¸ظپظˆظ† ط§ظ„ظ…ظˆظ‚ظˆظپظˆظ†</option>
-                <option value="all" @(Model.EmployeeStatus == "all" ? "selected" : "")>ظƒظ„ ط§ظ„ظ…ظˆط¸ظپظٹظ†</option>
+            <input type="search" name="searchText" value="@Model.SearchText" placeholder="بحث بالكود أو الموظف أو البيان" />
+            <select name="employeeStatus" title="حالة الموظف">
+                <option value="active" @(Model.EmployeeStatus == "active" ? "selected" : "")>الموظفون النشطون</option>
+                <option value="stopped" @(Model.EmployeeStatus == "stopped" ? "selected" : "")>الموظفون الموقوفون</option>
+                <option value="all" @(Model.EmployeeStatus == "all" ? "selected" : "")>كل الموظفين</option>
             </select>
             @if (Model.ModuleKey == "advances")
             {
-                <select name="employeeId" title="ط§ظ„ظ…ظˆط¸ظپ">
-                    <option value="">ظƒظ„ ط§ظ„ظ…ظˆط¸ظپظٹظ†</option>
+                <select name="employeeId" title="الموظف">
+                    <option value="">كل الموظفين</option>
                     @foreach (var employee in Model.Employees)
                     {
                         <option value="@employee.Id" @(Model.EmployeeId == employee.Id ? "selected" : "")>@employee.Code - @employee.Name</option>
@@ -99,114 +100,114 @@
                         <option value="@department.Id" @(Model.DepartmentId == department.Id ? "selected" : "")>@department.Name</option>
                     }
                 </select>
-                <input type="date" name="dateFrom" value="@Model.DateFrom" title="ظ…ظ† طھط§ط±ظٹط®" />
-                <input type="date" name="dateTo" value="@Model.DateTo" title="ط¥ظ„ظ‰ طھط§ط±ظٹط®" />
-                <select name="advanceStatus" title="ط­ط§ظ„ط© ط§ظ„ط³ظ„ظپط©">
-                    <option value="all" @(Model.AdvanceStatus == "all" ? "selected" : "")>ظƒظ„ ط§ظ„ط­ط§ظ„ط§طھ</option>
-                    <option value="draft" @(Model.AdvanceStatus == "draft" ? "selected" : "")>ظ…ط³ظˆط¯ط©</option>
+                <input type="date" name="dateFrom" value="@Model.DateFrom" title="من تاريخ" />
+                <input type="date" name="dateTo" value="@Model.DateTo" title="إلى تاريخ" />
+                <select name="advanceStatus" title="حالة السلفة">
+                    <option value="all" @(Model.AdvanceStatus == "all" ? "selected" : "")>كل الحالات</option>
+                    <option value="draft" @(Model.AdvanceStatus == "draft" ? "selected" : "")>مسودة</option>
                     <option value="pending" @(Model.AdvanceStatus == "pending" ? "selected" : "")>قيد الاعتماد</option>
-                    <option value="approved" @(Model.AdvanceStatus == "approved" ? "selected" : "")>ظ…ط¹طھظ…ط¯ط©</option>
-                    <option value="posted" @(Model.AdvanceStatus == "posted" ? "selected" : "")>ظ…ط±ط³ظ„ط©/ظ…ط±ط­ظ„ط©</option>
-                    <option value="accounting-approved" @(Model.AdvanceStatus == "accounting-approved" ? "selected" : "")>ظ…ط¹طھظ…ط¯ط© ظ…ط­ط§ط³ط¨ظٹط§ظ‹</option>
-                    <option value="rejected" @(Model.AdvanceStatus == "rejected" ? "selected" : "")>ظ…ط±ظپظˆط¶ط©</option>
+                    <option value="approved" @(Model.AdvanceStatus == "approved" ? "selected" : "")>معتمدة</option>
+                    <option value="posted" @(Model.AdvanceStatus == "posted" ? "selected" : "")>مرسلة/مرحلة</option>
+                    <option value="accounting-approved" @(Model.AdvanceStatus == "accounting-approved" ? "selected" : "")>معتمدة محاسبياً</option>
+                    <option value="rejected" @(Model.AdvanceStatus == "rejected" ? "selected" : "")>مرفوضة</option>
                 </select>
             }
             @if (Model.ModuleKey == "vacations")
             {
-                <select name="branchId" title="ط§ظ„ظپط±ط¹">
-                    <option value="">ظƒظ„ ط§ظ„ظپط±ظˆط¹</option>
+                <select name="branchId" title="الفرع">
+                    <option value="">كل الفروع</option>
                     @foreach (var branch in Model.Branches)
                     {
                         <option value="@branch.Id" @(Model.BranchId == branch.Id ? "selected" : "")>@branch.Name</option>
                     }
                 </select>
-                <select name="departmentId" title="ط§ظ„ط¥ط¯ط§ط±ط©">
-                    <option value="">ظƒظ„ ط§ظ„ط¥ط¯ط§ط±ط§طھ</option>
+                <select name="departmentId" title="الإدارة">
+                    <option value="">كل الإدارات</option>
                     @foreach (var department in Model.Departments)
                     {
                         <option value="@department.Id" @(Model.DepartmentId == department.Id ? "selected" : "")>@department.Name</option>
                     }
                 </select>
-                <select name="employeeId" title="ط§ظ„ظ…ظˆط¸ظپ">
-                    <option value="">ظƒظ„ ط§ظ„ظ…ظˆط¸ظپظٹظ†</option>
+                <select name="employeeId" title="الموظف">
+                    <option value="">كل الموظفين</option>
                     @foreach (var employee in Model.Employees)
                     {
                         <option value="@employee.Id" @(Model.EmployeeId == employee.Id ? "selected" : "")>@employee.Code - @employee.Name</option>
                     }
                 </select>
-                <input type="date" name="dateFrom" value="@Model.DateFrom" title="ظ…ظ† طھط§ط±ظٹط® ط¨ط¯ط§ظٹط© ط§ظ„ط¥ط¬ط§ط²ط©" />
-                <input type="date" name="dateTo" value="@Model.DateTo" title="ط¥ظ„ظ‰ طھط§ط±ظٹط® ط¨ط¯ط§ظٹط© ط§ظ„ط¥ط¬ط§ط²ط©" />
-                <select name="vacationType" title="ظ†ظˆط¹ ط§ظ„ط¥ط¬ط§ط²ط©">
-                    <option value="">ظƒظ„ ط£ظ†ظˆط§ط¹ ط§ظ„ط¥ط¬ط§ط²ط§طھ</option>
+                <input type="date" name="dateFrom" value="@Model.DateFrom" title="من تاريخ بداية الإجازة" />
+                <input type="date" name="dateTo" value="@Model.DateTo" title="إلى تاريخ بداية الإجازة" />
+                <select name="vacationType" title="نوع الإجازة">
+                    <option value="">كل أنواع الإجازات</option>
                     @foreach (var type in Model.VacationTypes)
                     {
                         <option value="@type.Value" @(Model.VacationType == type.Value ? "selected" : "")>@type.Text</option>
                     }
                 </select>
-                <select name="status" title="ط­ط§ظ„ط© ط§ظ„ط·ظ„ط¨">
-                    <option value="all" @(Model.VacationStatus == "all" ? "selected" : "")>ظƒظ„ ط§ظ„ط­ط§ظ„ط§طھ</option>
-                    <option value="draft" @(Model.VacationStatus == "draft" ? "selected" : "")>ظ…ط³ظˆط¯ط©</option>
-                    <option value="pending-manager" @(Model.VacationStatus == "pending-manager" ? "selected" : "")>ظ‚ظٹط¯ ظ…ط±ط§ط¬ط¹ط© ط§ظ„ظ…ط¯ظٹط±</option>
-                    <option value="pending-hr" @(Model.VacationStatus == "pending-hr" ? "selected" : "")>ظ‚ظٹط¯ ط§ط¹طھظ…ط§ط¯ ط§ظ„ظ…ظˆط§ط±ط¯ ط§ظ„ط¨ط´ط±ظٹط©</option>
-                    <option value="approved" @(Model.VacationStatus == "approved" ? "selected" : "")>ظ…ط¹طھظ…ط¯ط©</option>
-                    <option value="rejected" @(Model.VacationStatus == "rejected" ? "selected" : "")>ظ…ط±ظپظˆط¶ط© / ظ…ظ„ط؛ط§ط©</option>
-                    <option value="paid" @(Model.VacationStatus == "paid" ? "selected" : "")>ظ…ط±طھط¨ط·ط© ط¨ظ…ط³طھط­ظ‚ط§طھ</option>
+                <select name="status" title="حالة الطلب">
+                    <option value="all" @(Model.VacationStatus == "all" ? "selected" : "")>كل الحالات</option>
+                    <option value="draft" @(Model.VacationStatus == "draft" ? "selected" : "")>مسودة</option>
+                    <option value="pending-manager" @(Model.VacationStatus == "pending-manager" ? "selected" : "")>قيد مراجعة المدير</option>
+                    <option value="pending-hr" @(Model.VacationStatus == "pending-hr" ? "selected" : "")>قيد اعتماد الموارد البشرية</option>
+                    <option value="approved" @(Model.VacationStatus == "approved" ? "selected" : "")>معتمدة</option>
+                    <option value="rejected" @(Model.VacationStatus == "rejected" ? "selected" : "")>مرفوضة / ملغاة</option>
+                    <option value="paid" @(Model.VacationStatus == "paid" ? "selected" : "")>مرتبطة بمستحقات</option>
                 </select>
             }
             @if (Model.ModuleKey == "changed-components")
             {
-                <input type="search" class="lhf-select-search" data-filter-select="lhfFilterEmployeeId" placeholder="طھطµظپظٹط© ط§ظ„ظ…ظˆط¸ظپظٹظ†..." autocomplete="off" />
-                <select id="lhfFilterEmployeeId" name="employeeId" title="ط§ظ„ظ…ظˆط¸ظپ">
-                    <option value="">ظƒظ„ ط§ظ„ظ…ظˆط¸ظپظٹظ†</option>
+                <input type="search" class="lhf-select-search" data-filter-select="lhfFilterEmployeeId" placeholder="تصفية الموظفين..." autocomplete="off" />
+                <select id="lhfFilterEmployeeId" name="employeeId" title="الموظف">
+                    <option value="">كل الموظفين</option>
                     @foreach (var employee in Model.Employees)
                     {
                         <option value="@employee.Id" @(Model.EmployeeId == employee.Id ? "selected" : "")>@employee.Code - @employee.Name</option>
                     }
                 </select>
-                <input type="search" class="lhf-select-search" data-filter-select="lhfFilterComponentId" placeholder="طھطµظپظٹط© ط§ظ„ظ…ظپط±ط¯ط§طھ..." autocomplete="off" />
-                <select id="lhfFilterComponentId" name="componentId" title="ط§ظ„ظ…ظپط±ط¯ط©">
-                    <option value="">ظƒظ„ ط§ظ„ظ…ظپط±ط¯ط§طھ</option>
+                <input type="search" class="lhf-select-search" data-filter-select="lhfFilterComponentId" placeholder="تصفية المفردات..." autocomplete="off" />
+                <select id="lhfFilterComponentId" name="componentId" title="المفردة">
+                    <option value="">كل المفردات</option>
                     @foreach (var component in Model.Components)
                     {
-                        <option value="@component.Id" @(Model.ComponentId == component.Id ? "selected" : "")>@component.Name (@(component.AddOrDiscount ? "ط¥ط¶ط§ظپط©" : "ط®طµظ…"))</option>
+                        <option value="@component.Id" @(Model.ComponentId == component.Id ? "selected" : "")>@component.Name (@(component.AddOrDiscount ? "إضافة" : "خصم"))</option>
                     }
                 </select>
-                <select name="branchId" title="ط§ظ„ظپط±ط¹">
-                    <option value="">ظƒظ„ ط§ظ„ظپط±ظˆط¹</option>
+                <select name="branchId" title="الفرع">
+                    <option value="">كل الفروع</option>
                     @foreach (var branch in Model.Branches)
                     {
                         <option value="@branch.Id" @(Model.BranchId == branch.Id ? "selected" : "")>@branch.Name</option>
                     }
                 </select>
-                <select name="departmentId" title="ط§ظ„ط¥ط¯ط§ط±ط©">
-                    <option value="">ظƒظ„ ط§ظ„ط¥ط¯ط§ط±ط§طھ</option>
+                <select name="departmentId" title="الإدارة">
+                    <option value="">كل الإدارات</option>
                     @foreach (var department in Model.Departments)
                     {
                         <option value="@department.Id" @(Model.DepartmentId == department.Id ? "selected" : "")>@department.Name</option>
                     }
                 </select>
-                <input type="date" name="dateFrom" value="@Model.DateFrom" title="ظ…ظ† طھط§ط±ظٹط®" />
-                <input type="date" name="dateTo" value="@Model.DateTo" title="ط¥ظ„ظ‰ طھط§ط±ظٹط®" />
-                <input type="number" name="year" min="1900" max="2100" value="@(Model.YearFilter.HasValue ? Model.YearFilter.Value.ToString() : "")" placeholder="ط§ظ„ط³ظ†ط©" title="ط§ظ„ط³ظ†ط© ط§ظ„ظپط¹ظ„ظٹط©" />
-                <select name="month" title="ط§ظ„ط´ظ‡ط± ط§ظ„ظپط¹ظ„ظٹ">
-                    <option value="">ظƒظ„ ط§ظ„ط´ظ‡ظˆط±</option>
+                <input type="date" name="dateFrom" value="@Model.DateFrom" title="من تاريخ" />
+                <input type="date" name="dateTo" value="@Model.DateTo" title="إلى تاريخ" />
+                <input type="number" name="year" min="1900" max="2100" value="@(Model.YearFilter.HasValue ? Model.YearFilter.Value.ToString() : "")" placeholder="السنة" title="السنة الفعلية" />
+                <select name="month" title="الشهر الفعلي">
+                    <option value="">كل الشهور</option>
                     @for (var m = 1; m <= 12; m++)
                     {
                         <option value="@m" @(Model.MonthFilter == m ? "selected" : "")>@m.ToString("00")</option>
                     }
                 </select>
-                <select name="componentType" title="ظ†ظˆط¹ ط§ظ„ظ…ظپط±ط¯ط©">
-                    <option value="all" @(Model.ComponentType == "all" ? "selected" : "")>ط¥ط¶ط§ظپط© ظˆط®طµظ…</option>
-                    <option value="addition" @(Model.ComponentType == "addition" ? "selected" : "")>ط¥ط¶ط§ظپط§طھ ظپظ‚ط·</option>
-                    <option value="deduction" @(Model.ComponentType == "deduction" ? "selected" : "")>ط®طµظˆظ…ط§طھ ظپظ‚ط·</option>
+                <select name="componentType" title="نوع المفردة">
+                    <option value="all" @(Model.ComponentType == "all" ? "selected" : "")>إضافة وخصم</option>
+                    <option value="addition" @(Model.ComponentType == "addition" ? "selected" : "")>إضافات فقط</option>
+                    <option value="deduction" @(Model.ComponentType == "deduction" ? "selected" : "")>خصومات فقط</option>
                 </select>
-                <select name="status" title="ط­ط§ظ„ط© ط§ظ„ظ…ط³ظٹط±">
-                    <option value="all" @(Model.StatusFilter == "all" ? "selected" : "")>ظƒظ„ ط§ظ„ط­ط§ظ„ط§طھ</option>
-                    <option value="open" @(Model.StatusFilter == "open" ? "selected" : "")>ظ…ظپطھظˆط­</option>
-                    <option value="used" @(Model.StatusFilter == "used" ? "selected" : "")>ظ…ط³طھط®ط¯ظ… ظپظٹ ط§ظ„ظ…ط³ظٹط±</option>
+                <select name="status" title="حالة المسير">
+                    <option value="all" @(Model.StatusFilter == "all" ? "selected" : "")>كل الحالات</option>
+                    <option value="open" @(Model.StatusFilter == "open" ? "selected" : "")>مفتوح</option>
+                    <option value="used" @(Model.StatusFilter == "used" ? "selected" : "")>مستخدم في المسير</option>
                 </select>
             }
-            <button type="submit"><i class="fas fa-search"></i><span>ط¨ط­ط«</span></button>
+            <button type="submit"><i class="fas fa-search"></i><span>بحث</span></button>
         </form>
     </header>
 
@@ -224,24 +225,24 @@
 
     @if (Model.ModuleKey == "changed-components")
     {
-        <section class="lhf-changed-snapshot" aria-label="ظ…ظ„ط®طµ ط§ظ„ظ…ظپط±ط¯ط§طھ ط§ظ„ظ…طھط؛ظٹط±ط©">
-            <article class="addition"><span>ط¥ط¶ط§ظپط§طھ ط§ظ„ط´ظ‡ط±</span><strong>@changedAdditions.ToString("N2")</strong><small>@changedRows.Count(x => x.AddOrDiscount).ToString("N0") ط³ط·ط±</small></article>
-            <article class="deduction"><span>ط®طµظˆظ…ط§طھ ط§ظ„ط´ظ‡ط±</span><strong>@changedDeductions.ToString("N2")</strong><small>@changedRows.Count(x => !x.AddOrDiscount).ToString("N0") ط³ط·ط±</small></article>
-            <article class="@(changedLocked > 0 ? "locked" : "")"><span>ظ…ظ‚ظپظ„ط© ط¨ط§ظ„ظ…ط³ظٹط±</span><strong>@changedLocked.ToString("N0")</strong><small>ظ„ط§ طھط¹ط¯ظ„ ظ…ظ† ظ‡ظ†ط§</small></article>
-            <article><span>ظ…ظپطھظˆط­ط©</span><strong>@changedOpen.ToString("N0")</strong><small>ظ‚ط§ط¨ظ„ط© ظ„ظ„ط­ظپط¸ ط­ط³ط¨ ط§ظ„طµظ„ط§ط­ظٹط©</small></article>
-            <article class="net"><span>طµط§ظپظٹ ط§ظ„ظ…ط¹ط±ظˆط¶</span><strong>@(changedAdditions - changedDeductions).ToString("N2")</strong><small>@changedCount.ToString("N0") ط³ط·ط± ط­ط³ط¨ ط§ظ„ظپظ„ط§طھط±</small></article>
+        <section class="lhf-changed-snapshot" aria-label="ملخص المفردات المتغيرة">
+            <article class="addition"><span>إضافات الشهر</span><strong>@changedAdditions.ToString("N2")</strong><small>@changedRows.Count(x => x.AddOrDiscount).ToString("N0") سطر</small></article>
+            <article class="deduction"><span>خصومات الشهر</span><strong>@changedDeductions.ToString("N2")</strong><small>@changedRows.Count(x => !x.AddOrDiscount).ToString("N0") سطر</small></article>
+            <article class="@(changedLocked > 0 ? "locked" : "")"><span>مقفلة بالمسير</span><strong>@changedLocked.ToString("N0")</strong><small>لا تعدل من هنا</small></article>
+            <article><span>مفتوحة</span><strong>@changedOpen.ToString("N0")</strong><small>قابلة للحفظ حسب الصلاحية</small></article>
+            <article class="net"><span>صافي المعروض</span><strong>@(changedAdditions - changedDeductions).ToString("N2")</strong><small>@changedCount.ToString("N0") سطر حسب الفلاتر</small></article>
         </section>
 
         if (changedEmployeeGroups.Any())
         {
             <section class="lhf-panel lhf-employee-totals">
-                <header><h3>ط¥ط¬ظ…ط§ظ„ظٹط§طھ ط§ظ„ظ…ظˆط¸ظپظٹظ†</h3><span>ط£ط¹ظ„ظ‰ ط§ظ„ظ…ظˆط¸ظپظٹظ† ط£ط«ط±ط§ظ‹ ط¶ظ…ظ† ظ†طھظٹط¬ط© ط§ظ„ط¨ط­ط« ط§ظ„ط­ط§ظ„ظٹط©.</span></header>
+                <header><h3>إجماليات الموظفين</h3><span>أعلى الموظفين أثراً ضمن نتيجة البحث الحالية.</span></header>
                 <div>
                     @foreach (var item in changedEmployeeGroups)
                     {
                         <article class="@(item.Total >= 0 ? "addition" : "deduction")">
                             <strong>@item.EmployeeName</strong>
-                            <small>@item.EmployeeCode - @item.Count.ToString("N0") ط³ط·ط±</small>
+                            <small>@item.EmployeeCode - @item.Count.ToString("N0") سطر</small>
                             <span>@item.Total.ToString("N2")</span>
                         </article>
                     }
@@ -252,44 +253,44 @@
 
     @if (Model.ModuleKey == "advances")
     {
-        <div class="lhf-advance-dashboard" aria-label="ظ…ظ„ط®طµ ط§ظ„ط³ظ„ظپ">
+        <div class="lhf-advance-dashboard" aria-label="ملخص السلف">
             <article>
-                <span>ط¹ط¯ط¯ ط§ظ„ط·ظ„ط¨ط§طھ</span>
+                <span>عدد الطلبات</span>
                 <strong>@advanceCount.ToString("N0")</strong>
-                <small>ط­ط³ط¨ ط§ظ„ظپظ„ط§طھط± ط§ظ„ط­ط§ظ„ظٹط©</small>
+                <small>حسب الفلاتر الحالية</small>
             </article>
             <article>
-                <span>ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ط³ظ„ظپ</span>
+                <span>إجمالي السلف</span>
                 <strong>@advanceTotal.ToString("N2")</strong>
-                <small>ظ‚ظٹظ…ط© ط§ظ„ط·ظ„ط¨ط§طھ ط§ظ„ظ…ط¹ط±ظˆط¶ط©</small>
+                <small>قيمة الطلبات المعروضة</small>
             </article>
             <article>
-                <span>ط§ظ„ظ…ط³ط¯ط¯</span>
+                <span>المسدد</span>
                 <strong>@advancePaid.ToString("N2")</strong>
-                <small>ط£ظ‚ط³ط§ط· طھظ… طھط±ط­ظٹظ„ظ‡ط§ ط£ظˆ ط³ط¯ط§ط¯ظ‡ط§</small>
+                <small>أقساط تم ترحيلها أو سدادها</small>
             </article>
             <article>
-                <span>ط§ظ„ظ…طھط¨ظ‚ظٹ</span>
+                <span>المتبقي</span>
                 <strong>@advanceRemaining.ToString("N2")</strong>
-                <small>ط±طµظٹط¯ ظ…ظپطھظˆط­ ظ„ظ„ظ…طھط§ط¨ط¹ط©</small>
+                <small>رصيد مفتوح للمتابعة</small>
             </article>
             <article>
-                <span>ط§ظ„ط§ط¹طھظ…ط§ط¯ ظˆط§ظ„طµط±ظپ</span>
+                <span>الاعتماد والصرف</span>
                 <strong>@advanceApproved / @advanceDisbursed</strong>
-                <small>ظ…ط¹طھظ…ط¯ط© / ظ…طµط±ظˆظپط©</small>
+                <small>معتمدة / مصروفة</small>
             </article>
             <article class="@(advanceLocked > 0 ? "has-warning" : "")">
-                <span>ط·ظ„ط¨ط§طھ ظ…ظ‚ظپظ„ط©</span>
+                <span>طلبات مقفلة</span>
                 <strong>@advanceLocked.ToString("N0")</strong>
-                <small>ظ„ط§ طھط¹ط¯ظ„ ط¥ظ„ط§ ط¹ط¨ط± ط¯ظˆط±ط© ط§ظ„ط¥ظ„ط؛ط§ط، ط§ظ„ط¢ظ…ظ†</small>
+                <small>لا تعدل إلا عبر دورة الإلغاء الآمن</small>
             </article>
         </div>
 
         <section class="lhf-panel lhf-advances-panel">
             <header>
                 <div>
-                    <h3>ط·ظ„ط¨ط§طھ ط§ظ„ط³ظ„ظپ</h3>
-                    <span>ظ‡ط°ظ‡ ط§ظ„ط´ط§ط´ط© طھط­ظپط¸ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط© ظˆط£ظ‚ط³ط§ط·ظ‡ط§طŒ ظˆظٹظ…ظƒظ† ظ…ظ†ظ‡ط§ ط¥ظ†ط´ط§ط، ط§ظ„ط³ظ„ظپط© ط§ظ„ظپط¹ظ„ظٹط© ط¨ط¹ط¯ ط§ظ„ط§ط¹طھظ…ط§ط¯. ظ„ط§ ظٹطھظ… ط¥ظ†ط´ط§ط، ظ‚ظٹط¯ ظ…ط­ط§ط³ط¨ظٹ طھظ„ظ‚ط§ط¦ظٹط§ظ‹ ظ…ظ† ظ‡ط°ط§ ط§ظ„ظ…ط³ط§ط± ظ„ط£ظ† ظ…ظ†ط·ظ‚ VB6 ط§ظ„ط±ط¦ظٹط³ظٹ ظ„ط§ ظٹط±ط­ظ„ ظ‚ظٹط¯ط§ظ‹ ظ…ط¤ظƒط¯ط§ظ‹ ظ‡ظ†ط§.</span>
+                    <h3>طلبات السلف</h3>
+                    <span>هذه الشاشة تحفظ طلب السلفة وأقساطها، ويمكن منها إنشاء السلفة الفعلية بعد الاعتماد. لا يتم إنشاء قيد محاسبي تلقائياً من هذا المسار لأن منطق VB6 الرئيسي لا يرحل قيداً مؤكداً هنا.</span>
                 </div>
                 <div class="lhf-panel-tools">
                     <input type="search" id="lhfAdvanceTableSearch" placeholder="بحث سريع داخل النتائج..." autocomplete="off" />
@@ -303,16 +304,16 @@
                 <table class="lhf-table lhf-advance-table">
                     <thead>
                         <tr>
-                            <th>ط±ظ‚ظ…</th>
-                            <th>ط§ظ„ظ…ظˆط¸ظپ</th>
-                            <th>ط§ظ„ظپط±ط¹ / ط§ظ„ط¥ط¯ط§ط±ط©</th>
-                            <th>ط§ظ„طھط§ط±ظٹط®</th>
-                            <th>ط§ظ„ظ‚ظٹظ…ط©</th>
-                            <th>ط§ظ„ط£ظ‚ط³ط§ط·</th>
-                            <th>ط§ظ„ظ…طھط¨ظ‚ظٹ</th>
-                            <th>ط§ظ„ط­ط§ظ„ط©</th>
-                            <th>ظ…ظ„ط§ط­ط¸ط§طھ</th>
-                            <th>ط¥ط¬ط±ط§ط،ط§طھ</th>
+                            <th>رقم</th>
+                            <th>الموظف</th>
+                            <th>الفرع / الإدارة</th>
+                            <th>التاريخ</th>
+                            <th>القيمة</th>
+                            <th>الأقساط</th>
+                            <th>المتبقي</th>
+                            <th>الحالة</th>
+                            <th>ملاحظات</th>
+                            <th>إجراءات</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -325,21 +326,21 @@
                                 <td>
                                     <strong>@row.EmployeeName</strong>
                                     <small>@row.EmployeeCode</small>
-                                    <small>ط§ظ„ط±ط§طھط¨ ط§ظ„ط£ط³ط§ط³ظٹ: @row.BasicSalary.ToString("N2")</small>
+                                    <small>الراتب الأساسي: @row.BasicSalary.ToString("N2")</small>
                                 </td>
                                 <td>
                                     <strong>@row.BranchName</strong>
                                     <small>@row.DepartmentName</small>
-                                    <small>ط±طµظٹط¯ ط³ط§ط¨ظ‚: @row.OldAdvance.ToString("N2")</small>
+                                    <small>رصيد سابق: @row.OldAdvance.ToString("N2")</small>
                                 </td>
                                 <td>@row.AdvanceDate</td>
                                 <td class="lhf-num">@row.AdvanceValue.ToString("N2")</td>
                                 <td>
                                     <div class="lhf-installment-summary">
-                                        <strong>@row.PaymentCounts ظ‚ط³ط·</strong>
-                                        <small>ظ‚ظٹظ…ط© طھظ‚ط±ظٹط¨ظٹط©: @estimatedPart.ToString("N2")</small>
-                                        <small>ط£ظˆظ„ ظ‚ط³ط·: @row.FirstMonthPayment / @row.FirstYearPayment</small>
-                                        <span class="lhf-installment-chip">@row.PaidPartsCount / @row.PartsCount ظ…ط³ط¯ط¯</span>
+                                        <strong>@row.PaymentCounts قسط</strong>
+                                        <small>قيمة تقريبية: @estimatedPart.ToString("N2")</small>
+                                        <small>أول قسط: @row.FirstMonthPayment / @row.FirstYearPayment</small>
+                                        <span class="lhf-installment-chip">@row.PaidPartsCount / @row.PartsCount مسدد</span>
                                     </div>
                                 </td>
                                 <td class="lhf-num">@row.RemainingAmount.ToString("N2")</td>
@@ -361,15 +362,15 @@
                                 <td class="lhf-actions">
                                     @if (Model.Permissions.CanEdit && row.CanEdit)
                                     {
-                                        <button type="button" data-edit-advance="@row.Id">طھط¹ط¯ظٹظ„</button>
+                                        <button type="button" data-edit-advance="@row.Id">تعديل</button>
                                     }
                                     @if (Model.Permissions.CanDelete && row.CanDelete)
                                     {
-                                        <button type="button" data-delete-advance="@row.Id">ط­ط°ظپ</button>
+                                        <button type="button" data-delete-advance="@row.Id">حذف</button>
                                     }
                                     @if (Model.Permissions.CanEdit && row.CanApprove)
                                     {
-                                        <button type="button" data-approve-advance="@row.Id">ط§ط¹طھظ…ط§ط¯</button>
+                                        <button type="button" data-approve-advance="@row.Id">اعتماد</button>
                                     }
                                     @if (Model.Permissions.CanEdit && row.CanSendApproval)
                                     {
@@ -377,22 +378,22 @@
                                     }
                                     @if (Model.Permissions.CanDelete && row.CanCancel)
                                     {
-                                        <button type="button" data-cancel-advance="@row.Id">ط¥ظ„ط؛ط§ط، ط¢ظ…ظ†</button>
+                                        <button type="button" data-cancel-advance="@row.Id">إلغاء آمن</button>
                                     }
                                     @if (Model.Permissions.CanEdit && row.CanDisburse)
                                     {
-                                        <button type="button" data-disburse-advance="@row.Id">طµط±ظپ ط§ظ„ط³ظ„ظپط©</button>
+                                        <button type="button" data-disburse-advance="@row.Id">صرف السلفة</button>
                                     }
                                     @if (!row.CanEdit && !string.IsNullOrWhiteSpace(row.LockReason))
                                     {
-                                        <span class="lhf-action-note">ظ…ظ‚ظپظ„ط©</span>
+                                        <span class="lhf-action-note">مقفلة</span>
                                     }
                                 </td>
                             </tr>
                         }
                         @if (!Model.Advances.Any())
                         {
-                            <tr><td colspan="10" class="lhf-empty">ظ„ط§ طھظˆط¬ط¯ ط·ظ„ط¨ط§طھ ط³ظ„ظپ ظ…ط·ط§ط¨ظ‚ط© ظ„ظ„ظپظ„ط§طھط± ط§ظ„ط­ط§ظ„ظٹط©.</td></tr>
+                            <tr><td colspan="10" class="lhf-empty">لا توجد طلبات سلف مطابقة للفلاتر الحالية.</td></tr>
                         }
                     </tbody>
                 </table>
@@ -403,29 +404,29 @@
     {
         <section class="lhf-panel">
             <header>
-                <h3>ظƒطھط§ظ„ظˆط¬ ظ…ظƒظˆظ†ط§طھ ط§ظ„ط±ظˆط§طھط¨</h3>
+                <h3>كتالوج مكونات الرواتب</h3>
                 @if (Model.Permissions.CanAdd)
                 {
-                    <button type="button" class="lhf-primary" data-new-component><i class="fas fa-plus"></i><span>ظ…ظƒظˆظ† ط¬ط¯ظٹط¯</span></button>
+                    <button type="button" class="lhf-primary" data-new-component><i class="fas fa-plus"></i><span>مكون جديد</span></button>
                 }
             </header>
             <div class="lhf-table-wrap">
                 <table class="lhf-table">
-                    <thead><tr><th>ط§ظ„ظ…ظƒظˆظ†</th><th>ط§ظ„ط­ط³ط§ط¨</th><th>ط§ظ„طھطµظ†ظٹظپ</th><th>ط·ط±ظٹظ‚ط© ط§ظ„ط­ط³ط§ط¨</th><th>ط¸ظ‡ظˆط±</th></tr></thead>
+                    <thead><tr><th>المكون</th><th>الحساب</th><th>التصنيف</th><th>طريقة الحساب</th><th>ظهور</th></tr></thead>
                     <tbody>
                         @foreach (var row in Model.Components)
                         {
                             <tr data-component-id="@row.Id">
                                 <td><strong>@row.Name</strong><small>@row.NameEnglish</small></td>
-                                <td><span class="lhf-muted-account">ظٹطھظ… ط¹ط±ط¶ ط§ظ„ط­ط³ط§ط¨ط§طھ ظ…ظ† ط´ط§ط´ط© ظ…ط¹ط§ظٹظ†ط© ط§ظ„ظ‚ظٹط¯ ط¨ط£ط³ظ…ط§ط، ظˆط§ط¶ط­ط©</span></td>
+                                <td><span class="lhf-muted-account">يتم عرض الحسابات من شاشة معاينة القيد بأسماء واضحة</span></td>
                                 <td>
-                                    <span class="lhf-badge @(row.AddOrDiscount ? "success" : "danger")">@(row.AddOrDiscount ? "ط¥ط¶ط§ظپط©" : "ط®طµظ…")</span>
-                                    @if (row.Salary) { <span class="lhf-badge info">ط±ط§طھط¨</span> }
-                                    @if (row.Insurance) { <span class="lhf-badge warning">طھط£ظ…ظٹظ†</span> }
-                                    @if (row.Reward) { <span class="lhf-badge success">ظ…ظƒط§ظپط£ط©</span> }
+                                    <span class="lhf-badge @(row.AddOrDiscount ? "success" : "danger")">@(row.AddOrDiscount ? "إضافة" : "خصم")</span>
+                                    @if (row.Salary) { <span class="lhf-badge info">راتب</span> }
+                                    @if (row.Insurance) { <span class="lhf-badge warning">تأمين</span> }
+                                    @if (row.Reward) { <span class="lhf-badge success">مكافأة</span> }
                                 </td>
-                                <td>@(row.FixedOrChanged ? "ظ…طھط؛ظٹط±" : "ط«ط§ط¨طھ") - ظˆط­ط¯ط© @row.Unit</td>
-                                <td>@(row.ViewComponent ? "ط¸ط§ظ‡ط±" : "ظ…ط®ظپظٹ")</td>
+                                <td>@(row.FixedOrChanged ? "متغير" : "ثابت") - وحدة @row.Unit</td>
+                                <td>@(row.ViewComponent ? "ظاهر" : "مخفي")</td>
                             </tr>
                         }
                     </tbody>
@@ -438,15 +439,15 @@
         <section class="lhf-panel lhf-changed-components">
             <header>
                 <div>
-                    <h3>طھط³ط¬ظٹظ„ ط§ظ„ظ…ظپط±ط¯ط§طھ ط§ظ„ظ…طھط؛ظٹط±ط©</h3>
-                    <span>ط§ظ„ظ‚ظٹظ… ط§ظ„ط´ظ‡ط±ظٹط© ط§ظ„ظ…طھط؛ظٹط±ط© ط§ظ„طھظٹ ظٹظ‚ط±ط£ظ‡ط§ ظ…ط³ظٹط± ط§ظ„ط±ظˆط§طھط¨ ظ…ظ† TblChangedComponentRegister ظˆطھظپط§طµظٹظ„ظ‡ط§.</span>
+                    <h3>تسجيل المفردات المتغيرة</h3>
+                    <span>القيم الشهرية المتغيرة التي يقرأها مسير الرواتب من TblChangedComponentRegister وتفاصيلها.</span>
                 </div>
                 @if (Model.Permissions.CanAdd)
                 {
                     <div class="lhf-panel-tools">
-                        <button type="button" class="lhf-primary" data-new-changed-component><i class="fas fa-plus"></i><span>ظ…ظپط±ط¯ط© ظ…طھط؛ظٹط±ط© ط¬ط¯ظٹط¯ط©</span></button>
-                        <button type="button" data-open-changed-bulk="bulk"><i class="fas fa-layer-group"></i><span>ط¥ط¯ط®ط§ظ„ ط¬ظ…ط§ط¹ظٹ</span></button>
-                        <button type="button" data-open-changed-bulk="copy"><i class="fas fa-copy"></i><span>ظ†ط³ط® ط´ظ‡ط±</span></button>
+                        <button type="button" class="lhf-primary" data-new-changed-component><i class="fas fa-plus"></i><span>مفردة متغيرة جديدة</span></button>
+                        <button type="button" data-open-changed-bulk="bulk"><i class="fas fa-layer-group"></i><span>إدخال جماعي</span></button>
+                        <button type="button" data-open-changed-bulk="copy"><i class="fas fa-copy"></i><span>نسخ شهر</span></button>
                     </div>
                 }
             </header>
@@ -454,15 +455,15 @@
                 <table class="lhf-table lhf-changed-table">
                     <thead>
                         <tr>
-                            <th>ط±ظ‚ظ…</th>
-                            <th>ط§ظ„ظ…ظˆط¸ظپ</th>
-                            <th>ط§ظ„ظ…ظپط±ط¯ط©</th>
-                            <th>ط§ظ„ظپطھط±ط©</th>
-                            <th>ط§ظ„ظ‚ظٹظ…ط©</th>
-                            <th>ط§ظ„ظ‚ظٹط§ط³</th>
-                            <th>ط§ظ„ط­ط§ظ„ط©</th>
-                            <th>ظ…ظ„ط§ط­ط¸ط§طھ</th>
-                            <th>ط¥ط¬ط±ط§ط،ط§طھ</th>
+                            <th>رقم</th>
+                            <th>الموظف</th>
+                            <th>المفردة</th>
+                            <th>الفترة</th>
+                            <th>القيمة</th>
+                            <th>القياس</th>
+                            <th>الحالة</th>
+                            <th>ملاحظات</th>
+                            <th>إجراءات</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -477,32 +478,32 @@
                                 </td>
                                 <td>
                                     <strong>@row.ComponentName</strong>
-                                    <span class="lhf-badge @(row.AddOrDiscount ? "success" : "danger")">@(row.AddOrDiscount ? "ط¥ط¶ط§ظپط©" : "ط®طµظ…")</span>
+                                    <span class="lhf-badge @(row.AddOrDiscount ? "success" : "danger")">@(row.AddOrDiscount ? "إضافة" : "خصم")</span>
                                 </td>
                                 <td>@row.Month / @row.Year<br /><small>@row.RecordDate</small></td>
                                 <td class="lhf-num">@row.Value.ToString("N2")</td>
                                 <td>
-                                    @if (row.NoOfDays > 0) { <small>ط£ظٹط§ظ…: @row.NoOfDays.ToString("N2")</small> }
-                                    @if (row.NoOfHours > 0 || row.NoOfMinutes > 0) { <small>ط³ط§ط¹ط§طھ: @row.NoOfHours.ToString("N2") : @row.NoOfMinutes.ToString("N2")</small> }
-                                    @if (row.HourRate > 0) { <small>ظ…ط¹ط¯ظ„: @row.HourRate.ToString("N2")</small> }
-                                    @if (row.Salary > 0) { <small>ط£ط³ط§ط³: @row.Salary.ToString("N2")</small> }
+                                    @if (row.NoOfDays > 0) { <small>أيام: @row.NoOfDays.ToString("N2")</small> }
+                                    @if (row.NoOfHours > 0 || row.NoOfMinutes > 0) { <small>ساعات: @row.NoOfHours.ToString("N2") : @row.NoOfMinutes.ToString("N2")</small> }
+                                    @if (row.HourRate > 0) { <small>معدل: @row.HourRate.ToString("N2")</small> }
+                                    @if (row.Salary > 0) { <small>أساس: @row.Salary.ToString("N2")</small> }
                                 </td>
                                 <td>
-                                    @if (row.PayrollUsed) { <span class="lhf-badge locked">ظ…ط³طھط®ط¯ظ… ظپظٹ ط§ظ„ظ…ط³ظٹط±</span> }
-                                    else { <span class="lhf-badge info">ظ…ظپطھظˆط­</span> }
+                                    @if (row.PayrollUsed) { <span class="lhf-badge locked">مستخدم في المسير</span> }
+                                    else { <span class="lhf-badge info">مفتوح</span> }
                                     @if (row.PayrollRunId.HasValue && !string.IsNullOrWhiteSpace(Model.PayrollRunUrl))
                                     {
                                         <a class="lhf-run-link" href="@(Model.PayrollRunUrl + "?payrollRunId=" + row.PayrollRunId.Value + "&year=" + row.Year + "&month=" + row.Month)">
-                                            ظ…ط³ظٹط± #@row.PayrollRunId.Value
+                                            مسير #@row.PayrollRunId.Value
                                         </a>
                                         <small>@(string.IsNullOrWhiteSpace(row.PayrollRunName) ? "Snapshot payroll run" : row.PayrollRunName)</small>
-                                        <span class="lhf-badge @(row.PayrollRunPosted ? "locked" : "warning")">@(row.PayrollRunPosted ? "ظ…ط±ط­ظ„" : "ظ…ط­ظپظˆط¸")</span>
+                                        <span class="lhf-badge @(row.PayrollRunPosted ? "locked" : "warning")">@(row.PayrollRunPosted ? "مرحل" : "محفوظ")</span>
                                     }
                                     else if (row.PayrollUsed && !string.IsNullOrWhiteSpace(row.PayrollUsageSource))
                                     {
                                         <small>@row.PayrollUsageSource</small>
                                     }
-                                    @if (row.IsLegacyBulk) { <span class="lhf-badge warning">ط¯ظپط¹ط© ظ…طھط¹ط¯ط¯ط©</span> }
+                                    @if (row.IsLegacyBulk) { <span class="lhf-badge warning">دفعة متعددة</span> }
                                 </td>
                                 <td>
                                     <span>@row.Remarks</span>
@@ -511,22 +512,22 @@
                                 <td class="lhf-actions">
                                     @if (Model.Permissions.CanEdit && row.CanEdit)
                                     {
-                                        <button type="button" data-edit-changed-component="@row.Id">طھط¹ط¯ظٹظ„</button>
+                                        <button type="button" data-edit-changed-component="@row.Id">تعديل</button>
                                     }
                                     @if (Model.Permissions.CanDelete && row.CanDelete)
                                     {
-                                        <button type="button" data-delete-changed-component="@row.Id">ط­ط°ظپ</button>
+                                        <button type="button" data-delete-changed-component="@row.Id">حذف</button>
                                     }
                                     @if (!row.CanEdit)
                                     {
-                                        <span class="lhf-action-note">ظ…ظ‚ظپظ„ط©</span>
+                                        <span class="lhf-action-note">مقفلة</span>
                                     }
                                 </td>
                             </tr>
                         }
                         @if (!Model.ChangedComponents.Any())
                         {
-                            <tr><td colspan="9" class="lhf-empty">ظ„ط§ طھظˆط¬ط¯ ظ…ظپط±ط¯ط§طھ ظ…طھط؛ظٹط±ط© ظ…ط·ط§ط¨ظ‚ط© ظ„ظ„ظپظ„ط§طھط± ط§ظ„ط­ط§ظ„ظٹط©.</td></tr>
+                            <tr><td colspan="9" class="lhf-empty">لا توجد مفردات متغيرة مطابقة للفلاتر الحالية.</td></tr>
                         }
                     </tbody>
                 </table>
@@ -537,46 +538,46 @@
             <form id="lhfChangedComponentForm" class="lhf-editor-card">
                 <input type="hidden" id="lhfChangedDetailId" name="Id" />
                 <header>
-                    <h3>ط¨ظٹط§ظ†ط§طھ ط§ظ„ظ…ظپط±ط¯ط© ط§ظ„ظ…طھط؛ظٹط±ط©</h3>
-                    <button type="button" data-close-changed-component aria-label="ط¥ط؛ظ„ط§ظ‚">أ—</button>
+                    <h3>بيانات المفردة المتغيرة</h3>
+                    <button type="button" data-close-changed-component aria-label="إغلاق">×</button>
                 </header>
                 <div class="lhf-form-grid">
-                    <label><span>ط§ظ„ظ…ظˆط¸ظپ</span>
-                        <input type="search" id="lhfChangedEmployeeSearch" class="lhf-select-search lhf-editor-search" data-filter-select="lhfChangedEmployeeId" placeholder="ط¨ط­ط« ط³ط±ظٹط¹ ط¨ط§ظ„ط§ط³ظ… ط£ظˆ ط§ظ„ظƒظˆط¯" autocomplete="off" />
+                    <label><span>الموظف</span>
+                        <input type="search" id="lhfChangedEmployeeSearch" class="lhf-select-search lhf-editor-search" data-filter-select="lhfChangedEmployeeId" placeholder="بحث سريع بالاسم أو الكود" autocomplete="off" />
                         <select id="lhfChangedEmployeeId" name="EmployeeId" required>
-                            <option value="">ط§ط®طھط± ط§ظ„ظ…ظˆط¸ظپ</option>
+                            <option value="">اختر الموظف</option>
                             @foreach (var employee in Model.Employees)
                             {
                                 <option value="@employee.Id" data-salary="@employee.BasicSalary">@employee.Code - @employee.Name</option>
                             }
                         </select>
                     </label>
-                    <label><span>ط§ظ„ظ…ظپط±ط¯ط©</span>
-                        <input type="search" id="lhfChangedComponentSearch" class="lhf-select-search lhf-editor-search" data-filter-select="lhfChangedComponentId" placeholder="ط¨ط­ط« ط³ط±ظٹط¹ ظپظٹ ط§ظ„ظ…ظپط±ط¯ط§طھ" autocomplete="off" />
+                    <label><span>المفردة</span>
+                        <input type="search" id="lhfChangedComponentSearch" class="lhf-select-search lhf-editor-search" data-filter-select="lhfChangedComponentId" placeholder="بحث سريع في المفردات" autocomplete="off" />
                         <select id="lhfChangedComponentId" name="ComponentId" required>
-                            <option value="">ط§ط®طھط± ط§ظ„ظ…ظپط±ط¯ط©</option>
+                            <option value="">اختر المفردة</option>
                             @foreach (var component in Model.Components)
                             {
-                                <option value="@component.Id" data-add="@component.AddOrDiscount.ToString().ToLowerInvariant()" data-unit="@component.Unit">@component.Name (@(component.AddOrDiscount ? "ط¥ط¶ط§ظپط©" : "ط®طµظ…"))</option>
+                                <option value="@component.Id" data-add="@component.AddOrDiscount.ToString().ToLowerInvariant()" data-unit="@component.Unit">@component.Name (@(component.AddOrDiscount ? "إضافة" : "خصم"))</option>
                             }
                         </select>
                     </label>
-                    <label><span>ط§ظ„طھط§ط±ظٹط®</span><input type="date" id="lhfChangedRecordDate" name="RecordDate" required /></label>
-                    <label><span>ط§ظ„ط³ظ†ط©</span><input type="number" id="lhfChangedYear" name="Year" min="2006" max="3000" required /></label>
-                    <label><span>ط§ظ„ط´ظ‡ط±</span><input type="number" id="lhfChangedMonth" name="Month" min="1" max="12" required /></label>
-                    <label><span>ط§ظ„ظ‚ظٹظ…ط©</span><input type="number" id="lhfChangedValue" name="Value" min="0.01" step="0.01" required /></label>
-                    <label><span>ط¹ط¯ط¯ ط§ظ„ط£ظٹط§ظ…</span><input type="number" id="lhfChangedDays" name="NoOfDays" min="0" step="0.01" /></label>
-                    <label><span>ط¹ط¯ط¯ ط§ظ„ط³ط§ط¹ط§طھ</span><input type="number" id="lhfChangedHours" name="NoOfHours" min="0" step="0.01" /></label>
-                    <label><span>ط§ظ„ط¯ظ‚ط§ط¦ظ‚</span><input type="number" id="lhfChangedMinutes" name="NoOfMinutes" min="0" step="0.01" /></label>
-                    <label><span>ظ…ط¹ط¯ظ„ ط§ظ„ط³ط§ط¹ط©/ط§ظ„ظٹظˆظ…</span><input type="number" id="lhfChangedHourRate" name="HourRate" min="0" step="0.01" /></label>
-                    <label><span>ط§ظ„ط±ط§طھط¨ ط§ظ„ط£ط³ط§ط³ظٹ</span><input type="number" id="lhfChangedSalary" name="Salary" min="0" step="0.01" /></label>
-                    <label class="lhf-field-wide"><span>ظ…ظ„ط§ط­ط¸ط§طھ</span><textarea id="lhfChangedRemarks" name="Remarks" rows="3"></textarea></label>
+                    <label><span>التاريخ</span><input type="date" id="lhfChangedRecordDate" name="RecordDate" required /></label>
+                    <label><span>السنة</span><input type="number" id="lhfChangedYear" name="Year" min="2006" max="3000" required /></label>
+                    <label><span>الشهر</span><input type="number" id="lhfChangedMonth" name="Month" min="1" max="12" required /></label>
+                    <label><span>القيمة</span><input type="number" id="lhfChangedValue" name="Value" min="0.01" step="0.01" required /></label>
+                    <label><span>عدد الأيام</span><input type="number" id="lhfChangedDays" name="NoOfDays" min="0" step="0.01" /></label>
+                    <label><span>عدد الساعات</span><input type="number" id="lhfChangedHours" name="NoOfHours" min="0" step="0.01" /></label>
+                    <label><span>الدقائق</span><input type="number" id="lhfChangedMinutes" name="NoOfMinutes" min="0" step="0.01" /></label>
+                    <label><span>معدل الساعة/اليوم</span><input type="number" id="lhfChangedHourRate" name="HourRate" min="0" step="0.01" /></label>
+                    <label><span>الراتب الأساسي</span><input type="number" id="lhfChangedSalary" name="Salary" min="0" step="0.01" /></label>
+                    <label class="lhf-field-wide"><span>ملاحظات</span><textarea id="lhfChangedRemarks" name="Remarks" rows="3"></textarea></label>
                 </div>
-                <div class="lhf-changed-entry-preview" id="lhfChangedEntryPreview">ط§ط®طھط± ط§ظ„ظ…ظˆط¸ظپ ظˆط§ظ„ظ…ظپط±ط¯ط© ظ„ظ…ط±ط§ط¬ط¹ط© ط§طھط¬ط§ظ‡ ط§ظ„طھط£ط«ظٹط± ظ‚ط¨ظ„ ط§ظ„ط­ظپط¸.</div>
+                <div class="lhf-changed-entry-preview" id="lhfChangedEntryPreview">اختر الموظف والمفردة لمراجعة اتجاه التأثير قبل الحفظ.</div>
                 <div id="lhfChangedMessage" class="lhf-editor-message"></div>
                 <footer>
-                    <button type="button" data-close-changed-component>ط¥ظ„ط؛ط§ط،</button>
-                    <button type="submit" class="lhf-primary">ط­ظپط¸</button>
+                    <button type="button" data-close-changed-component>إلغاء</button>
+                    <button type="submit" class="lhf-primary">حفظ</button>
                 </footer>
             </form>
         </div>
@@ -585,54 +586,54 @@
             <form id="lhfChangedBulkForm" class="lhf-editor-card lhf-wide-editor">
                 <input type="hidden" id="lhfChangedBulkMode" name="Mode" value="bulk" />
                 <header>
-                    <h3 id="lhfChangedBulkTitle">ط¥ط¯ط®ط§ظ„ ط¬ظ…ط§ط¹ظٹ ظ„ظ„ظ…ظپط±ط¯ط§طھ ط§ظ„ظ…طھط؛ظٹط±ط©</h3>
-                    <button type="button" data-close-changed-bulk aria-label="ط¥ط؛ظ„ط§ظ‚">أ—</button>
+                    <h3 id="lhfChangedBulkTitle">إدخال جماعي للمفردات المتغيرة</h3>
+                    <button type="button" data-close-changed-bulk aria-label="إغلاق">×</button>
                 </header>
                 <div class="lhf-form-grid">
-                    <label class="lhf-field-wide"><span>ط§ظ„ظ…ظˆط¸ظپظˆظ†</span><textarea id="lhfChangedBulkEmployees" name="EmployeeTokens" rows="3" placeholder="ط§ظƒطھط¨ ط±ظ‚ظ… ط§ظ„ظ…ظˆط¸ظپ ط£ظˆ ط§ظ„ظƒظˆط¯طŒ ظˆط§ظپطµظ„ ط¨ظٹظ† ط§ظ„ظ…ظˆط¸ظپظٹظ† ط¨ظپط§طµظ„ط© ط£ظˆ ط³ط·ط± ط¬ط¯ظٹط¯"></textarea></label>
-                    <label><span>ط§ظ„ظ…ظپط±ط¯ط©</span>
+                    <label class="lhf-field-wide"><span>الموظفون</span><textarea id="lhfChangedBulkEmployees" name="EmployeeTokens" rows="3" placeholder="اكتب رقم الموظف أو الكود، وافصل بين الموظفين بفاصلة أو سطر جديد"></textarea></label>
+                    <label><span>المفردة</span>
                         <select id="lhfChangedBulkComponentId" name="ComponentId">
-                            <option value="">ط§ط®طھط± ط§ظ„ظ…ظپط±ط¯ط©</option>
+                            <option value="">اختر المفردة</option>
                             @foreach (var component in Model.Components)
                             {
-                                <option value="@component.Id" data-add="@component.AddOrDiscount.ToString().ToLowerInvariant()" data-unit="@component.Unit">@component.Name (@(component.AddOrDiscount ? "ط¥ط¶ط§ظپط©" : "ط®طµظ…"))</option>
+                                <option value="@component.Id" data-add="@component.AddOrDiscount.ToString().ToLowerInvariant()" data-unit="@component.Unit">@component.Name (@(component.AddOrDiscount ? "إضافة" : "خصم"))</option>
                             }
                         </select>
                     </label>
-                    <label class="lhf-copy-only"><span>ظ…ظپط±ط¯ط© ط§ظ„ظ…طµط¯ط±</span>
+                    <label class="lhf-copy-only"><span>مفردة المصدر</span>
                         <select id="lhfChangedBulkSourceComponentId" name="SourceComponentId">
-                            <option value="">ظƒظ„ ط§ظ„ظ…ظپط±ط¯ط§طھ</option>
+                            <option value="">كل المفردات</option>
                             @foreach (var component in Model.Components)
                             {
-                                <option value="@component.Id">@component.Name (@(component.AddOrDiscount ? "ط¥ط¶ط§ظپط©" : "ط®طµظ…"))</option>
+                                <option value="@component.Id">@component.Name (@(component.AddOrDiscount ? "إضافة" : "خصم"))</option>
                             }
                         </select>
                     </label>
-                    <label class="lhf-copy-only"><span>ط³ظ†ط© ط§ظ„ظ…طµط¯ط±</span><input type="number" id="lhfChangedBulkSourceYear" name="SourceYear" min="2006" max="3000" /></label>
-                    <label class="lhf-copy-only"><span>ط´ظ‡ط± ط§ظ„ظ…طµط¯ط±</span><input type="number" id="lhfChangedBulkSourceMonth" name="SourceMonth" min="1" max="12" /></label>
-                    <label><span>طھط§ط±ظٹط® ط§ظ„طھط³ط¬ظٹظ„</span><input type="date" id="lhfChangedBulkRecordDate" name="RecordDate" /></label>
-                    <label><span>ط³ظ†ط© ط§ظ„ظ‡ط¯ظپ</span><input type="number" id="lhfChangedBulkYear" name="Year" min="2006" max="3000" required /></label>
-                    <label><span>ط´ظ‡ط± ط§ظ„ظ‡ط¯ظپ</span><input type="number" id="lhfChangedBulkMonth" name="Month" min="1" max="12" required /></label>
-                    <label class="lhf-bulk-only"><span>ط§ظ„ظ‚ظٹظ…ط©</span><input type="number" id="lhfChangedBulkValue" name="Value" min="0.01" step="0.01" /></label>
-                    <label class="lhf-bulk-only"><span>ط¹ط¯ط¯ ط§ظ„ط£ظٹط§ظ…</span><input type="number" id="lhfChangedBulkDays" name="NoOfDays" min="0" step="0.01" /></label>
-                    <label class="lhf-bulk-only"><span>ط¹ط¯ط¯ ط§ظ„ط³ط§ط¹ط§طھ</span><input type="number" id="lhfChangedBulkHours" name="NoOfHours" min="0" step="0.01" /></label>
-                    <label class="lhf-bulk-only"><span>ط§ظ„ط¯ظ‚ط§ط¦ظ‚</span><input type="number" id="lhfChangedBulkMinutes" name="NoOfMinutes" min="0" step="0.01" /></label>
-                    <label class="lhf-bulk-only"><span>ظ…ط¹ط¯ظ„ ط§ظ„ط³ط§ط¹ط©/ط§ظ„ظٹظˆظ…</span><input type="number" id="lhfChangedBulkHourRate" name="HourRate" min="0" step="0.01" /></label>
-                    <label class="lhf-bulk-only"><span>ط§ظ„ط±ط§طھط¨ ط§ظ„ط£ط³ط§ط³ظٹ</span><input type="number" id="lhfChangedBulkSalary" name="Salary" min="0" step="0.01" /></label>
-                    <label class="lhf-field-wide"><span>ظ…ظ„ط§ط­ط¸ط§طھ</span><textarea id="lhfChangedBulkRemarks" name="Remarks" rows="2"></textarea></label>
+                    <label class="lhf-copy-only"><span>سنة المصدر</span><input type="number" id="lhfChangedBulkSourceYear" name="SourceYear" min="2006" max="3000" /></label>
+                    <label class="lhf-copy-only"><span>شهر المصدر</span><input type="number" id="lhfChangedBulkSourceMonth" name="SourceMonth" min="1" max="12" /></label>
+                    <label><span>تاريخ التسجيل</span><input type="date" id="lhfChangedBulkRecordDate" name="RecordDate" /></label>
+                    <label><span>سنة الهدف</span><input type="number" id="lhfChangedBulkYear" name="Year" min="2006" max="3000" required /></label>
+                    <label><span>شهر الهدف</span><input type="number" id="lhfChangedBulkMonth" name="Month" min="1" max="12" required /></label>
+                    <label class="lhf-bulk-only"><span>القيمة</span><input type="number" id="lhfChangedBulkValue" name="Value" min="0.01" step="0.01" /></label>
+                    <label class="lhf-bulk-only"><span>عدد الأيام</span><input type="number" id="lhfChangedBulkDays" name="NoOfDays" min="0" step="0.01" /></label>
+                    <label class="lhf-bulk-only"><span>عدد الساعات</span><input type="number" id="lhfChangedBulkHours" name="NoOfHours" min="0" step="0.01" /></label>
+                    <label class="lhf-bulk-only"><span>الدقائق</span><input type="number" id="lhfChangedBulkMinutes" name="NoOfMinutes" min="0" step="0.01" /></label>
+                    <label class="lhf-bulk-only"><span>معدل الساعة/اليوم</span><input type="number" id="lhfChangedBulkHourRate" name="HourRate" min="0" step="0.01" /></label>
+                    <label class="lhf-bulk-only"><span>الراتب الأساسي</span><input type="number" id="lhfChangedBulkSalary" name="Salary" min="0" step="0.01" /></label>
+                    <label class="lhf-field-wide"><span>ملاحظات</span><textarea id="lhfChangedBulkRemarks" name="Remarks" rows="2"></textarea></label>
                 </div>
-                <div class="lhf-bulk-summary" id="lhfChangedBulkSummary">ط§ظ„ظ…ط¹ط§ظٹظ†ط© ظ…ط·ظ„ظˆط¨ط© ظ‚ط¨ظ„ ط§ظ„ط­ظپط¸.</div>
+                <div class="lhf-bulk-summary" id="lhfChangedBulkSummary">المعاينة مطلوبة قبل الحفظ.</div>
                 <div class="lhf-table-wrap lhf-bulk-preview-wrap" hidden>
                     <table class="lhf-table">
-                        <thead><tr><th>#</th><th>ط§ظ„ظ…ظˆط¸ظپ</th><th>ط§ظ„ظ…ظپط±ط¯ط©</th><th>ط§ظ„ظپطھط±ط©</th><th>ط§ظ„ظ‚ظٹظ…ط©</th><th>ط§ظ„ط­ط§ظ„ط©</th><th>ط§ظ„طھظ‚ط±ظٹط±</th></tr></thead>
+                        <thead><tr><th>#</th><th>الموظف</th><th>المفردة</th><th>الفترة</th><th>القيمة</th><th>الحالة</th><th>التقرير</th></tr></thead>
                         <tbody id="lhfChangedBulkPreviewRows"></tbody>
                     </table>
                 </div>
                 <footer>
                     <span id="lhfChangedBulkMessage" class="lhf-editor-message"></span>
-                    <button type="button" data-close-changed-bulk>ط¥ظ„ط؛ط§ط،</button>
-                    <button type="button" data-preview-changed-bulk>ظ…ط¹ط§ظٹظ†ط©</button>
-                    <button type="button" class="lhf-primary" data-save-changed-bulk disabled>ط­ظپط¸ ط§ظ„ط³ط·ظˆط± ط§ظ„طµط§ظ„ط­ط©</button>
+                    <button type="button" data-close-changed-bulk>إلغاء</button>
+                    <button type="button" data-preview-changed-bulk>معاينة</button>
+                    <button type="button" class="lhf-primary" data-save-changed-bulk disabled>حفظ السطور الصالحة</button>
                 </footer>
             </form>
         </div>
@@ -642,8 +643,8 @@
         <section class="lhf-panel lhf-vacation-engine">
             <header>
                 <div>
-                    <h3>ظ…ط­ط±ظƒ ط±طµظٹط¯ ط§ظ„ط¥ط¬ط§ط²ط§طھ</h3>
-                    <span>ط­ط³ط§ط¨ ظ…ظˆط­ط¯ ظ„ظ„ط§ط³طھط­ظ‚ط§ظ‚طŒ ط§ظ„ظ…ط±ط­ظ„طŒ ط§ظ„ظ…ط³طھظ‡ظ„ظƒطŒ ط§ظ„ط¥ط¬ط§ط²ط§طھ ط¨ط¯ظˆظ† ط±ط§طھط¨طŒ ظˆط§ظ„ظ…طھط¨ظ‚ظٹ ظ‚ط¨ظ„ ط§ط¹طھظ…ط§ط¯ ط£ظٹ ط¥ط¬ط§ط²ط© ظ…ط¯ظپظˆط¹ط©.</span>
+                    <h3>محرك رصيد الإجازات</h3>
+                    <span>حساب موحد للاستحقاق، المرحل، المستهلك، الإجازات بدون راتب، والمتبقي قبل اعتماد أي إجازة مدفوعة.</span>
                 </div>
             </header>
             <div class="lhf-vacation-balance-form">
@@ -656,20 +657,20 @@
                             }
                         </select>
                     </label>
-                <label><span>طھط§ط±ظٹط® ط§ظ„ط­ط³ط§ط¨</span><input type="date" id="lhfVacationAsOfDate" /></label>
-                <label><span>ظ…ظ† طھط§ط±ظٹط®</span><input type="date" id="lhfVacationStartDate" /></label>
-                <label><span>ط¥ظ„ظ‰ طھط§ط±ظٹط®</span><input type="date" id="lhfVacationEndDate" /></label>
-                <button type="button" class="lhf-primary" data-calc-vacation-balance>ط­ط³ط§ط¨ ط§ظ„ط±طµظٹط¯</button>
+                <label><span>تاريخ الحساب</span><input type="date" id="lhfVacationAsOfDate" /></label>
+                <label><span>من تاريخ</span><input type="date" id="lhfVacationStartDate" /></label>
+                <label><span>إلى تاريخ</span><input type="date" id="lhfVacationEndDate" /></label>
+                <button type="button" class="lhf-primary" data-calc-vacation-balance>حساب الرصيد</button>
             </div>
             <div class="lhf-vacation-balance-result" id="lhfVacationBalanceResult">
-                ط§ط®طھط± ظ…ظˆط¸ظپط§ ظ„ط­ط³ط§ط¨ ط±طµظٹط¯ ط§ظ„ط¥ط¬ط§ط²ط§طھ ظ‚ط¨ظ„ ط§ظ„ط­ظپط¸ ط£ظˆ ط§ظ„ط§ط¹طھظ…ط§ط¯.
+                اختر موظفا لحساب رصيد الإجازات قبل الحفظ أو الاعتماد.
             </div>
         </section>
         <section class="lhf-panel">
-            <header><h3>ط§ظ„ط³ط¬ظ„ط§طھ</h3><span>ط·ظ„ط¨ط§طھ ظˆظ…ط³طھط­ظ‚ط§طھ ط§ظ„ط¥ط¬ط§ط²ط§طھ ط­ط³ط¨ ط§ظ„ط´ط§ط´ط© ط§ظ„ط­ط§ظ„ظٹط©</span></header>
+            <header><h3>السجلات</h3><span>طلبات ومستحقات الإجازات حسب الشاشة الحالية</span></header>
             <div class="lhf-table-wrap">
                 <table class="lhf-table">
-                    <thead><tr><th>ط±ظ‚ظ…</th><th>ط§ظ„ط¨ظٹط§ظ†</th><th>ط§ظ„طھط§ط±ظٹط®/ط§ظ„ظپطھط±ط©</th><th>ط§ظ„ظ‚ظٹظ…ط©</th><th>ط§ظ„ط­ط§ظ„ط©</th><th>طھظپط§طµظٹظ„</th></tr></thead>
+                    <thead><tr><th>رقم</th><th>البيان</th><th>التاريخ/الفترة</th><th>القيمة</th><th>الحالة</th><th>تفاصيل</th></tr></thead>
                     <tbody>
                         @foreach (var row in Model.Rows)
                         {
@@ -689,7 +690,7 @@
                         }
                         @if (!Model.Rows.Any())
                         {
-                            <tr><td colspan="6" class="lhf-empty">ظ„ط§ طھظˆط¬ط¯ ط³ط¬ظ„ط§طھ ظ…ط·ط§ط¨ظ‚ط© ظ„ظ„ط¨ط­ط« ط§ظ„ط­ط§ظ„ظٹ.</td></tr>
+                            <tr><td colspan="6" class="lhf-empty">لا توجد سجلات مطابقة للبحث الحالي.</td></tr>
                         }
                     </tbody>
                 </table>
@@ -699,10 +700,10 @@
     else
     {
         <section class="lhf-panel">
-            <header><h3>ط§ظ„ط³ط¬ظ„ط§طھ</h3><span>ط¯ظˆط±ط© ظ‚ط±ط§ط،ط© ظ…ط­ظƒظˆظ…ط©</span></header>
+            <header><h3>السجلات</h3><span>دورة قراءة محكومة</span></header>
             <div class="lhf-table-wrap">
                 <table class="lhf-table">
-                    <thead><tr><th>ط±ظ‚ظ…</th><th>ط§ظ„ط¨ظٹط§ظ†</th><th>ط§ظ„طھط§ط±ظٹط®/ط§ظ„ظپطھط±ط©</th><th>ط§ظ„ظ‚ظٹظ…ط©</th><th>ط§ظ„ط­ط§ظ„ط©</th><th>طھظپط§طµظٹظ„</th></tr></thead>
+                    <thead><tr><th>رقم</th><th>البيان</th><th>التاريخ/الفترة</th><th>القيمة</th><th>الحالة</th><th>تفاصيل</th></tr></thead>
                     <tbody>
                         @foreach (var row in Model.Rows)
                         {
@@ -722,7 +723,7 @@
                         }
                         @if (!Model.Rows.Any())
                         {
-                            <tr><td colspan="6" class="lhf-empty">ظ„ط§ طھظˆط¬ط¯ ط³ط¬ظ„ط§طھ ظ…ط·ط§ط¨ظ‚ط© ظ„ظ„ط¨ط­ط« ط§ظ„ط­ط§ظ„ظٹ.</td></tr>
+                            <tr><td colspan="6" class="lhf-empty">لا توجد سجلات مطابقة للبحث الحالي.</td></tr>
                         }
                     </tbody>
                 </table>
@@ -732,21 +733,21 @@
 
     @if (Model.ModuleKey == "vacations")
     {
-        <section class="lhf-vacation-workspace" aria-label="ط¥ط¯ط§ط±ط© ط§ظ„ط¥ط¬ط§ط²ط§طھ">
+        <section class="lhf-vacation-workspace" aria-label="إدارة الإجازات">
             <div class="lhf-vacation-summary">
-                <article><span>ط·ظ„ط¨ط§طھ ط§ظ„ط¥ط¬ط§ط²ط§طھ</span><strong>@vacationCount.ToString("N0")</strong><small>ط­ط³ط¨ ط§ظ„ظپظ„ط§طھط± ط§ظ„ط­ط§ظ„ظٹط©</small></article>
-                <article><span>ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ط£ظٹط§ظ…</span><strong>@vacationDays.ToString("N2")</strong><small>ط£ظٹط§ظ… ظ…ط·ظ„ظˆط¨ط© ط£ظˆ ظ…ط³ط¬ظ„ط©</small></article>
-                <article class="@(vacationPending > 0 ? "has-warning" : "")"><span>ظ‚ظٹط¯ ظ…ط±ط§ط¬ط¹ط© ط§ظ„ظ…ط¯ظٹط±</span><strong>@vacationPending.ToString("N0")</strong><small>طھط­طھط§ط¬ ظ‚ط±ط§ط±ظ‹ط§</small></article>
-                <article><span>ظ‚ظٹط¯ ط§ط¹طھظ…ط§ط¯ HR</span><strong>@vacationManagerApproved.ToString("N0")</strong><small>ط§ط¹طھظ…ط¯ظ‡ط§ ط§ظ„ظ…ط¯ظٹط±</small></article>
-                <article><span>ظ…ط¹طھظ…ط¯ط© ظ†ظ‡ط§ط¦ظٹظ‹ط§</span><strong>@vacationHrApproved.ToString("N0")</strong><small>ط¬ط§ظ‡ط²ط© ظ„ظ„ظ…طھط§ط¨ط¹ط©</small></article>
-                <article class="@(vacationRejected > 0 || vacationLocked > 0 ? "has-warning" : "")"><span>ظ…ط±ظپظˆط¶ط© / ظ…ظ‚ظپظ„ط©</span><strong>@vacationRejected.ToString("N0") / @vacationLocked.ToString("N0")</strong><small>ط±ظپط¶ ط£ظˆ ط§ط±طھط¨ط§ط· ط¨طھط³ظˆظٹط©</small></article>
+                <article><span>طلبات الإجازات</span><strong>@vacationCount.ToString("N0")</strong><small>حسب الفلاتر الحالية</small></article>
+                <article><span>إجمالي الأيام</span><strong>@vacationDays.ToString("N2")</strong><small>أيام مطلوبة أو مسجلة</small></article>
+                <article class="@(vacationPending > 0 ? "has-warning" : "")"><span>قيد مراجعة المدير</span><strong>@vacationPending.ToString("N0")</strong><small>تحتاج قرارًا</small></article>
+                <article><span>قيد اعتماد HR</span><strong>@vacationManagerApproved.ToString("N0")</strong><small>اعتمدها المدير</small></article>
+                <article><span>معتمدة نهائيًا</span><strong>@vacationHrApproved.ToString("N0")</strong><small>جاهزة للمتابعة</small></article>
+                <article class="@(vacationRejected > 0 || vacationLocked > 0 ? "has-warning" : "")"><span>مرفوضة / مقفلة</span><strong>@vacationRejected.ToString("N0") / @vacationLocked.ToString("N0")</strong><small>رفض أو ارتباط بتسوية</small></article>
             </div>
 
             <section class="lhf-panel lhf-vacation-engine">
                 <header>
                     <div>
-                        <h3>ظ…ظ„ط®طµ ط±طµظٹط¯ ط§ظ„ظ…ظˆط¸ظپ</h3>
-                        <span>ط§ط­ط³ط¨ ط§ظ„ط±طµظٹط¯ ظ‚ط¨ظ„ طھط³ط¬ظٹظ„ ط£ظˆ ط§ط¹طھظ…ط§ط¯ ط·ظ„ط¨ ط¥ط¬ط§ط²ط© ظ…ط¯ظپظˆط¹ط©طŒ ظ…ط¹ ط¥ط¸ظ‡ط§ط± ط§ظ„ط§ط³طھظ‡ظ„ط§ظƒ ظˆط§ظ„ط±طµظٹط¯ ط§ظ„ظ…طھظˆظ‚ط¹.</span>
+                        <h3>ملخص رصيد الموظف</h3>
+                        <span>احسب الرصيد قبل تسجيل أو اعتماد طلب إجازة مدفوعة، مع إظهار الاستهلاك والرصيد المتوقع.</span>
                     </div>
                 </header>
                 <div class="lhf-vacation-balance-form">
@@ -762,22 +763,22 @@
                     <label><span>تاريخ الحساب</span><input type="date" id="lhfVacationAsOfDate" value="@Model.DateFrom" /></label>
                     <label><span>من تاريخ</span><input type="date" id="lhfVacationStartDate" value="@Model.DateFrom" /></label>
                     <label><span>إلى تاريخ</span><input type="date" id="lhfVacationEndDate" value="@Model.DateTo" /></label>
-                    <button type="button" class="lhf-primary" data-calc-vacation-balance>ط­ط³ط§ط¨ ط§ظ„ط±طµظٹط¯</button>
+                    <button type="button" class="lhf-primary" data-calc-vacation-balance>حساب الرصيد</button>
                 </div>
                 <div class="lhf-vacation-balance-result" id="lhfVacationBalanceResult">
-                    ط§ط®طھط± ظ…ظˆط¸ظپط§ ظ„ط­ط³ط§ط¨ ط±طµظٹط¯ ط§ظ„ط¥ط¬ط§ط²ط§طھ ظ‚ط¨ظ„ ط§ظ„ط­ظپط¸ ط£ظˆ ط§ظ„ط§ط¹طھظ…ط§ط¯.
+                    اختر موظفا لحساب رصيد الإجازات قبل الحفظ أو الاعتماد.
                 </div>
             </section>
 
             <section class="lhf-panel lhf-vacation-calendar">
                 <header>
                     <div>
-                        <h3>ظ†ط¸ط±ط© طھظ‚ظˆظٹظ…ظٹط© ط³ط±ظٹط¹ط©</h3>
-                        <span>ط£ظ‚ط±ط¨ ط·ظ„ط¨ط§طھ ط§ظ„ط¥ط¬ط§ط²ط§طھ ظ…ط±طھط¨ط© ط­ط³ط¨ ط§ظ„ظپطھط±ط©طŒ ظ„طھط³ظ‡ظٹظ„ ظ…ط±ط§ط¬ط¹ط© ط§ظ„طھط¯ط§ط®ظ„ط§طھ ظ‚ط¨ظ„ ط§ظ„ط§ط¹طھظ…ط§ط¯.</span>
+                        <h3>نظرة تقويمية سريعة</h3>
+                        <span>أقرب طلبات الإجازات مرتبة حسب الفترة، لتسهيل مراجعة التداخلات قبل الاعتماد.</span>
                     </div>
                     @if (Model.Permissions.CanAdd)
                     {
-                        <button type="button" class="lhf-primary" data-new-vacation><i class="fas fa-plus"></i><span>ط·ظ„ط¨ ط¥ط¬ط§ط²ط© ط¬ط¯ظٹط¯</span></button>
+                        <button type="button" class="lhf-primary" data-new-vacation><i class="fas fa-plus"></i><span>طلب إجازة جديد</span></button>
                     }
                 </header>
                 <div class="lhf-vacation-calendar-strip">
@@ -787,13 +788,13 @@
                         <article class="lhf-vacation-date-card @badgeClass">
                             <small>@row.FromDate</small>
                             <strong>@row.EmployeeName</strong>
-                            <span>@row.NoVacation.ToString("N2") ظٹظˆظ…</span>
+                            <span>@row.NoVacation.ToString("N2") يوم</span>
                             <em>@row.StatusText</em>
                         </article>
                     }
                     @if (!vacationRows.Any())
                     {
-                        <div class="lhf-empty">ظ„ط§ طھظˆط¬ط¯ ط·ظ„ط¨ط§طھ ط¥ط¬ط§ط²ط§طھ ظ…ط·ط§ط¨ظ‚ط© ظ„ظ„ظپظ„ط§طھط± ط§ظ„ط­ط§ظ„ظٹط©.</div>
+                        <div class="lhf-empty">لا توجد طلبات إجازات مطابقة للفلاتر الحالية.</div>
                     }
                 </div>
             </section>
@@ -801,16 +802,16 @@
             <section class="lhf-panel lhf-vacations-panel">
                 <header>
                     <div>
-                        <h3>ط·ظ„ط¨ط§طھ ط§ظ„ط¥ط¬ط§ط²ط§طھ ظˆظ…ط³ط§ط± ط§ظ„ط§ط¹طھظ…ط§ط¯</h3>
-                        <span>ظ…ط±ط§ط¬ط¹ط© ظ…ط±ظƒط²ط© ظ„ظ„ط­ط§ظ„ط©طŒ ط§ظ„ط±طµظٹط¯طŒ ط§ظ„ط§ط¹طھظ…ط§ط¯طŒ ظˆظ…ظ†ط¹ ط§ظ„طھط¯ط§ط®ظ„ ط£ظˆ ط§ظ„طھظƒط±ط§ط± ظ‚ط¨ظ„ ط§ظ„ط­ظپط¸.</span>
+                        <h3>طلبات الإجازات ومسار الاعتماد</h3>
+                        <span>مراجعة مركزة للحالة، الرصيد، الاعتماد، ومنع التداخل أو التكرار قبل الحفظ.</span>
                     </div>
                     <div class="lhf-panel-tools">
-                        <input type="search" id="lhfVacationTableSearch" placeholder="ط¨ط­ط« ط¯ط§ط®ظ„ ط§ظ„ط·ظ„ط¨ط§طھ..." autocomplete="off" />
+                        <input type="search" id="lhfVacationTableSearch" placeholder="بحث داخل الطلبات..." autocomplete="off" />
                     </div>
                 </header>
                 <div class="lhf-table-wrap">
                     <table class="lhf-table lhf-vacation-table">
-                        <thead><tr><th>ط±ظ‚ظ…</th><th>ط§ظ„ظ…ظˆط¸ظپ</th><th>ط§ظ„ظپطھط±ط©</th><th>ط§ظ„ط£ظٹط§ظ…</th><th>ط§ظ„ظ†ظˆط¹</th><th>ط§ظ„ط­ط§ظ„ط©</th><th>ظ…ط³ط§ط± ط§ظ„ط§ط¹طھظ…ط§ط¯</th><th>ظ…ظ„ط§ط­ط¸ط§طھ</th><th>ط¥ط¬ط±ط§ط،ط§طھ</th></tr></thead>
+                        <thead><tr><th>رقم</th><th>الموظف</th><th>الفترة</th><th>الأيام</th><th>النوع</th><th>الحالة</th><th>مسار الاعتماد</th><th>ملاحظات</th><th>إجراءات</th></tr></thead>
                         <tbody>
                             @foreach (var row in Model.Vacations)
                             {
@@ -818,28 +819,46 @@
                                 <tr class="@(row.CanEdit ? "" : "lhf-row-locked")" data-vacation-search="@((row.EmployeeCode + " " + row.EmployeeName + " " + row.BranchName + " " + row.DepartmentName + " " + row.StatusText + " " + row.Reason).ToLowerInvariant())" data-vacation-employee="@row.EmployeeId" data-vacation-from="@row.FromDate" data-vacation-to="@row.ToDate" data-vacation-id="@row.Id">
                                     <td><code>@row.Id</code></td>
                                     <td><strong>@row.EmployeeName</strong><small>@row.EmployeeCode</small><small>@row.BranchName - @row.DepartmentName</small></td>
-                                    <td><strong>@row.FromDate</strong><small>ط¥ظ„ظ‰ @row.ToDate</small><small>ط¹ظˆط¯ط© ط§ظ„ط¹ظ…ظ„: @row.ResumeWork</small></td>
+                                    <td><strong>@row.FromDate</strong><small>إلى @row.ToDate</small><small>عودة العمل: @row.ResumeWork</small></td>
                                     <td class="lhf-num">@row.NoVacation.ToString("N2")</td>
-                                    <td>@(row.WithoutSalary ? "ط¨ط¯ظˆظ† ط±ط§طھط¨" : "ط¨ط±ط§طھط¨")</td>
-                                    <td><span class="lhf-badge @badgeClass">@row.StatusText</span></td>
-                                    <td><div class="lhf-approval-mini"><span class="@(row.Submitted ? "done" : "")">ط¥ط±ط³ط§ظ„</span><span class="@(row.ManagerApproved ? "done" : "")">ط§ظ„ظ…ط¯ظٹط±</span><span class="@(row.HrApproved ? "done" : "")">HR</span></div></td>
+                                    <td>@(row.WithoutSalary ? "بدون راتب" : "براتب")</td>
+                                    <td>
+                                        <div class="lhf-status-stack">
+                                            <span class="lhf-badge @badgeClass">@row.StatusText</span>
+                                            @if (row.EntitlementId.HasValue)
+                                            {
+                                                <span class="lhf-badge info">مستحقات #@row.EntitlementId.Value</span>
+                                            }
+                                            @if (row.EmbarkationId.HasValue)
+                                            {
+                                                <span class="lhf-badge success">تمت المباشرة</span>
+                                                <small>فعلي: @row.ActualReturnDate</small>
+                                                <small>أيام فعلية: @row.ActualVacationDays.ToString("N2") / تأخير: @row.DelayDays.ToString("N2")</small>
+                                            }
+                                            else if (row.LinkedToEntitlement)
+                                            {
+                                                <small>لم تسجل مباشرة العمل بعد.</small>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td><div class="lhf-approval-mini"><span class="@(row.Submitted ? "done" : "")">إرسال</span><span class="@(row.ManagerApproved ? "done" : "")">المدير</span><span class="@(row.HrApproved ? "done" : "")">HR</span></div></td>
                                     <td><span>@row.Reason</span>@if (!string.IsNullOrWhiteSpace(row.LockReason)) { <small class="lhf-lock-note">@row.LockReason</small> }</td>
                                     <td class="lhf-actions">
-                                        @if (Model.Permissions.CanEdit && row.CanRecordReturnToWork && row.EntitlementId.HasValue) { <button type="button" data-save-vacation-return="@row.EntitlementId.Value" data-vacation-start="@row.FromDate" data-vacation-end="@row.ToDate">طھط³ط¬ظٹظ„ ظ…ط¨ط§ط´ط±ط©</button> }
-                                        @if (Model.Permissions.CanDelete && row.CanDeleteReturnToWork && row.EntitlementId.HasValue) { <button type="button" data-delete-vacation-return="@row.EntitlementId.Value">ط­ط°ظپ ط§ظ„ظ…ط¨ط§ط´ط±ط©</button> }
-                                        @if (Model.Permissions.CanAdd && row.CanCreateEntitlement) { <button type="button" data-create-vacation-entitlement="@row.Id">ط¥ظ†ط´ط§ط، ظ…ط³طھط­ظ‚ط§طھ</button> }
-                                        @if (Model.Permissions.CanDelete && row.CanDeleteEntitlement && row.EntitlementId.HasValue) { <button type="button" data-delete-vacation-entitlement="@row.EntitlementId.Value">ط­ط°ظپ ط§ظ„ظ…ط³طھط­ظ‚ط§طھ</button> }
-                                        @if (Model.Permissions.CanEdit && row.CanEdit) { <button type="button" data-edit-vacation="@row.Id">طھط¹ط¯ظٹظ„</button> }
-                                        @if (Model.Permissions.CanEdit && row.CanManagerApprove) { <button type="button" data-manager-approve-vacation="@row.Id">ط§ط¹طھظ…ط§ط¯ ط§ظ„ظ…ط¯ظٹط±</button> }
-                                        @if (Model.Permissions.CanEdit && row.CanHrApprove) { <button type="button" data-hr-approve-vacation="@row.Id">ط§ط¹طھظ…ط§ط¯ HR</button> }
-                                        @if (Model.Permissions.CanEdit && row.CanReject) { <button type="button" data-reject-vacation="@row.Id">ط±ظپط¶</button> }
-                                        @if (Model.Permissions.CanDelete && row.CanCancel) { <button type="button" data-cancel-vacation="@row.Id">ط¥ظ„ط؛ط§ط، ط¢ظ…ظ†</button> }
+                                        @if (Model.Permissions.CanEdit && row.CanRecordReturnToWork && row.EntitlementId.HasValue) { <button type="button" data-save-vacation-return="@row.EntitlementId.Value" data-vacation-start="@row.FromDate" data-vacation-end="@row.ToDate" data-vacation-actual="@row.ActualReturnDate" data-vacation-actual-days="@row.ActualVacationDays.ToString(CultureInfo.InvariantCulture)" data-vacation-delay-days="@row.DelayDays.ToString(CultureInfo.InvariantCulture)">@(row.EmbarkationId.HasValue ? "تعديل مباشرة" : "تسجيل مباشرة")</button> }
+                                        @if (Model.Permissions.CanDelete && row.CanDeleteReturnToWork && row.EntitlementId.HasValue) { <button type="button" data-delete-vacation-return="@row.EntitlementId.Value">حذف المباشرة</button> }
+                                        @if (Model.Permissions.CanAdd && row.CanCreateEntitlement) { <button type="button" data-create-vacation-entitlement="@row.Id">إنشاء مستحقات</button> }
+                                        @if (Model.Permissions.CanDelete && row.CanDeleteEntitlement && row.EntitlementId.HasValue) { <button type="button" data-delete-vacation-entitlement="@row.EntitlementId.Value">حذف المستحقات</button> }
+                                        @if (Model.Permissions.CanEdit && row.CanEdit) { <button type="button" data-edit-vacation="@row.Id">تعديل</button> }
+                                        @if (Model.Permissions.CanEdit && row.CanManagerApprove) { <button type="button" data-manager-approve-vacation="@row.Id">اعتماد المدير</button> }
+                                        @if (Model.Permissions.CanEdit && row.CanHrApprove) { <button type="button" data-hr-approve-vacation="@row.Id">اعتماد HR</button> }
+                                        @if (Model.Permissions.CanEdit && row.CanReject) { <button type="button" data-reject-vacation="@row.Id">رفض</button> }
+                                        @if (Model.Permissions.CanDelete && row.CanCancel) { <button type="button" data-cancel-vacation="@row.Id">إلغاء آمن</button> }
                                     </td>
                                 </tr>
                             }
                             @if (!Model.Vacations.Any())
                             {
-                                <tr><td colspan="9" class="lhf-empty">ظ„ط§ طھظˆط¬ط¯ ط·ظ„ط¨ط§طھ ط¥ط¬ط§ط²ط§طھ ظ…ط·ط§ط¨ظ‚ط© ظ„ظ„ظپظ„ط§طھط± ط§ظ„ط­ط§ظ„ظٹط©.</td></tr>
+                                <tr><td colspan="9" class="lhf-empty">لا توجد طلبات إجازات مطابقة للفلاتر الحالية.</td></tr>
                             }
                         </tbody>
                     </table>
@@ -853,40 +872,40 @@
         <section class="lhf-panel">
             <header>
                 <div>
-                    <h3>ط·ظ„ط¨ط§طھ ط§ظ„ط¥ط¬ط§ط²ط§طھ - ظ…ط³ط§ط± ط§ظ„ط§ط¹طھظ…ط§ط¯</h3>
-                    <span>ط¯ظˆط±ط© ط¥ط±ط³ط§ظ„ ظˆط§ط¹طھظ…ط§ط¯ ط¢ظ…ظ†ط© ظ…ط¹ ظ…ظ†ط¹ ط§ظ„طھط¯ط§ط®ظ„ ظˆظ‚ظپظ„ ط§ظ„ط·ظ„ط¨ ط¨ط¹ط¯ ط§ظ„ط§ط¹طھظ…ط§ط¯ ط£ظˆ ط§ظ„طھط³ظˆظٹط©.</span>
+                    <h3>طلبات الإجازات - مسار الاعتماد</h3>
+                    <span>دورة إرسال واعتماد آمنة مع منع التداخل وقفل الطلب بعد الاعتماد أو التسوية.</span>
                 </div>
                 @if (Model.Permissions.CanAdd)
                 {
-                    <button type="button" class="lhf-primary" data-new-vacation>ط·ظ„ط¨ ط¥ط¬ط§ط²ط© ط¬ط¯ظٹط¯</button>
+                    <button type="button" class="lhf-primary" data-new-vacation>طلب إجازة جديد</button>
                 }
             </header>
             <div class="lhf-table-wrap">
                 <table class="lhf-table">
-                    <thead><tr><th>ط±ظ‚ظ…</th><th>ط§ظ„ظ…ظˆط¸ظپ</th><th>ط§ظ„ظپطھط±ط©</th><th>ط§ظ„ط£ظٹط§ظ…</th><th>ط§ظ„ظ†ظˆط¹</th><th>ط§ظ„ط­ط§ظ„ط©</th><th>ظ…ظ„ط§ط­ط¸ط§طھ</th><th>ط¥ط¬ط±ط§ط،ط§طھ</th></tr></thead>
+                    <thead><tr><th>رقم</th><th>الموظف</th><th>الفترة</th><th>الأيام</th><th>النوع</th><th>الحالة</th><th>ملاحظات</th><th>إجراءات</th></tr></thead>
                     <tbody>
                         @foreach (var row in Model.Vacations)
                         {
                             <tr class="@(row.CanEdit ? "" : "lhf-row-locked")">
                                 <td><code>@row.Id</code></td>
                                 <td><strong>@row.EmployeeName</strong><small>@row.EmployeeCode</small><small>@row.BranchName - @row.DepartmentName</small></td>
-                                <td><strong>@row.FromDate</strong><small>ط¥ظ„ظ‰ @row.ToDate</small><small>ط¹ظˆط¯ط© ط§ظ„ط¹ظ…ظ„: @row.ResumeWork</small></td>
+                                <td><strong>@row.FromDate</strong><small>إلى @row.ToDate</small><small>عودة العمل: @row.ResumeWork</small></td>
                                 <td class="lhf-num">@row.NoVacation.ToString("N2")</td>
-                                <td>@(row.WithoutSalary ? "ط¨ط¯ظˆظ† ط±ط§طھط¨" : "ط¨ط±ط§طھط¨")</td>
+                                <td>@(row.WithoutSalary ? "بدون راتب" : "براتب")</td>
                                 <td><span class="lhf-badge @(row.Rejected ? "danger" : row.HrApproved ? "success" : row.ManagerApproved ? "warning" : "info")">@row.StatusText</span></td>
                                 <td><span>@row.Reason</span>@if (!string.IsNullOrWhiteSpace(row.LockReason)) { <small class="lhf-lock-note">@row.LockReason</small> }</td>
                                 <td class="lhf-actions">
-                                    @if (Model.Permissions.CanEdit && row.CanEdit) { <button type="button" data-edit-vacation="@row.Id">طھط¹ط¯ظٹظ„</button> }
-                                    @if (Model.Permissions.CanEdit && row.CanManagerApprove) { <button type="button" data-manager-approve-vacation="@row.Id">ط§ط¹طھظ…ط§ط¯ ط§ظ„ظ…ط¯ظٹط±</button> }
-                                    @if (Model.Permissions.CanEdit && row.CanHrApprove) { <button type="button" data-hr-approve-vacation="@row.Id">ط§ط¹طھظ…ط§ط¯ HR</button> }
-                                    @if (Model.Permissions.CanEdit && row.CanReject) { <button type="button" data-reject-vacation="@row.Id">ط±ظپط¶</button> }
-                                    @if (Model.Permissions.CanDelete && row.CanCancel) { <button type="button" data-cancel-vacation="@row.Id">ط¥ظ„ط؛ط§ط، ط¢ظ…ظ†</button> }
+                                    @if (Model.Permissions.CanEdit && row.CanEdit) { <button type="button" data-edit-vacation="@row.Id">تعديل</button> }
+                                    @if (Model.Permissions.CanEdit && row.CanManagerApprove) { <button type="button" data-manager-approve-vacation="@row.Id">اعتماد المدير</button> }
+                                    @if (Model.Permissions.CanEdit && row.CanHrApprove) { <button type="button" data-hr-approve-vacation="@row.Id">اعتماد HR</button> }
+                                    @if (Model.Permissions.CanEdit && row.CanReject) { <button type="button" data-reject-vacation="@row.Id">رفض</button> }
+                                    @if (Model.Permissions.CanDelete && row.CanCancel) { <button type="button" data-cancel-vacation="@row.Id">إلغاء آمن</button> }
                                 </td>
                             </tr>
                         }
                         @if (!Model.Vacations.Any())
                         {
-                            <tr><td colspan="8" class="lhf-empty">ظ„ط§ طھظˆط¬ط¯ ط·ظ„ط¨ط§طھ ط¥ط¬ط§ط²ط§طھ ظ…ط·ط§ط¨ظ‚ط© ظ„ظ„ط¨ط­ط« ط§ظ„ط­ط§ظ„ظٹ.</td></tr>
+                            <tr><td colspan="8" class="lhf-empty">لا توجد طلبات إجازات مطابقة للبحث الحالي.</td></tr>
                         }
                     </tbody>
                 </table>
@@ -894,34 +913,37 @@
         </section>
     }
 
+    @if (Model.ModuleKey == "components" || Model.ModuleKey == "payroll-items")
+    {
     <aside class="lhf-editor" id="lhfComponentEditor" hidden>
         <form class="lhf-editor-card" id="lhfComponentForm">
-            <header><h3>ظ…ظƒظˆظ† ط±ط§طھط¨</h3><button type="button" data-close-component><i class="fas fa-times"></i></button></header>
+            <header><h3>مكون راتب</h3><button type="button" data-close-component><i class="fas fa-times"></i></button></header>
             <input type="hidden" id="lhfComponentId" name="Id" />
             <div class="lhf-editor-grid">
-                <label><span>ط§ظ„ط§ط³ظ… ط§ظ„ط¹ط±ط¨ظٹ</span><input id="lhfName" name="Name" required /></label>
-                <label><span>ط§ظ„ط§ط³ظ… ط§ظ„ط¥ظ†ط¬ظ„ظٹط²ظٹ</span><input id="lhfNameEnglish" name="NameEnglish" /></label>
-                <label class="lhf-hidden-technical"><span>ط­ط³ط§ط¨ ط§ظ„ظ…طµط±ظˆظپ/ط§ظ„ط§ط³طھط­ظ‚ط§ظ‚</span><input id="lhfAccountCode" name="AccountCode" /></label>
-                <label class="lhf-hidden-technical"><span>ط­ط³ط§ط¨ ظ…ظ‚ط§ط¨ظ„</span><input id="lhfAccountCode1" name="AccountCode1" /></label>
-                <label><span>ط§ظ„ظˆط­ط¯ط©</span><input id="lhfUnit" name="Unit" type="number" /></label>
-                <label><span>طھط±طھظٹط¨/ط·ط±ظٹظ‚ط© ط§ظ„ط§ط­طھط³ط§ط¨</span><input id="lhfAllowIntroduction" name="AllowIntroduction" type="number" /></label>
-                <label class="lhf-check"><input id="lhfAddOrDiscount" name="AddOrDiscount" type="checkbox" /><span>ط¥ط¶ط§ظپط© ظˆظ„ظٹط³طھ ط®طµظ…</span></label>
-                <label class="lhf-check"><input id="lhfFixedOrChanged" name="FixedOrChanged" type="checkbox" /><span>ظ…طھط؛ظٹط±</span></label>
-                <label class="lhf-check"><input id="lhfViewComponent" name="ViewComponent" type="checkbox" /><span>ط¸ط§ظ‡ط± ظپظٹ ط§ظ„ظ…ط³ظٹط±</span></label>
-                <label class="lhf-check"><input id="lhfSalary" name="Salary" type="checkbox" /><span>ظٹط¯ط®ظ„ ظپظٹ ط§ظ„ط±ط§طھط¨</span></label>
-                <label class="lhf-check"><input id="lhfAbsence" name="Absence" type="checkbox" /><span>ط؛ظٹط§ط¨</span></label>
-                <label class="lhf-check"><input id="lhfLate" name="Late" type="checkbox" /><span>طھط£ط®ظٹط±</span></label>
-                <label class="lhf-check"><input id="lhfOvertime" name="Overtime" type="checkbox" /><span>ط¥ط¶ط§ظپظٹ</span></label>
-                <label class="lhf-check"><input id="lhfInsurance" name="Insurance" type="checkbox" /><span>طھط£ظ…ظٹظ†</span></label>
-                <label class="lhf-check"><input id="lhfReward" name="Reward" type="checkbox" /><span>ظ…ظƒط§ظپط£ط©</span></label>
+                <label><span>الاسم العربي</span><input id="lhfName" name="Name" required /></label>
+                <label><span>الاسم الإنجليزي</span><input id="lhfNameEnglish" name="NameEnglish" /></label>
+                <label class="lhf-hidden-technical"><span>حساب المصروف/الاستحقاق</span><input id="lhfAccountCode" name="AccountCode" /></label>
+                <label class="lhf-hidden-technical"><span>حساب مقابل</span><input id="lhfAccountCode1" name="AccountCode1" /></label>
+                <label><span>الوحدة</span><input id="lhfUnit" name="Unit" type="number" /></label>
+                <label><span>ترتيب/طريقة الاحتساب</span><input id="lhfAllowIntroduction" name="AllowIntroduction" type="number" /></label>
+                <label class="lhf-check"><input id="lhfAddOrDiscount" name="AddOrDiscount" type="checkbox" /><span>إضافة وليست خصم</span></label>
+                <label class="lhf-check"><input id="lhfFixedOrChanged" name="FixedOrChanged" type="checkbox" /><span>متغير</span></label>
+                <label class="lhf-check"><input id="lhfViewComponent" name="ViewComponent" type="checkbox" /><span>ظاهر في المسير</span></label>
+                <label class="lhf-check"><input id="lhfSalary" name="Salary" type="checkbox" /><span>يدخل في الراتب</span></label>
+                <label class="lhf-check"><input id="lhfAbsence" name="Absence" type="checkbox" /><span>غياب</span></label>
+                <label class="lhf-check"><input id="lhfLate" name="Late" type="checkbox" /><span>تأخير</span></label>
+                <label class="lhf-check"><input id="lhfOvertime" name="Overtime" type="checkbox" /><span>إضافي</span></label>
+                <label class="lhf-check"><input id="lhfInsurance" name="Insurance" type="checkbox" /><span>تأمين</span></label>
+                <label class="lhf-check"><input id="lhfReward" name="Reward" type="checkbox" /><span>مكافأة</span></label>
             </div>
-            <footer><span id="lhfEditorMessage"></span><button type="button" data-close-component>ط¥ظ„ط؛ط§ط،</button><button type="submit" class="lhf-primary">ط­ظپط¸</button></footer>
+            <footer><span id="lhfEditorMessage"></span><button type="button" data-close-component>إلغاء</button><button type="submit" class="lhf-primary">حفظ</button></footer>
         </form>
     </aside>
+    }
 
     <aside class="lhf-editor" id="lhfAdvanceEditor" hidden>
         <form class="lhf-editor-card" id="lhfAdvanceForm">
-            <header><h3>ط·ظ„ط¨ ط³ظ„ظپط© ظ…ظˆط¸ظپ</h3><button type="button" data-close-advance><i class="fas fa-times"></i></button></header>
+            <header><h3>طلب سلفة موظف</h3><button type="button" data-close-advance><i class="fas fa-times"></i></button></header>
             <input type="hidden" id="lhfAdvanceId" name="Id" />
             <div class="lhf-editor-alert" id="lhfAdvanceLockBanner" hidden></div>
             <section class="lhf-advance-workflow">
@@ -938,39 +960,39 @@
                 </ol>
             </section>
             <div class="lhf-editor-grid">
-                <label class="lhf-span-2"><span>ط§ظ„ظ…ظˆط¸ظپ</span>
-                    <input type="search" id="lhfAdvanceEmployeeSearch" class="lhf-employee-filter" placeholder="ط§ظƒطھط¨ ظƒظˆط¯ ط£ظˆ ط§ط³ظ… ط§ظ„ظ…ظˆط¸ظپ ظ„طھط¶ظٹظٹظ‚ ط§ظ„ظ‚ط§ط¦ظ…ط©" autocomplete="off" />
+                <label class="lhf-span-2"><span>الموظف</span>
+                    <input type="search" id="lhfAdvanceEmployeeSearch" class="lhf-employee-filter" placeholder="اكتب كود أو اسم الموظف لتضييق القائمة" autocomplete="off" />
                     <select id="lhfAdvanceEmployeeId" name="EmployeeId" required>
-                        <option value="">ط§ط®طھط± ط§ظ„ظ…ظˆط¸ظپ</option>
+                        <option value="">اختر الموظف</option>
                         @foreach (var employee in Model.Employees)
                         {
                             <option value="@employee.Id" data-salary="@employee.BasicSalary.ToString(CultureInfo.InvariantCulture)" data-branch="@employee.BranchName" data-department="@employee.DepartmentName">@employee.Code - @employee.Name</option>
                         }
                     </select>
                 </label>
-                <label><span>طھط§ط±ظٹط® ط§ظ„ط·ظ„ط¨</span><input id="lhfAdvanceDate" name="AdvanceDate" type="date" required /></label>
-                <label><span>ظ‚ظٹظ…ط© ط§ظ„ط³ظ„ظپط©</span><input id="lhfAdvanceValue" name="AdvanceValue" type="number" step="0.01" min="0.01" required /></label>
-                <label><span>ط¹ط¯ط¯ ط§ظ„ط£ظ‚ط³ط§ط·</span><input id="lhfPaymentCounts" name="PaymentCounts" type="number" min="1" max="84" required /></label>
-                <label><span>ط£ظˆظ„ ط´ظ‡ط± ظ„ظ„ط³ط¯ط§ط¯</span><input id="lhfFirstMonthPayment" name="FirstMonthPayment" type="number" min="1" max="12" required /></label>
-                <label><span>ط£ظˆظ„ ط³ظ†ط© ظ„ظ„ط³ط¯ط§ط¯</span><input id="lhfFirstYearPayment" name="FirstYearPayment" type="number" min="1900" max="2100" required /></label>
-                <label class="lhf-check"><input id="lhfAutoDiscount" name="AutoDiscount" type="checkbox" checked /><span>ظٹط®طµظ… طھظ„ظ‚ط§ط¦ظٹط§ظ‹ ظ…ظ† ط§ظ„ط±ط§طھط¨</span></label>
-                <label class="lhf-span-3"><span>ط§ظ„ط³ط¨ط¨ / ط§ظ„ظ…ظ„ط§ط­ط¸ط§طھ</span><input id="lhfAdvanceReason" name="Reason" maxlength="4000" /></label>
+                <label><span>تاريخ الطلب</span><input id="lhfAdvanceDate" name="AdvanceDate" type="date" required /></label>
+                <label><span>قيمة السلفة</span><input id="lhfAdvanceValue" name="AdvanceValue" type="number" step="0.01" min="0.01" required /></label>
+                <label><span>عدد الأقساط</span><input id="lhfPaymentCounts" name="PaymentCounts" type="number" min="1" max="84" required /></label>
+                <label><span>أول شهر للسداد</span><input id="lhfFirstMonthPayment" name="FirstMonthPayment" type="number" min="1" max="12" required /></label>
+                <label><span>أول سنة للسداد</span><input id="lhfFirstYearPayment" name="FirstYearPayment" type="number" min="1900" max="2100" required /></label>
+                <label class="lhf-check"><input id="lhfAutoDiscount" name="AutoDiscount" type="checkbox" checked /><span>يخصم تلقائياً من الراتب</span></label>
+                <label class="lhf-span-3"><span>السبب / الملاحظات</span><input id="lhfAdvanceReason" name="Reason" maxlength="4000" /></label>
                 <div class="lhf-advance-summary lhf-span-3">
-                    <span id="lhfAdvanceEmployeeMeta">ط§ط®طھط± ظ…ظˆط¸ظپط§ظ‹ ظ„ط¹ط±ط¶ ط§ظ„ظپط±ط¹ ظˆط§ظ„ط¥ط¯ط§ط±ط© ظˆط§ظ„ط±ط§طھط¨ ط§ظ„ط£ط³ط§ط³ظٹ.</span>
-                    <strong id="lhfAdvancePartsPreview">ط³ظٹطھظ… ط­ط³ط§ط¨ ط§ظ„ط£ظ‚ط³ط§ط· ط¹ظ†ط¯ ط§ظ„ط­ظپط¸.</strong>
+                    <span id="lhfAdvanceEmployeeMeta">اختر موظفاً لعرض الفرع والإدارة والراتب الأساسي.</span>
+                    <strong id="lhfAdvancePartsPreview">سيتم حساب الأقساط عند الحفظ.</strong>
                     <div class="lhf-advance-financials" id="lhfAdvanceFinancialSummary">
-                        <span>ظ„ط§ طھظˆط¬ط¯ ط¨ظٹط§ظ†ط§طھ ظ…ط§ظ„ظٹط© ظ„ظ„ط¹ط±ط¶ ظ‚ط¨ظ„ ط§ط®طھظٹط§ط± ط§ظ„ظ…ظˆط¸ظپ.</span>
+                        <span>لا توجد بيانات مالية للعرض قبل اختيار الموظف.</span>
                     </div>
                     <div class="lhf-installment-validation" id="lhfAdvanceInstallmentValidation">سيتم التحقق من إجمالي الأقساط وحالتها عند تحميل الطلب.</div>
                     <div class="lhf-parts-grid-wrap">
                         <table class="lhf-parts-grid">
                             <thead>
                                 <tr>
-                                    <th>ط§ظ„ظ‚ط³ط·</th>
-                                    <th>طھط§ط±ظٹط® ط§ظ„ط§ط³طھط­ظ‚ط§ظ‚</th>
-                                    <th>ط§ظ„ظ‚ظٹظ…ط©</th>
+                                    <th>القسط</th>
+                                    <th>تاريخ الاستحقاق</th>
+                                    <th>القيمة</th>
                                     <th>المتبقي</th>
-                                    <th>ط§ظ„ط­ط§ظ„ط©</th>
+                                    <th>الحالة</th>
                                     <th>مسير الرواتب</th>
                                     <th>تاريخ السداد/الترحيل</th>
                                 </tr>
@@ -981,34 +1003,34 @@
                         </table>
                     </div>
                     <div class="lhf-accounting-boundary" id="lhfAdvanceAccountingBoundary">
-                        <strong>ط§ظ„ط­ط¯ ط§ظ„ظ…ط­ط§ط³ط¨ظٹ ظ„ظ„ط³ظ„ظپط©</strong>
-                        <span>ط³ظٹطھظ… ط¹ط±ط¶ ظ…طµط¯ط± ط§ظ„ط£ط«ط± ط§ظ„ظ…ط­ط§ط³ط¨ظٹ ط¨ط¹ط¯ ط­ظپط¸ ط£ظˆ طھط­ظ…ظٹظ„ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط©.</span>
+                        <strong>الحد المحاسبي للسلفة</strong>
+                        <span>سيتم عرض مصدر الأثر المحاسبي بعد حفظ أو تحميل طلب السلفة.</span>
                     </div>
                 </div>
             </div>
-            <footer><span id="lhfAdvanceMessage"></span><button type="button" data-close-advance>ط¥ظ„ط؛ط§ط،</button><button type="submit" class="lhf-primary">ط­ظپط¸ ط·ظ„ط¨ ط§ظ„ط³ظ„ظپط©</button></footer>
+            <footer><span id="lhfAdvanceMessage"></span><button type="button" data-close-advance>إلغاء</button><button type="submit" class="lhf-primary">حفظ طلب السلفة</button></footer>
         </form>
     </aside>
     <aside class="lhf-editor" id="lhfVacationEditor" hidden>
         <form class="lhf-editor-card" id="lhfVacationForm">
-            <header><h3>ط·ظ„ط¨ ط¥ط¬ط§ط²ط© ظ…ظˆط¸ظپ</h3><button type="button" data-close-vacation><i class="fas fa-times"></i></button></header>
+            <header><h3>طلب إجازة موظف</h3><button type="button" data-close-vacation><i class="fas fa-times"></i></button></header>
             <input type="hidden" id="lhfVacationId" name="Id" />
             <div class="lhf-editor-alert" id="lhfVacationLockBanner" hidden></div>
             <div class="lhf-editor-grid">
-                <label class="lhf-span-2"><span>ط§ظ„ظ…ظˆط¸ظپ</span>
-                    <input type="search" id="lhfVacationEmployeeSearch" class="lhf-employee-filter" placeholder="ط§ظƒطھط¨ ظƒظˆط¯ ط£ظˆ ط§ط³ظ… ط§ظ„ظ…ظˆط¸ظپ ظ„طھط¶ظٹظٹظ‚ ط§ظ„ظ‚ط§ط¦ظ…ط©" autocomplete="off" />
+                <label class="lhf-span-2"><span>الموظف</span>
+                    <input type="search" id="lhfVacationEmployeeSearch" class="lhf-employee-filter" placeholder="اكتب كود أو اسم الموظف لتضييق القائمة" autocomplete="off" />
                     <select id="lhfVacationRequestEmployeeId" name="EmployeeId" required>
-                        <option value="">ط§ط®طھط± ط§ظ„ظ…ظˆط¸ظپ</option>
+                        <option value="">اختر الموظف</option>
                         @foreach (var employee in Model.Employees)
                         {
                             <option value="@employee.Id" data-salary="@employee.BasicSalary.ToString(CultureInfo.InvariantCulture)" data-branch="@employee.BranchName" data-department="@employee.DepartmentName">@employee.Code - @employee.Name</option>
                         }
                     </select>
                 </label>
-                <label><span>ظ…ظ† طھط§ط±ظٹط®</span><input id="lhfVacationRequestFromDate" name="FromDate" type="date" required /></label>
-                <label><span>ط¥ظ„ظ‰ طھط§ط±ظٹط®</span><input id="lhfVacationRequestToDate" name="ToDate" type="date" required /></label>
-                <label><span>ط¹ظˆط¯ط© ط§ظ„ط¹ظ…ظ„</span><input id="lhfVacationRequestResumeWork" name="ResumeWork" type="date" /></label>
-                <label><span>ظ†ظˆط¹ ط§ظ„ط¥ط¬ط§ط²ط©</span>
+                <label><span>من تاريخ</span><input id="lhfVacationRequestFromDate" name="FromDate" type="date" required /></label>
+                <label><span>إلى تاريخ</span><input id="lhfVacationRequestToDate" name="ToDate" type="date" required /></label>
+                <label><span>عودة العمل</span><input id="lhfVacationRequestResumeWork" name="ResumeWork" type="date" /></label>
+                <label><span>نوع الإجازة</span>
                     <select id="lhfVacationRequestType" name="VacationType">
                         @foreach (var type in Model.VacationTypes)
                         {
@@ -1016,17 +1038,17 @@
                         }
                     </select>
                 </label>
-                <label class="lhf-check"><input id="lhfVacationWithSalary" name="WithSalary" type="checkbox" checked /><span>ط¨ط±ط§طھط¨</span></label>
-                <label class="lhf-check"><input id="lhfVacationWithoutSalary" name="WithoutSalary" type="checkbox" /><span>ط¨ط¯ظˆظ† ط±ط§طھط¨</span></label>
-                <label class="lhf-span-3"><span>ط§ظ„ط³ط¨ط¨ / ط§ظ„ظ…ظ„ط§ط­ط¸ط§طھ</span><input id="lhfVacationReason" name="Reason" maxlength="4000" /></label>
+                <label class="lhf-check"><input id="lhfVacationWithSalary" name="WithSalary" type="checkbox" checked /><span>براتب</span></label>
+                <label class="lhf-check"><input id="lhfVacationWithoutSalary" name="WithoutSalary" type="checkbox" /><span>بدون راتب</span></label>
+                <label class="lhf-span-3"><span>السبب / الملاحظات</span><input id="lhfVacationReason" name="Reason" maxlength="4000" /></label>
                 <div class="lhf-vacation-request-summary lhf-span-3">
                     <span id="lhfVacationEmployeeMeta">اختر موظفا لعرض الفرع والإدارة والراتب الأساسي.</span>
                     <span id="lhfVacationDateSummary">حدد فترة الإجازة لحساب الأيام وموعد العودة.</span>
                 </div>
                 <div class="lhf-vac-conflict lhf-span-3" id="lhfVacationConflict" hidden></div>
-                <div class="lhf-vacation-balance-result lhf-span-3" id="lhfVacationRequestBalance">ط³ظٹطھظ… ط­ط³ط§ط¨ ط§ظ„ط±طµظٹط¯ ظ‚ط¨ظ„ ط§ظ„ط­ظپط¸.</div>
+                <div class="lhf-vacation-balance-result lhf-span-3" id="lhfVacationRequestBalance">سيتم حساب الرصيد قبل الحفظ.</div>
             </div>
-            <footer><span id="lhfVacationMessage"></span><button type="button" data-close-vacation>ط¥ظ„ط؛ط§ط،</button><button type="submit" class="lhf-primary">ط­ظپط¸ ظˆط¥ط±ط³ط§ظ„</button></footer>
+            <footer><span id="lhfVacationMessage"></span><button type="button" data-close-vacation>إلغاء</button><button type="submit" class="lhf-primary">حفظ وإرسال</button></footer>
         </form>
     </aside>
 </section>

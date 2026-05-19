@@ -1776,6 +1776,12 @@ function sourceTypeChange() {
         });
     }
     function addEdit(n) {
+        if (window.ZatcaComplianceWarning && window.ZatcaComplianceWarning.requiresConfirmation('CashReceiptVoucher.Save')) {
+            window.ZatcaComplianceWarning.confirm('CashReceiptVoucher.Save', function () {
+                addEdit(n);
+            });
+            return;
+        }
 
         let valid = true;
         var sum = 0;

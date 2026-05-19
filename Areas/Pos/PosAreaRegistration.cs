@@ -95,7 +95,7 @@ namespace MyERP.Areas.Pos
                 context,
                 "Pos_cashing_shell",
                 "Pos/Cashing",
-                new { controller = "PosDashboard", action = "Cashing" }
+                new { controller = "Cashing", action = "Index" }
             );
 
             MapPosRoute(

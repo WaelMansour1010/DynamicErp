@@ -306,6 +306,21 @@ namespace MyERP.Areas.MainErp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public JsonResult DeleteVacation(int id)
+        {
+            if (!Can("HR.Vacations", "Delete"))
+            {
+                Response.StatusCode = 403;
+                return Json(new LegacyHrFinanceSaveResult { Success = false, Message = "ليست لديك صلاحية حذف طلبات الإجازات." });
+            }
+
+            var result = _service.DeleteVacation(id);
+            if (!result.Success) { Response.StatusCode = 400; }
+            return Json(result);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult CreateVacationEntitlement(int id)
         {
             if (!Can("HR.Vacations", "Add"))
@@ -458,7 +473,7 @@ namespace MyERP.Areas.MainErp.Controllers
         [HttpGet]
         public JsonResult EmployeesLookup(string term, string employeeStatus = "active")
         {
-            if (!Can("HR.Advances", "View"))
+            if (!Can("HR.Advances", "View") && !CanChangedComponents("View"))
             {
                 Response.StatusCode = 403;
                 return Json(new { success = false, message = "ليست لديك صلاحية عرض الموظفين." }, JsonRequestBehavior.AllowGet);
@@ -500,6 +515,7 @@ namespace MyERP.Areas.MainErp.Controllers
             model.HrApproveVacationUrl = Url.Action("HrApproveVacation", "Hr", new { area = "MainErp" });
             model.RejectVacationUrl = Url.Action("RejectVacation", "Hr", new { area = "MainErp" });
             model.CancelVacationUrl = Url.Action("CancelVacation", "Hr", new { area = "MainErp" });
+            model.DeleteVacationUrl = Url.Action("DeleteVacation", "Hr", new { area = "MainErp" });
             model.CreateVacationEntitlementUrl = Url.Action("CreateVacationEntitlement", "Hr", new { area = "MainErp" });
             model.DeleteVacationEntitlementUrl = Url.Action("DeleteVacationEntitlement", "Hr", new { area = "MainErp" });
             model.SaveVacationReturnToWorkUrl = Url.Action("SaveVacationReturnToWork", "Hr", new { area = "MainErp" });

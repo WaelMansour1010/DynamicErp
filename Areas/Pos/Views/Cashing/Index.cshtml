@@ -58,7 +58,8 @@
             <article><span>الوضع</span><strong>عرض وحفظ</strong></article>
         </div>
 
-        @using (Html.BeginForm("Index", "Cashing", new { area = "Pos" }, FormMethod.Get, new { @class = "voucher-search-panel" }))
+        <div class="voucher-save-status" data-voucher-search-status role="status" aria-live="polite"></div>
+        @using (Html.BeginForm("Index", "Cashing", new { area = "Pos" }, FormMethod.Get, new { @class = "voucher-search-panel", data_voucher_search_form = "true" }))
         {
             <label><span>من تاريخ</span><input type="date" name="fromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : "")" /></label>
             <label><span>إلى تاريخ</span><input type="date" name="toDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : "")" /></label>
@@ -67,7 +68,10 @@
             <label><span>الفرع</span><input type="number" name="branchId" value="@Model.BranchId" /></label>
             <label><span>الخزنة / البنك</span><input type="text" name="cashboxOrBank" value="@Model.CashboxOrBank" /></label>
             <label><span>المبلغ</span><input type="number" step="0.01" name="amount" value="@Model.Amount" /></label>
-            <button type="submit" class="primary-action">بحث</button>
+            <div class="voucher-search-actions">
+                <button type="submit" class="primary-action" data-voucher-search-button>بحث</button>
+                <a class="voucher-details-link" href="@Url.Action("Index", "Cashing", new { area = "Pos" })">مسح</a>
+            </div>
         }
 
         <div class="voucher-table-card">
@@ -121,5 +125,25 @@
         </div>
     </section>
 </div>
+<script>
+    (function () {
+        var form = document.querySelector("[data-voucher-search-form]");
+        var button = document.querySelector("[data-voucher-search-button]");
+        var status = document.querySelector("[data-voucher-search-status]");
+        if (!form) { return; }
+        form.addEventListener("submit", function () {
+            form.setAttribute("aria-busy", "true");
+            if (button) {
+                button.disabled = true;
+                button.textContent = "جاري البحث...";
+            }
+            if (status) {
+                status.textContent = "جاري تحميل سندات القبض...";
+                status.classList.add("is-active");
+                status.classList.remove("is-error");
+            }
+        });
+    })();
+</script>
 </body>
 </html>

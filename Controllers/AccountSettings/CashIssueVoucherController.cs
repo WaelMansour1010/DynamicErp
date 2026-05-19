@@ -31,6 +31,7 @@ namespace MyERP.Controllers.AccountSettings
         {
             ViewBag.PageIndex = pageIndex;
             ViewBag.OpenReport = report == true;
+            ZatcaComplianceWarning.Apply(this, db, "CashIssueVoucher.Index");
             if (report == true)
             {
                 ViewBag.Id = id;
@@ -135,6 +136,7 @@ namespace MyERP.Controllers.AccountSettings
         {
             SystemSetting systemSetting = db.SystemSettings.Any() ? db.SystemSettings.FirstOrDefault() : new SystemSetting();
             ViewBag.UseCostCenter = systemSetting.UseCostCenter;
+            ZatcaComplianceWarning.Apply(this, db, "CashIssueVoucher.AddEdit");
 
             int userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
             DepartmentRepository departmentRepository = new DepartmentRepository(db);

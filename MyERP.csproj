@@ -3607,6 +3607,7 @@
     <Compile Include="Utils\Serializer.cs" />
     <Compile Include="Utils\SmsService.cs" />
     <Compile Include="Utils\StockIssueAuthorize.cs" />
+    <Compile Include="Utils\ZatcaComplianceWarning.cs" />
     <Compile Include="Utils\ZhipuAiService.cs" />
     <Compile Include="ViewModels\AllowedScreensViewModel.cs" />
     <Compile Include="ViewModels\PropertyBillRegisterationViewModel.cs" />
@@ -4735,6 +4736,7 @@
     <Content Include="Database\Migrations\MainErp\0004_ServiceInvoice_CashReceiptVoucher.sql" />
     <Content Include="Database\Migrations\POS\0002_POS_Example_StoredProcedure.sql" />
     <Content Include="Database\Migrations\Shared\0001_Shared_Example_AddColumn.sql" />
+    <Content Include="Database\Migrations\Shared\0002_SystemSetting_IsZatcaLinked.sql" />
     <Content Include="Docs\Database_Migration_Audit.md" />
     <Content Include="Docs\Database_Migration_System.md" />
     <Content Include="Docs\Database_Update_Manager.md" />
@@ -4833,6 +4835,7 @@
     <Content Include="Views\Shared\Lockout.cshtml" />
     <Content Include="Views\Shared\_LoginPartial.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
+    <Content Include="Views\Shared\_ZatcaComplianceWarning.cshtml" />
     <Content Include="Views\AccountStatement\Edit.cshtml" />
     <Content Include="Views\AccountStatement\GETAccountStatementDetails.cshtml" />
     <Content Include="Views\AdvertisingCompaigns\AddEdit.cshtml" />

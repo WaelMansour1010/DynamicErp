@@ -2006,6 +2006,13 @@ function PrintInvoice(Id) {
 
     //*********************************************************//
     function addEdit(n) {
+        if (window.ZatcaComplianceWarning && window.ZatcaComplianceWarning.requiresConfirmation('PropertyContract.Save')) {
+            window.ZatcaComplianceWarning.confirm('PropertyContract.Save', function () {
+                addEdit(n);
+            });
+            return;
+        }
+
         let valid = true;
         if ($('.form-horizontal').first().find('.form-control:invalid').length > 0) {
             $('.form-horizontal').first().addClass('was-validated');

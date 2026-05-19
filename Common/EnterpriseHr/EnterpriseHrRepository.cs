@@ -145,10 +145,10 @@ namespace MyERP.Common.EnterpriseHr
                             RequestedDays = requestedDays,
                             ExcludeVacationId = id
                         });
-                        if (!balance.CanPostPaidVacation)
+                        if (balance.Errors.Count > 0 || !balance.IsEmployeeActive)
                         {
                             transaction.Rollback();
-                            return Fail(balance.Errors.Any() ? string.Join(" ", balance.Errors) : "رصيد الإجازات لا يسمح بتسجيل إجازة مدفوعة لهذه الفترة.");
+                            return Fail(balance.Errors.Any() ? string.Join(" ", balance.Errors) : "لا يمكن تسجيل إجازة مدفوعة لهذا الموظف في حالته الحالية.");
                         }
                     }
 
@@ -228,6 +228,65 @@ WHERE ID = @ID;", connection, transaction))
         public LegacyHrFinanceSaveResult CancelVacation(int id, int? userId, string userName, string remarks)
         {
             return ChangeVacationApproval(id, userId, userName, remarks, "CANCEL");
+        }
+
+        public LegacyHrFinanceSaveResult DeleteVacation(int id)
+        {
+            if (id <= 0) { return Fail("رقم طلب الإجازة غير صحيح."); }
+
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var transaction = connection.BeginTransaction())
+            {
+                try
+                {
+                    var vacation = LoadVacationById(connection, transaction, id);
+                    if (vacation == null) { transaction.Rollback(); return Fail("لم يتم العثور على طلب الإجازة."); }
+                    if (vacation.LinkedToEntitlement || vacation.PaidOrSettled)
+                    {
+                        transaction.Rollback();
+                        return Fail(vacation.LockReason);
+                    }
+
+                    if (vacation.ManagerApproved || vacation.HrApproved || HasApprovedVacationApprovalRows(connection, transaction, id))
+                    {
+                        transaction.Rollback();
+                        return Fail("لا يمكن حذف طلب إجازة تم اعتماده. استخدم مسار الإلغاء الآمن فقط قبل إنشاء المستحقات أو أي ربط لاحق.");
+                    }
+
+                    using (var deleteApproval = new SqlCommand(@"
+DELETE FROM dbo.ApprovalData
+WHERE ScreenName IN (N'formvocatinl', N'FrmEmpVacations')
+  AND CONVERT(INT, Transaction_ID) = @VacationID;", connection, transaction))
+                    {
+                        deleteApproval.Parameters.Add("@VacationID", SqlDbType.Int).Value = id;
+                        deleteApproval.ExecuteNonQuery();
+                    }
+
+                    using (var deleteVacation = new SqlCommand(@"
+DELETE FROM dbo.TblVocation
+WHERE ID = @VacationID
+  AND ISNULL(Approved,0) = 0
+  AND ISNULL(ManagerApprove,0) = 0
+  AND ISNULL(FlagPayed,0) = 0
+  AND NOT EXISTS (SELECT 1 FROM dbo.TblVocationEntitlements ve WITH (NOLOCK) WHERE ISNULL(ve.NoOrder,0) = @VacationID);", connection, transaction))
+                    {
+                        deleteVacation.Parameters.Add("@VacationID", SqlDbType.Int).Value = id;
+                        if (deleteVacation.ExecuteNonQuery() == 0)
+                        {
+                            transaction.Rollback();
+                            return Fail("تعذر حذف طلب الإجازة لأنه أصبح معتمداً أو مرتبطاً بتسوية أثناء التنفيذ.");
+                        }
+                    }
+
+                    transaction.Commit();
+                    return new LegacyHrFinanceSaveResult { Success = true, Id = id, Message = "تم حذف طلب الإجازة غير المعتمد بأمان." };
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
         }
 
         public LegacyHrFinanceSaveResult CreateVacationEntitlementFromRequest(int vacationId, int? userId)
@@ -351,10 +410,6 @@ VALUES
 DELETE FROM dbo.ApprovalData WHERE ScreenName = N'FrmVocationEntitlements' AND CONVERT(INT, Transaction_ID) = @ID;
 DELETE FROM dbo.TblVocationEntitlementsDet WHERE VoEntID = @ID;
 DELETE FROM dbo.TblInforVacatiom WHERE VacatioID = @ID;
-IF OBJECT_ID(N'dbo.TblVacationSalary', N'U') IS NOT NULL
-BEGIN
-    DELETE FROM dbo.TblVacationSalary WHERE VacationID = @ID;
-END
 DELETE FROM dbo.TblVocationEntitlements WHERE ID = @ID;", connection, transaction))
                     {
                         command.Parameters.Add("@ID", SqlDbType.Int).Value = entitlementId;
@@ -404,6 +459,12 @@ WHERE ID = @VacationID
                     if (!string.IsNullOrWhiteSpace(lockMessage)) { transaction.Rollback(); return Fail(lockMessage); }
 
                     var actualDate = actualReturnDate.Value.Date;
+                    if (actualDate < entitlement.StartDate)
+                    {
+                        transaction.Rollback();
+                        return Fail("تاريخ المباشرة لا يمكن أن يكون قبل تاريخ بداية الإجازة.");
+                    }
+
                     var approvedDays = entitlement.ApprovedDays > 0 ? entitlement.ApprovedDays : DateDiffInclusive(entitlement.StartDate, entitlement.EndDate);
                     var actualDays = request.ActualVacationDays.HasValue && request.ActualVacationDays.Value > 0
                         ? request.ActualVacationDays.Value
@@ -2243,9 +2304,13 @@ ORDER BY d.Double_Entry_Vouchers_ID;", connection, transaction))
 
             if (TableExists(connection, transaction, "PayrollRunAdvanceDeductions"))
             {
-                var payrollWhere = ColumnExists(connection, transaction, "PayrollRunAdvanceDeductions", "RequestAdvanceId")
+                var hasRequestAdvanceId = ColumnExists(connection, transaction, "PayrollRunAdvanceDeductions", "RequestAdvanceId");
+                var payrollWhere = hasRequestAdvanceId
                     ? "WHERE RequestAdvanceId = @RequestId"
                     : "WHERE AdvanceId = @ActualAdvanceId";
+                var payrollDetailWhere = hasRequestAdvanceId
+                    ? "WHERE l.RequestAdvanceId = @RequestId"
+                    : "WHERE l.AdvanceId = @ActualAdvanceId";
                 using (var command = new SqlCommand(@"
 SELECT COUNT(1) AS LineCount,
        SUM(CASE WHEN IsPosted = 1 THEN 1 ELSE 0 END) AS PostedLineCount,
@@ -2281,7 +2346,7 @@ SELECT TOP (50)
        l.NoteId
 FROM dbo.PayrollRunAdvanceDeductions l WITH (NOLOCK)
 LEFT JOIN dbo.PayrollRunHeader h WITH (NOLOCK) ON h.PayrollRunId = l.PayrollRunId
-" + payrollWhere.Replace("RequestAdvanceId", "l.RequestAdvanceId").Replace("AdvanceId", "l.AdvanceId") + @"
+" + payrollDetailWhere + @"
 ORDER BY l.IsPosted DESC, h.PeriodYear DESC, h.PeriodMonth DESC, l.PartDate, l.PayrollRunAdvanceDeductionId;", connection, transaction))
                 {
                     command.Parameters.Add("@RequestId", SqlDbType.Int).Value = requestId;
@@ -2698,6 +2763,7 @@ ORDER BY VacationType;", connection, transaction))
             if (!fromDate.HasValue) { return Fail("تاريخ بداية الإجازة غير صحيح."); }
             if (!toDate.HasValue) { return Fail("تاريخ نهاية الإجازة غير صحيح."); }
             if (toDate.Value.Date < fromDate.Value.Date) { return Fail("تاريخ نهاية الإجازة لا يجوز أن يكون قبل تاريخ البداية."); }
+            if (string.IsNullOrWhiteSpace(request.VacationType)) { return Fail("اختر نوع الإجازة أو اكتب نوعاً واضحاً قبل الحفظ."); }
             if (request.WithSalary && request.WithoutSalary) { return Fail("اختر نوعا واحدا فقط: إجازة براتب أو بدون راتب."); }
             if (!request.WithSalary && !request.WithoutSalary) { request.WithSalary = true; }
             return new LegacyHrFinanceSaveResult { Success = true };
@@ -2800,7 +2866,7 @@ WHERE v.ID = @ID;", connection, transaction))
                 vacation.CanEdit = false;
                 vacation.CanDelete = false;
                 vacation.CanDeleteEntitlement = vacation.EntitlementId.HasValue;
-                vacation.CanRecordReturnToWork = vacation.EntitlementId.HasValue && !vacation.EmbarkationId.HasValue;
+                vacation.CanRecordReturnToWork = vacation.EntitlementId.HasValue;
                 vacation.CanDeleteReturnToWork = vacation.EmbarkationId.HasValue;
                 return;
             }
@@ -2861,6 +2927,7 @@ WHERE v.ID = @ID;", connection, transaction))
             command.Parameters.Add("@Reason", SqlDbType.NVarChar, 4000).Value = DbText(request.Reason);
             command.Parameters.Add("@UserID", SqlDbType.Int).Value = userId.HasValue ? (object)userId.Value : DBNull.Value;
             command.Parameters.Add("@TypeVocation", SqlDbType.Int).Value = request.WithoutSalary ? 1 : 0;
+            command.Parameters.Add("@TypeVacation", SqlDbType.Int).Value = request.WithoutSalary ? 1 : 0;
             command.Parameters.Add("@VocationType", SqlDbType.NVarChar, 200).Value = DbText(string.IsNullOrWhiteSpace(request.VacationType) ? (request.WithoutSalary ? "إجازة بدون راتب" : "إجازة سنوية") : request.VacationType);
             command.Parameters.Add("@WithSalary", SqlDbType.Bit).Value = request.WithSalary;
             command.Parameters.Add("@WithoutSalary", SqlDbType.Bit).Value = request.WithoutSalary;
@@ -3363,6 +3430,18 @@ WHERE ISNULL(Due,0) = @ID
                 }
             }
 
+            if (TableExists(connection, transaction, "TblVacationSalary") && ColumnExists(connection, transaction, "TblVacationSalary", "VacationID"))
+            {
+                using (var command = new SqlCommand("SELECT COUNT(1) FROM dbo.TblVacationSalary WITH (NOLOCK) WHERE VacationID = @ID;", connection, transaction))
+                {
+                    command.Parameters.Add("@ID", SqlDbType.Int).Value = entitlementId;
+                    if (Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture) > 0)
+                    {
+                        return "لا يمكن تعديل مباشرة العمل لأنها مرتبطة بحركة راتب/تسوية إجازة.";
+                    }
+                }
+            }
+
             return null;
         }
 
@@ -3518,13 +3597,26 @@ WHERE ISNULL(Due,0) = @ID
                 }
             }
 
-            if (TableExists(connection, transaction, "TblEmbarkation") && ColumnExists(connection, transaction, "TblEmbarkation", "VacationPaied"))
+            if (TableExists(connection, transaction, "TblVacationSalary") && ColumnExists(connection, transaction, "TblVacationSalary", "VacationID"))
+            {
+                using (var command = new SqlCommand("SELECT COUNT(1) FROM dbo.TblVacationSalary WITH (NOLOCK) WHERE VacationID = @ID;", connection, transaction))
+                {
+                    command.Parameters.Add("@ID", SqlDbType.Int).Value = entitlementId;
+                    if (Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture) > 0)
+                    {
+                        boundary.IsLocked = true;
+                        boundary.Message = "لا يمكن حذف مستند مستحقات الإجازة لأنه مرتبط بحركة راتب/تسوية إجازة.";
+                        return boundary;
+                    }
+                }
+            }
+
+            if (TableExists(connection, transaction, "TblEmbarkation") && ColumnExists(connection, transaction, "TblEmbarkation", "OrderVocation"))
             {
                 using (var command = new SqlCommand(@"
 SELECT COUNT(1)
 FROM dbo.TblEmbarkation WITH (NOLOCK)
-WHERE ISNULL(VacationPaied,0) = 1
-  AND ISNULL(Emp_ID,0) = (SELECT TOP (1) ISNULL(EmpID,0) FROM dbo.TblVocationEntitlements WITH (NOLOCK) WHERE ID = @ID);", connection, transaction))
+WHERE ISNULL(OrderVocation,0) = @ID;", connection, transaction))
                 {
                     command.Parameters.Add("@ID", SqlDbType.Int).Value = entitlementId;
                     if (Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture) > 0)
@@ -3587,6 +3679,20 @@ WHERE ScreenName = N'formvocatinl'
             }
         }
 
+        private static bool HasApprovedVacationApprovalRows(SqlConnection connection, SqlTransaction transaction, int vacationId)
+        {
+            using (var command = new SqlCommand(@"
+SELECT COUNT(1)
+FROM dbo.ApprovalData WITH (UPDLOCK, HOLDLOCK)
+WHERE ScreenName IN (N'formvocatinl', N'FrmEmpVacations')
+  AND CONVERT(INT, Transaction_ID) = @VacationID
+  AND ApprovDate IS NOT NULL;", connection, transaction))
+            {
+                command.Parameters.Add("@VacationID", SqlDbType.Int).Value = vacationId;
+                return Convert.ToInt32(command.ExecuteScalar(), CultureInfo.InvariantCulture) > 0;
+            }
+        }
+
         private VacationBalanceViewModel CalculateVacationBalance(SqlConnection connection, SqlTransaction transaction, VacationBalanceRequestViewModel request)
         {
             var asOfDate = ParseDate(request.AsOfDate).GetValueOrDefault(DateTime.Today).Date;
@@ -3618,8 +3724,8 @@ WHERE ScreenName = N'formvocatinl'
             }
 
             var contract = LoadVacationContract(connection, transaction, request.EmployeeId);
-            var useContractSettings = GetVacationSettingsUseContract(connection, transaction);
-            model.CalculationMode = useContractSettings ? "ContractSettings" : "ScheduledEntitlements";
+            var settings = LoadVacationSettingsSnapshot(connection, transaction);
+            model.CalculationMode = settings.UseContractSettings ? "ContractSettings" : "ScheduledEntitlements";
             ValidateVacationSettingsWindow(connection, transaction, request, asOfDate, model);
 
             if (contract.Exists)
@@ -3632,10 +3738,11 @@ WHERE ScreenName = N'formvocatinl'
             }
 
             model.OpeningBalanceDays = SumVacationOpeningBalance(connection, transaction, request.EmployeeId, asOfDate);
-            model.CarryOverDays = GetLastBalanceMonth(connection, transaction, request.EmployeeId, request.ExcludeEntitlementId.GetValueOrDefault()) * 30m;
+            model.CarryOverDays = settings.IncludeContractCarryOver ? GetLastBalanceMonth(connection, transaction, request.EmployeeId, request.ExcludeEntitlementId.GetValueOrDefault()) * 30m : 0m;
             AddBalanceLine(model, "OpeningBalance", null, "رصيد افتتاحي مؤكد من أرصدة الإجازات الافتتاحية", model.OpeningBalanceDays, "رصيد افتتاحي");
+            AddBalanceLine(model, "TblVocationEntitlements", null, "رصيد مرحل من آخر تسوية إجازة", model.CarryOverDays, "مرحل");
 
-            if (useContractSettings && contract.Exists)
+            if (settings.UseContractSettings && contract.Exists)
             {
                 var contractAccruedDays = CalculateContractAccrual(connection, transaction, request.EmployeeId, asOfDate, contract, model.CarryOverDays);
                 model.AccruedDays = RoundDays(contractAccruedDays + model.OpeningBalanceDays);
@@ -3675,7 +3782,20 @@ WHERE ScreenName = N'formvocatinl'
             model.AvailableBeforeRequest = RoundDays(model.AccruedDays - model.UnpaidLeaveDays - model.AbsenceDeductionDays - model.PaidVacationConsumedDays - model.PendingApprovedDays);
             model.AvailableAfterRequest = RoundDays(model.AvailableBeforeRequest - requestedDays);
             model.NegativeBalancePrevented = model.AvailableAfterRequest < 0;
-            model.CanPostPaidVacation = model.IsEmployeeActive && !model.NegativeBalancePrevented && requestedDays >= 0;
+            model.CanPostPaidVacation = model.IsEmployeeActive && requestedDays >= 0;
+
+            var overlapStart = ParseDate(request.VacationStartDate);
+            var overlapEnd = ParseDate(request.VacationEndDate);
+            if (overlapStart.HasValue && overlapEnd.HasValue)
+            {
+                var overlapMessage = FindVacationOverlap(connection, transaction, request.EmployeeId, overlapStart.Value.Date, overlapEnd.Value.Date, request.ExcludeVacationId.GetValueOrDefault());
+                if (!string.IsNullOrWhiteSpace(overlapMessage))
+                {
+                    model.HasOverlappingVacationWarning = true;
+                    model.OverlappingVacationMessage = overlapMessage;
+                    model.Warnings.Add(overlapMessage + " لم يتم تأكيد منع صارم من VB6، لذلك يظهر كتنبيه مراجعة قبل الحفظ.");
+                }
+            }
 
             if (requestedDays < 0)
             {
@@ -3685,7 +3805,7 @@ WHERE ScreenName = N'formvocatinl'
 
             if (model.NegativeBalancePrevented)
             {
-                model.Errors.Add("رصيد الإجازات لا يكفي. لا يسمح المحرك بإنشاء رصيد سالب للإجازة المدفوعة.");
+                model.Warnings.Add("الرصيد المتاح لا يكفي لتغطية الإجازة المدفوعة. تم إظهاره كتحذير للمراجعة لأن منع الرصيد السالب غير مؤكد كقاعدة صارمة من VB6.");
             }
 
             if (model.Errors.Count > 0)
@@ -3796,11 +3916,28 @@ ORDER BY ISNULL(c.Contract_ID, 0) DESC;", connection, transaction))
             }
         }
 
-        private static bool GetVacationSettingsUseContract(SqlConnection connection, SqlTransaction transaction)
+        private sealed class VacationSettingsSnapshot
         {
-            using (var command = new SqlCommand("SELECT TOP (1) 1 FROM dbo.TblVacationSettings WITH (NOLOCK) WHERE ISNULL(Typ,0)=1", connection, transaction))
+            public bool UseContractSettings { get; set; }
+            public bool IncludeContractCarryOver { get; set; }
+        }
+
+        private static VacationSettingsSnapshot LoadVacationSettingsSnapshot(SqlConnection connection, SqlTransaction transaction)
+        {
+            using (var command = new SqlCommand(@"
+SELECT TOP (1) ISNULL(Typ,0) AS Typ, ISNULL(CommContract,0) AS CommContract
+FROM dbo.TblVacationSettings WITH (NOLOCK)
+ORDER BY ID DESC;", connection, transaction))
             {
-                return command.ExecuteScalar() != null;
+                using (var reader = command.ExecuteReader())
+                {
+                    if (!reader.Read()) { return new VacationSettingsSnapshot(); }
+                    return new VacationSettingsSnapshot
+                    {
+                        UseContractSettings = ReadInt(reader, "Typ") == 1,
+                        IncludeContractCarryOver = ReadInt(reader, "CommContract") == 1
+                    };
+                }
             }
         }
 

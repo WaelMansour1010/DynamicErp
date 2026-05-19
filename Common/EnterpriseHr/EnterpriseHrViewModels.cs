@@ -52,6 +52,7 @@ namespace MyERP.Common.EnterpriseHr
         public string HrApproveVacationUrl { get; set; }
         public string RejectVacationUrl { get; set; }
         public string CancelVacationUrl { get; set; }
+        public string DeleteVacationUrl { get; set; }
         public string CreateVacationEntitlementUrl { get; set; }
         public string DeleteVacationEntitlementUrl { get; set; }
         public string SaveVacationReturnToWorkUrl { get; set; }
@@ -495,6 +496,8 @@ namespace MyERP.Common.EnterpriseHr
         public decimal AvailableAfterRequest { get; set; }
         public bool NegativeBalancePrevented { get; set; }
         public bool CanPostPaidVacation { get; set; }
+        public bool HasOverlappingVacationWarning { get; set; }
+        public string OverlappingVacationMessage { get; set; }
         public IList<VacationBalanceLineViewModel> Lines { get; set; }
         public IList<string> Warnings { get; set; }
         public IList<string> Errors { get; set; }

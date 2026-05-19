@@ -96,6 +96,11 @@ namespace MyERP.Common.EnterpriseHr
             return _repository.CancelVacation(id, userId, userName, remarks);
         }
 
+        public LegacyHrFinanceSaveResult DeleteVacation(int id)
+        {
+            return _repository.DeleteVacation(id);
+        }
+
         public LegacyHrFinanceSaveResult CreateVacationEntitlementFromRequest(int vacationId, int? userId)
         {
             return _repository.CreateVacationEntitlementFromRequest(vacationId, userId);

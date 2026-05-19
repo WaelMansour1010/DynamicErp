@@ -2558,6 +2558,13 @@
         });
     }
     function addEdit(n) {
+            if (window.ZatcaComplianceWarning && window.ZatcaComplianceWarning.requiresConfirmation('CashIssueVoucher.Save')) {
+                window.ZatcaComplianceWarning.confirm('CashIssueVoucher.Save', function () {
+                    addEdit(n);
+                });
+                return;
+            }
+
             let valid = true;
             var sum = 0;
             if ($(".form-control:invalid").length > 0) {

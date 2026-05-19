@@ -347,6 +347,23 @@ namespace MyERP.Areas.Pos.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public JsonResult DeleteVacation(int id)
+        {
+            var context = GetContext();
+            if (!Can(context, "HR.Vacations", "Delete"))
+            {
+                Trace.TraceWarning("POS HR permission denied: DeleteVacation user={0}", context == null ? 0 : context.UserId);
+                Response.StatusCode = context == null ? 401 : 403;
+                return Json(new LegacyHrFinanceSaveResult { Success = false, Message = "ليست لديك صلاحية حذف طلبات الإجازات." });
+            }
+
+            var result = _service.DeleteVacation(id);
+            if (!result.Success) { Response.StatusCode = 400; }
+            return Json(result);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public JsonResult CreateVacationEntitlement(int id)
         {
             var context = GetContext();
@@ -520,7 +537,7 @@ namespace MyERP.Areas.Pos.Controllers
         public JsonResult EmployeesLookup(string term, string employeeStatus = "active")
         {
             var context = GetContext();
-            if (!Can(context, "HR.Advances", "View"))
+            if (!Can(context, "HR.Advances", "View") && !Can(context, "HR.ChangedComponentData", "View"))
             {
                 Response.StatusCode = context == null ? 401 : 403;
                 return Json(new { success = false, message = "ليست لديك صلاحية عرض الموظفين." }, JsonRequestBehavior.AllowGet);
@@ -570,6 +587,7 @@ namespace MyERP.Areas.Pos.Controllers
             model.HrApproveVacationUrl = Url.Action("HrApproveVacation", "Hr", new { area = "Pos" });
             model.RejectVacationUrl = Url.Action("RejectVacation", "Hr", new { area = "Pos" });
             model.CancelVacationUrl = Url.Action("CancelVacation", "Hr", new { area = "Pos" });
+            model.DeleteVacationUrl = Url.Action("DeleteVacation", "Hr", new { area = "Pos" });
             model.CreateVacationEntitlementUrl = Url.Action("CreateVacationEntitlement", "Hr", new { area = "Pos" });
             model.DeleteVacationEntitlementUrl = Url.Action("DeleteVacationEntitlement", "Hr", new { area = "Pos" });
             model.SaveVacationReturnToWorkUrl = Url.Action("SaveVacationReturnToWork", "Hr", new { area = "Pos" });

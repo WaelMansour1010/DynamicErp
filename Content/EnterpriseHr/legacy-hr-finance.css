@@ -4,7 +4,7 @@
 .lhf-hero h2 { margin: 4px 0; font-size: 28px; font-weight: 800; }
 .lhf-hero p { margin: 0; color: rgba(255,255,255,.78); }
 .lhf-search { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
-.lhf-search-wide { grid-template-columns: minmax(180px,1.4fr) repeat(6,minmax(120px,auto)); align-items:end; }
+.lhf-search-wide { grid-template-columns: repeat(auto-fit,minmax(130px,1fr)); align-items:end; }
 .lhf-search-vacations { grid-template-columns:minmax(180px,1.35fr) repeat(7,minmax(118px,1fr)) auto; }
 .lhf-search-changed { grid-template-columns: minmax(180px,1.2fr) repeat(5,minmax(120px,1fr)); align-items:end; }
 .lhf-filter-panel { padding:12px; border:1px solid rgba(255,255,255,.2); border-radius:8px; background:rgba(15,23,42,.16); grid-template-columns:repeat(6,minmax(120px,1fr)); }
@@ -59,6 +59,16 @@
 .lhf-editor-card header,.lhf-editor-card footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid rgba(126,143,166,.16)}
 .lhf-editor-card footer{border-top:1px solid rgba(126,143,166,.16);border-bottom:0}.lhf-editor-card header button{width:36px;height:36px;border:0;border-radius:8px;background:#f1f5f9}
 .lhf-editor-alert { margin:14px 18px 0; padding:11px 13px; border-radius:8px; border:1px solid #fed7aa; background:#fff7ed; color:#9a3412; font-weight:800; }
+.lhf-advance-workflow { margin:14px 18px 0; display:grid; grid-template-columns:minmax(160px,.32fr) 1fr; gap:12px; align-items:stretch; }
+.lhf-advance-workflow > div { padding:12px; border-radius:8px; border:1px solid rgba(126,143,166,.22); background:#f8fafc; display:flex; flex-direction:column; gap:8px; }
+.lhf-advance-workflow > div span { color:#64748b; font-size:12px; font-weight:900; }
+.lhf-advance-workflow ol { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; margin:0; padding:0; list-style:none; }
+.lhf-advance-workflow li { min-height:62px; padding:9px 10px; border-radius:8px; border:1px solid rgba(126,143,166,.18); background:#f1f5f9; color:#475569; display:flex; flex-direction:column; justify-content:center; gap:3px; }
+.lhf-advance-workflow li.done { background:#f0fdf4; border-color:#bbf7d0; color:#166534; }
+.lhf-advance-workflow li.danger { background:#fff1f2; border-color:#fecaca; color:#991b1b; }
+.lhf-advance-workflow li.history { grid-column:1/-1; min-height:auto; background:#eff6ff; border-color:#bfdbfe; color:#1e3a8a; }
+.lhf-advance-workflow li strong,.lhf-advance-workflow li small { display:block; }
+.lhf-advance-workflow li small { color:inherit; opacity:.78; font-weight:800; }
 .lhf-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:18px}.lhf-form-grid label{display:flex;flex-direction:column;gap:6px;margin:0;font-size:12px;color:#475569;font-weight:700}.lhf-form-grid input,.lhf-form-grid select,.lhf-form-grid textarea{border:1px solid rgba(126,143,166,.34);border-radius:8px;padding:0 10px;background:#fff;color:#172033}.lhf-form-grid input,.lhf-form-grid select{height:39px}.lhf-form-grid textarea{min-height:82px;padding-top:9px;resize:vertical}.lhf-field-wide{grid-column:1/-1}
 .lhf-editor-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:18px}.lhf-editor-grid label{display:flex;flex-direction:column;gap:6px;margin:0;font-size:12px;color:#475569;font-weight:700}
 .lhf-editor-grid input,.lhf-editor-grid select{height:39px;border:1px solid rgba(126,143,166,.34);border-radius:8px;padding:0 10px;background:#fff;color:#172033}.lhf-check{flex-direction:row!important;align-items:center;min-height:39px}.lhf-check input{width:18px;height:18px}
@@ -71,6 +81,8 @@
 .lhf-changed-entry-preview.addition strong { background:#dcfce7; color:#166534; }
 .lhf-changed-entry-preview.deduction { background:#fff1f2; border-color:#fecaca; color:#991b1b; }
 .lhf-changed-entry-preview.deduction strong { background:#fee2e2; color:#991b1b; }
+.lhf-changed-entry-preview em { flex-basis:100%; font-style:normal; color:#92400e; }
+.lhf-changed-entry-preview.has-warning { border-style:solid; box-shadow:inset -4px 0 #f59e0b; }
 .lhf-span-2{grid-column:span 2}.lhf-span-3{grid-column:1/-1}
 .lhf-advance-summary{padding:12px 14px;border:1px dashed rgba(37,99,235,.34);border-radius:8px;background:#eff6ff;color:#1e3a8a;display:flex;flex-direction:column;gap:6px}
 .lhf-advance-financials { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-top:4px; }
@@ -119,6 +131,7 @@
 .lhf-vac-errors ul,.lhf-vac-warnings ul { margin:8px 0 0; padding-inline-start:20px; }
 .lhf-vac-balance-status { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 14px; border-radius:8px; }
 .lhf-vac-balance-status.success { color:#166534; background:#f0fdf4; border:1px solid #bbf7d0; }
+.lhf-vac-balance-status.warning { color:#92400e; background:#fffbeb; border:1px solid #fde68a; }
 .lhf-vac-balance-status.danger { color:#991b1b; background:#fff1f2; border:1px solid #fecaca; }
 .lhf-vac-balance-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
 .lhf-vac-balance-grid article { padding:12px; border-radius:8px; border:1px solid rgba(126,143,166,.18); background:#fff; }
@@ -196,8 +209,8 @@
 .lhf-vacation-history small,.lhf-vacation-history em { color:#64748b; font-style:normal; }
 .lhf-message-error{color:#b91c1c!important}
 .lhf-page.is-loading:after { content:"جاري التحميل..."; position:fixed; inset:auto 24px 24px auto; z-index:1200; padding:10px 14px; border-radius:8px; background:#0f172a; color:#fff; box-shadow:0 12px 30px rgba(15,23,42,.24); font-weight:900; }
-@media(max-width:1200px){.lhf-advance-dashboard,.lhf-vacation-summary,.lhf-changed-snapshot{grid-template-columns:repeat(3,minmax(0,1fr))}.lhf-employee-totals>div{grid-template-columns:repeat(3,minmax(0,1fr))}.lhf-vacation-calendar-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.lhf-advance-financials,.lhf-accounting-boundary div,.lhf-vac-balance-grid,.lhf-vacation-request-summary,.lhf-vacation-history{grid-template-columns:repeat(2,minmax(0,1fr))}.lhf-vacation-balance-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:900px){.lhf-hero,.lhf-metrics,.lhf-editor-grid,.lhf-form-grid,.lhf-search,.lhf-search-wide,.lhf-search-changed,.lhf-filter-panel,.lhf-advance-dashboard,.lhf-vacation-summary,.lhf-changed-snapshot,.lhf-employee-totals>div,.lhf-vacation-calendar-strip,.lhf-advance-financials,.lhf-accounting-boundary div,.lhf-vacation-balance-form,.lhf-vac-balance-grid,.lhf-vacation-request-summary,.lhf-vacation-timeline ol,.lhf-vacation-history{grid-template-columns:1fr}.lhf-panel-tools,.lhf-panel-tools input{width:100%;min-width:0}.lhf-span-2,.lhf-span-3,.lhf-field-wide{grid-column:auto}.lhf-panel header{align-items:flex-start;flex-direction:column}.lhf-editor{padding:12px}.lhf-editor-card{max-height:calc(100vh - 24px)}}
+@media(max-width:1200px){.lhf-advance-dashboard,.lhf-vacation-summary,.lhf-changed-snapshot{grid-template-columns:repeat(3,minmax(0,1fr))}.lhf-employee-totals>div{grid-template-columns:repeat(3,minmax(0,1fr))}.lhf-vacation-calendar-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.lhf-advance-financials,.lhf-accounting-boundary div,.lhf-vac-balance-grid,.lhf-vacation-request-summary,.lhf-vacation-history{grid-template-columns:repeat(2,minmax(0,1fr))}.lhf-vacation-balance-form{grid-template-columns:repeat(2,minmax(0,1fr))}.lhf-advance-workflow{grid-template-columns:1fr}.lhf-advance-workflow ol{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:900px){.lhf-hero,.lhf-metrics,.lhf-editor-grid,.lhf-form-grid,.lhf-search,.lhf-search-wide,.lhf-search-changed,.lhf-filter-panel,.lhf-advance-dashboard,.lhf-vacation-summary,.lhf-changed-snapshot,.lhf-employee-totals>div,.lhf-vacation-calendar-strip,.lhf-advance-financials,.lhf-accounting-boundary div,.lhf-vacation-balance-form,.lhf-vac-balance-grid,.lhf-vacation-request-summary,.lhf-vacation-timeline ol,.lhf-vacation-history,.lhf-advance-workflow ol{grid-template-columns:1fr}.lhf-panel-tools,.lhf-panel-tools input{width:100%;min-width:0}.lhf-span-2,.lhf-span-3,.lhf-field-wide{grid-column:auto}.lhf-panel header{align-items:flex-start;flex-direction:column}.lhf-editor{padding:12px}.lhf-editor-card{max-height:calc(100vh - 24px)}}
 body.pos-enterprise-hr-page { margin:0; min-height:100vh; background:#f6f8fb; font-family:"Cairo","Tahoma",Arial,sans-serif; }
 body.pos-enterprise-hr-page .lhf-page { padding:22px; }
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page { background:#0f172a; color:#e5e7eb; }
@@ -239,6 +252,12 @@ html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-editor-card footer 
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-changed-entry-preview { background:#0f172a; color:#cbd5e1; border-color:rgba(148,163,184,.28); }
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-changed-entry-preview.addition { background:#052e16; color:#bbf7d0; border-color:#166534; }
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-changed-entry-preview.deduction { background:#3f1d24; color:#fecaca; border-color:#991b1b; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-changed-entry-preview em { color:#fde68a; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-advance-workflow > div,
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-advance-workflow li { background:#0f172a; color:#cbd5e1; border-color:rgba(148,163,184,.28); }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-advance-workflow li.done { background:#052e16; color:#bbf7d0; border-color:#166534; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-advance-workflow li.danger { background:#3f1d24; color:#fecaca; border-color:#991b1b; }
+html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-advance-workflow li.history { background:#172554; color:#dbeafe; border-color:#1d4ed8; }
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-advance-summary { background:#172554; color:#dbeafe; border-color:rgba(96,165,250,.4); }
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-advance-financials span,
 html[data-pos-theme="dark"] body.pos-enterprise-hr-page .lhf-parts-grid-wrap,

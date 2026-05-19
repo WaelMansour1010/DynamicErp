@@ -95,6 +95,8 @@ namespace MyERP.Areas.Pos.Services
                         throw new InvalidOperationException("تم استدعاء حفظ POS لكن لم يتم تأكيد الفاتورة والتفاصيل.");
                     }
 
+                    _repository.SyncSalesInvoiceVatFromDetails(saved.Transaction_ID);
+
                     VerifyPersistedServiceType(saved.Transaction_ID, row.InternalServiceType, row.ServiceItemId);
 
                     rowResult.Status = "Imported";

@@ -83,6 +83,7 @@
     { "file": "97_POS_DEVSerial_RemoveFromHotPath.sql", "reason": "Manual production rollout script to recreate usp_POS_SaveTransaction without DEV_Serial allocator locking; review before deployment." },
     { "file": "MANUAL_98_POS_VoucherCoding_Diagnostics.sql", "reason": "Read-only voucher coding diagnostics for SerialCounters_V2 contention, wait evidence, duplicate serials, and stage p95/p99." },
     { "file": "MANUAL_101_POS_TransactionIdAllocator_ConcurrencyTest.sql", "reason": "Manual test-database concurrency probe for the Transaction_ID allocator; consumes Transaction_ID values." },
-    { "file": "100_POS_SaveTransaction_Phase1_LockWindow.sql", "reason": "Manual Phase 1 production rollout: Branch POS voucher scope plus reviewed usp_POS_SaveTransaction lock-window mitigation with rollback capture." }
+    { "file": "100_POS_SaveTransaction_Phase1_LockWindow.sql", "reason": "Manual Phase 1 production rollout: Branch POS voucher scope plus reviewed usp_POS_SaveTransaction lock-window mitigation with rollback capture." },
+    { "file": "MANUAL_114_POS_RepairExcelImportedInvoiceVat.sql", "reason": "Manual one-time data repair: sync Transactions.VAT from Transaction_Details.Vat for already-imported Excel POS invoices after review." }
   ]
 }

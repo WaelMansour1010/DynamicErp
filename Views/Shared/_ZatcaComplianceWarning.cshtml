@@ -1,0 +1,224 @@
+@{
+    bool zatcaWarningRequired = ViewBag.ZatcaComplianceWarningRequired == true;
+    bool zatcaWarningShowOnOpen = ViewBag.ZatcaComplianceWarningShowOnOpen == true;
+    string zatcaWarningContext = ViewBag.ZatcaComplianceWarningContext as string ?? "";
+}
+
+@if (zatcaWarningRequired)
+{
+    <style>
+        .zatca-warning-modal .modal-dialog {
+            max-width: 760px;
+        }
+
+        .zatca-warning-modal .modal-content {
+            border: 0;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(34, 34, 34, 0.25);
+            overflow: hidden;
+        }
+
+        .zatca-warning-modal .modal-header {
+            align-items: center;
+            background: #fff7e6;
+            border-bottom: 1px solid #ffd591;
+            color: #7a3f00;
+        }
+
+        .zatca-warning-modal .zatca-warning-icon {
+            align-items: center;
+            background: #faad14;
+            border-radius: 50%;
+            color: #fff;
+            display: inline-flex;
+            flex: 0 0 46px;
+            font-size: 26px;
+            height: 46px;
+            justify-content: center;
+            margin-left: 14px;
+            width: 46px;
+        }
+
+        .zatca-warning-modal .modal-title {
+            color: #7a3f00;
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .zatca-warning-modal .modal-body {
+            direction: rtl;
+            font-size: 17px;
+            line-height: 1.9;
+            padding: 26px 30px 20px;
+            text-align: right;
+        }
+
+        .zatca-warning-modal .zatca-warning-body {
+            color: #3d3d3d;
+            margin-bottom: 18px;
+        }
+
+        .zatca-warning-modal .zatca-warning-countdown {
+            background: #fff3cd;
+            border: 1px solid #ffe08a;
+            border-radius: 6px;
+            color: #856404;
+            font-weight: 700;
+            margin: 18px 0;
+            padding: 12px 16px;
+            text-align: center;
+        }
+
+        .zatca-warning-modal .zatca-warning-ack {
+            align-items: center;
+            background: #f8f9fa;
+            border-radius: 6px;
+            display: flex;
+            gap: 10px;
+            padding: 12px 14px;
+        }
+
+        .zatca-warning-modal .zatca-warning-ack input {
+            height: 20px;
+            margin: 0;
+            width: 20px;
+        }
+
+        .zatca-warning-modal .modal-footer {
+            border-top: 1px solid #f1f1f1;
+            padding: 16px 30px 24px;
+        }
+
+        .zatca-warning-modal .btn-zatca-continue:disabled {
+            cursor: not-allowed;
+            opacity: .65;
+        }
+    </style>
+
+    <div class="modal fade zatca-warning-modal" id="zatcaComplianceWarningModal" tabindex="-1" role="dialog" aria-labelledby="zatcaComplianceWarningTitle" aria-hidden="true" data-context="@zatcaWarningContext" data-show-on-open="@zatcaWarningShowOnOpen.ToString().ToLowerInvariant()">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="zatca-warning-icon" aria-hidden="true"><i class="fas fa-exclamation-triangle"></i></span>
+                    <h5 class="modal-title" id="zatcaComplianceWarningTitle">تنبيه نظامي هام</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="zatca-warning-body">
+                        <p>تشير إعدادات النظام إلى أن هذه المنشأة لم تستكمل حتى الآن إجراءات الربط والتكامل مع هيئة الزكاة والضريبة والجمارك.</p>
+                        <p>استمرار استخدام النظام وإصدار العمليات المحاسبية دون استكمال متطلبات الربط قد يعرض المنشأة لمخالفات أو غرامات نظامية وفق متطلبات الفوترة الإلكترونية المعتمدة داخل المملكة العربية السعودية.</p>
+                        <p>يرجى التواصل مع الإدارة أو الدعم الفني لاستكمال إجراءات الربط في أقرب وقت ممكن.</p>
+                        <p>هذا التنبيه يظهر تلقائيًا لحماية المنشأة والتنبيه بالمتطلبات النظامية الحالية.</p>
+                    </div>
+                    <div class="zatca-warning-countdown" id="zatcaWarningCountdown">يمكن المتابعة بعد 20 ثانية</div>
+                    <label class="zatca-warning-ack" for="zatcaWarningAcknowledgement">
+                        <input type="checkbox" id="zatcaWarningAcknowledgement" />
+                        <span>أقر بأنني اطلعت على التحذير النظامي</span>
+                    </label>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning btn-lg btn-zatca-continue" id="zatcaWarningContinue" disabled>يمكن المتابعة بعد 20 ثانية</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.ZatcaComplianceWarning = (function () {
+            var countdownSeconds = 20;
+            var bypass = {};
+            var activeDeferred = null;
+            var timer = null;
+
+            function resetModal() {
+                clearInterval(timer);
+                timer = null;
+                $('#zatcaWarningAcknowledgement').prop('checked', false);
+                $('#zatcaWarningContinue').prop('disabled', true).text('يمكن المتابعة بعد ' + countdownSeconds + ' ثانية');
+                $('#zatcaWarningCountdown').text('يمكن المتابعة بعد ' + countdownSeconds + ' ثانية');
+            }
+
+            function refreshContinueButton(secondsLeft) {
+                var acknowledged = $('#zatcaWarningAcknowledgement').prop('checked') === true;
+                var canContinue = secondsLeft <= 0 && acknowledged;
+                $('#zatcaWarningContinue')
+                    .prop('disabled', !canContinue)
+                    .text(secondsLeft > 0 ? 'يمكن المتابعة بعد ' + secondsLeft + ' ثانية' : 'المتابعة على مسؤولية المستخدم');
+            }
+
+            function show() {
+                if (activeDeferred) {
+                    return activeDeferred.promise();
+                }
+
+                activeDeferred = $.Deferred();
+                resetModal();
+
+                var secondsLeft = countdownSeconds;
+                $('#zatcaComplianceWarningModal').modal({
+                    backdrop: 'static',
+                    keyboard: false,
+                    show: true
+                });
+
+                timer = setInterval(function () {
+                    secondsLeft -= 1;
+                    if (secondsLeft <= 0) {
+                        clearInterval(timer);
+                        timer = null;
+                        secondsLeft = 0;
+                    }
+
+                    $('#zatcaWarningCountdown').text(secondsLeft > 0 ? 'يمكن المتابعة بعد ' + secondsLeft + ' ثانية' : 'يجب تحديد الإقرار قبل المتابعة');
+                    refreshContinueButton(secondsLeft);
+                }, 1000);
+
+                $('#zatcaWarningAcknowledgement').off('change.zatca').on('change.zatca', function () {
+                    refreshContinueButton(secondsLeft);
+                });
+
+                $('#zatcaWarningContinue').off('click.zatca').on('click.zatca', function () {
+                    if ($(this).prop('disabled')) {
+                        return;
+                    }
+
+                    $('#zatcaComplianceWarningModal').modal('hide');
+                    activeDeferred.resolve();
+                    activeDeferred = null;
+                });
+
+                return activeDeferred.promise();
+            }
+
+            function requiresConfirmation(context) {
+                if (bypass[context]) {
+                    delete bypass[context];
+                    return false;
+                }
+
+                return true;
+            }
+
+            function confirm(context, continuation) {
+                show().done(function () {
+                    bypass[context] = true;
+                    if (typeof continuation === 'function') {
+                        continuation();
+                    }
+                });
+            }
+
+            $(function () {
+                if ($('#zatcaComplianceWarningModal').data('show-on-open') === true) {
+                    show();
+                }
+            });
+
+            return {
+                confirm: confirm,
+                requiresConfirmation: requiresConfirmation,
+                show: show
+            };
+        })();
+    </script>
+}

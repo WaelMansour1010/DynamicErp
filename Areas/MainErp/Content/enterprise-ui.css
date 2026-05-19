@@ -1219,6 +1219,72 @@
     gap: var(--erp-gap);
 }
 
+.voucher-workspace .voucher-form-grid label.is-hidden {
+    display: none;
+}
+
+.voucher-workspace .voucher-form-grid label.is-invalid input,
+.voucher-workspace .voucher-form-grid label.is-invalid select,
+.voucher-workspace .voucher-form-grid label.is-invalid textarea {
+    background: #fff7ed;
+    border-color: #f97316;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, .14);
+}
+
+.voucher-workspace .voucher-field-error,
+.voucher-workspace .voucher-account-filter-meta {
+    color: #b42318;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.6;
+}
+
+.voucher-workspace .voucher-account-filter-meta {
+    color: var(--erp-muted);
+    display: block;
+    margin-top: 4px;
+}
+
+.voucher-workspace .voucher-payment-warning {
+    align-self: end;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: var(--erp-radius-sm);
+    color: #9a3412;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.7;
+    padding: 10px 12px;
+}
+
+.voucher-workspace .voucher-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.voucher-workspace .voucher-row-actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.voucher-workspace .voucher-row-actions .voucher-details-link {
+    justify-content: center;
+    min-width: 74px;
+}
+
+.voucher-workspace [aria-busy="true"] {
+    opacity: .86;
+}
+
+.voucher-workspace button[disabled],
+.voucher-workspace .voucher-primary-action[disabled] {
+    cursor: wait;
+    opacity: .72;
+}
+
 @media (max-width: 1100px) {
     .erp-filter-grid,
     .erp-split-grid,

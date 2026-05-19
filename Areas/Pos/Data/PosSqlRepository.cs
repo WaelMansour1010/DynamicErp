@@ -13000,6 +13000,42 @@ WHERE Transaction_ID = @transactionId;";
             }
         }
 
+        public void SyncSalesInvoiceVatFromDetails(int transactionId)
+        {
+            if (transactionId <= 0)
+            {
+                return;
+            }
+
+            const string sql = @"
+;WITH DetailTotals AS
+(
+    SELECT
+        Transaction_ID,
+        CAST(ISNULL(SUM(CONVERT(MONEY, ISNULL(Vat, 0))), 0) AS MONEY) AS VatAmount
+    FROM dbo.Transaction_Details WITH (NOLOCK)
+    WHERE Transaction_ID = @transactionId
+    GROUP BY Transaction_ID
+)
+UPDATE t
+SET VAT = d.VatAmount
+FROM dbo.Transactions AS t
+INNER JOIN DetailTotals AS d ON d.Transaction_ID = t.Transaction_ID
+WHERE t.Transaction_ID = @transactionId
+  AND ISNULL(t.Transaction_Type, 0) = 21
+  AND ISNULL(t.IsPOS, 0) = 1
+  AND ISNULL(t.TrafficViolations, 0) = 0
+  AND ISNULL(t.VAT, 0) <> ISNULL(d.VatAmount, 0);";
+
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand(sql, connection))
+            {
+                command.Parameters.Add("@transactionId", SqlDbType.Int).Value = transactionId;
+                connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
         private static bool IsCashOutService(string serviceType)
         {
             return string.Equals((serviceType ?? string.Empty).Trim(), "cash-out", StringComparison.OrdinalIgnoreCase);

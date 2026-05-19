@@ -139,6 +139,7 @@ namespace MyERP.Reporting
 
         public ActionResult UnitesStatus()
         {
+            ZatcaComplianceWarning.Apply(this, db, "Report.UnitesStatus");
             return View();
         }
         public ActionResult PropertyProp_Report()

@@ -29,6 +29,7 @@ namespace MyERP.Controllers.AccountSettings
         {
             ViewBag.PageIndex = pageIndex;
             ViewBag.OpenReport = report == true;
+            ZatcaComplianceWarning.Apply(this, db, "CashReceiptVoucher.Index");
             if (report == true)
             {
                 ViewBag.Id = id;
@@ -504,6 +505,7 @@ namespace MyERP.Controllers.AccountSettings
             ViewBag.Date = propBillRegisteration.BillRegDate?.ToString("yyyy-MM-ddTHH:mm");
 
             ViewBag.FromPropertyBillRegisteration = true;
+            ZatcaComplianceWarning.Apply(this, db, "CashReceiptVoucher.AddEditForPropertyBill");
 
             return View("AddEdit", cashReceiptVoucher);
         }
@@ -516,6 +518,7 @@ namespace MyERP.Controllers.AccountSettings
             }
             SystemSetting systemSetting = await db.SystemSettings.AnyAsync() ? await db.SystemSettings.FirstOrDefaultAsync() : new SystemSetting();
             ViewBag.UseCostCenter = systemSetting.UseCostCenter;
+            ZatcaComplianceWarning.Apply(this, db, "CashReceiptVoucher.AddEdit");
             var userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
             DepartmentRepository departmentRepository = new DepartmentRepository(db);
             CashboxReposistory cashboxReposistory = new CashboxReposistory(db);

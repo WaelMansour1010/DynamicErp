@@ -24,6 +24,7 @@ namespace MyERP.Controllers.PropertyManagement
         // GET: PropertyContract
         public ActionResult Index(int pageIndex = 1, int wantedRowsNo = 10, string searchWord = "")
         {
+            ZatcaComplianceWarning.Apply(this, db, "PropertyContract.Index");
             QueryHelper.AddLog(new MyLog()
             {
                 ArAction = "فتح قائمة العقود",
@@ -75,6 +76,7 @@ namespace MyERP.Controllers.PropertyManagement
         public ActionResult AddEdit(int? id)
         {
             SystemSetting systemSetting = db.SystemSettings.Any() ? db.SystemSettings.FirstOrDefault() : new SystemSetting();
+            ZatcaComplianceWarning.Apply(this, db, "PropertyContract.AddEdit");
             var userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
             DepartmentRepository departmentRepository = new DepartmentRepository(db);
             //------ Time Zone Depends On Currency --------//

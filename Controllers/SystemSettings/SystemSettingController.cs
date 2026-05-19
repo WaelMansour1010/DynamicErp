@@ -20,6 +20,7 @@ namespace MyERP.Controllers.SystemSettings
         {
             var session = Session["lang"] != null ? Session["lang"].ToString() : "ar";
             var userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
+            ViewBag.CanEditZatcaLink = userId == 1;
 
             SystemSetting systemSetting = db.SystemSettings.Any() ? db.SystemSettings.FirstOrDefault() : new SystemSetting();
 
@@ -90,6 +91,13 @@ namespace MyERP.Controllers.SystemSettings
         {
             string domainName = Request.Url.GetLeftPart(UriPartial.Authority);
             var count = db.SystemSettings.Count();
+            var userId = int.Parse(((ClaimsIdentity)User.Identity).FindFirst("Id").Value);
+            var currentSystemSetting = db.SystemSettings.AsNoTracking().FirstOrDefault();
+            if (userId != 1 && currentSystemSetting != null)
+            {
+                systemSetting.IsZatcaLinked = currentSystemSetting.IsZatcaLinked;
+            }
+
             if (systemSetting.ShowCashBoxBalance == null)
                 systemSetting.ShowCashBoxBalance = false;
             systemSetting.PayViaCash = true;

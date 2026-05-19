@@ -11,16 +11,35 @@
         var paymentMethod = form.querySelector("[name='PaymentMethod']");
         var box = form.querySelector("[name='BoxId']");
         var bank = form.querySelector("[name='BankId']");
+        var chequeNumber = form.querySelector("[name='ChequeNumber']");
+        var chequeDueDate = form.querySelector("[name='ChequeDueDate']");
         var account = form.querySelector("[name='PartyAccountCode']");
         var accountFilter = document.querySelector("[data-account-filter]");
         var totalNet = document.querySelector("[data-total-net]");
         var totalVat = document.querySelector("[data-total-vat]");
         var totalGross = document.querySelector("[data-total-gross]");
         var sourceHint = document.querySelector("[data-source-hint]");
+        var warning = document.createElement("div");
+        var accountMeta = document.createElement("small");
         var originalAccountOptions = account ? Array.prototype.map.call(account.options, function (option) {
             return { value: option.value, text: option.text, selected: option.selected };
         }) : [];
         var isSubmitting = false;
+        var initialized = false;
+
+        form.setAttribute("novalidate", "novalidate");
+
+        warning.className = "voucher-payment-warning";
+        warning.setAttribute("role", "alert");
+        warning.style.display = "none";
+        if (paymentMethod && paymentMethod.closest("label")) {
+            paymentMethod.closest("label").insertAdjacentElement("afterend", warning);
+        }
+
+        accountMeta.className = "voucher-account-filter-meta";
+        if (accountFilter && accountFilter.parentNode) {
+            accountFilter.parentNode.appendChild(accountMeta);
+        }
 
         function numberValue(element) {
             var value = parseFloat(element && element.value ? element.value : "0");
@@ -31,11 +50,77 @@
             return value.toLocaleString("ar-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
+        function labelFor(element) {
+            return element && element.closest ? element.closest("label") : null;
+        }
+
+        function isBlank(element) {
+            return !element || !String(element.value || "").trim();
+        }
+
+        function isCashMethod() {
+            return paymentMethod && paymentMethod.value === "0";
+        }
+
+        function isBankTransferMethod() {
+            return paymentMethod && paymentMethod.value === "2";
+        }
+
+        function isUnsupportedMethod() {
+            return paymentMethod && paymentMethod.value !== "" && !isCashMethod() && !isBankTransferMethod();
+        }
+
         function setStatus(message, isError) {
             if (!status) { return; }
             status.textContent = message || "";
             status.classList.toggle("is-error", !!isError);
             status.classList.toggle("is-active", !!message);
+        }
+
+        function setFieldError(element, message) {
+            var label = labelFor(element);
+            var error;
+            if (!label) { return; }
+            error = label.querySelector(".voucher-field-error");
+            if (message) {
+                if (!error) {
+                    error = document.createElement("small");
+                    error.className = "voucher-field-error";
+                    label.appendChild(error);
+                }
+                error.textContent = message;
+                label.classList.add("is-invalid");
+                element.setAttribute("aria-invalid", "true");
+            } else {
+                if (error) { error.parentNode.removeChild(error); }
+                label.classList.remove("is-invalid");
+                element.removeAttribute("aria-invalid");
+            }
+        }
+
+        function clearFieldErrors() {
+            [paymentMethod, box, bank, chequeNumber, chequeDueDate, account, amount].forEach(function (element) {
+                setFieldError(element, "");
+            });
+        }
+
+        function toggleField(element, visible) {
+            var label = labelFor(element);
+            if (!label) { return; }
+            label.classList.toggle("is-hidden", !visible);
+            element.disabled = !visible;
+            element.setAttribute("aria-hidden", visible ? "false" : "true");
+        }
+
+        function setReferenceLabels(textNumber, textDate) {
+            var numberLabel = labelFor(chequeNumber);
+            var dateLabel = labelFor(chequeDueDate);
+            if (numberLabel && numberLabel.querySelector("span")) {
+                numberLabel.querySelector("span").textContent = textNumber;
+            }
+            if (dateLabel && dateLabel.querySelector("span")) {
+                dateLabel.querySelector("span").textContent = textDate;
+            }
         }
 
         function updateTotals() {
@@ -50,21 +135,50 @@
         }
 
         function updatePaymentSource() {
-            var method = paymentMethod ? paymentMethod.value : "";
-            var wantsBank = method === "2";
-            var wantsBox = method === "0";
-            if (box) {
-                box.closest("label").classList.toggle("is-voucher-source-active", wantsBox);
-                box.closest("label").classList.toggle("is-voucher-source-muted", wantsBank);
+            var wantsBank = isBankTransferMethod();
+            var wantsBox = isCashMethod();
+            var unsupported = isUnsupportedMethod();
+
+            toggleField(box, wantsBox);
+            toggleField(bank, wantsBank);
+            toggleField(chequeNumber, wantsBank || unsupported);
+            toggleField(chequeDueDate, wantsBank || unsupported);
+
+            if (box && labelFor(box)) {
+                labelFor(box).classList.toggle("is-voucher-source-active", wantsBox);
+                labelFor(box).classList.toggle("is-voucher-source-muted", wantsBank || unsupported);
             }
-            if (bank) {
-                bank.closest("label").classList.toggle("is-voucher-source-active", wantsBank);
-                bank.closest("label").classList.toggle("is-voucher-source-muted", wantsBox);
+            if (bank && labelFor(bank)) {
+                labelFor(bank).classList.toggle("is-voucher-source-active", wantsBank);
+                labelFor(bank).classList.toggle("is-voucher-source-muted", wantsBox || unsupported);
             }
+
+            if (wantsBank) {
+                setReferenceLabels("رقم الحوالة", "تاريخ الحوالة");
+            } else {
+                setReferenceLabels("رقم الشيك", "تاريخ الاستحقاق");
+            }
+
             if (sourceHint) {
                 sourceHint.textContent = wantsBank
-                    ? "سيتم اعتماد حساب البنك كطرف دائن في القيد."
-                    : "سيتم اعتماد حساب الخزنة كطرف دائن في القيد.";
+                    ? "سيتم اعتماد حساب البنك كطرف الصندوق/البنك، ويلزم إدخال رقم وتاريخ الحوالة."
+                    : wantsBox
+                        ? "سيتم اعتماد حساب الخزنة كطرف الصندوق في القيد."
+                        : "اختر طريقة دفع مدعومة قبل الحفظ.";
+            }
+
+            if (warning) {
+                if (unsupported) {
+                    warning.textContent = "هذه الطريقة قيد التنفيذ. دورة الشيكات/التسويات لم يتم تفعيلها بعد، لذلك تم إيقاف الحفظ لحماية القيود والروابط.";
+                    warning.style.display = "block";
+                } else {
+                    warning.textContent = "";
+                    warning.style.display = "none";
+                }
+            }
+
+            if (initialized) {
+                clearFieldErrors();
             }
         }
 
@@ -74,15 +188,79 @@
             var selectedValue = account.value;
             var matches = originalAccountOptions.filter(function (item, index) {
                 return index === 0 || item.value === selectedValue || item.text.toLowerCase().indexOf(term) >= 0;
-            }).slice(0, 80);
+            });
+            var visibleMatches = matches.slice(0, 80);
+            var selectedItem = originalAccountOptions.filter(function (item) { return item.value === selectedValue; })[0];
+            if (selectedItem && !visibleMatches.some(function (item) { return item.value === selectedValue; })) {
+                visibleMatches.push(selectedItem);
+            }
             account.innerHTML = "";
-            matches.forEach(function (item) {
+            visibleMatches.forEach(function (item) {
                 var option = document.createElement("option");
                 option.value = item.value;
                 option.text = item.text;
                 option.selected = item.value === selectedValue;
                 account.appendChild(option);
             });
+            if (accountMeta) {
+                accountMeta.textContent = term
+                    ? "تم عرض " + Math.max(visibleMatches.length - 1, 0) + " نتيجة. ضيق البحث لنتيجة أسرع."
+                    : "اكتب جزءا من رقم الحساب أو الاسم لتقليل القائمة.";
+            }
+        }
+
+        function validateForm() {
+            var firstInvalid = null;
+            clearFieldErrors();
+
+            function mark(element, message) {
+                if (!firstInvalid) { firstInvalid = element; }
+                setFieldError(element, message);
+            }
+
+            if (!paymentMethod || isBlank(paymentMethod)) {
+                mark(paymentMethod, "اختر طريقة الدفع.");
+            } else if (isUnsupportedMethod()) {
+                mark(paymentMethod, "هذه الطريقة قيد التنفيذ ولا يمكن حفظها حاليا.");
+            }
+
+            Array.prototype.forEach.call(form.querySelectorAll("[required]"), function (element) {
+                if (!element.disabled && isBlank(element)) {
+                    mark(element, "هذا الحقل مطلوب.");
+                }
+            });
+
+            if (account && isBlank(account)) {
+                mark(account, "اختر الحساب أو الطرف.");
+            }
+
+            if (!amount || numberValue(amount) <= 0) {
+                mark(amount, "أدخل مبلغ السند بقيمة أكبر من صفر.");
+            }
+
+            if (isCashMethod() && box && isBlank(box)) {
+                mark(box, "اختر الخزنة للدفع النقدي.");
+            }
+
+            if (isBankTransferMethod()) {
+                if (bank && isBlank(bank)) {
+                    mark(bank, "اختر البنك للحوالة البنكية.");
+                }
+                if (chequeNumber && isBlank(chequeNumber)) {
+                    mark(chequeNumber, "أدخل رقم الحوالة البنكية.");
+                }
+                if (chequeDueDate && isBlank(chequeDueDate)) {
+                    mark(chequeDueDate, "حدد تاريخ الحوالة البنكية.");
+                }
+            }
+
+            if (firstInvalid && firstInvalid.focus) {
+                firstInvalid.focus();
+                setStatus("راجع الحقول المحددة قبل الحفظ.", true);
+                return false;
+            }
+
+            return true;
         }
 
         function setBusy() {
@@ -101,9 +279,13 @@
             element.addEventListener("input", updateTotals);
             element.addEventListener("change", updateTotals);
         });
-        [paymentMethod, box, bank].forEach(function (element) {
+        [paymentMethod, box, bank, chequeNumber, chequeDueDate, account].forEach(function (element) {
             if (!element) { return; }
-            element.addEventListener("change", updatePaymentSource);
+            element.addEventListener("change", function () {
+                setFieldError(element, "");
+                if (element === paymentMethod) { updatePaymentSource(); }
+            });
+            element.addEventListener("input", function () { setFieldError(element, ""); });
         });
         if (accountFilter) {
             accountFilter.addEventListener("input", filterAccounts);
@@ -129,10 +311,23 @@
                 setStatus("تم إرسال الطلب بالفعل. انتظر نتيجة الحفظ.", true);
                 return;
             }
+            if (!validateForm()) {
+                event.preventDefault();
+                return;
+            }
             setBusy();
         });
 
         updateTotals();
         updatePaymentSource();
+        filterAccounts();
+        initialized = true;
+
+        window.setTimeout(function () {
+            var target = accountFilter || account || amount;
+            if (target && target.focus && !form.querySelector(".field-validation-error")) {
+                target.focus();
+            }
+        }, 100);
     })();
 </script>

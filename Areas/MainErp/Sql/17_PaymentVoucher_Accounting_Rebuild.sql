@@ -605,6 +605,7 @@ BEGIN
     IF @noteType = 4 AND ISNULL(@cashingType, -1) NOT IN (0, 1, 2, 7) BEGIN RAISERROR(N'نوع سند القبض المختار يحتاج منطق ربط خاص من VB6 ولم يتم تفعيله بعد في الحفظ الآمن.', 16, 1); RETURN; END
     IF (@paymentMethod = 0 AND @boxId IS NULL) BEGIN RAISERROR(N'يجب اختيار الصندوق لطريقة الدفع النقدي.', 16, 1); RETURN; END
     IF (@paymentMethod = 2 AND @bankId IS NULL) BEGIN RAISERROR(N'يجب اختيار البنك لطريقة التحويل البنكي.', 16, 1); RETURN; END
+    IF (@paymentMethod = 2 AND NULLIF(LTRIM(RTRIM(ISNULL(@chequeNumber, N''))), N'') IS NULL) BEGIN RAISERROR(N'يجب إدخال رقم الحوالة لطريقة التحويل البنكي.', 16, 1); RETURN; END
     IF (@boxId IS NOT NULL AND @bankId IS NOT NULL) BEGIN RAISERROR(N'اختر صندوقا أو بنكا فقط.', 16, 1); RETURN; END
 
     DECLARE
@@ -865,8 +866,8 @@ BEGIN
             Rate = 1,
             BankID = CASE WHEN @paymentMethod = 2 THEN @bankId ELSE NULL END,
             BoxID = CASE WHEN @paymentMethod = 0 THEN @boxId ELSE NULL END,
-            ChqueNum = NULL,
-            DueDate = NULL,
+            ChqueNum = CASE WHEN @paymentMethod = 2 THEN @chequeNumber ELSE NULL END,
+            DueDate = CASE WHEN @paymentMethod = 2 THEN COALESCE(@chequeDueDate, @noteDate) ELSE NULL END,
             UserID = @userId,
             Remark = @remark,
             CashingType = @cashingType,
@@ -877,8 +878,8 @@ BEGIN
             too = @partyDisplay,
             ORDER_NO = @orderNo,
             PaymentType = @paymentMethod,
-            TxtChequeNumber1 = NULL,
-            DtpChequeDueDate1 = NULL,
+            TxtChequeNumber1 = CASE WHEN @paymentMethod = 2 THEN @chequeNumber ELSE NULL END,
+            DtpChequeDueDate1 = CASE WHEN @paymentMethod = 2 THEN COALESCE(@chequeDueDate, @noteDate) ELSE NULL END,
             ManualNo = @manualNo,
             NCashingType = @receiptClass,
             Prefix = @voucherPrefix,
@@ -900,7 +901,7 @@ BEGIN
         (
             NoteID, NoteDate, NoteType, NoteSerial, NoteSerial1, OldNoteSerial1,
             Note_Value, Note_Value2, Note_ValueE, Rate,
-            BankID, BoxID, UserID, Remark, CashingType, NoteCashingType, NotePosted,
+            BankID, BoxID, ChqueNum, DueDate, UserID, Remark, CashingType, NoteCashingType, NotePosted,
             numbering_type, numbering_type1, sanad_year, sanad_month, branch_no, user_name,
             person, too, ORDER_NO, PaymentType, TxtChequeNumber1, DtpChequeDueDate1,
             ManualNo, NCashingType, Prefix, PayDes, PayDes1, VAT, TotalValue, TotalNotesValue, IncludVAT,
@@ -912,11 +913,18 @@ BEGIN
             CONVERT(float, @amount), CONVERT(float, @totalPaymentAmount), CONVERT(float, @totalPaymentAmount), 1,
             CASE WHEN @paymentMethod = 2 THEN @bankId ELSE NULL END,
             CASE WHEN @paymentMethod = 0 THEN @boxId ELSE NULL END,
+            CASE WHEN @paymentMethod = 2 THEN @chequeNumber ELSE NULL END,
+            CASE WHEN @paymentMethod = 2 THEN COALESCE(@chequeDueDate, @noteDate) ELSE NULL END,
             @userId, @remark, @cashingType, @paymentMethod, 0,
             ISNULL((SELECT TOP (1) numbering_id FROM dbo.sanad_numbering WHERE branch_no = @branchId AND sanad_no = 0), 0),
             ISNULL((SELECT TOP (1) numbering_id FROM dbo.sanad_numbering WHERE branch_no = @branchId AND sanad_no = @voucherSanadNo AND (Prefix = @voucherPrefix OR (Prefix IS NULL AND @voucherPrefix IS NULL))), 0),
             YEAR(@noteDate), MONTH(@noteDate), @branchId, CONVERT(nvarchar(50), @userId),
-            @partyDisplay, @partyDisplay, @orderNo, @paymentMethod, NULL, NULL,
+            @partyDisplay,
+            @partyDisplay,
+            @orderNo,
+            @paymentMethod,
+            CASE WHEN @paymentMethod = 2 THEN @chequeNumber ELSE NULL END,
+            CASE WHEN @paymentMethod = 2 THEN COALESCE(@chequeDueDate, @noteDate) ELSE NULL END,
             @manualNo, @receiptClass, @voucherPrefix, @payDes, @payDes1, CONVERT(float, @vatAmount), CONVERT(float, @totalPaymentAmount), CONVERT(float, @totalPaymentAmount), CASE WHEN ISNULL(@includeVat, 0) <> 0 THEN 1 ELSE 0 END,
             CASE WHEN @vatAmount > 0 THEN CONVERT(float, @mainDebitAmount) ELSE NULL END,
             @partyAccount,

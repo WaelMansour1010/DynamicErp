@@ -114,6 +114,7 @@ namespace MyERP.Models
         public Nullable<bool> InabilityToEditSalesAndPurchaseInvoicesAndReturns { get; set; }
         public Nullable<bool> LinkSalesRepresentativesWithCustomers { get; set; }
         public Nullable<bool> WorkingWithTheEgyptianVacationSystem { get; set; }
+        public bool IsZatcaLinked { get; set; }
     
         public virtual Bank Bank { get; set; }
         public virtual CashBox CashBox { get; set; }
