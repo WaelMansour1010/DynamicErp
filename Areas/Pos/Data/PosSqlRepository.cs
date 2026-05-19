@@ -5312,6 +5312,12 @@ WHERE ClientRequestId = @ClientRequestId
                 return true;
             }
 
+            if (message.IndexOf("Unable to generate NoteSerial1 using dbo.usp_Voucher_coding_V2", StringComparison.OrdinalIgnoreCase) >= 0
+                || message.IndexOf("Unable to generate Issue Voucher NoteSerial1 using dbo.usp_Voucher_coding_V2", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return true;
+            }
+
             if (message.IndexOf("sys.sp_getapplock", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 return false;

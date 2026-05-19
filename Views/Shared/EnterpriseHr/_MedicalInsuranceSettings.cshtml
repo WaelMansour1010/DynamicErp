@@ -150,7 +150,7 @@
             <nav class="ep-drawer-tabs">
                 <button type="button" class="active" data-drawer-tab="general">البيانات الأساسية</button>
                 <button type="button" data-drawer-tab="payroll">أثر الراتب</button>
-                <button type="button" data-drawer-tab="dependents">التابعون</button>
+                <button type="button" data-drawer-tab="dependents">قواعد التابعين</button>
                 <button type="button" data-drawer-tab="rules">قواعد التحمل</button>
                 <button type="button" data-drawer-tab="accounting">الحسابات</button>
                 <button type="button" data-drawer-tab="history">السجل</button>
@@ -203,13 +203,17 @@
                 </section>
 
                 <section class="ep-drawer-panel" data-drawer-panel="dependents">
+                    <div class="ep-plan-rule-explainer">
+                        <strong>هذه قواعد الخطة وليست تابعين حقيقيين لموظف محدد.</strong>
+                        <span>هنا يتم تحديد العدد المسموح والتكلفة الافتراضية لأنواع التابعين. إضافة الزوج أو الأبناء الفعليين تتم من ملف الموظف داخل تبويب التأمين الطبي.</span>
+                    </div>
                     <div class="ep-form-grid rescue-grid-3">
-                        <label class="ep-field"><span>أقصى عدد تابعين</span><input id="epMaxDependents" type="number" min="0" value="4" /></label>
+                        <label class="ep-field"><span>أقصى عدد تابعين للموظف</span><input id="epMaxDependents" type="number" min="0" value="4" /></label>
                         <label class="ep-field"><span>العمر الأقصى للأبناء</span><input id="epChildrenMaxAge" type="number" min="0" value="21" /></label>
                         <label class="ep-field"><span>نسبة التغطية الافتراضية</span><input id="epDefaultCoveragePercent" type="number" min="0" max="100" value="100" /></label>
                     </div>
                     <details class="ep-advanced">
-                        <summary>تكلفة التابعين</summary>
+                        <summary>تكلفة أنواع التابعين</summary>
                         <div class="ep-form-grid rescue-grid-3">
                             <label class="ep-field"><span>تكلفة الزوج/الزوجة</span><input id="epSpouseCost" type="number" step="0.01" min="0" value="0" /></label>
                             <label class="ep-field"><span>تكلفة الطفل</span><input id="epChildCost" type="number" step="0.01" min="0" value="0" /></label>
@@ -217,10 +221,10 @@
                         </div>
                     </details>
                     <div class="ep-inline-add ep-dependent-add">
-                        <input id="epDependentName" placeholder="اسم التابع" />
+                        <input id="epDependentName" placeholder="اسم/نوع القاعدة مثال: زوجة أو ابن" />
                         <select id="epDependentRelation"><option value="Spouse">زوجة/زوج</option><option value="Child">ابن/ابنة</option><option value="Parent">والد/والدة</option></select>
                         <input id="epDependentBirthDate" type="date" />
-                        <button type="button" id="epAddDependent"><i class="fas fa-plus"></i> إضافة تابع</button>
+                        <button type="button" id="epAddDependent"><i class="fas fa-plus"></i> إضافة قاعدة تابع</button>
                     </div>
                     <div class="ep-dependent-card-grid" id="epDependentsCards"></div>
                     <table class="ep-table ep-md-hidden-table"><tbody id="epDependentsRows"></tbody></table>

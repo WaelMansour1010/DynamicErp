@@ -416,6 +416,11 @@ WHERE e.Emp_ID = @Id;";
                     reader.Close();
                     employee.MedicalInsuranceHistory = GetMedicalInsuranceHistory(connection, id);
                     employee.MedicalInsurance = employee.MedicalInsuranceHistory.Count > 0 ? employee.MedicalInsuranceHistory[0] : null;
+                    employee.MedicalInsuranceDependents = GetMedicalInsuranceDependents(connection, id, employee.MedicalInsurance == null ? (int?)null : employee.MedicalInsurance.Id);
+                    if (employee.MedicalInsurance != null)
+                    {
+                        employee.MedicalInsurance.Dependents = employee.MedicalInsuranceDependents.ToList();
+                    }
                     return employee;
                 }
             }
@@ -7068,9 +7073,91 @@ VALUES
 (@EmpId, @PlanId, @PolicyNumber, @CardNumber, @CoveragePercent, @StartDate, @EndDate, @IsMonthly, @IsActive,
  @MonthlyCost, @EmployeeShareType, @EmployeeShareValue,
  @CompanyShareType, @CompanyShareValue, @EmployeeMonthlyDeduction, @CompanyMonthlyCost,
- @EmployeeShareValue, CASE WHEN @EmployeeShareType = N'Percent' THEN @EmployeeShareValue ELSE 0 END, @EmployeeShareType, @Notes, @UserId, GETDATE());"))
+ @EmployeeShareValue, CASE WHEN @EmployeeShareType = N'Percent' THEN @EmployeeShareValue ELSE 0 END, @EmployeeShareType, @Notes, @UserId, GETDATE());
+SELECT CONVERT(INT, SCOPE_IDENTITY());"))
                 {
                     AddInsuranceParameters(command, insurance, employeeId, userId);
+                    insurance.Id = Convert.ToInt32(command.ExecuteScalar());
+                }
+            }
+
+            SaveMedicalInsuranceDependents(connection, transaction, insurance, employeeId);
+        }
+
+        private IList<EmployeeMedicalInsuranceDependent> GetMedicalInsuranceDependents(SqlConnection connection, int employeeId, int? employeeInsuranceId)
+        {
+            var rows = new List<EmployeeMedicalInsuranceDependent>();
+            if (!TableExists(connection, "MedicalInsuranceDependents"))
+            {
+                return rows;
+            }
+
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = @"
+SELECT DependentId, EmpId, EmployeeInsuranceId, DependentName, Relation, BirthDate, CoveragePercent, IsActive
+FROM dbo.MedicalInsuranceDependents WITH (NOLOCK)
+WHERE EmpId = @EmpId
+  AND IsActive = 1
+  AND (@EmployeeInsuranceId IS NULL OR EmployeeInsuranceId = @EmployeeInsuranceId OR EmployeeInsuranceId IS NULL)
+ORDER BY Relation, DependentName;";
+                command.Parameters.Add("@EmpId", SqlDbType.Int).Value = employeeId;
+                AddNullable(command, "@EmployeeInsuranceId", SqlDbType.Int, employeeInsuranceId);
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        rows.Add(new EmployeeMedicalInsuranceDependent
+                        {
+                            DependentId = ReadNullableInt(reader, "DependentId"),
+                            EmployeeId = ReadInt(reader, "EmpId"),
+                            EmployeeInsuranceId = ReadNullableInt(reader, "EmployeeInsuranceId"),
+                            DependentName = ReadString(reader, "DependentName"),
+                            Relation = ReadString(reader, "Relation"),
+                            BirthDate = ReadNullableDate(reader, "BirthDate"),
+                            CoveragePercent = ReadDecimal(reader, "CoveragePercent"),
+                            IsActive = ReadBool(reader, "IsActive")
+                        });
+                    }
+                }
+            }
+
+            return rows;
+        }
+
+        private void SaveMedicalInsuranceDependents(SqlConnection connection, SqlTransaction transaction, EmployeeMedicalInsurance insurance, int employeeId)
+        {
+            if (!TableExists(connection, transaction, "MedicalInsuranceDependents") || insurance == null || !insurance.Id.HasValue)
+            {
+                return;
+            }
+
+            using (var command = CreateCommand(connection, transaction, @"
+UPDATE dbo.MedicalInsuranceDependents
+SET IsActive = 0
+WHERE EmpId = @EmpId
+  AND (EmployeeInsuranceId = @EmployeeInsuranceId OR EmployeeInsuranceId IS NULL);"))
+            {
+                command.Parameters.Add("@EmpId", SqlDbType.Int).Value = employeeId;
+                command.Parameters.Add("@EmployeeInsuranceId", SqlDbType.Int).Value = insurance.Id.Value;
+                command.ExecuteNonQuery();
+            }
+
+            foreach (var dependent in (insurance.Dependents ?? new List<EmployeeMedicalInsuranceDependent>()).Where(x => x != null && !string.IsNullOrWhiteSpace(x.DependentName)))
+            {
+                using (var command = CreateCommand(connection, transaction, @"
+INSERT INTO dbo.MedicalInsuranceDependents
+(EmpId, EmployeeInsuranceId, DependentName, Relation, BirthDate, CoveragePercent, IsActive, CreatedAt)
+VALUES
+(@EmpId, @EmployeeInsuranceId, @DependentName, @Relation, @BirthDate, @CoveragePercent, @IsActive, GETDATE());"))
+                {
+                    command.Parameters.Add("@EmpId", SqlDbType.Int).Value = employeeId;
+                    command.Parameters.Add("@EmployeeInsuranceId", SqlDbType.Int).Value = insurance.Id.Value;
+                    AddNullable(command, "@DependentName", SqlDbType.NVarChar, dependent.DependentName);
+                    AddNullable(command, "@Relation", SqlDbType.NVarChar, string.IsNullOrWhiteSpace(dependent.Relation) ? "Child" : dependent.Relation);
+                    AddNullable(command, "@BirthDate", SqlDbType.DateTime, dependent.BirthDate);
+                    command.Parameters.Add("@CoveragePercent", SqlDbType.Money).Value = dependent.CoveragePercent <= 0 ? 100 : dependent.CoveragePercent;
+                    command.Parameters.Add("@IsActive", SqlDbType.Bit).Value = dependent.IsActive && insurance.IsActive;
                     command.ExecuteNonQuery();
                 }
             }

@@ -63,7 +63,8 @@
     { "order": 112, "file": "112_POS_PayrollAdvanceDeductionLinks.sql", "autoApply": true, "purpose": "Payroll advance installment links to salary runs so payroll posting can mark deducted installments safely." },
     { "order": 113, "file": "113_POS_PayrollVacationAttendanceIntegration.sql", "autoApply": true, "purpose": "Payroll vacation/attendance compatibility fields and legacy GetAbcentDay2 function for salary run recalculation." },
     { "order": 115, "file": "115_POS_PaymentVoucher_Accounting_Rebuild.sql", "autoApply": true, "purpose": "سند الدفع / سند الصرف: الحفظ والترقيم والقيود المحاسبية المحصنة بدون MAX+1." },
-    { "order": 116, "file": "116_POS_Voucher_ReadProcedures_Compatibility.sql", "autoApply": true, "purpose": "سندات الدفع والصرف والقبض: إجراءات البحث والعرض والـ lookups المتوافقة مع POS/MainERP." }
+    { "order": 116, "file": "116_POS_Voucher_ReadProcedures_Compatibility.sql", "autoApply": true, "purpose": "سندات الدفع والصرف والقبض: إجراءات البحث والعرض والـ lookups المتوافقة مع POS/MainERP." },
+    { "order": 117, "file": "117_POS_MedicalInsuranceDependents.sql", "autoApply": true, "purpose": "Production table for employee medical insurance dependents linked to employee subscriptions." }
   ],
   "manualScripts": [
     { "file": "35_POS_SystemHealthPermissions.sql", "reason": "Requires sysadmin/master login and replacing the app SQL login placeholder." },

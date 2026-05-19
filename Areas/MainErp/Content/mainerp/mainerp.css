@@ -2556,6 +2556,28 @@ body.main-erp-sidebar-collapsed .pos-main-shell.main-erp-app-shell {
     text-align: left;
 }
 
+.voucher-hr-section {
+    border-color: rgba(59, 130, 246, .28);
+    background: linear-gradient(180deg, rgba(239, 246, 255, .92), rgba(255, 255, 255, .96));
+}
+
+.voucher-hr-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.voucher-hr-warning {
+    margin: 12px 0 0;
+    color: #7c2d12;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    padding: 10px 12px;
+    line-height: 1.8;
+}
+
 .voucher-form-grid label.is-voucher-source-active {
     background: #ecfdf3;
     border: 1px solid #bbf7d0;

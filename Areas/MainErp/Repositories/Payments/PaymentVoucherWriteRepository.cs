@@ -248,6 +248,16 @@ namespace MyERP.Areas.MainErp.Repositories.Payments
                 return "حساب الطرف مطلوب قبل حفظ السند.";
             }
 
+            if (model.NoteType == 5 && model.CashingType.HasValue && (model.CashingType.Value == 4 || model.CashingType.Value == 6))
+            {
+                return "سداد الرواتب وسلف الموظفين لها مسار VB6 خاص (FrmEmpSalary6 / SaveSalaryPyment / saveAdvancedData) ولا يجوز حفظها كقيد عام من هذه الشاشة حتى يكتمل نقل الدورة المحاسبية.";
+            }
+
+            if (model.NoteType == 5 && model.PaymentMethod.HasValue && (model.PaymentMethod.Value == 4 || model.PaymentMethod.Value == 5))
+            {
+                return "تسوية الحساب أو الدفع الآجل لسندات الموظفين يحتاج نقل دورة الربط الكاملة من VB6 قبل تفعيله في الحفظ الآمن.";
+            }
+
             if (!model.BoxId.HasValue && !model.BankId.HasValue)
             {
                 return "يجب اختيار خزنة أو بنك للسند.";

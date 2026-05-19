@@ -62,10 +62,12 @@ namespace MyERP.Common.EmployeePayroll
         public string Notes { get; set; }
         public EmployeeMedicalInsurance MedicalInsurance { get; set; }
         public IList<EmployeeMedicalInsurance> MedicalInsuranceHistory { get; set; }
+        public IList<EmployeeMedicalInsuranceDependent> MedicalInsuranceDependents { get; set; }
 
         public EmployeeSummary()
         {
             MedicalInsuranceHistory = new List<EmployeeMedicalInsurance>();
+            MedicalInsuranceDependents = new List<EmployeeMedicalInsuranceDependent>();
         }
     }
 
@@ -175,6 +177,12 @@ namespace MyERP.Common.EmployeePayroll
         public string Notes { get; set; }
         public DateTime? CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public IList<EmployeeMedicalInsuranceDependent> Dependents { get; set; }
+
+        public EmployeeMedicalInsurance()
+        {
+            Dependents = new List<EmployeeMedicalInsuranceDependent>();
+        }
 
         public decimal Amount
         {
@@ -193,6 +201,18 @@ namespace MyERP.Common.EmployeePayroll
             get { return EmployeeShareType; }
             set { EmployeeShareType = value; }
         }
+    }
+
+    public class EmployeeMedicalInsuranceDependent
+    {
+        public int? DependentId { get; set; }
+        public int EmployeeId { get; set; }
+        public int? EmployeeInsuranceId { get; set; }
+        public string DependentName { get; set; }
+        public string Relation { get; set; }
+        public DateTime? BirthDate { get; set; }
+        public decimal CoveragePercent { get; set; }
+        public bool IsActive { get; set; }
     }
 
     public class MedicalInsuranceCalculation

@@ -5,6 +5,7 @@
     var screen = root.getAttribute("data-screen");
     var readOnly = root.getAttribute("data-read-only") === "true";
     var enterpriseDependents = [];
+    var employeeInsuranceDependents = [];
     var enterpriseRules = [];
     var enterpriseCoverageRows = [];
     var actionLocks = {};
@@ -387,6 +388,17 @@
         byId("epInsuranceEnd").value = dateInput(mi.EndDate);
         byId("epInsuranceMonthly").checked = mi.IsMonthly !== false;
         byId("epInsuranceNotes").value = mi.Notes || "";
+        employeeInsuranceDependents = (mi.Dependents || employee.MedicalInsuranceDependents || []).map(function (x) {
+            return {
+                DependentId: x.DependentId || null,
+                DependentName: x.DependentName || x.Name || "",
+                Relation: x.Relation || "Child",
+                BirthDate: dateInput(x.BirthDate),
+                CoveragePercent: x.CoveragePercent || 100,
+                IsActive: x.IsActive !== false
+            };
+        });
+        renderEmployeeInsuranceDependents();
         renderInsuranceHistory(employee.MedicalInsuranceHistory || []);
         renderEmployeeProfile(employee);
         updateInsurancePreview();
@@ -441,7 +453,8 @@
                 EndDate: byId("epInsuranceEnd").value || null,
                 IsMonthly: byId("epInsuranceMonthly").checked,
                 IsActive: byId("epInsuranceActive").checked,
-                Notes: byId("epInsuranceNotes").value
+                Notes: byId("epInsuranceNotes").value,
+                Dependents: employeeInsuranceDependents
             }
         };
     }
@@ -1045,6 +1058,26 @@
         if (cards && !cards.innerHTML) { cards.innerHTML = '<div class="ep-empty-card">لا توجد بيانات تابعين في معاينة هذه الخطة.</div>'; }
         setText("epHeroDependents", enterpriseDependents.length);
         validateEnterpriseInsurance();
+    }
+    function renderEmployeeInsuranceDependents() {
+        var host = byId("epEmployeeDependentsCards");
+        var count = byId("epEmployeeDependentsCount");
+        if (!host) { return; }
+        host.innerHTML = "";
+        if (count) { count.textContent = employeeInsuranceDependents.length; }
+        if (!employeeInsuranceDependents.length) {
+            host.innerHTML = '<div class="ep-empty-card">لا يوجد تابعون مسجلون لهذا الموظف. أضف الزوج/الزوجة أو الأبناء هنا، وليس داخل تعريف الخطة.</div>';
+            return;
+        }
+        employeeInsuranceDependents.forEach(function (x, i) {
+            var age = ageFromDate(x.BirthDate);
+            host.insertAdjacentHTML("beforeend",
+                '<article class="ep-dependent-card ep-employee-dependent-card">' +
+                '<div><strong>' + html(x.DependentName || x.Name || "") + '</strong><span>' + html(relationLabel(x.Relation)) + '</span></div>' +
+                '<div class="ep-dependent-metrics"><span>' + age + ' سنة</span><span>' + html(x.CoveragePercent || 100) + '%</span></div>' +
+                '<button type="button" title="حذف التابع من اشتراك الموظف" data-remove-employee-dependent="' + i + '"><i class="fas fa-trash"></i></button>' +
+                '</article>');
+        });
     }
     function renderRules() {
         var tbody = byId("epRulesRows");
@@ -1778,9 +1811,31 @@
             renderDependents();
             calculatePlanPreview();
         }
+        if (btn.id === "epAddEmployeeDependent") {
+            var employeeDependentName = byId("epEmployeeDependentName") ? byId("epEmployeeDependentName").value : "";
+            var employeeDependentRelation = byId("epEmployeeDependentRelation") ? byId("epEmployeeDependentRelation").value : "Child";
+            var employeeDependentBirthDate = byId("epEmployeeDependentBirthDate") ? byId("epEmployeeDependentBirthDate").value : "";
+            var employeeDependentCoverage = byId("epEmployeeDependentCoverage") ? number(byId("epEmployeeDependentCoverage").value) || 100 : 100;
+            var selectedPlan = (root._plans || []).filter(function (x) { return String(x.PlanId) === String(byId("epInsurancePlan") ? byId("epInsurancePlan").value : ""); })[0] || {};
+            var maxDependentsForEmployee = parseInt(selectedPlan.MaxDependents || "0", 10);
+            var maxChildAgeForEmployee = parseInt(selectedPlan.ChildrenMaxAge || "0", 10);
+            if (!employeeDependentName) { message("اكتب اسم التابع أولا.", true); return; }
+            if (maxDependentsForEmployee > 0 && employeeInsuranceDependents.length >= maxDependentsForEmployee) { message("عدد التابعين يتجاوز الحد الأقصى المسموح في الخطة.", true); return; }
+            if (employeeDependentRelation === "Child" && maxChildAgeForEmployee > 0 && ageFromDate(employeeDependentBirthDate) > maxChildAgeForEmployee) { message("عمر الابن/الابنة يتجاوز حد الخطة.", true); return; }
+            employeeInsuranceDependents.push({ DependentName: employeeDependentName, Relation: employeeDependentRelation, BirthDate: employeeDependentBirthDate, CoveragePercent: employeeDependentCoverage, IsActive: true });
+            if (byId("epEmployeeDependentName")) { byId("epEmployeeDependentName").value = ""; }
+            if (byId("epEmployeeDependentBirthDate")) { byId("epEmployeeDependentBirthDate").value = ""; }
+            renderEmployeeInsuranceDependents();
+            return;
+        }
         if (btn.hasAttribute("data-remove-dependent")) {
             enterpriseDependents.splice(parseInt(btn.getAttribute("data-remove-dependent"), 10), 1);
             renderDependents();
+        }
+        if (btn.hasAttribute("data-remove-employee-dependent")) {
+            employeeInsuranceDependents.splice(parseInt(btn.getAttribute("data-remove-employee-dependent"), 10), 1);
+            renderEmployeeInsuranceDependents();
+            return;
         }
         if (btn.hasAttribute("data-insurance-section")) {
             root.querySelectorAll("[data-insurance-section]").forEach(function (x) { x.classList.toggle("active", x === btn); });

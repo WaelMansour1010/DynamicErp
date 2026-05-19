@@ -31,6 +31,13 @@
             new SelectListItem { Value = "4", Text = "صرف لعميل" },
             new SelectListItem { Value = "5", Text = "مصروف عام" }
         };
+    if (Model.NoteType == 5)
+    {
+        voucherTypes = voucherTypes
+            .Select(x => x.Value == "4" ? new SelectListItem { Value = "4", Text = "سلفة / موظف" } : x)
+            .Concat(new[] { new SelectListItem { Value = "6", Text = "سداد رواتب" } })
+            .ToArray();
+    }
     var receiptClasses = new[]
     {
         new SelectListItem { Value = "0", Text = "بدون تصنيف" },
@@ -60,6 +67,23 @@
     }
 
     <div class="voucher-save-status" data-voucher-status role="status" aria-live="polite"></div>
+
+    @if (Model.NoteType == 5)
+    {
+        <section class="voucher-section voucher-hr-section">
+            <div class="voucher-section-title">
+                <h4>عمليات الموظفين</h4>
+                <span>الرواتب والسلف لها دورة ربط محاسبية مستقلة عن السند العام.</span>
+            </div>
+            <div class="voucher-hr-actions">
+                <a class="voucher-ghost-action" href="@Url.Content("~/MainErp/EmployeePayroll/SalaryRun")">مسير الرواتب</a>
+                <a class="voucher-ghost-action" href="@Url.Content("~/MainErp/Hr/Advances")">سلف الموظفين</a>
+            </div>
+            <p class="voucher-hr-warning">
+                اختيار "سداد رواتب" أو "سلفة / موظف" ظاهر الآن حتى لا يختفي مسار العمل، لكن الحفظ من هذا النموذج سيظل محجوبًا إلى أن يتم نقل دورة VB6 كاملة: FrmEmpSalary6 / SaveSalaryPyment / saveAdvancedData.
+            </p>
+        </section>
+    }
 
     @using (Html.BeginForm("Save", controllerName, new { area = "MainErp" }, FormMethod.Post, new { @class = "voucher-edit-form", data_payment_voucher_form = "true", autocomplete = "off" }))
     {

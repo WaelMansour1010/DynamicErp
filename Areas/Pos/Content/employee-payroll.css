@@ -442,6 +442,73 @@ button, .ep-link { border:1px solid #cfd7e6; background:#fff; color:#172033; bor
 .ep-med-dependent-card span { display:block; }
 .ep-med-dependent-card span { color:var(--med-muted); margin-top:2px; }
 .ep-med-dependent-card b { margin-right:auto; border-radius:999px; padding:4px 8px; background:var(--med-green-soft); color:var(--med-green); font-size:12px; }
+
+.ep-plan-rule-explainer,
+.ep-insurance-dependent-box {
+    border:1px solid #dbeafe;
+    background:linear-gradient(135deg, #f8fbff 0%, #eef6ff 100%);
+    border-radius:12px;
+    padding:14px;
+    margin-bottom:12px;
+}
+
+.ep-plan-rule-explainer strong,
+.ep-plan-rule-explainer span,
+.ep-dependent-box-head strong,
+.ep-dependent-box-head span { display:block; }
+
+.ep-plan-rule-explainer strong,
+.ep-dependent-box-head strong { color:#0f172a; font-weight:900; margin-bottom:4px; }
+
+.ep-plan-rule-explainer span,
+.ep-dependent-box-head span { color:#64748b; line-height:1.7; }
+
+.ep-dependent-box-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:12px; }
+
+.ep-dependent-box-head b {
+    white-space:nowrap;
+    border-radius:999px;
+    background:#e0f2fe;
+    color:#0369a1;
+    padding:7px 12px;
+    font-size:13px;
+}
+
+.ep-employee-dependent-add { grid-template-columns:minmax(220px, 1.5fr) minmax(140px, .8fr) minmax(150px, .9fr) minmax(120px, .7fr) auto; }
+
+.ep-employee-dependent-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
+    gap:10px;
+    margin-top:12px;
+}
+
+.ep-employee-dependent-card {
+    border:1px solid #e2e8f0;
+    background:#fff;
+    border-radius:10px;
+    padding:12px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    box-shadow:0 8px 18px rgba(15, 23, 42, .04);
+}
+
+.ep-employee-dependent-card i {
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:#eef2ff;
+    color:#2563eb;
+}
+
+.ep-employee-dependent-card div { flex:1; min-width:0; }
+.ep-employee-dependent-card strong { display:block; color:#0f172a; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ep-employee-dependent-card span { display:block; color:#64748b; font-size:12px; margin-top:2px; }
+.ep-employee-dependent-card button { border:1px solid #fee2e2; background:#fff1f2; color:#be123c; border-radius:8px; width:34px; height:34px; }
 .ep-med-safe-mode { border-radius:999px; padding:6px 10px; color:var(--med-blue); background:var(--med-blue-soft); white-space:nowrap; }
 .ep-med-donut-wrap { display:flex; align-items:center; gap:18px; margin-bottom:14px; }
 .ep-med-donut { width:148px; height:148px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; background:conic-gradient(#137333 0 55%, #d99b22 55% 70%, #b42318 70% 84%, #64748b 84% 100%); position:relative; flex-shrink:0; }

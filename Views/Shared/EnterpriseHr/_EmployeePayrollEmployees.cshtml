@@ -174,6 +174,27 @@
                         <span>لا تحذف اشتراكاً مرتبطاً بالمسير. استخدم إنهاء الاشتراك لإيقاف الخصم مع حفظ الأثر السابق.</span>
                         <button type="button" id="epEndInsuranceSubscription"><i class="fas fa-calendar-times"></i> إنهاء الاشتراك</button>
                     </div>
+                    <div class="ep-span-all ep-insurance-dependent-box">
+                        <div class="ep-dependent-box-head">
+                            <div>
+                                <strong>تابعو الموظف</strong>
+                                <span>أضف الزوج أو الأبناء الفعليين المرتبطين باشتراك هذا الموظف. الخطة تحدد القواعد والحدود فقط.</span>
+                            </div>
+                            <b><span id="epEmployeeDependentsCount">0</span> تابع</b>
+                        </div>
+                        <div class="ep-inline-add ep-employee-dependent-add">
+                            <input id="epEmployeeDependentName" placeholder="اسم التابع" />
+                            <select id="epEmployeeDependentRelation">
+                                <option value="Spouse">زوجة/زوج</option>
+                                <option value="Child">ابن/ابنة</option>
+                                <option value="Parent">والد/والدة</option>
+                            </select>
+                            <input id="epEmployeeDependentBirthDate" type="date" aria-label="تاريخ الميلاد" />
+                            <input id="epEmployeeDependentCoverage" type="number" min="0" max="100" step="0.01" value="100" aria-label="نسبة التغطية" />
+                            <button type="button" id="epAddEmployeeDependent"><i class="fas fa-plus"></i> إضافة تابع</button>
+                        </div>
+                        <div class="ep-employee-dependent-grid" id="epEmployeeDependentsCards"></div>
+                    </div>
                     <label class="ep-field ep-span-all"><span>ملاحظات التأمين</span><textarea id="epInsuranceNotes"></textarea></label>
                     <div class="ep-span-all ep-insurance-state-bar" id="epInsuranceStateBar"></div>
                     <div class="ep-span-all ep-history-card">
