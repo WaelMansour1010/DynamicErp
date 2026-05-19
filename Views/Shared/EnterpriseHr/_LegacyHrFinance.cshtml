@@ -30,9 +30,61 @@
         .OrderByDescending(x => Math.Abs(x.Total))
         .Take(6)
         .ToList();
+    var moduleTitle = Model.Title;
+    var moduleSubtitle = "مساحة عمل موحدة لشؤون الموظفين تعمل بنفس منطق العمل داخل POS و MainERP مع الحفاظ على سياق النظام المفتوح.";
+    var moduleTone = "info";
+    var nextAction = "راجع النتائج وحدد الإجراء المناسب حسب الصلاحيات وحالة السجل.";
+    var blockedHint = "أي إجراء غير متاح يظهر بسبب الصلاحية أو حالة الاعتماد أو الارتباط بالرواتب/المستندات.";
+    var workflowSteps = new[] { "بحث ومراجعة", "تسجيل", "اعتماد", "متابعة" };
+    if (Model.ModuleKey == "advances")
+    {
+        moduleSubtitle = "إدارة طلب السلفة من التسجيل والاعتماد وحتى إنشاء السلفة الفعلية ومتابعة الأقساط بدون إنشاء قيود مباشرة من شاشة HR.";
+        moduleTone = advanceLocked > 0 ? "warning" : "success";
+        nextAction = Model.Permissions.CanAdd ? "يمكنك إنشاء طلب سلفة جديد أو متابعة الطلبات المفتوحة من الجدول." : "راجع طلبات السلف الحالية حسب الصلاحيات المتاحة.";
+        workflowSteps = new[] { "طلب السلفة", "الاعتماد", "صرف السلفة", "الأقساط والرواتب" };
+    }
+    else if (Model.ModuleKey == "vacations")
+    {
+        moduleSubtitle = "دورة الإجازة من الطلب وحساب الرصيد والاعتماد إلى مستحقات الإجازة ومباشرة العمل، بدون ترحيل رواتب أو حسابات من هذه الشاشة.";
+        moduleTone = vacationPending > 0 || vacationRejected > 0 ? "warning" : "success";
+        nextAction = Model.Permissions.CanAdd ? "ابدأ بطلب إجازة جديد أو احسب رصيد الموظف قبل الاعتماد." : "راجع طلبات الإجازة وحالات الاعتماد والارتباط بالمستحقات.";
+        workflowSteps = new[] { "طلب الإجازة", "الرصيد", "الاعتماد", "المستحقات", "مباشرة العمل" };
+    }
+    else if (Model.ModuleKey == "changed-components")
+    {
+        moduleSubtitle = "تسجيل المفردات المتغيرة التي يقرأها مسير الرواتب مع توضيح المفتوح والمقفل بسبب استخدامه في مسير.";
+        moduleTone = changedLocked > 0 ? "warning" : "success";
+        nextAction = Model.Permissions.CanAdd ? "سجل مفردة متغيرة أو استخدم الإدخال الجماعي مع مراجعة القيم قبل الحفظ." : "راجع المفردات المتغيرة وحالة استخدامها في المسير.";
+        workflowSteps = new[] { "اختيار الموظف", "اختيار المفردة", "حفظ القيمة", "قفل بالمسير" };
+    }
+    else if (Model.ModuleKey == "components" || Model.ModuleKey == "payroll-items")
+    {
+        moduleSubtitle = "كتالوج مفردات الرواتب والبدلات والخصومات المستخدمة في دورة المسير.";
+        workflowSteps = new[] { "تعريف المفردة", "تصنيف التأثير", "مراجعة الحساب", "ظهور بالمسير" };
+    }
+    else if (Model.ModuleKey == "leave")
+    {
+        moduleSubtitle = "متابعة أرصدة الإجازات والمستحقات المرتبطة بها من نقطة مركزية.";
+        workflowSteps = new[] { "الرصيد", "الطلبات", "المستحقات", "المباشرة" };
+    }
+    else if (Model.ModuleKey == "absences")
+    {
+        moduleSubtitle = "متابعة الغياب والتأثيرات المرتبطة بالموظف قبل وصولها إلى دورة الرواتب.";
+        workflowSteps = new[] { "تسجيل", "مراجعة", "تأثير الراتب", "متابعة" };
+    }
+    else if (Model.ModuleKey == "allowances")
+    {
+        moduleSubtitle = "إدارة البدلات وعناصر الاستحقاق المتاحة للموظفين ضمن منظومة الرواتب.";
+        workflowSteps = new[] { "تعريف", "ربط", "مراجعة", "تفعيل" };
+    }
+    else if (Model.ModuleKey == "end-service")
+    {
+        moduleSubtitle = "متابعة تسويات نهاية الخدمة ومؤشرات الإغلاق بدون فتح أي مسار محاسبي غير معتمد.";
+        workflowSteps = new[] { "بيانات الموظف", "المستحقات", "الخصومات", "التسوية" };
+    }
 }
 
-<section class="lhf-page" data-lhf-page="@Model.ModuleKey"
+<section class="lhf-page lhf-workspace lhf-module-@Model.ModuleKey" data-lhf-page="@Model.ModuleKey"
          data-host-context="@Model.HostContext"
          data-screen-key="@Model.ScreenKey"
          data-component-details-url="@Model.ComponentDetailsUrl"
@@ -64,10 +116,23 @@
          data-delete-vacation-return-url="@Model.DeleteVacationReturnToWorkUrl"
          data-employee-lookup-url="@Model.EmployeeLookupUrl">
     @Html.AntiForgeryToken()
-    <header class="lhf-hero">
-        <div>
-            <span>@Model.SourceSystem</span>
-            <h2>@Model.Title</h2>
+    <header class="lhf-hero lhf-workspace-header">
+        <div class="lhf-title-block">
+            <span class="lhf-host-chip">@Model.HostContext</span>
+            <span class="lhf-source-chip">@Model.SourceSystem</span>
+            <h2>@moduleTitle</h2>
+            <p>@moduleSubtitle</p>
+            <div class="lhf-command-card @moduleTone">
+                <span>الإجراء التالي</span>
+                <strong>@nextAction</strong>
+                <small>@blockedHint</small>
+            </div>
+            <nav class="lhf-workflow-strip" aria-label="دورة العمل">
+                @for (var i = 0; i < workflowSteps.Length; i++)
+                {
+                    <span class="lhf-workflow-step @(i == 0 ? "active" : "")"><b>@(i + 1)</b>@workflowSteps[i]</span>
+                }
+            </nav>
             <p>شاشة مشتركة بين POS و MainERP ضمن شؤون الموظفين، مع الحفاظ على سياق النظام المفتوح.</p>
         </div>
         <form method="get" class="lhf-search @(Model.ModuleKey == "advances" || Model.ModuleKey == "vacations" ? "lhf-search-wide" : Model.ModuleKey == "changed-components" ? "lhf-search-changed lhf-filter-panel" : "") @(Model.ModuleKey == "vacations" ? "lhf-search-vacations lhf-filter-panel" : "")">

@@ -27,7 +27,7 @@
     { "order": 48, "file": "48_POS_SalesRepresentativesPerformanceDashboard.sql", "autoApply": true, "purpose": "Sales representatives performance procedure." },
     { "order": 49, "file": "49_POS_SalesRepresentativeTargets.sql", "autoApply": true, "purpose": "Sales representative targets table/procedures." },
     { "order": 50, "file": "50_POS_ExcelImportCommitAudit.sql", "autoApply": true, "purpose": "Excel import commit audit constraints/indexes." },
-    { "order": 51, "file": "51_POS_PaymentCashing_ReadProcedures.sql", "autoApply": true, "purpose": "Payment/cashing read procedures." },
+    { "order": 51, "file": "51_POS_PaymentCashing_ReadProcedures.sql", "autoApply": true, "purpose": "إجراءات قراءة سندات القبض والصرف القديمة - تبقى للتوافق، ويعاد تحصين الحفظ بالسكربتات اللاحقة." },
     { "order": 52, "file": "52_POS_EmployeePayroll_MedicalInsurance.sql", "autoApply": true, "purpose": "POS Web medical insurance setup, employee subscriptions, payroll deduction audit, and deduction procedure." },
     { "order": 54, "file": "54_POS_DoubleEntryVoucherSequence_Fix.sql", "autoApply": true, "purpose": "Safe double-entry voucher sequence repair." },
     { "order": 62, "file": "62_POS_SalesInvoice_LimitedEditPermissions.sql", "autoApply": true, "purpose": "Limited POS sales invoice edit permissions and audit log table." },
@@ -61,7 +61,9 @@
     { "order": 110, "file": "110_POS_EmployeePhoto_PrintCards.sql", "autoApply": true, "purpose": "Employee photo data column used by shared HR printable employee and medical insurance cards." },
     { "order": 111, "file": "111_POS_KycFollowUp_ReportProcedure_2012.sql", "autoApply": true, "purpose": "SQL Server 2012 compatible KYC follow-up report procedure hotfix with collation-safe joins." },
     { "order": 112, "file": "112_POS_PayrollAdvanceDeductionLinks.sql", "autoApply": true, "purpose": "Payroll advance installment links to salary runs so payroll posting can mark deducted installments safely." },
-    { "order": 113, "file": "113_POS_PayrollVacationAttendanceIntegration.sql", "autoApply": true, "purpose": "Payroll vacation/attendance compatibility fields and legacy GetAbcentDay2 function for salary run recalculation." }
+    { "order": 113, "file": "113_POS_PayrollVacationAttendanceIntegration.sql", "autoApply": true, "purpose": "Payroll vacation/attendance compatibility fields and legacy GetAbcentDay2 function for salary run recalculation." },
+    { "order": 115, "file": "115_POS_PaymentVoucher_Accounting_Rebuild.sql", "autoApply": true, "purpose": "سند الدفع / سند الصرف: الحفظ والترقيم والقيود المحاسبية المحصنة بدون MAX+1." },
+    { "order": 116, "file": "116_POS_Voucher_ReadProcedures_Compatibility.sql", "autoApply": true, "purpose": "سندات الدفع والصرف والقبض: إجراءات البحث والعرض والـ lookups المتوافقة مع POS/MainERP." }
   ],
   "manualScripts": [
     { "file": "35_POS_SystemHealthPermissions.sql", "reason": "Requires sysadmin/master login and replacing the app SQL login placeholder." },
