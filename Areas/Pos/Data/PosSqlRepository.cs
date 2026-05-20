@@ -7882,6 +7882,34 @@ END";
             return table;
         }
 
+        public DataTable RunPosProjectStatusClosingReport(string reportKey, DateTime fromDate, DateTime toDate, int branchId, int userId, bool canChangeDefaults, int? branchFromId = null, int? branchToId = null, bool showEmptyBranches = false, string serviceSearch = null, string serviceType = null, int? storeId = null, int? filterUserId = null)
+        {
+            var table = new DataTable();
+            using (var connection = new SqlConnection(_connectionString))
+            using (var command = new SqlCommand("dbo.usp_POS_ProjectStatus_Report_Run", connection))
+            using (var adapter = new SqlDataAdapter(command))
+            {
+                command.CommandType = CommandType.StoredProcedure;
+                command.CommandTimeout = 120;
+                command.Parameters.Add("@reportKey", SqlDbType.NVarChar, 80).Value = reportKey ?? string.Empty;
+                command.Parameters.Add("@fromDate", SqlDbType.DateTime).Value = fromDate.Date;
+                command.Parameters.Add("@toDate", SqlDbType.DateTime).Value = toDate.Date;
+                command.Parameters.Add("@branchId", SqlDbType.Int).Value = branchId;
+                command.Parameters.Add("@userId", SqlDbType.Int).Value = userId;
+                command.Parameters.Add("@canChangeDefaults", SqlDbType.Bit).Value = canChangeDefaults;
+                command.Parameters.Add("@branchFromId", SqlDbType.Int).Value = branchFromId.HasValue ? (object)branchFromId.Value : DBNull.Value;
+                command.Parameters.Add("@branchToId", SqlDbType.Int).Value = branchToId.HasValue ? (object)branchToId.Value : DBNull.Value;
+                command.Parameters.Add("@showEmptyBranches", SqlDbType.Bit).Value = showEmptyBranches;
+                command.Parameters.Add("@serviceSearch", SqlDbType.NVarChar, 100).Value = string.IsNullOrWhiteSpace(serviceSearch) ? (object)DBNull.Value : serviceSearch.Trim();
+                command.Parameters.Add("@serviceType", SqlDbType.NVarChar, 30).Value = string.IsNullOrWhiteSpace(serviceType) ? (object)DBNull.Value : NormalizeInvoiceOperationType(serviceType);
+                command.Parameters.Add("@storeId", SqlDbType.Int).Value = storeId.HasValue ? (object)storeId.Value : DBNull.Value;
+                command.Parameters.Add("@filterUserId", SqlDbType.Int).Value = filterUserId.HasValue ? (object)filterUserId.Value : DBNull.Value;
+                adapter.Fill(table);
+            }
+
+            return table;
+        }
+
         private DataTable RunBranchDailyRollupParityReport(DateTime fromDate, DateTime toDate, int branchId, int userId, bool canChangeDefaults, int? branchFromId, int? branchToId)
         {
             var source = new DataTable();

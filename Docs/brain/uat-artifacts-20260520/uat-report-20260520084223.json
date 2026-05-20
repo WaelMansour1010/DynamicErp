@@ -1,0 +1,14 @@
+{
+  "projectCode": "UAT084223",
+  "projectName": "مشروع UAT 084223",
+  "projectId": null,
+  "extractId": null,
+  "logs": {
+    "consoleErrors": [],
+    "pageErrors": [],
+    "failedRequests": [],
+    "steps": [],
+    "fatal": "page.waitForNavigation: Timeout 30000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation until \"domcontentloaded\"\n============================================================\n    at F:\\Source Code\\SatriahMain\\.node_repl_cell_45.mjs:95:1927\n    at async F:\\Source Code\\SatriahMain\\.node_repl_cell_45.mjs:95:24"
+  },
+  "outDir": "F:/Source Code/DynamicErp/Docs/brain/uat-artifacts-20260520"
+}

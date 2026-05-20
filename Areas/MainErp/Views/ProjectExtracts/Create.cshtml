@@ -1,25 +1,31 @@
-@model MyERP.Areas.MainErp.ViewModels.Projects.ProjectExtractCreateViewModel
+﻿@model MyERP.Areas.MainErp.ViewModels.Projects.ProjectExtractCreateViewModel
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
     Func<DateTime?, string> dateValue = value => value.HasValue && value.Value.Year >= 1900
         ? value.Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
         : String.Empty;
-    ViewBag.Title = "مستخلص مشروع جديد";
+    var isEdit = Model.Id > 0;
+    ViewBag.Title = isEdit ? "تعديل مستخلص مشروع" : "مستخلص مشروع جديد";
 }
 
 <section class="erp-page main-erp-project-extract-create" dir="rtl">
     <input type="hidden" id="ExtractId" value="@Model.Id" />
-    <header class="erp-page-header">
+
+    <header class="erp-page-header extract-hero">
         <div>
-            <h1>مستخلص مشروع جديد</h1>
-            <p>إنشاء مستخلص جاري أو ختامي</p>
+            <h1>@ViewBag.Title</h1>
+            <p>@(isEdit ? ("رقم المستخلص: " + Model.Id) : "إنشاء مستخلص جاري أو ختامي")</p>
         </div>
-        <div class="main-erp-header-actions">
-            <a class="erp-btn" href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })">
-                <i class="fas fa-arrow-right"></i> القائمة
-            </a>
+        <div class="extract-hero-meta">
+            <span class="extract-status @(isEdit ? "is-saved" : "is-new")">@(isEdit ? "محفوظ" : "جديد")</span>
+            <div class="main-erp-header-actions">
+                <a class="erp-btn" href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })"><i class="fas fa-arrow-right"></i> رجوع</a>
+                <a class="erp-btn" href="@Url.Action("Create", "ProjectExtracts", new { area = "MainErp" })"><i class="fas fa-plus"></i> مستخلص جديد</a>
+            </div>
         </div>
     </header>
+
+    <div id="extractFormMessage"></div>
 
     @if (TempData["ProjectExtracts.Error"] != null)
     {
@@ -54,41 +60,21 @@
         </div>
     </section>
 
-    <!-- Summary Cards -->
     <section class="erp-card">
         <div class="erp-card-head"><h2>الملخص المالي</h2></div>
-        <div style="display:flex; gap:12px; padding:12px; flex-wrap:wrap;">
-            <div class="summary-card">
-                <label>إجمالي الأعمال الحالية</label>
-                <input class="main-erp-input" type="number" step="any" id="TotalWork" name="Total" value="@Model.Total" readonly />
-            </div>
-            <div class="summary-card">
-                <label>خصم دفعة مقدمة</label>
-                <input class="main-erp-input calc-trigger" type="number" step="any" id="AdvancedPayment" name="AdvancedPayment" value="@Model.AdvancedPayment" />
-            </div>
-            <div class="summary-card">
-                <label>ضمان حسن أداء</label>
-                <input class="main-erp-input calc-trigger" type="number" step="any" id="PerforValue" name="PerforValue" value="@Model.PerforValue" />
-            </div>
-            <div class="summary-card">
-                <label>الخصم العام</label>
-                <input class="main-erp-input calc-trigger" type="number" step="any" id="GeneralDiscount" name="GeneralDiscount" value="@Model.GeneralDiscount" />
-            </div>
-            <div class="summary-card">
-                <label>الضريبة</label>
-                <input class="main-erp-input calc-trigger" type="number" step="any" id="VatValue" name="VatValue" value="@Model.VatValue" />
-            </div>
-            <div class="summary-card" style="background:#e3f2fd; border:1px solid #90caf9;">
-                <label>الصافي المستحق</label>
-                <input class="main-erp-input" type="number" step="any" id="NetValue" name="NetValue" value="@Model.NetValue" readonly />
-            </div>
+        <div class="extract-summary-grid">
+            <div class="summary-card"><label>إجمالي الأعمال الحالية</label><input class="main-erp-input" type="number" step="any" id="TotalWork" name="Total" value="@Model.Total" readonly /></div>
+            <div class="summary-card"><label>خصم دفعة مقدمة</label><input class="main-erp-input calc-trigger" type="number" step="any" id="AdvancedPayment" name="AdvancedPayment" value="@Model.AdvancedPayment" /></div>
+            <div class="summary-card"><label>ضمان حسن أداء</label><input class="main-erp-input calc-trigger" type="number" step="any" id="PerforValue" name="PerforValue" value="@Model.PerforValue" /></div>
+            <div class="summary-card"><label>الخصم العام</label><input class="main-erp-input calc-trigger" type="number" step="any" id="GeneralDiscount" name="GeneralDiscount" value="@Model.GeneralDiscount" /></div>
+            <div class="summary-card"><label>الضريبة</label><input class="main-erp-input calc-trigger" type="number" step="any" id="VatValue" name="VatValue" value="@Model.VatValue" /></div>
+            <div class="summary-card summary-card-net"><label>الصافي المستحق</label><input class="main-erp-input" type="number" step="any" id="NetValue" name="NetValue" value="@Model.NetValue" readonly /></div>
         </div>
     </section>
 
-    <!-- Items Grid -->
     <section class="erp-card">
         <div class="erp-card-head"><h2>بنود المستخلص</h2></div>
-        <div class="erp-card-body" style="padding:15px;" id="GridContainer">
+        <div class="erp-card-body extract-grid-body" id="GridContainer">
             @if (Model.ProjectId.HasValue && Model.ProjectId.Value > 0)
             {
                 @Html.Partial("_ExtractItemsGrid", Model)
@@ -110,117 +96,196 @@
     </footer>
 </section>
 
+<style>
+.main-erp-project-extract-create .extract-hero { align-items: start; gap: 12px; }
+.main-erp-project-extract-create .extract-hero-meta { display: flex; flex-direction: column; align-items: end; gap: 10px; }
+.main-erp-project-extract-create .extract-status { font-size: 12px; font-weight: 700; border-radius: 99px; padding: 5px 12px; }
+.main-erp-project-extract-create .extract-status.is-new { background: #eefbf3; color: #1f7a45; border: 1px solid #bde7cd; }
+.main-erp-project-extract-create .extract-status.is-saved { background: #eef4ff; color: #224c9a; border: 1px solid #c6d6ff; }
+.main-erp-project-extract-create .extract-summary-grid { display: grid; gap: 10px; padding: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.main-erp-project-extract-create .summary-card { background: #f8fbff; border: 1px solid #dbe8f5; border-radius: 10px; padding: 10px; }
+.main-erp-project-extract-create .summary-card label { font-size: 12px; color: #64748b; margin: 0 0 5px; display: block; }
+.main-erp-project-extract-create .summary-card-net { background: #eaf6ff; border-color: #b9dcff; }
+.main-erp-project-extract-create .extract-grid-body { padding: 15px; }
+.main-erp-project-extract-create #ExtractItemsBody tr.row-edited { background: #fff9ec; }
+.main-erp-project-extract-create #ExtractItemsBody tr.row-warning { background: #fff4f4; }
+.main-erp-project-extract-create #ExtractItemsBody .curr-val { font-weight: 700; background: #f8fbff; }
+</style>
+
 <script>
-    // ---- عند تغيير المشروع: نعيد تحميل الصفحة بالمشروع الجديد ----
-    document.getElementById('ProjectIdSelect').addEventListener('change', function () {
-        var pid = this.value;
-        if (pid && pid > 0) {
-            window.location.href = '@Url.Action("Create", "ProjectExtracts", new { area = "MainErp" })' + '?projectId=' + pid;
-        }
-    });
+    function byId(id) { return document.getElementById(id); }
+    function num(val) { var n = parseFloat(val); return isNaN(n) ? 0 : n; }
 
-    // ---- حساب إجمالي البند عند تغيير الكمية ----
-    $(document).on('input', '#ExtractItemsBody .curr-qty', function () {
-        var row = $(this).closest('tr');
-        var qty = parseFloat($(this).val()) || 0;
-        var price = parseFloat($(this).data('price')) || 0;
-        row.find('.curr-val').val((qty * price).toFixed(2));
-        calculateGrandTotals();
-    });
-
-    // ---- حساب خانات الملخص ----
-    $(document).on('input', '.calc-trigger', calculateGrandTotals);
-
-    function calculateGrandTotals() {
-        var total = 0;
-        $('#ExtractItemsBody .curr-val').each(function () {
-            total += parseFloat($(this).val()) || 0;
-        });
-        $('#TotalWork').val(total.toFixed(2));
-        $('#ExtractTableTotal').text(total.toFixed(2));
-
-        var adv = parseFloat($('#AdvancedPayment').val()) || 0;
-        var perf = parseFloat($('#PerforValue').val()) || 0;
-        var disc = parseFloat($('#GeneralDiscount').val()) || 0;
-        var vat = parseFloat($('#VatValue').val()) || 0;
-        var net = total - adv - perf - disc + vat;
-        $('#NetValue').val(net.toFixed(2));
+    function showExtractMessage(type, text) {
+        var host = byId('extractFormMessage');
+        if (!host) return;
+        host.innerHTML = '<div class="' + (type === 'error' ? 'main-erp-warning' : 'erp-alert is-active') + '">' + text + '</div>';
     }
 
-    // ---- جمع البنود وإرسالها ----
-    function saveExtract() {
-        var projectId = $('#ProjectIdSelect').val();
-        if (!projectId || projectId <= 0) {
-            alert('يرجى اختيار المشروع أولاً.');
-            return;
-        }
+    function recalculateExtractRows() {
+        var rows = document.querySelectorAll('#ExtractItemsBody tr');
+        for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            var qtyInput = row.querySelector('.curr-qty');
+            var valInput = row.querySelector('.curr-val');
+            if (!qtyInput || !valInput) continue;
 
-        var billDate = $('#BillDate').val();
-        if (!billDate) {
-            alert('يرجى إدخال تاريخ المستخلص.');
-            return;
-        }
+            var qty = num(qtyInput.value);
+            var price = num(qtyInput.getAttribute('data-price'));
+            var value = qty * price;
+            valInput.value = value.toFixed(2);
 
-        var items = [];
-        $('#ExtractItemsBody tr').each(function () {
-            var currQtyInput = $(this).find('.curr-qty');
-            if (currQtyInput.length) {
-                var currQty = parseFloat(currQtyInput.val()) || 0;
-                if (currQty > 0) {
-                    items.push({
-                        PrMainDesID: parseInt($(this).find('.pr-main-des-id').val()) || 0,
-                        Item: $(this).find('.item-title').text(),
-                        CurrentQuantity: currQty,
-                        Price: parseFloat(currQtyInput.data('price')) || 0,
-                        CurrentValue: parseFloat($(this).find('.curr-val').val()) || 0,
-                        PreviousQuantity: parseFloat(currQtyInput.data('prev-qty')) || 0,
-                        PreviousValue: parseFloat(currQtyInput.data('prev-val')) || 0,
-                        ContractQuantity: parseFloat(currQtyInput.data('contract-qty')) || 0,
-                        FullCode: $(this).find('.item-code').text()
-                    });
-                }
+            row.classList.toggle('row-edited', qty > 0);
+            row.classList.toggle('row-warning', qty > 0 && value <= 0);
+        }
+    }
+
+    function calculateGrandTotals() {
+        recalculateExtractRows();
+
+        var total = 0;
+        var values = document.querySelectorAll('#ExtractItemsBody .curr-val');
+        for (var i = 0; i < values.length; i++) total += num(values[i].value);
+
+        var totalWork = byId('TotalWork');
+        if (totalWork) totalWork.value = total.toFixed(2);
+
+        var totalText = byId('ExtractTableTotal');
+        if (totalText) totalText.textContent = total.toFixed(2);
+
+        var adv = num(byId('AdvancedPayment') ? byId('AdvancedPayment').value : 0);
+        var perf = num(byId('PerforValue') ? byId('PerforValue').value : 0);
+        var disc = num(byId('GeneralDiscount') ? byId('GeneralDiscount').value : 0);
+        var vat = num(byId('VatValue') ? byId('VatValue').value : 0);
+
+        var net = total - adv - perf - disc + vat;
+        var netInput = byId('NetValue');
+        if (netInput) netInput.value = net.toFixed(2);
+    }
+
+    function collectExtractItems() {
+        var result = [];
+        var rows = document.querySelectorAll('#ExtractItemsBody tr');
+        for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            var qtyInput = row.querySelector('.curr-qty');
+            if (!qtyInput) continue;
+
+            var currentQty = num(qtyInput.value);
+            if (currentQty <= 0) continue;
+
+            var price = num(qtyInput.getAttribute('data-price'));
+            var currentValue = currentQty * price;
+            if (currentValue <= 0) {
+                result.invalidCurrentValue = true;
+                continue;
             }
-        });
+
+            result.push({
+                PrMainDesID: parseInt((row.querySelector('.pr-main-des-id') || {}).value || '0', 10) || 0,
+                Item: ((row.querySelector('.item-title') || {}).textContent || '').trim(),
+                CurrentQuantity: currentQty,
+                Price: price,
+                CurrentValue: currentValue,
+                PreviousQuantity: num(qtyInput.getAttribute('data-prev-qty')),
+                PreviousValue: num(qtyInput.getAttribute('data-prev-val')),
+                ContractQuantity: num(qtyInput.getAttribute('data-contract-qty')),
+                FullCode: ((row.querySelector('.item-code') || {}).textContent || '').trim()
+            });
+        }
+
+        return result;
+    }
+
+    async function saveExtract() {
+        calculateGrandTotals();
+
+        var projectId = byId('ProjectIdSelect') ? byId('ProjectIdSelect').value : '';
+        if (!projectId || num(projectId) <= 0) {
+            showExtractMessage('error', 'يرجى اختيار المشروع أولاً.');
+            return;
+        }
+
+        var billDate = byId('BillDate') ? byId('BillDate').value : '';
+        if (!billDate) {
+            showExtractMessage('error', 'يرجى إدخال تاريخ المستخلص.');
+            return;
+        }
+
+        var items = collectExtractItems();
+        if (items.invalidCurrentValue) {
+            showExtractMessage('error', 'لا يمكن حفظ سطر بكمية حالية أكبر من صفر وقيمة تنفيذ حالية صفرية.');
+            return;
+        }
+
+        if (items.length === 0) {
+            showExtractMessage('error', 'لا يمكن حفظ مستخلص بدون بنود تنفيذ.');
+            return;
+        }
 
         var data = {
             ProjectId: projectId,
-            Id: parseInt($('#ExtractId').val()) || 0,
+            Id: num(byId('ExtractId') ? byId('ExtractId').value : 0),
             BillDate: billDate,
-            ManualNo: $('#ManualNo').val(),
-            Remarks: $('#Remarks').val(),
-            Total: parseFloat($('#TotalWork').val()) || 0,
-            AdvancedPayment: parseFloat($('#AdvancedPayment').val()) || 0,
-            PerforValue: parseFloat($('#PerforValue').val()) || 0,
-            GeneralDiscount: parseFloat($('#GeneralDiscount').val()) || 0,
-            VatValue: parseFloat($('#VatValue').val()) || 0,
-            NetValue: parseFloat($('#NetValue').val()) || 0,
+            ManualNo: byId('ManualNo') ? byId('ManualNo').value : '',
+            Remarks: byId('Remarks') ? byId('Remarks').value : '',
+            Total: num(byId('TotalWork') ? byId('TotalWork').value : 0),
+            AdvancedPayment: num(byId('AdvancedPayment') ? byId('AdvancedPayment').value : 0),
+            PerforValue: num(byId('PerforValue') ? byId('PerforValue').value : 0),
+            GeneralDiscount: num(byId('GeneralDiscount') ? byId('GeneralDiscount').value : 0),
+            VatValue: num(byId('VatValue') ? byId('VatValue').value : 0),
+            NetValue: num(byId('NetValue') ? byId('NetValue').value : 0),
             ExtractItems: items
         };
 
-        $('#saveExtractBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> جارٍ الحفظ...');
+        var saveBtn = byId('saveExtractBtn');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+        }
 
-        $.ajax({
-            type: 'POST',
-            url: '@Url.Action("CreateJson", "ProjectExtracts", new { area = "MainErp" })',
-            contentType: 'application/json',
-            data: JSON.stringify(data),
-            success: function (r) {
-                if (r && r.success) {
-                    window.location.href = '@Url.Action("Details", "ProjectExtracts", new { area = "MainErp" })' + '/' + r.id;
-                } else {
-                    alert(r && r.message ? r.message : 'حدث خطأ أثناء الحفظ.');
-                    $('#saveExtractBtn').prop('disabled', false).html('<i class="fas fa-save"></i> حفظ المستخلص');
-                }
-            },
-            error: function () {
-                alert('فشل الاتصال بالخادم، يرجى المحاولة مرة أخرى.');
-                $('#saveExtractBtn').prop('disabled', false).html('<i class="fas fa-save"></i> حفظ المستخلص');
+        try {
+            var response = await fetch('@Url.Action("CreateJson", "ProjectExtracts", new { area = "MainErp" })', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            var r = await response.json();
+            if (r && r.success) {
+                showExtractMessage('success', 'تم حفظ المستخلص بنجاح.');
+                window.location.href = '@Url.Action("Details", "ProjectExtracts", new { area = "MainErp" })' + '/' + r.id;
+                return;
             }
-        });
+
+            showExtractMessage('error', r && r.message ? r.message : 'حدث خطأ أثناء الحفظ.');
+        } catch (e) {
+            showExtractMessage('error', 'فشل الاتصال بالخادم، يرجى المحاولة مرة أخرى.');
+        }
+
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ المستخلص';
+        }
     }
 
-    // ---- تفعيل الحسابات عند تحميل الصفحة ----
-    $(document).ready(function () {
+    document.addEventListener('change', function (e) {
+        if (e.target && e.target.id === 'ProjectIdSelect') {
+            var pid = e.target.value;
+            if (pid && num(pid) > 0) {
+                window.location.href = '@Url.Action("Create", "ProjectExtracts", new { area = "MainErp" })' + '?projectId=' + pid;
+            }
+        }
+    });
+
+    document.addEventListener('input', function (e) {
+        if (!e.target) return;
+        if (e.target.closest('#ExtractItemsBody .curr-qty') || e.target.classList.contains('calc-trigger')) {
+            calculateGrandTotals();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
         calculateGrandTotals();
     });
 </script>

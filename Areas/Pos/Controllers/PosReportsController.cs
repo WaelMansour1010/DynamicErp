@@ -211,12 +211,12 @@ namespace MyERP.Areas.Pos.Controllers
                 new PosReportDefinition("sales-departments", "تقرير المبيعات الشامل بالإدارات", "sales", admin || context.CanReportSalesCompleteDepartments, true, "تقرير مبيعات حسب الإدارات"),
                 new PosReportDefinition("sales-sectors", "تقرير المبيعات الشامل بالقطاعات", "sales", admin || context.CanReportDailyTransactionsSectors, true, "تقرير مبيعات حسب القطاعات"),
                 new PosReportDefinition("sales-analytical", "تقرير المبيعات تحليلي", "sales", admin || context.CanReportSalesCompleteAnalytical, true, "تقرير تحليلي"),
-                new PosReportDefinition("general-sales", "تقرير المبيعات العام", "sales", admin || context.CanReportAllSales, true, "تقرير مبيعات عام"),
-                new PosReportDefinition("revenues", "تقرير الإيرادات التشغيلي", "sales", admin || context.CanViewReports, true, "إيرادات الرسوم والضريبة وصافي التحصيل"),
+                new PosReportDefinition("general-sales", "تقرير المبيعات العام", "closings", admin || context.CanReportAllSales, true, "Command8 / CloseReprotTotal.rpt"),
+                new PosReportDefinition("revenues", "تقرير الإيرادات", "closings", admin || context.CanViewReports, true, "Command10 / CloseReprotTotal2FastMini2.rpt"),
                 new PosReportDefinition("web-invoices", "تقرير فواتير الويب", "sales", admin || context.CanViewReports, true, "عدد فواتير الويب حسب المستخدم"),
                 new PosReportDefinition("non-web-login-users", "مستخدمين دخلوا من غير الويب", "sales", admin || context.CanViewReports, true, "Non-Web Login Users"),
                 new PosReportDefinition("salesmen", "تقرير المناديب", "closings", admin || context.CanReportSalesmen, false, "لم يتم تحديد مصدر التقرير بعد"),
-                new PosReportDefinition("finance-closing", "تقرير الإغلاقات", "closings", admin || context.CanReportClosings, true, "الإغلاقات المقفولة + متابعة اليوم المفتوح live"),
+                new PosReportDefinition("finance-closing", "تقرير الإغلاق المالي", "closings", admin || context.CanReportClosings, true, "Command9 / CloseReprotTotal2Fast.rpt"),
                 new PosReportDefinition("finance-closing-discounts", "تقرير الإغلاق المالي الشامل على مستوى الفروع", "closings", admin || context.CanReportFinanceClosing, true, "الإغلاقات والخصومات مع متابعة الفروع المفتوحة live"),
                 new PosReportDefinition("discounts", "تقرير الخصومات", "closings", admin || context.CanReportDiscounts, false, "لم يتم تحديد مصدر التقرير بعد"),
                 new PosReportDefinition("indicators", "تقرير المؤشرات العامة", "closings", admin || context.CanReportIndicators, false, "لم يتم تحديد مصدر التقرير بعد"),
@@ -280,6 +280,25 @@ namespace MyERP.Areas.Pos.Controllers
             if (report.Key == "web-invoices")
             {
                 table = _repository.RunPosWebInvoiceAuditReport(from, to, branchId, context.UserId, IsAdmin(context) || context.CanViewReports);
+                return SortReportTable(table, request.SortBy);
+            }
+
+            if (IsProjectStatusClosingParityReport(report.Key))
+            {
+                table = _repository.RunPosProjectStatusClosingReport(
+                    report.Key,
+                    from,
+                    to,
+                    branchId,
+                    context.UserId,
+                    IsAdmin(context) || context.CanViewReports,
+                    request.BranchFromId,
+                    request.BranchToId,
+                    request.ShowEmptyBranches,
+                    request.ServiceSearch,
+                    request.ServiceType,
+                    request.StoreId,
+                    request.UserId);
                 return SortReportTable(table, request.SortBy);
             }
 
@@ -524,6 +543,13 @@ namespace MyERP.Areas.Pos.Controllers
         {
             return string.Equals(reportKey, "finance-closing", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(reportKey, "finance-closing-discounts", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsProjectStatusClosingParityReport(string reportKey)
+        {
+            return string.Equals(reportKey, "general-sales", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "finance-closing", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "revenues", StringComparison.OrdinalIgnoreCase);
         }
 
         private static bool IsOperationalSalesReport(string reportKey)

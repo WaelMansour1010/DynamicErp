@@ -453,7 +453,7 @@
                     return;
                 }
 
-                if ((data.reportKey || data.ReportKey) === "finance-closing-discounts") {
+                if (isProjectStatusCrystalReport(data.reportKey || data.ReportKey)) {
                     renderFinancialClosingReport(data);
                     return;
                 }
@@ -510,6 +510,13 @@
                     }
                 }
                 return false;
+            }
+            function isProjectStatusCrystalReport(reportKey) {
+                reportKey = String(reportKey || "").toLowerCase();
+                return reportKey === "general-sales"
+                    || reportKey === "finance-closing"
+                    || reportKey === "revenues"
+                    || reportKey === "finance-closing-discounts";
             }
             function formatReportCell(key, value) {
                 if (String(key || "").toLowerCase() === "cardissuestatus") {

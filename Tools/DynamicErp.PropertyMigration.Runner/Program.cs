@@ -101,6 +101,14 @@ internal static class Program
             await RunStepAsync("Discovery", () => RunSqlTemplateAsync("Discovery_SELECT_ONLY_Generic.sql", readOnly: true));
             await RunStepAsync("Diagnostics", () => RunSqlTemplateAsync("Diagnostics_Generic.sql", readOnly: false));
             await RunStepAsync("MappingValidation", MappingValidationAsync);
+            if (_config.IncludeIntelligence)
+            {
+                await RunStepAsync("IntelligenceDiscovery", IntelligenceAsync);
+            }
+            if (_config.IncludeAccountIntelligence)
+            {
+                await RunStepAsync("AccountDiscovery", AccountIntelligenceAsync);
+            }
             await RunStepAsync("Migration", MigrationAsync);
             await RunStepAsync("Reconciliation", () => RunSqlTemplateAsync("Reconciliation_Generic.sql", readOnly: true));
             await RunStepAsync("ReadyToTestDelivery", ReadyToTestDeliveryAsync);
@@ -259,6 +267,30 @@ SELECT
             await AccountingSafetyGateAsync();
         }
 
+        private async Task IntelligenceAsync()
+        {
+            if (_config.SourceDatabaseName.Equals("RSMDB", StringComparison.OrdinalIgnoreCase))
+            {
+                await RunSqlTemplateAsync("RSMDB_IntelligenceLayer_20260520.sql", readOnly: false);
+                AddInfo("IntelligenceDiscovery", "Executed RSMDB intelligence stages: JournalResolution, ReceiptMatching, OwnerPaymentClassification, ConfidenceScoring, ReviewReduction.");
+                return;
+            }
+
+            AddInfo("IntelligenceDiscovery", $"No customer-specific intelligence template is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
+        }
+
+        private async Task AccountIntelligenceAsync()
+        {
+            if (_config.SourceDatabaseName.Equals("RSMDB", StringComparison.OrdinalIgnoreCase))
+            {
+                await RunSqlTemplateAsync("RSMDB_AccountMappingIntelligence_20260520.sql", readOnly: false);
+                AddInfo("AccountDiscovery", "Executed RSMDB account intelligence stages: AccountDiscovery, AccountMatching, AccountConfidenceScoring, AccountFamilyDetection, AccountReviewQueue.");
+                return;
+            }
+
+            AddInfo("AccountDiscovery", $"No customer-specific account intelligence template is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
+        }
+
         private async Task ReadOnlySafetyValidationAsync()
         {
             await using var target = new SqlConnection(BuildConnectionString(_config.TargetCloneDatabaseName));
@@ -347,6 +379,14 @@ SELECT Contracts = CASE WHEN OBJECT_ID(N'dbo.PropertyContract') IS NULL THEN 0 E
         {
             AddInfo("ExecutionPlan", "DryRun only. No SQL templates will be executed and no database objects will be changed.");
             AddInfo("ExecutionPlan", "Planned stages: CoreSetup, Discovery, Diagnostics, MappingValidation, Migration, Reconciliation, ReadyToTestDelivery.");
+            if (_config.IncludeIntelligence)
+            {
+                AddInfo("ExecutionPlan", "Intelligence stages enabled: IntelligenceDiscovery, JournalResolution, ReceiptMatching, OwnerPaymentClassification, ConfidenceScoring, ReviewReduction.");
+            }
+            if (_config.IncludeAccountIntelligence)
+            {
+                AddInfo("ExecutionPlan", "Account intelligence stages enabled: AccountDiscovery, AccountMatching, AccountConfidenceScoring, AccountFamilyDetection, AccountReviewQueue.");
+            }
             AddInfo("ExecutionPlan", $"Selected modules: Accounting={_config.IncludeAccounting}, Receipts={_config.IncludeHistoricalReceipts}, Issues={_config.IncludeIssues}, Journals={_config.IncludeJournalEntries}, AdvancePayments={_config.IncludeAdvancePayments}, Terminations={_config.IncludeTerminations}.");
             AddInfo("ExecutionPlan", $"ControlledPipelineOnly={_config.SkipCustomerSpecificMigrationTemplates}.");
             AddInfo("ExecutionPlan", $"SkipStages={string.Join(",", _config.SkipStages)}.");
@@ -666,6 +706,8 @@ internal sealed class MigrationRunnerConfig
     public bool IncludeJournalEntries { get; set; }
     public bool IncludeAdvancePayments { get; set; } = true;
     public bool IncludeTerminations { get; set; }
+    public bool IncludeIntelligence { get; set; }
+    public bool IncludeAccountIntelligence { get; set; }
     public bool ExcludeUnsafePayments { get; set; } = true;
     public bool BackupVerified { get; set; }
     public bool ExecutionPlanApproved { get; set; }

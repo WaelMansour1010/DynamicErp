@@ -1,0 +1,61 @@
+{
+  "tag": "20260520090124",
+  "code": "UI090124",
+  "projectId": 52,
+  "extractId": 3512,
+  "shots": [
+    "F:\\Source Code\\DynamicErp\\Docs\\brain\\uat-artifacts-20260520\\ui-refresh\\projects-new-20260520090124.png",
+    "F:\\Source Code\\DynamicErp\\Docs\\brain\\uat-artifacts-20260520\\ui-refresh\\projects-filled-20260520090124.png",
+    "F:\\Source Code\\DynamicErp\\Docs\\brain\\uat-artifacts-20260520\\ui-refresh\\projects-reopen-20260520090124.png",
+    "F:\\Source Code\\DynamicErp\\Docs\\brain\\uat-artifacts-20260520\\ui-refresh\\extract-create-20260520090124.png",
+    "F:\\Source Code\\DynamicErp\\Docs\\brain\\uat-artifacts-20260520\\ui-refresh\\extract-filled-20260520090124.png",
+    "F:\\Source Code\\DynamicErp\\Docs\\brain\\uat-artifacts-20260520\\ui-refresh\\extract-reopen-20260520090124.png"
+  ],
+  "logs": {
+    "consoleErrors": [],
+    "pageErrors": [],
+    "failed500": [],
+    "steps": [
+      {
+        "step": "Project create rows",
+        "status": "PASS",
+        "details": "rows=3"
+      },
+      {
+        "step": "Project saved",
+        "status": "PASS",
+        "details": "http://localhost:63735/MainErp/Projects"
+      },
+      {
+        "step": "Project reopen persisted",
+        "status": "PASS",
+        "details": "projectId=52,rows=2"
+      },
+      {
+        "step": "Extract totals client-side",
+        "status": "PASS",
+        "details": "total=650.00,net=657.00"
+      },
+      {
+        "step": "Extract saved",
+        "status": "PASS",
+        "details": "extractId=3512"
+      },
+      {
+        "step": "QtyExe/TotalExe not duplicated",
+        "status": "PASS",
+        "details": "old=1,cur=2"
+      },
+      {
+        "step": "Voucher balanced",
+        "status": "FAIL",
+        "details": "parse failed"
+      },
+      {
+        "step": "No JS errors / 500",
+        "status": "PASS",
+        "details": "clean"
+      }
+    ]
+  }
+}

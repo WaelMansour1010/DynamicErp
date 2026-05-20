@@ -1,0 +1,84 @@
+{
+  "code": "UAT084534",
+  "name": "مشروع UAT 084534",
+  "pid": 51,
+  "eid": 3511,
+  "logs": {
+    "steps": [
+      {
+        "step": "1) فتح شاشة المشاريع من منيو MainErp",
+        "status": "PASS",
+        "details": "Menu link exists in dashboard sidebar"
+      },
+      {
+        "step": "1b) فتح شاشة المشاريع",
+        "status": "PASS",
+        "details": "http://localhost:63735/MainErp/Projects"
+      },
+      {
+        "step": "2) إنشاء مشروع جديد ببندين على الأقل",
+        "status": "PASS",
+        "details": "rows=3"
+      },
+      {
+        "step": "3) حفظ المشروع",
+        "status": "PASS",
+        "details": "http://localhost:63735/MainErp/Projects"
+      },
+      {
+        "step": "4) إعادة فتح المشروع والتأكد من ثبات البنود",
+        "status": "PASS",
+        "details": "projectId=51,rows=2"
+      },
+      {
+        "step": "6) التأكد أن CurrentValue والإجماليات تتحسب قبل الحفظ",
+        "status": "PASS",
+        "details": "vals=100,400 total=500"
+      },
+      {
+        "step": "12) حفظ مستخلص بدون بنود والتأكد من رسالة منع",
+        "status": "PASS",
+        "details": "لا يمكن حفظ مستخلص بدون بنود تنفيذ."
+      },
+      {
+        "step": "7) حفظ المستخلص",
+        "status": "PASS",
+        "details": "extractId=3511"
+      },
+      {
+        "step": "9) تعديل المستخلص وإعادة الحفظ",
+        "status": "PASS",
+        "details": "http://localhost:63735/MainErp/ProjectExtracts/Details/3511"
+      },
+      {
+        "step": "10) التأكد من عدم تضاعف QtyExe/TotalExe",
+        "status": "PASS",
+        "details": "old=1,current=2"
+      },
+      {
+        "step": "11) لا يوجد قيد مكرر لنفس bill_id",
+        "status": "FAIL",
+        "details": "Msg 207, Level 16, State 1, Server WAEL\\SQL2019, Line 1\r\nInvalid column name 'bill_id'.\r\n"
+      },
+      {
+        "step": "13) تجربة فتح Index والبحث/الفلاتر",
+        "status": "PASS",
+        "details": "http://localhost:63735/MainErp/ProjectExtracts/Index?searchText=UAT084534"
+      },
+      {
+        "step": "14) العربي سليم ولا يوجد mojibake",
+        "status": "FAIL",
+        "details": "mojibake pattern seen"
+      },
+      {
+        "step": "15) لا يوجد Console/Network errors",
+        "status": "PASS",
+        "details": "ok"
+      }
+    ],
+    "consoleErrors": [],
+    "pageErrors": [],
+    "failedRequests": [],
+    "zero": "لا يمكن حفظ مستخلص بدون بنود تنفيذ."
+  }
+}

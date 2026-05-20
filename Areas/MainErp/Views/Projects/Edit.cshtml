@@ -1,4 +1,4 @@
-@model MyERP.Areas.MainErp.ViewModels.Projects.ProjectEditViewModel
+﻿@model MyERP.Areas.MainErp.ViewModels.Projects.ProjectEditViewModel
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
     var isNewProject = Model.IsNewProject;
@@ -6,149 +6,221 @@
         ? value.Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture)
         : String.Empty;
     ViewBag.Title = isNewProject ? "مشروع جديد" : "تعديل مشروع";
+    var statusText = isNewProject ? "جديد" : "محفوظ";
+    var statusClass = isNewProject ? "is-new" : "is-saved";
 }
 
 <section class="erp-page main-erp-projects-screen" dir="rtl">
-    <header class="erp-page-header">
-        <div>
-            <h1>@ViewBag.Title</h1>
-            <p>@(String.IsNullOrWhiteSpace(Model.FullCode) ? "إضافة مشروع جديد" : Model.FullCode)</p>
-        </div>
-        <div class="main-erp-header-actions">
-            <a class="erp-btn" href="@Url.Action("Index", "Projects", new { area = "MainErp" })"><i class="fas fa-arrow-right"></i> القائمة</a>
-            @if (!isNewProject && Model.Id > 0)
-            {
-                <a class="erp-btn" href="@Url.Action("Create", "ProjectExtracts", new { area = "MainErp", projectId = Model.Id })"><i class="fas fa-file-invoice"></i> مستخلص جديد</a>
-            }
-        </div>
-    </header>
+    <div class="project-shell">
+        <header class="project-topbar">
+            <div class="project-topbar-actions">
+                <button class="erp-btn erp-btn-primary" type="button" id="saveProjectBtnTop" onclick="saveProject()"><i class="fas fa-save"></i> حفظ</button>
+                @if (!isNewProject && Model.Id > 0)
+                {
+                    <a class="erp-btn" href="@Url.Action("New", "Projects", new { area = "MainErp" })"><i class="fas fa-plus"></i> مشروع جديد</a>
+                    <a class="erp-btn" href="@Url.Action("Create", "ProjectExtracts", new { area = "MainErp", projectId = Model.Id })"><i class="fas fa-plus"></i> مستخلص جديد</a>
+                }
+                <a class="erp-btn danger" href="@Url.Action("Index", "Projects", new { area = "MainErp" })"><i class="fas fa-arrow-right"></i> رجوع</a>
+            </div>
+            <div class="project-topbar-title">
+                <h1>@ViewBag.Title</h1>
+                <p>رقم المشروع: @(String.IsNullOrWhiteSpace(Model.FullCode) ? "--" : Model.FullCode)</p>
+            </div>
+        </header>
 
-    @if (TempData["Projects.Success"] != null)
-    {
-        <div class="erp-alert is-active">@TempData["Projects.Success"]</div>
-    }
-
-    @using (Html.BeginForm("Save", "Projects", new { area = "MainErp" }, FormMethod.Post, new { @class = "project-editor-form", autocomplete = "off" }))
-    {
-        @Html.AntiForgeryToken()
-        @Html.HiddenFor(x => x.Id)
-        @Html.HiddenFor(x => x.IsNewProject)
-        @Html.ValidationSummary(false, "", new { @class = "main-erp-warning" })
-
-        <section class="erp-card">
-            <div class="erp-card-head"><h2>البيانات الأساسية</h2></div>
-            <div class="erp-form-grid">
-                <label class="erp-field"><span>بادئة الكود</span>@Html.TextBoxFor(x => x.Prefix, new { @class = "main-erp-input", maxlength = "50" })</label>
-                <label class="erp-field"><span>كود المشروع</span>@Html.TextBoxFor(x => x.Code, new { @class = "main-erp-input", maxlength = "50", required = "required" })</label>
-                <label class="erp-field"><span>اسم المشروع عربي</span>@Html.TextBoxFor(x => x.ProjectName, new { @class = "main-erp-input", required = "required", dir = "rtl" })</label>
-                <label class="erp-field"><span>اسم المشروع إنجليزي</span>@Html.TextBoxFor(x => x.ProjectNameEnglish, new { @class = "main-erp-input", dir = "ltr" })</label>
-                <label class="erp-field"><span>العميل النهائي</span>@Html.DropDownListFor(x => x.EndUserId, new SelectList(Model.Customers, "Value", "Text", Model.EndUserId), "-- اختر --", new { @class = "main-erp-input", required = "required" })</label>
-                <label class="erp-field"><span>مقاول الباطن</span>@Html.DropDownListFor(x => x.SubContractorId, new SelectList(Model.Customers, "Value", "Text", Model.SubContractorId), "-- بدون --", new { @class = "main-erp-input" })</label>
-                <label class="erp-field"><span>الفرع</span>@Html.DropDownListFor(x => x.BranchNo, new SelectList(Model.Branches, "Value", "Text", Model.BranchNo), "-- اختر --", new { @class = "main-erp-input", required = "required" })</label>
-                <label class="erp-field"><span>حالة المشروع</span>@Html.DropDownListFor(x => x.StatusId, new SelectList(Model.Statuses, "Value", "Text", Model.StatusId), "-- اختر --", new { @class = "main-erp-input", required = "required" })</label>
-                <label class="erp-field"><span>نوع العقد</span>@Html.DropDownListFor(x => x.ContractType, new SelectList(Model.ContractTypes, "Value", "Text", Model.ContractType), "-- اختر --", new { @class = "main-erp-input" })</label>
-                <label class="erp-field"><span>رقم العقد</span>@Html.TextBoxFor(x => x.ContractNo, new { @class = "main-erp-input" })</label>
+        <section class="project-kpis">
+            <div class="kpi-card">
+                <span>كود المشروع</span>
+                <strong>@(String.IsNullOrWhiteSpace(Model.Code) ? "--" : Model.Code)</strong>
+            </div>
+            <div class="kpi-card">
+                <span>اسم المشروع (إنجليزي)</span>
+                <strong>@(String.IsNullOrWhiteSpace(Model.ProjectNameEnglish) ? "--" : Model.ProjectNameEnglish)</strong>
+            </div>
+            <div class="kpi-card">
+                <span>اسم المشروع (عربي)</span>
+                <strong>@(String.IsNullOrWhiteSpace(Model.ProjectName) ? "--" : Model.ProjectName)</strong>
+            </div>
+            <div class="kpi-card status">
+                <span>الحالة</span>
+                <strong class="project-status @statusClass">@statusText</strong>
             </div>
         </section>
 
-        <section class="erp-card">
-            <div class="erp-card-head"><h2>القيم والتواريخ</h2></div>
-            <div class="erp-form-grid">
-                <label class="erp-field"><span>قيمة المشروع</span>@Html.TextBoxFor(x => x.ProjectCost, new { @class = "main-erp-input", inputmode = "decimal", required = "required" })</label>
-                <label class="erp-field"><span>قيمة الخصم</span>@Html.TextBoxFor(x => x.GeneralDiscount, new { @class = "main-erp-input", inputmode = "decimal" })</label>
-                <label class="erp-field"><span>نسبة الخصم</span>@Html.TextBoxFor(x => x.DiscountPercentage, new { @class = "main-erp-input", inputmode = "decimal" })</label>
-                <label class="erp-field"><span>العملة</span>@Html.DropDownListFor(x => x.CurrencyId, new SelectList(Model.Currencies, "Value", "Text", Model.CurrencyId), "-- اختر --", new { @class = "main-erp-input" })</label>
-                <label class="erp-field"><span>تاريخ البداية</span><input class="main-erp-input" type="date" name="StartDate" value="@dateValue(Model.StartDate)" /></label>
-                <label class="erp-field"><span>تاريخ الانتهاء</span><input class="main-erp-input" type="date" name="EndDate" value="@dateValue(Model.EndDate)" /></label>
-                <label class="erp-field"><span>أقرب نهاية</span><input class="main-erp-input" type="date" name="NearEndDate" value="@dateValue(Model.NearEndDate)" /></label>
-                <label class="erp-field"><span>التأمين</span>@Html.TextBoxFor(x => x.Insurance, new { @class = "main-erp-input", inputmode = "decimal" })</label>
-            </div>
-        </section>
+        <div id="projectFormMessage"></div>
 
-        <section class="erp-card">
-            <div class="erp-card-head"><h2>إدارة المشروع</h2></div>
-            <div class="erp-form-grid">
-                <label class="erp-field"><span>مدير الموقع</span>@Html.DropDownListFor(x => x.ManagerEmployeeId, new SelectList(Model.Employees, "Value", "Text", Model.ManagerEmployeeId), "-- اختر --", new { @class = "main-erp-input" })</label>
-                <label class="erp-field"><span>المندوب</span>@Html.DropDownListFor(x => x.SalesEmployeeId, new SelectList(Model.Employees, "Value", "Text", Model.SalesEmployeeId), "-- اختر --", new { @class = "main-erp-input" })</label>
-                <label class="erp-field"><span>نوع المشروع</span>@Html.DropDownListFor(x => x.PState, new SelectList(new[] { new { Value = "0", Text = "جديد" }, new { Value = "1", Text = "افتتاحي" } }, "Value", "Text", Model.PState), new { @class = "main-erp-input" })</label>
-                <label class="erp-field"><span>تحت التنفيذ</span>@Html.DropDownListFor(x => x.UnderImplementation, new SelectList(new[] { new { Value = "0", Text = "فعلي" }, new { Value = "1", Text = "تقديري" }, new { Value = "2", Text = "تحت التنفيذ" } }, "Value", "Text", Model.UnderImplementation), new { @class = "main-erp-input" })</label>
-                <label class="erp-field" style="grid-column:1/-1"><span>ملاحظات</span>@Html.TextAreaFor(x => x.Remarks, new { @class = "main-erp-input", rows = "4" })</label>
-            </div>
-        </section>
+        @if (TempData["Projects.Success"] != null)
+        {
+            <div class="erp-alert is-active">@TempData["Projects.Success"]</div>
+        }
 
-        <section class="erp-card">
-            <div class="erp-card-head"><h2>بنود المشروع</h2></div>
-            <div class="erp-card-body" style="padding: 15px;">
-                @Html.Partial("_ProjectMainDesGrid", Model)
-            </div>
-        </section>
+        @using (Html.BeginForm("Save", "Projects", new { area = "MainErp" }, FormMethod.Post, new { @class = "project-editor-form", autocomplete = "off" }))
+        {
+            @Html.AntiForgeryToken()
+            @Html.HiddenFor(x => x.Id)
+            @Html.HiddenFor(x => x.IsNewProject)
+            @Html.ValidationSummary(false, "", new { @class = "main-erp-warning" })
 
-        <footer class="main-erp-actions">
-            <button class="erp-btn erp-btn-primary" type="button" id="saveProjectBtn" onclick="saveProject()"><i class="fas fa-save"></i> حفظ</button>
-            <a class="erp-btn" href="@Url.Action("Index", "Projects", new { area = "MainErp" })"><i class="fas fa-times"></i> إلغاء</a>
-        </footer>
-    }
+            <section class="erp-card clean">
+                <div class="erp-card-head"><h2>البيانات الأساسية</h2></div>
+                <div class="erp-form-grid compact">
+                    <label class="erp-field"><span>بادئة الكود</span>@Html.TextBoxFor(x => x.Prefix, new { @class = "main-erp-input", maxlength = "50" })</label>
+                    <label class="erp-field"><span>كود المشروع</span>@Html.TextBoxFor(x => x.Code, new { @class = "main-erp-input", maxlength = "50", required = "required" })</label>
+                    <label class="erp-field"><span>العميل النهائي</span>@Html.DropDownListFor(x => x.EndUserId, new SelectList(Model.Customers, "Value", "Text", Model.EndUserId), "-- اختر --", new { @class = "main-erp-input", required = "required" })</label>
+                    <label class="erp-field"><span>مقاول الباطن</span>@Html.DropDownListFor(x => x.SubContractorId, new SelectList(Model.Customers, "Value", "Text", Model.SubContractorId), "-- بدون --", new { @class = "main-erp-input" })</label>
+                    <label class="erp-field"><span>نوع العقد</span>@Html.DropDownListFor(x => x.ContractType, new SelectList(Model.ContractTypes, "Value", "Text", Model.ContractType), "-- اختر --", new { @class = "main-erp-input" })</label>
+                    <label class="erp-field"><span>رقم العقد</span>@Html.TextBoxFor(x => x.ContractNo, new { @class = "main-erp-input" })</label>
+                    <label class="erp-field"><span>الفرع</span>@Html.DropDownListFor(x => x.BranchNo, new SelectList(Model.Branches, "Value", "Text", Model.BranchNo), "-- اختر --", new { @class = "main-erp-input", required = "required" })</label>
+                    <label class="erp-field"><span>حالة المشروع</span>@Html.DropDownListFor(x => x.StatusId, new SelectList(Model.Statuses, "Value", "Text", Model.StatusId), "-- اختر --", new { @class = "main-erp-input", required = "required" })</label>
+                    <label class="erp-field"><span>اسم المشروع (عربي)</span>@Html.TextBoxFor(x => x.ProjectName, new { @class = "main-erp-input", required = "required", dir = "rtl" })</label>
+                    <label class="erp-field"><span>اسم المشروع (إنجليزي)</span>@Html.TextBoxFor(x => x.ProjectNameEnglish, new { @class = "main-erp-input", dir = "ltr" })</label>
+                </div>
+            </section>
+
+            <section class="erp-card clean">
+                <div class="erp-card-head"><h2>القيم والتواريخ</h2></div>
+                <div class="erp-form-grid compact">
+                    <label class="erp-field"><span>قيمة المشروع</span>@Html.TextBoxFor(x => x.ProjectCost, new { @class = "main-erp-input", inputmode = "decimal", required = "required" })</label>
+                    <label class="erp-field"><span>الخصم العام</span>@Html.TextBoxFor(x => x.GeneralDiscount, new { @class = "main-erp-input", inputmode = "decimal" })</label>
+                    <label class="erp-field"><span>نسبة الخصم</span>@Html.TextBoxFor(x => x.DiscountPercentage, new { @class = "main-erp-input", inputmode = "decimal" })</label>
+                    <label class="erp-field"><span>العملة</span>@Html.DropDownListFor(x => x.CurrencyId, new SelectList(Model.Currencies, "Value", "Text", Model.CurrencyId), "-- اختر --", new { @class = "main-erp-input" })</label>
+                    <label class="erp-field"><span>تاريخ البداية</span><input class="main-erp-input" type="date" name="StartDate" value="@dateValue(Model.StartDate)" /></label>
+                    <label class="erp-field"><span>تاريخ الانتهاء</span><input class="main-erp-input" type="date" name="EndDate" value="@dateValue(Model.EndDate)" /></label>
+                    <label class="erp-field"><span>أقرب نهاية</span><input class="main-erp-input" type="date" name="NearEndDate" value="@dateValue(Model.NearEndDate)" /></label>
+                    <label class="erp-field"><span>التأمين</span>@Html.TextBoxFor(x => x.Insurance, new { @class = "main-erp-input", inputmode = "decimal" })</label>
+                </div>
+            </section>
+
+            <section class="erp-card clean">
+                <div class="erp-card-head"><h2>إدارة المشروع</h2></div>
+                <div class="erp-form-grid compact">
+                    <label class="erp-field"><span>مدير الموقع</span>@Html.DropDownListFor(x => x.ManagerEmployeeId, new SelectList(Model.Employees, "Value", "Text", Model.ManagerEmployeeId), "-- اختر --", new { @class = "main-erp-input" })</label>
+                    <label class="erp-field"><span>المندوب</span>@Html.DropDownListFor(x => x.SalesEmployeeId, new SelectList(Model.Employees, "Value", "Text", Model.SalesEmployeeId), "-- اختر --", new { @class = "main-erp-input" })</label>
+                    <label class="erp-field"><span>نوع المشروع</span>@Html.DropDownListFor(x => x.PState, new SelectList(new[] { new { Value = "0", Text = "جديد" }, new { Value = "1", Text = "افتتاحي" } }, "Value", "Text", Model.PState), new { @class = "main-erp-input" })</label>
+                    <label class="erp-field"><span>حالة التنفيذ</span>@Html.DropDownListFor(x => x.UnderImplementation, new SelectList(new[] { new { Value = "0", Text = "فعلي" }, new { Value = "1", Text = "تقديري" }, new { Value = "2", Text = "تحت التنفيذ" } }, "Value", "Text", Model.UnderImplementation), new { @class = "main-erp-input" })</label>
+                    <label class="erp-field" style="grid-column:1/-1"><span>ملاحظات</span>@Html.TextAreaFor(x => x.Remarks, new { @class = "main-erp-input", rows = "3", placeholder = "اكتب ملاحظاتك هنا..." })</label>
+                </div>
+            </section>
+
+            <section class="erp-card clean">
+                <div class="erp-card-head"><h2>بنود المشروع</h2></div>
+                <div class="erp-card-body" style="padding: 15px;">
+                    @Html.Partial("_ProjectMainDesGrid", Model)
+                </div>
+            </section>
+
+            <footer class="main-erp-actions compact-actions">
+                <button class="erp-btn erp-btn-primary" type="button" id="saveProjectBtn" onclick="saveProject()"><i class="fas fa-save"></i> حفظ</button>
+                <a class="erp-btn" href="@Url.Action("Index", "Projects", new { area = "MainErp" })"><i class="fas fa-times"></i> إلغاء</a>
+            </footer>
+        }
+    </div>
 </section>
 
+<style>
+.main-erp-projects-screen .project-shell { background: #f8fafc; border: 1px solid #e4e9f2; border-radius: 14px; padding: 14px; }
+.main-erp-projects-screen .project-topbar { display:flex; justify-content:space-between; align-items:center; gap:12px; padding: 2px 0 12px; border-bottom:1px solid #e6ecf5; }
+.main-erp-projects-screen .project-topbar-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.main-erp-projects-screen .project-topbar-title h1 { margin:0; font-size:44px; color:#0f254b; }
+.main-erp-projects-screen .project-topbar-title p { margin:4px 0 0; color:#64748b; font-weight:600; }
+.main-erp-projects-screen .erp-btn.danger { border-color:#f7c8c8; color:#d33; background:#fff; }
+.main-erp-projects-screen .project-kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:12px 0; }
+.main-erp-projects-screen .kpi-card { background:#fff; border:1px solid #e3e9f3; border-radius:12px; padding:12px; min-height:68px; display:flex; flex-direction:column; justify-content:center; }
+.main-erp-projects-screen .kpi-card span { color:#2c59b6; font-weight:700; font-size:13px; }
+.main-erp-projects-screen .kpi-card strong { color:#0f172a; font-size:24px; margin-top:3px; }
+.main-erp-projects-screen .kpi-card.status { align-items:center; }
+.main-erp-projects-screen .project-status { font-size:13px; font-weight:700; border-radius:999px; padding:6px 14px; margin-top:5px; }
+.main-erp-projects-screen .project-status.is-new { background:#eefbf3; color:#1f7a45; border:1px solid #bde7cd; }
+.main-erp-projects-screen .project-status.is-saved { background:#eef8ef; color:#1d8b3b; border:1px solid #ccebd6; }
+.main-erp-projects-screen .erp-card.clean { border:1px solid #e3e9f3; border-radius:12px; box-shadow:none; }
+.main-erp-projects-screen .erp-form-grid.compact { gap:10px 12px; }
+.main-erp-projects-screen .erp-card-head { border-bottom:1px solid #e8edf6; }
+.main-erp-projects-screen .erp-card-head h2 { color:#1d4db5; font-weight:800; }
+.main-erp-projects-screen .main-erp-input { height:38px; border-radius:8px; }
+.main-erp-projects-screen textarea.main-erp-input { height:auto; }
+.main-erp-projects-screen .compact-actions { margin-top: 10px; justify-content:flex-start; }
+@media (max-width:1200px){ .main-erp-projects-screen .project-kpis{grid-template-columns:repeat(2,minmax(0,1fr));} }
+@media (max-width:768px){ .main-erp-projects-screen .project-topbar{flex-direction:column-reverse; align-items:stretch;} .main-erp-projects-screen .project-topbar-title h1{font-size:30px;} .main-erp-projects-screen .project-kpis{grid-template-columns:1fr;} }
+</style>
+
 <script>
-    function saveProject() {
+    function valueByName(name) {
+        var el = document.querySelector('[name="' + name + '"]');
+        return el ? el.value : '';
+    }
+
+    function showProjectMessage(type, text) {
+        var host = document.getElementById('projectFormMessage');
+        if (!host) return;
+        host.innerHTML = '<div class="' + (type === 'error' ? 'main-erp-warning' : 'erp-alert is-active') + '">' + text + '</div>';
+    }
+
+    async function saveProject() {
         var form = document.querySelector('.project-editor-form');
         if (!form.checkValidity()) {
             form.classList.add('was-validated');
+            showProjectMessage('error', 'يرجى استكمال الحقول المطلوبة قبل الحفظ.');
             return;
         }
 
         var items = typeof getProjectItems === 'function' ? getProjectItems() : [];
 
         var data = {
-            Id: $('#Id').val(),
-            IsNewProject: $('#IsNewProject').val(),
-            Prefix: $('[name="Prefix"]').val(),
-            Code: $('[name="Code"]').val(),
-            ProjectName: $('[name="ProjectName"]').val(),
-            ProjectNameEnglish: $('[name="ProjectNameEnglish"]').val(),
-            EndUserId: $('[name="EndUserId"]').val(),
-            SubContractorId: $('[name="SubContractorId"]').val(),
-            BranchNo: $('[name="BranchNo"]').val(),
-            StatusId: $('[name="StatusId"]').val(),
-            ContractType: $('[name="ContractType"]').val(),
-            ContractNo: $('[name="ContractNo"]').val(),
-            ProjectCost: $('[name="ProjectCost"]').val(),
-            GeneralDiscount: $('[name="GeneralDiscount"]').val(),
-            DiscountPercentage: $('[name="DiscountPercentage"]').val(),
-            CurrencyId: $('[name="CurrencyId"]').val(),
-            StartDate: $('[name="StartDate"]').val(),
-            EndDate: $('[name="EndDate"]').val(),
-            NearEndDate: $('[name="NearEndDate"]').val(),
-            Insurance: $('[name="Insurance"]').val(),
-            ManagerEmployeeId: $('[name="ManagerEmployeeId"]').val(),
-            SalesEmployeeId: $('[name="SalesEmployeeId"]').val(),
-            PState: $('[name="PState"]').val(),
-            UnderImplementation: $('[name="UnderImplementation"]').val(),
-            Remarks: $('[name="Remarks"]').val(),
-            ProjectItems: items
+            Id: valueByName('Id'),
+            IsNewProject: valueByName('IsNewProject'),
+            Prefix: valueByName('Prefix'),
+            Code: valueByName('Code'),
+            ProjectName: valueByName('ProjectName'),
+            ProjectNameEnglish: valueByName('ProjectNameEnglish'),
+            EndUserId: valueByName('EndUserId'),
+            SubContractorId: valueByName('SubContractorId'),
+            BranchNo: valueByName('BranchNo'),
+            StatusId: valueByName('StatusId'),
+            ContractType: valueByName('ContractType'),
+            ContractNo: valueByName('ContractNo'),
+            ProjectCost: valueByName('ProjectCost'),
+            GeneralDiscount: valueByName('GeneralDiscount'),
+            DiscountPercentage: valueByName('DiscountPercentage'),
+            CurrencyId: valueByName('CurrencyId'),
+            StartDate: valueByName('StartDate'),
+            EndDate: valueByName('EndDate'),
+            NearEndDate: valueByName('NearEndDate'),
+            Insurance: valueByName('Insurance'),
+            ManagerEmployeeId: valueByName('ManagerEmployeeId'),
+            SalesEmployeeId: valueByName('SalesEmployeeId'),
+            PState: valueByName('PState'),
+            UnderImplementation: valueByName('UnderImplementation'),
+            Remarks: valueByName('Remarks'),
+            ProjectItems: items,
+            ProjectMainDes: items
         };
 
-        $('#saveProjectBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> جارٍ الحفظ...');
+        var saveBtn = document.getElementById('saveProjectBtn');
+        var saveBtnTop = document.getElementById('saveProjectBtnTop');
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...'; }
+        if (saveBtnTop) { saveBtnTop.disabled = true; saveBtnTop.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...'; }
 
-        $.ajax({
-            type: 'POST',
-            url: '@Url.Action("SaveJson", "Projects", new { area = "MainErp" })',
-            contentType: 'application/json',
-            data: JSON.stringify(data),
-            success: function (r) {
-                if (r && r.success) {
-                    window.location.href = '@Url.Action("Index", "Projects", new { area = "MainErp" })';
-                } else {
-                    alert(r && r.message ? r.message : 'حدث خطأ أثناء الحفظ.');
-                    $('#saveProjectBtn').prop('disabled', false).html('<i class="fas fa-save"></i> حفظ');
-                }
-            },
-            error: function () {
-                alert('فشل الاتصال بالخادم، يرجى المحاولة مرة أخرى.');
-                $('#saveProjectBtn').prop('disabled', false).html('<i class="fas fa-save"></i> حفظ');
+        try {
+            var response = await fetch('@Url.Action("SaveJson", "Projects", new { area = "MainErp" })', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            var r = await response.json();
+            if (r && r.success) {
+                showProjectMessage('success', 'تم حفظ المشروع بنجاح.');
+                window.location.href = '@Url.Action("Index", "Projects", new { area = "MainErp" })';
+                return;
             }
-        });
+
+            showProjectMessage('error', (r && r.message) ? r.message : 'حدث خطأ أثناء الحفظ.');
+        } catch (e) {
+            showProjectMessage('error', 'فشل الاتصال بالخادم، يرجى المحاولة مرة أخرى.');
+        }
+
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ'; }
+        if (saveBtnTop) { saveBtnTop.disabled = false; saveBtnTop.innerHTML = '<i class="fas fa-save"></i> حفظ'; }
     }
 </script>
 

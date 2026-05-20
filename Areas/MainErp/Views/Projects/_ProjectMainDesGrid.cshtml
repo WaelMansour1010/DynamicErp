@@ -1,104 +1,197 @@
-@model MyERP.Areas.MainErp.ViewModels.Projects.ProjectEditViewModel
+﻿@model MyERP.Areas.MainErp.ViewModels.Projects.ProjectEditViewModel
 
-<div class="table-responsive">
+<div class="project-items-toolbar">
+    <div>
+        <strong>بنود المشروع</strong>
+        <small>أدخل اسم البند والكمية والسعر. الإجمالي يُحسب تلقائيًا.</small>
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-primary" id="AddProjectItemBtn">
+        <i class="fas fa-plus"></i> إضافة بند
+    </button>
+</div>
+
+<div class="table-responsive project-items-wrap">
     <table class="table table-centered table-bordered mb-0" id="ProjectMainDesTable">
-        <thead class="thead-light">
+        <thead>
             <tr>
-                <th style="width:35%">اسم البند</th>
-                <th style="width:15%">الكمية (التعاقدية)</th>
-                <th style="width:15%">السعر</th>
-                <th style="width:15%">الإجمالي</th>
-                <th style="width:15%">ملاحظات</th>
+                <th style="width:32%">اسم البند</th>
+                <th style="width:13%">الكمية</th>
+                <th style="width:13%">السعر</th>
+                <th style="width:13%">الإجمالي</th>
+                <th style="width:24%">ملاحظات</th>
                 <th style="width:5%">حذف</th>
             </tr>
         </thead>
         <tbody id="ProjectItemsBody">
             @if (Model != null && Model.ProjectItems != null)
             {
-                foreach (var item in Model.ProjectItems)
+                for (var i = 0; i < Model.ProjectItems.Count; i++)
                 {
+                    var item = Model.ProjectItems[i];
                     <tr>
                         <td>
-                            <input type="hidden" class="item-id" value="@item.Id" />
-                            <input type="text" class="item-name form-control form-control-sm" value="@item.Item" placeholder="اسم البند" />
+                            <input type="hidden" class="item-id" name="ProjectMainDes[@i].Id" value="@item.Id" />
+                            <input type="text" class="item-name form-control form-control-sm" name="ProjectMainDes[@i].ItemName" value="@item.Item" placeholder="اسم البند" />
                         </td>
-                        <td>
-                            <input type="number" step="any" min="0" class="item-qty form-control form-control-sm" value="@item.Quantity" />
-                        </td>
-                        <td>
-                            <input type="number" step="any" min="0" class="item-price form-control form-control-sm" value="@item.Price" />
-                        </td>
-                        <td>
-                            <input type="number" step="any" class="item-total form-control form-control-sm" value="@item.Value" readonly />
-                        </td>
-                        <td>
-                            <input type="text" class="item-remarks form-control form-control-sm" value="" />
-                        </td>
+                        <td><input type="number" step="any" min="0" class="item-qty form-control form-control-sm" name="ProjectMainDes[@i].Quantity" value="@item.Quantity" /></td>
+                        <td><input type="number" step="any" min="0" class="item-price form-control form-control-sm" name="ProjectMainDes[@i].Price" value="@item.Price" /></td>
+                        <td><input type="number" step="any" class="item-total form-control form-control-sm" name="ProjectMainDes[@i].Value" value="@item.Value" readonly /></td>
+                        <td><input type="text" class="item-remarks form-control form-control-sm" name="ProjectMainDes[@i].Remarks" value="@item.Remarks" placeholder="ملاحظة (اختياري)" /></td>
                         <td class="text-center">
-                            <a href="javascript:void(0);" onclick="removeProjectItem(this)" class="text-danger">
-                                <i class="fas fa-trash-alt"></i>
-                            </a>
+                            <a href="javascript:void(0);" class="text-danger remove-project-item row-delete" title="حذف البند"><i class="fas fa-trash-alt"></i></a>
                         </td>
                     </tr>
                 }
             }
         </tbody>
+        <tfoot>
+            <tr class="project-items-total-row">
+                <td colspan="3" class="text-right">إجمالي البنود</td>
+                <td><input type="text" id="ProjectItemsGrandTotal" class="form-control form-control-sm" value="0.00" readonly /></td>
+                <td colspan="2"></td>
+            </tr>
+        </tfoot>
     </table>
 </div>
 
-<div class="mt-2">
-    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addProjectItem()">
-        <i class="fas fa-plus"></i> إضافة بند
-    </button>
-</div>
+<style>
+.project-items-toolbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px; }
+.project-items-toolbar small { display:block; color:#64748b; }
+.project-items-wrap { border:1px solid #dbe4f0; border-radius:10px; overflow:hidden; }
+#ProjectMainDesTable thead th { background: linear-gradient(90deg,#1f4db8,#2f61cf); color:#fff; border-color:#2b5fc9; font-weight:700; }
+#ProjectMainDesTable tbody tr.is-dirty { background:#fff9ec; }
+#ProjectMainDesTable tbody tr.is-empty { background:#fff4f4; }
+#ProjectMainDesTable .row-delete { display:inline-flex; width:28px; height:28px; border-radius:999px; align-items:center; justify-content:center; background:#fff1f2; }
+#ProjectMainDesTable .row-delete:hover { background:#ffe1e5; }
+#ProjectMainDesTable .item-total { background:#f8fbff; font-weight:700; }
+.project-items-total-row { background:#eef4ff; }
+#ProjectItemsGrandTotal { font-weight:800; color:#1f4db8; }
+</style>
 
 <script>
-    function addProjectItem() {
-        var tr = '<tr>' +
-            '<td><input type="hidden" class="item-id" value="0" />' +
-            '<input type="text" class="item-name form-control form-control-sm" placeholder="اسم البند" /></td>' +
-            '<td><input type="number" step="any" min="0" class="item-qty form-control form-control-sm" value="0" /></td>' +
-            '<td><input type="number" step="any" min="0" class="item-price form-control form-control-sm" value="0" /></td>' +
-            '<td><input type="number" step="any" class="item-total form-control form-control-sm" value="0" readonly /></td>' +
-            '<td><input type="text" class="item-remarks form-control form-control-sm" /></td>' +
-            '<td class="text-center"><a href="javascript:void(0);" onclick="removeProjectItem(this)" class="text-danger"><i class="fas fa-trash-alt"></i></a></td>' +
-            '</tr>';
-        $('#ProjectItemsBody').append(tr);
-    }
-
-    function removeProjectItem(btn) {
-        var tbody = $('#ProjectItemsBody');
-        if (tbody.find('tr').length > 1) {
-            $(btn).closest('tr').remove();
-        } else {
-            var row = $(btn).closest('tr');
-            row.find('.item-name').val('');
-            row.find('.item-qty, .item-price, .item-total').val('0');
-            row.find('.item-remarks').val('');
+    function projectItemsRenumber() {
+        var rows = document.querySelectorAll('#ProjectItemsBody tr');
+        for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            var id = row.querySelector('.item-id');
+            var name = row.querySelector('.item-name');
+            var qty = row.querySelector('.item-qty');
+            var price = row.querySelector('.item-price');
+            var total = row.querySelector('.item-total');
+            var remarks = row.querySelector('.item-remarks');
+            if (id) id.name = 'ProjectMainDes[' + i + '].Id';
+            if (name) name.name = 'ProjectMainDes[' + i + '].ItemName';
+            if (qty) qty.name = 'ProjectMainDes[' + i + '].Quantity';
+            if (price) price.name = 'ProjectMainDes[' + i + '].Price';
+            if (total) total.name = 'ProjectMainDes[' + i + '].Value';
+            if (remarks) remarks.name = 'ProjectMainDes[' + i + '].Remarks';
         }
     }
 
-    $(document).on('input', '#ProjectItemsBody .item-qty, #ProjectItemsBody .item-price', function () {
-        var row = $(this).closest('tr');
-        var qty = parseFloat(row.find('.item-qty').val()) || 0;
-        var price = parseFloat(row.find('.item-price').val()) || 0;
-        row.find('.item-total').val((qty * price).toFixed(2));
-    });
+    function createProjectItemRow(index) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+            '<td><input type="hidden" class="item-id" name="ProjectMainDes[' + index + '].Id" value="0" />' +
+            '<input type="text" class="item-name form-control form-control-sm" name="ProjectMainDes[' + index + '].ItemName" placeholder="اسم البند" /></td>' +
+            '<td><input type="number" step="any" min="0" class="item-qty form-control form-control-sm" name="ProjectMainDes[' + index + '].Quantity" value="0" /></td>' +
+            '<td><input type="number" step="any" min="0" class="item-price form-control form-control-sm" name="ProjectMainDes[' + index + '].Price" value="0" /></td>' +
+            '<td><input type="number" step="any" class="item-total form-control form-control-sm" name="ProjectMainDes[' + index + '].Value" value="0" readonly /></td>' +
+            '<td><input type="text" class="item-remarks form-control form-control-sm" name="ProjectMainDes[' + index + '].Remarks" placeholder="ملاحظة (اختياري)" /></td>' +
+            '<td class="text-center"><a href="javascript:void(0);" class="text-danger remove-project-item row-delete" title="حذف البند"><i class="fas fa-trash-alt"></i></a></td>';
+        return tr;
+    }
+
+    function addProjectItem() {
+        var tbody = document.getElementById('ProjectItemsBody');
+        if (!tbody) return;
+        var tr = createProjectItemRow(tbody.querySelectorAll('tr').length);
+        tbody.appendChild(tr);
+        projectItemsRenumber();
+        recalcProjectItemsSummary();
+    }
+
+    function recalcRowTotal(row) {
+        var qty = parseFloat((row.querySelector('.item-qty') || {}).value || '0') || 0;
+        var price = parseFloat((row.querySelector('.item-price') || {}).value || '0') || 0;
+        var total = row.querySelector('.item-total');
+        if (total) total.value = (qty * price).toFixed(2);
+        var name = ((row.querySelector('.item-name') || {}).value || '').trim();
+        row.classList.toggle('is-empty', !name && qty === 0 && price === 0);
+    }
+
+    function recalcProjectItemsSummary() {
+        var rows = document.querySelectorAll('#ProjectItemsBody tr');
+        var grandTotal = 0;
+        for (var i = 0; i < rows.length; i++) {
+            recalcRowTotal(rows[i]);
+            grandTotal += parseFloat((rows[i].querySelector('.item-total') || {}).value || '0') || 0;
+        }
+        var g = document.getElementById('ProjectItemsGrandTotal');
+        if (g) g.value = grandTotal.toFixed(2);
+    }
 
     function getProjectItems() {
         var items = [];
-        $('#ProjectItemsBody tr').each(function () {
-            var name = $(this).find('.item-name').val();
-            if (name && name.trim() !== '') {
-                items.push({
-                    Id: parseInt($(this).find('.item-id').val()) || 0,
-                    Item: name.trim(),
-                    Quantity: parseFloat($(this).find('.item-qty').val()) || 0,
-                    Price: parseFloat($(this).find('.item-price').val()) || 0,
-                    Value: parseFloat($(this).find('.item-total').val()) || 0
-                });
-            }
-        });
+        var rows = document.querySelectorAll('#ProjectItemsBody tr');
+        for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            var itemName = ((row.querySelector('.item-name') || {}).value || '').trim();
+            if (!itemName) continue;
+            items.push({
+                Id: parseInt((row.querySelector('.item-id') || {}).value || '0', 10) || 0,
+                Item: itemName,
+                Quantity: parseFloat((row.querySelector('.item-qty') || {}).value || '0') || 0,
+                Price: parseFloat((row.querySelector('.item-price') || {}).value || '0') || 0,
+                Value: parseFloat((row.querySelector('.item-total') || {}).value || '0') || 0,
+                Remarks: ((row.querySelector('.item-remarks') || {}).value || '').trim()
+            });
+        }
         return items;
     }
+
+    document.addEventListener('click', function (e) {
+        var addBtn = e.target.closest('#AddProjectItemBtn');
+        if (addBtn) { addProjectItem(); return; }
+
+        var removeBtn = e.target.closest('.remove-project-item');
+        if (!removeBtn) return;
+        var tbody = document.getElementById('ProjectItemsBody');
+        var rows = tbody ? tbody.querySelectorAll('tr') : [];
+        var row = removeBtn.closest('tr');
+        if (!row) return;
+
+        if (rows.length > 1) {
+            row.remove();
+            projectItemsRenumber();
+            recalcProjectItemsSummary();
+            return;
+        }
+
+        var id = row.querySelector('.item-id');
+        var name = row.querySelector('.item-name');
+        var qty = row.querySelector('.item-qty');
+        var price = row.querySelector('.item-price');
+        var total = row.querySelector('.item-total');
+        var remarks = row.querySelector('.item-remarks');
+        if (id) id.value = '0'; if (name) name.value = ''; if (qty) qty.value = '0'; if (price) price.value = '0'; if (total) total.value = '0'; if (remarks) remarks.value = '';
+        row.classList.remove('is-dirty'); row.classList.add('is-empty');
+        recalcProjectItemsSummary();
+    });
+
+    document.addEventListener('input', function (e) {
+        if (!e.target.closest('#ProjectItemsBody')) return;
+        var row = e.target.closest('tr');
+        if (!row) return;
+        if (e.target.classList.contains('item-qty') || e.target.classList.contains('item-price') || e.target.classList.contains('item-name') || e.target.classList.contains('item-remarks')) {
+            row.classList.add('is-dirty');
+            recalcProjectItemsSummary();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var tbody = document.getElementById('ProjectItemsBody');
+        if (!tbody) return;
+        if (tbody.querySelectorAll('tr').length === 0) addProjectItem();
+        else { projectItemsRenumber(); recalcProjectItemsSummary(); }
+    });
 </script>

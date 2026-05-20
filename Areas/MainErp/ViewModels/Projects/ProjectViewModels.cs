@@ -130,6 +130,12 @@ namespace MyERP.Areas.MainErp.ViewModels.Projects
 
         public string AccountUnderImp { get; set; }
         public IList<ProjectMainDesViewModel> ProjectItems { get; set; }
+
+        public IList<ProjectMainDesViewModel> ProjectMainDes
+        {
+            get { return ProjectItems; }
+            set { ProjectItems = value; }
+        }
     }
 
     public class ProjectMainDesViewModel
@@ -137,9 +143,15 @@ namespace MyERP.Areas.MainErp.ViewModels.Projects
         public int Id { get; set; }
         public int ProjectId { get; set; }
         public string Item { get; set; }
+        public string ItemName
+        {
+            get { return Item; }
+            set { Item = value; }
+        }
         public decimal Price { get; set; }
         public decimal Quantity { get; set; }
         public decimal Value { get; set; }
+        public string Remarks { get; set; }
     }
 
     public class ProjectLookupItem

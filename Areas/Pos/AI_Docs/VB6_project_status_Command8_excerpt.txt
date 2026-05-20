@@ -1,0 +1,640 @@
+﻿ 11410: Private Sub Command8_Click()
+ 11411: 
+ 11412: Dim MySQL As String
+ 11413:     Dim RsData As New ADODB.Recordset
+ 11414:     Dim xApp As New CRAXDRT.Application
+ 11415:     Dim xReport As CRAXDRT.Report
+ 11416:     Dim CViewer As ClsReportViewer
+ 11417:     Dim StrReportTitle As String
+ 11418:     Dim StrFileName As String
+ 11419:     Dim Msg As String
+ 11420:     Dim rsDummy As New ADODB.Recordset
+ 11421:     Dim RsTrans As New ADODB.Recordset
+ 11422:     Dim mBranchID As Long
+ 11423: '--------------------------------------------------------------------------------------------
+ 11424:    Dim Begin As Boolean
+ 11425:    Begin = True
+ 11426:    Dim mBankBalance As Double
+ 11427:     Dim mTableName As String, mTableName2 As String
+ 11428:    
+ 11429:    Dim mBankBalanceCharge As Double
+ 11430:  Dim ii As Long
+ 11431:    Dim i As Long
+ 11432:    ii = DateDiff("D", txtFromDate.value, txtToDate.value)
+ 11433:    Dim mDate As Date
+ 11434:     Dim mDate2 As Date
+ 11435:    Dim Current_branchSql2 As String
+ 11436:     
+ 11437:     
+ 11438:    
+ 11439:     
+ 11440:    
+ 11441:    Current_branchSql2 = "SELECT BranchID FROM dbo.TblUsersBranches " & _
+ 11442:                     "WHERE (UserID = " & val(user_id) & ") " & _
+ 11443:                     "AND BranchID IN (" & _
+ 11444:                     "    SELECT branch_id " & _
+ 11445:                     "    FROM TblBranchesData " & _
+ 11446:                     "    WHERE (IsNull(isStoped, 0) = 0 OR IsNull(IsStopedDate, '9999-12-31') > " & SQLDate(txtFromDate.value, True) & ")" & _
+ 11447:                     ")"
+ 11448: 
+ 11449: 
+ 11450:      
+ 11451:      
+ 11452:      
+ 11453:    S = "SELECT"
+ 11454: 
+ 11455: S = S & "        TotalWallet = IsNull(CashOutTotal, 0) + IsNull(CashOut, 0)"
+ 11456: S = S & "       ,TotalSupplyWallet = (IsNull(CashOutTotal,0) + IsNull(CashOut,0)) - IsNull(CashOutDisc,0)"
+ 11457: S = S & "       ,TotalSupply = IsNull(TotalRechargeValue,0) + (IsNull(TotalRevSS,0) - IsNull(mTotalSalCard,0) - IsNull(TotalSaleDay2Vat,0)) + IsNull(CashOut,0) - IsNull(CashOutDisc,0)"
+ 11458: S = S & "       ,Net = IsNull(TotalRechargeValue,0) + IsNull(BoxBalance,0) + (IsNull(TotalRevSS,0) - IsNull(mTotalSalCard,0) - IsNull(TotalSaleDay2Vat,0)) + IsNull(mTotalSalCard,0) - IsNull(CashOutTotal,0)"
+ 11459: S = S & "       ,ActValue = IsNull(TotalRechargeValue,0) + IsNull(BoxBalance,0) + (IsNull(TotalRevSS,0) - IsNull(mTotalSalCard,0) - IsNull(TotalSaleDay2Vat,0)) + IsNull(mTotalSalCard,0) - IsNull(CashOutTotal,0)"
+ 11460: S = S & "       ,TotalRev = IsNull(TotalRevSS,0) - IsNull(mTotalSalCard ,0)- IsNull(TotalSaleDay2Vat,0)"
+ 11461: S = S & "    ,* FROM ("
+ 11462:    
+ 11463: S = S & " SELECT"
+ 11464: S = S & "     TblBranchesData.*, TblBranchesData.Branch_ID as BranchID, BoxBalance = 0"
+ 11465: 'S = S & "    ,TotalSaleDay = (SELECT"
+ 11466: 'S = S & "             SUM(Transaction_Details.Price) As PP"
+ 11467: 'S = S & "         From Transaction_Details"
+ 11468: 'S = S & "         INNER JOIN Transactions"
+ 11469: 'S = S & "             ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 11470: 'S = S & "         INNER JOIN TblItems"
+ 11471: 'S = S & "             ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 11472: 'S = S & "         Where TblItems.ItemType = 0"
+ 11473: 'S = S & "         AND Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11474: 'S = S & "         AND Transaction_Type IN (21)"
+ 11475: 'S = S & "         AND Transactions.BranchId  = TblBranchesData.branch_id"
+ 11476: 'S = S & "         AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0"
+ 11477: 'S = S & "         AND ISNULL(IsReturn, 0) = 0  and IsNull(Transactions.OtherItems,0) = 0 and IsNull(Transactions.InstallmentService,0) = 0"
+ 11478: 'S = S & "         AND ISNULL(HaveSerial, 0) = 1)"
+ 11479: 
+ 11480: ' ===== داخل الـ SELECT الداخلي (اللى بعد From TblBranchesData) =====
+ 11481: S = S & "    ,TotalReturns = (SELECT " & vbCrLf
+ 11482: S = S & "            SUM(ISNULL(tR.Transaction_NetValue,0) + ISNULL(tR.RechargeValue,0)) " & vbCrLf
+ 11483: S = S & "        FROM Transactions tR " & vbCrLf
+ 11484: S = S & "        WHERE tR.Transaction_Type IN (9) " & vbCrLf
+ 11485: 
+ 11486: S = S & "          AND tR.BranchId = TblBranchesData.branch_id " & vbCrLf
+ 11487: S = S & "          AND ISNULL(tR.NoteID3,0) IN ( " & vbCrLf
+ 11488: S = S & "                SELECT n.NoteID " & vbCrLf
+ 11489: S = S & "                FROM Notes n " & vbCrLf
+ 11490: S = S & "                WHERE n.NoteDate BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & vbCrLf
+ 11491: S = S & "                  AND n.branch_no = TblBranchesData.branch_id " & vbCrLf
+ 11492: S = S & "          )" & vbCrLf
+ 11493: S = S & "    )" & vbCrLf
+ 11494: 
+ 11495: S = S & "    ,CountReturns = (SELECT " & vbCrLf
+ 11496: S = S & "            COUNT(*) " & vbCrLf
+ 11497: S = S & "        FROM Transactions tR " & vbCrLf
+ 11498: S = S & "        WHERE tR.Transaction_Type IN (9) " & vbCrLf
+ 11499: 
+ 11500: S = S & "          AND tR.BranchId = TblBranchesData.branch_id " & vbCrLf
+ 11501: S = S & "          AND ISNULL(tR.NoteID3,0) IN ( " & vbCrLf
+ 11502: S = S & "                SELECT n.NoteID " & vbCrLf
+ 11503: S = S & "                FROM Notes n " & vbCrLf
+ 11504: S = S & "                WHERE n.NoteDate BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & vbCrLf
+ 11505: S = S & "                  AND n.branch_no = TblBranchesData.branch_id " & vbCrLf
+ 11506: S = S & "          )" & vbCrLf
+ 11507: S = S & "    )" & vbCrLf
+ 11508: 
+ 11509: 
+ 11510: 
+ 11511: S = S & "    ,TotalSaleDay = (SELECT SUM(Transaction_Details.Price) AS PP " & vbCrLf
+ 11512: S = S & "         FROM Transaction_Details " & vbCrLf
+ 11513: S = S & "         INNER JOIN Transactions " & vbCrLf
+ 11514: S = S & "             ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID " & vbCrLf
+ 11515: S = S & "         INNER JOIN TblItems " & vbCrLf
+ 11516: S = S & "             ON Transaction_Details.Item_ID = TblItems.ItemID " & vbCrLf
+ 11517: S = S & "         WHERE TblItems.ItemType = 0 " & vbCrLf
+ 11518: S = S & "         AND Transactions.Transaction_Date BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & " " & vbCrLf
+ 11519: S = S & "         AND Transaction_Type IN (21) " & vbCrLf
+ 11520: S = S & "         AND Transactions.BranchId = TblBranchesData.branch_id " & vbCrLf
+ 11521: S = S & "         AND ISNULL(IsWallet, 0) = 0 " & vbCrLf
+ 11522: S = S & "         AND ISNULL(Transactions.HaveGuarantee, 0) = 0 " & vbCrLf
+ 11523: S = S & "         AND ISNULL(IsReturn, 0) = 0 " & vbCrLf
+ 11524: S = S & "         AND ISNULL(Transactions.OtherItems, 0) = 0 " & vbCrLf
+ 11525: 'S = S & "         AND ISNULL(Transactions.InstallmentService, 0) = 0 " & vbCrLf
+ 11526: S = S & "         AND ISNULL(HaveSerial, 0) = 1)"
+ 11527: 
+ 11528: 
+ 11529: 'S = S & "    ,TotalSaleDay2 = (SELECT"
+ 11530: 'S = S & "             SUM(Transaction_Details.Price) As PP"
+ 11531: 'S = S & "         From Transaction_Details"
+ 11532: 'S = S & "         INNER JOIN Transactions"
+ 11533: 'S = S & "             ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 11534: 'S = S & "         INNER JOIN TblItems"
+ 11535: 'S = S & "             ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 11536: 'S = S & "         Where TblItems.ItemType = 0"
+ 11537: 'S = S & "         AND Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11538: 'S = S & "         AND Transaction_Type IN (21)"
+ 11539: 'S = S & "         AND Transactions.BranchId = TblBranchesData.branch_id"
+ 11540: 'S = S & "         AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0"
+ 11541: 'S = S & "         AND ISNULL(IsReturn, 0) = 0  and IsNull(Transactions.OtherItems,0) = 0 and IsNull(Transactions.InstallmentService,0) = 0"
+ 11542: 'S = S & "         AND ISNULL(HaveSerial, 0) = 1)"
+ 11543: 
+ 11544: S = S & "    ,TotalSaleDay2 = (SELECT SUM(Transaction_Details.Price) AS PP " & vbCrLf
+ 11545: S = S & "         FROM Transaction_Details " & vbCrLf
+ 11546: S = S & "         INNER JOIN Transactions " & vbCrLf
+ 11547: S = S & "             ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID " & vbCrLf
+ 11548: S = S & "         INNER JOIN TblItems " & vbCrLf
+ 11549: S = S & "             ON Transaction_Details.Item_ID = TblItems.ItemID " & vbCrLf
+ 11550: S = S & "         WHERE TblItems.ItemType = 0 " & vbCrLf
+ 11551: S = S & "         AND Transactions.Transaction_Date BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & " " & vbCrLf
+ 11552: S = S & "         AND Transaction_Type IN (21) " & vbCrLf
+ 11553: S = S & "         AND Transactions.BranchId = TblBranchesData.branch_id " & vbCrLf
+ 11554: S = S & "         AND ISNULL(IsWallet, 0) = 0 " & vbCrLf
+ 11555: S = S & "         AND ISNULL(Transactions.HaveGuarantee, 0) = 0 " & vbCrLf
+ 11556: S = S & "         AND ISNULL(IsReturn, 0) = 0 " & vbCrLf
+ 11557: S = S & "         AND ISNULL(Transactions.OtherItems, 0) = 0 " & vbCrLf
+ 11558: 'S = S & "         AND ISNULL(Transactions.InstallmentService, 0) = 0 " & vbCrLf
+ 11559: S = S & "         AND ISNULL(HaveSerial, 0) = 1)"
+ 11560: 
+ 11561: 
+ 11562: 'S = S & "    ,TotalSaleDay2Vat = (SELECT"
+ 11563: 'S = S & "             SUM(Transaction_Details.Vat) As PP"
+ 11564: 'S = S & "         From Transaction_Details"
+ 11565: 'S = S & "         INNER JOIN Transactions"
+ 11566: 'S = S & "             ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 11567: 'S = S & "         INNER JOIN TblItems"
+ 11568: 'S = S & "             ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 11569: 'S = S & "         Where TblItems.ItemType = 0"
+ 11570: 'S = S & "         AND Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11571: 'S = S & "         AND Transaction_Type IN (21)"
+ 11572: 'S = S & "         AND Transactions.BranchId = TblBranchesData.branch_id"
+ 11573: 'S = S & "         AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0"
+ 11574: 'S = S & "         AND ISNULL(IsReturn, 0) = 0  and IsNull(Transactions.OtherItems,0) = 0 and IsNull(Transactions.InstallmentService,0) = 0"
+ 11575: 'S = S & "         AND ISNULL(HaveSerial, 0) = 1)"
+ 11576: 
+ 11577: S = S & "    ,TotalSaleDay2Vat = (SELECT SUM(Transaction_Details.Vat) AS PP " & vbCrLf
+ 11578: S = S & "         FROM Transaction_Details " & vbCrLf
+ 11579: S = S & "         INNER JOIN Transactions " & vbCrLf
+ 11580: S = S & "             ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID " & vbCrLf
+ 11581: S = S & "         INNER JOIN TblItems " & vbCrLf
+ 11582: S = S & "             ON Transaction_Details.Item_ID = TblItems.ItemID " & vbCrLf
+ 11583: S = S & "         WHERE TblItems.ItemType = 0 " & vbCrLf
+ 11584: S = S & "         AND Transactions.Transaction_Date BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & " " & vbCrLf
+ 11585: S = S & "         AND Transaction_Type IN (21) " & vbCrLf
+ 11586: S = S & "         AND Transactions.BranchId = TblBranchesData.branch_id " & vbCrLf
+ 11587: S = S & "         AND ISNULL(IsWallet, 0) = 0 " & vbCrLf
+ 11588: S = S & "         AND ISNULL(Transactions.HaveGuarantee, 0) = 0 " & vbCrLf
+ 11589: S = S & "         AND ISNULL(IsReturn, 0) = 0 " & vbCrLf
+ 11590: S = S & "         AND ISNULL(Transactions.OtherItems, 0) = 0 " & vbCrLf
+ 11591: 'S = S & "         AND ISNULL(Transactions.InstallmentService, 0) = 0 " & vbCrLf
+ 11592: S = S & "         AND ISNULL(HaveSerial, 0) = 1)"
+ 11593: 
+ 11594: '
+ 11595: 'S = S & "    ,CountTransaction"
+ 11596: 'S = S & "     = (SELECT"
+ 11597: 'S = S & "             COUNT(Transaction_Details.Price) As PP"
+ 11598: 'S = S & "         From Transaction_Details"
+ 11599: 'S = S & "         INNER JOIN Transactions"
+ 11600: 'S = S & "             ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 11601: 'S = S & "         INNER JOIN TblItems"
+ 11602: 'S = S & "             ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 11603: 'S = S & "         Where IsNull(Transaction_Details.Price, 0) <> 0"
+ 11604: 'S = S & "         AND TblItems.ItemType = 1"
+ 11605: 'S = S & "                 AND Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11606: 'S = S & "                 AND Transaction_Type IN (21)"
+ 11607: 'S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 11608: 'S = S & "                 AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0  and IsNull(Transactions.OtherItems,0) = 0 and IsNull(Transactions.InstallmentService,0) = 0"
+ 11609: 'S = S & "                 AND ISNULL(HaveSerial, 0) = 0)"
+ 11610: 'S = S & "            ,CountCards = (SELECT"
+ 11611: 'S = S & "                     COUNT(*) AS mCount"
+ 11612: 'S = S & "                 From transactions"
+ 11613: 'S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11614: 'S = S & "                 AND Transaction_Type IN (21)"
+ 11615: 'S = S & "                 AND BranchId = TblBranchesData.branch_id"
+ 11616: 'S = S & "                 AND ISNULL(VisaNumber, '') <> ''"
+ 11617: 'S = S & "                 AND ISNULL(IsWallet, 0) = 0  and IsNull(Transactions.HaveGuarantee,0) = 0)"
+ 11618: 
+ 11619: 
+ 11620: S = S & "    ,CountTransaction = (SELECT COUNT(Transaction_Details.Price) AS PP " & vbCrLf
+ 11621: S = S & "         FROM Transaction_Details " & vbCrLf
+ 11622: S = S & "         INNER JOIN Transactions " & vbCrLf
+ 11623: S = S & "             ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID " & vbCrLf
+ 11624: S = S & "         INNER JOIN TblItems " & vbCrLf
+ 11625: S = S & "             ON Transaction_Details.Item_ID = TblItems.ItemID " & vbCrLf
+ 11626: S = S & "         WHERE ISNULL(Transaction_Details.Price, 0) <> 0 " & vbCrLf
+ 11627: S = S & "         AND TblItems.ItemType = 1 " & vbCrLf
+ 11628: S = S & "         AND Transactions.Transaction_Date BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & " " & vbCrLf
+ 11629: S = S & "         AND Transaction_Type IN (21) " & vbCrLf
+ 11630: S = S & "         AND Transactions.BranchId = TblBranchesData.branch_id " & vbCrLf
+ 11631: S = S & "         AND ISNULL(IsWallet, 0) = 0 " & vbCrLf
+ 11632: S = S & "         AND ISNULL(Transactions.HaveGuarantee, 0) = 0 " & vbCrLf
+ 11633: S = S & "         AND ISNULL(Transactions.OtherItems, 0) = 0 " & vbCrLf
+ 11634: 'S = S & "         AND ISNULL(Transactions.InstallmentService, 0) = 0 " & vbCrLf
+ 11635: S = S & "         AND ISNULL(HaveSerial, 0) = 0)" & vbCrLf
+ 11636: 
+ 11637: S = S & "    ,CountCards = (SELECT COUNT(*) AS mCount " & vbCrLf
+ 11638: S = S & "         FROM Transactions " & vbCrLf
+ 11639: S = S & "         WHERE Transaction_Date BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & " " & vbCrLf
+ 11640: S = S & "         AND Transaction_Type IN (21) " & vbCrLf
+ 11641: S = S & "         AND BranchId = TblBranchesData.branch_id " & vbCrLf
+ 11642: S = S & "         AND ISNULL(VisaNumber, '') <> '' " & vbCrLf
+ 11643: S = S & "         AND ISNULL(IsWallet, 0) = 0 " & vbCrLf
+ 11644: S = S & "         AND ISNULL(Transactions.HaveGuarantee, 0) = 0   )"
+ 11645: 
+ 11646: 
+ 11647: 'S = S & "            ,CountCashOut = (SELECT"
+ 11648: 'S = S & "                     COUNT(*) AS mCount"
+ 11649: 'S = S & "                 From transactions"
+ 11650: 'S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11651: 'S = S & "                 AND Transaction_Type IN (21)"
+ 11652: 'S = S & "                 AND BranchId = TblBranchesData.branch_id"
+ 11653: '
+ 11654: 'S = S & "                 AND ISNULL(IsWallet, 0) = 1)"
+ 11655: '
+ 11656: 'S = S & "            ,TotalRechargeValue = (SELECT"
+ 11657: 'S = S & "                     SUM(RechargeValue) As mCount"
+ 11658: 'S = S & "                 From transactions"
+ 11659: 'S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11660: 'S = S & "                 AND Transaction_Type IN (21)"
+ 11661: 'S = S & "                 AND BranchId = TblBranchesData.branch_id"
+ 11662: 'S = S & "                 AND ISNULL(RechargeValue, 0) <> 0"
+ 11663: 'S = S & "                 AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0) AND ISNULL(InstallmentService, 0) = 0  and IsNull(Transactions.OtherItems,0) = 0 and IsNull(Transactions.InstallmentService,0) = 0)"
+ 11664: 
+ 11665: S = S & "            ,CountCashOut = (SELECT COUNT(*) AS mCount " & vbCrLf
+ 11666: S = S & "                 FROM transactions " & vbCrLf
+ 11667: S = S & "                 WHERE Transaction_Date BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & vbCrLf
+ 11668: S = S & "                 AND Transaction_Type IN (21) " & vbCrLf
+ 11669: S = S & "                 AND BranchId = TblBranchesData.branch_id " & vbCrLf
+ 11670: S = S & "                 AND ISNULL(IsWallet, 0) = 1" & vbCrLf
+ 11671: S = S & "                 AND ISNULL(Transactions.HaveGuarantee, 0) = 0 " & vbCrLf
+ 11672: S = S & "                 AND ISNULL(Transactions.OtherItems, 0) = 0 " & vbCrLf
+ 11673: S = S & "                 AND ISNULL(Transactions.InstallmentService, 0) = 0)"
+ 11674: 
+ 11675: S = S & "            ,TotalRechargeValue = (SELECT SUM(RechargeValue) AS mCount " & vbCrLf
+ 11676: S = S & "                 FROM transactions " & vbCrLf
+ 11677: S = S & "                 WHERE Transaction_Date BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & vbCrLf
+ 11678: S = S & "                 AND Transaction_Type IN (21) " & vbCrLf
+ 11679: S = S & "                 AND BranchId = TblBranchesData.branch_id " & vbCrLf
+ 11680: S = S & "                 AND ISNULL(RechargeValue, 0) <> 0 " & vbCrLf
+ 11681: S = S & "                 AND ISNULL(IsWallet, 0) = 0 " & vbCrLf
+ 11682: S = S & "                 AND ISNULL(Transactions.HaveGuarantee, 0) = 0 " & vbCrLf
+ 11683: S = S & "                 AND ISNULL(Transactions.OtherItems, 0) = 0 " & vbCrLf
+ 11684: 'S = S & "                 AND ISNULL(Transactions.InstallmentService, 0) = 0"
+ 11685: S = S & " )"
+ 11686: 
+ 11687: 'S = S & "            ,TotalVat = (SELECT"
+ 11688: 'S = S & "                     SUM(Vat) As mCount"
+ 11689: 'S = S & "                 From transactions"
+ 11690: 'S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11691: 'S = S & "                 AND Transaction_Type IN (21)"
+ 11692: 'S = S & "                 AND BranchId = TblBranchesData.branch_id"
+ 11693: 'S = S & "                 AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0  and IsNull(Transactions.OtherItems,0) = 0 and IsNull(Transactions.InstallmentService,0) = 0)"
+ 11694: 'S = S & "            ,mTotalSalCard = (SELECT"
+ 11695: 'S = S & "                     SUM(Transaction_Details.Price) As PP"
+ 11696: 'S = S & "                 From Transaction_Details"
+ 11697: 'S = S & "                 INNER JOIN Transactions"
+ 11698: 'S = S & "                     ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 11699: 'S = S & "                 INNER JOIN TblItems"
+ 11700: 'S = S & "                     ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 11701: 'S = S & "                 Where TblItems.ItemType = 0"
+ 11702: 'S = S & "                 AND Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11703: 'S = S & "                 AND Transaction_Type IN (21)"
+ 11704: 'S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 11705: 'S = S & "                 AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0"
+ 11706: '
+ 11707: 'S = S & "                 AND ISNULL(HaveSerial, 0) = 1)"
+ 11708: 
+ 11709: S = S & "            ,TotalVat = (SELECT SUM(Vat) AS mCount " & vbCrLf
+ 11710: S = S & "                 FROM transactions " & vbCrLf
+ 11711: S = S & "                 WHERE Transaction_Date BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & vbCrLf
+ 11712: S = S & "                 AND Transaction_Type IN (21) " & vbCrLf
+ 11713: S = S & "                 AND BranchId = TblBranchesData.branch_id " & vbCrLf
+ 11714: S = S & "                 AND ISNULL(IsWallet, 0) = 0 " & vbCrLf
+ 11715: S = S & "                 AND ISNULL(Transactions.HaveGuarantee, 0) = 0 " & vbCrLf
+ 11716: S = S & "                 AND ISNULL(Transactions.OtherItems, 0) = 0 " & vbCrLf
+ 11717: S = S & "                 )" & vbCrLf
+ 11718: 
+ 11719: S = S & "            ,mTotalSalCard = (SELECT SUM(Transaction_Details.Price) AS PP " & vbCrLf
+ 11720: S = S & "                 FROM Transaction_Details " & vbCrLf
+ 11721: S = S & "                 INNER JOIN Transactions " & vbCrLf
+ 11722: S = S & "                     ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID " & vbCrLf
+ 11723: S = S & "                 INNER JOIN TblItems " & vbCrLf
+ 11724: S = S & "                     ON Transaction_Details.Item_ID = TblItems.ItemID " & vbCrLf
+ 11725: S = S & "                 WHERE TblItems.ItemType = 0 " & vbCrLf
+ 11726: S = S & "                 AND Transactions.Transaction_Date BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & vbCrLf
+ 11727: S = S & "                 AND Transaction_Type IN (21) " & vbCrLf
+ 11728: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id " & vbCrLf
+ 11729: S = S & "                 AND ISNULL(IsWallet, 0) = 0 " & vbCrLf
+ 11730: S = S & "                 AND ISNULL(Transactions.HaveGuarantee, 0) = 0 " & vbCrLf
+ 11731: S = S & "                 AND ISNULL(HaveSerial, 0) = 1)"
+ 11732: '
+ 11733: 'S = S & "            ,TotalRev2 = (SELECT"
+ 11734: 'S = S & "                     SUM(Transaction_Details.Price) As PP"
+ 11735: 'S = S & "                 From Transaction_Details"
+ 11736: 'S = S & "                 INNER JOIN Transactions"
+ 11737: 'S = S & "                     ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 11738: 'S = S & "                 INNER JOIN TblItems"
+ 11739: 'S = S & "                     ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 11740: 'S = S & "                 WHERE Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11741: 'S = S & "                 AND Transaction_Type IN (21)"
+ 11742: 'S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 11743: 'S = S & "                 AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0  and IsNull(Transactions.OtherItems,0) = 0 and IsNull(Transactions.InstallmentService,0) = 0"
+ 11744: '
+ 11745: 'S = S & "                 AND ISNULL(HaveSerial, 0) = 0)"
+ 11746: '
+ 11747: 'S = S & "            ,TotalRevVat = (SELECT"
+ 11748: 'S = S & "                     SUM(Transaction_Details.Vat) As PP2"
+ 11749: 'S = S & "                 From Transaction_Details"
+ 11750: 'S = S & "                 INNER JOIN Transactions"
+ 11751: 'S = S & "                     ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 11752: 'S = S & "                 INNER JOIN TblItems"
+ 11753: 'S = S & "                     ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 11754: 'S = S & "                 WHERE Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11755: 'S = S & "                 AND Transaction_Type IN (21)"
+ 11756: 'S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 11757: 'S = S & "                 AND ISNULL(IsWallet, 0) = 0  and IsNull(Transactions.HaveGuarantee,0) = 0  and IsNull(Transactions.OtherItems,0) = 0 and IsNull(Transactions.InstallmentService,0) = 0"
+ 11758: '
+ 11759: 'S = S & "                 AND ISNULL(HaveSerial, 0) = 0)"
+ 11760: 
+ 11761: S = S & "            ,TotalRev2 = (SELECT SUM(Transaction_Details.Price) AS PP " & vbCrLf
+ 11762: S = S & "                 FROM Transaction_Details " & vbCrLf
+ 11763: S = S & "                 INNER JOIN Transactions " & vbCrLf
+ 11764: S = S & "                     ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID " & vbCrLf
+ 11765: S = S & "                 INNER JOIN TblItems " & vbCrLf
+ 11766: S = S & "                     ON Transaction_Details.Item_ID = TblItems.ItemID " & vbCrLf
+ 11767: S = S & "                 WHERE Transactions.Transaction_Date BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & vbCrLf
+ 11768: S = S & "                 AND Transaction_Type IN (21) " & vbCrLf
+ 11769: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id " & vbCrLf
+ 11770: S = S & "                 AND ISNULL(IsWallet, 0) = 0 " & vbCrLf
+ 11771: S = S & "                 AND ISNULL(Transactions.HaveGuarantee, 0) = 0 " & vbCrLf
+ 11772: S = S & "                 AND ISNULL(Transactions.OtherItems, 0) = 0 " & vbCrLf
+ 11773: S = S & "                  " & vbCrLf
+ 11774: S = S & "                 AND ISNULL(HaveSerial, 0) = 0)" & vbCrLf
+ 11775: 
+ 11776: S = S & "            ,TotalRevVat = (SELECT SUM(Transaction_Details.Vat) AS PP2 " & vbCrLf
+ 11777: S = S & "                 FROM Transaction_Details " & vbCrLf
+ 11778: S = S & "                 INNER JOIN Transactions " & vbCrLf
+ 11779: S = S & "                     ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID " & vbCrLf
+ 11780: S = S & "                 INNER JOIN TblItems " & vbCrLf
+ 11781: S = S & "                     ON Transaction_Details.Item_ID = TblItems.ItemID " & vbCrLf
+ 11782: S = S & "                 WHERE Transactions.Transaction_Date BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & vbCrLf
+ 11783: S = S & "                 AND Transaction_Type IN (21) " & vbCrLf
+ 11784: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id " & vbCrLf
+ 11785: S = S & "                 AND ISNULL(IsWallet, 0) = 0 " & vbCrLf
+ 11786: S = S & "                 AND ISNULL(Transactions.HaveGuarantee, 0) = 0 " & vbCrLf
+ 11787: S = S & "                 AND ISNULL(Transactions.OtherItems, 0) = 0 " & vbCrLf
+ 11788: S = S & "                  " & vbCrLf
+ 11789: S = S & "                 AND ISNULL(HaveSerial, 0) = 0)"
+ 11790: 
+ 11791: 
+ 11792: S = S & "            ,CashOut = (SELECT"
+ 11793: S = S & "                     SUM(Transaction_NetValue) As mCount"
+ 11794: S = S & "                 From transactions"
+ 11795: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11796: S = S & "                 AND Transaction_Type IN (21)"
+ 11797: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 11798: S = S & "                 AND ISNULL(IsWallet, 0) = 1 AND IsNull(transactions.HaveGuarantee,0) = 0 and IsNull(transactions.OtherItems,0) = 0 and  IsNull(transactions.InstallmentService,0) = 0)"
+ 11799: 
+ 11800: S = S & "            ,CashOutTotal = (SELECT"
+ 11801: S = S & "                     SUM(RechargeValue) As mCount"
+ 11802: S = S & "                 From transactions"
+ 11803: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11804: S = S & "                 AND Transaction_Type IN (21)"
+ 11805: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 11806: S = S & "                 AND ISNULL(IsWallet, 0) = 1    AND IsNull(transactions.HaveGuarantee,0) = 0 and IsNull(transactions.OtherItems,0) = 0 and  IsNull(transactions.InstallmentService,0) = 0)"
+ 11807: 
+ 11808: 
+ 11809: S = S & "            ,InstallmentTotal = (SELECT"
+ 11810: S = S & "                     SUM(RechargeValue + Isnull(AmountLimit,0) + Isnull(RatioAMount,0)) As mCount"
+ 11811: S = S & "                 From transactions"
+ 11812: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11813: S = S & "                 AND Transaction_Type IN (21)"
+ 11814: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 11815: S = S & "                 AND ISNULL(InstallmentService, 0) = 1)"
+ 11816: 
+ 11817: S = S & "            ,CountInstallment = (SELECT"
+ 11818: S = S & "                     COUNT(*) AS mCount"
+ 11819: S = S & "                 From transactions"
+ 11820: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11821: S = S & "                 AND Transaction_Type IN (21)"
+ 11822: S = S & "                 AND BranchId = TblBranchesData.branch_id"
+ 11823: 
+ 11824: S = S & "                 AND ISNULL(InstallmentService, 0) = 1)"
+ 11825: 
+ 11826: 
+ 11827: 
+ 11828: 's = s & "            ,CashOutDisc = (SELECT"
+ 11829: '
+ 11830: '
+ 11831: '
+ 11832: '
+ 11833: 's = s & "                     SUM(RechargeValue) + SUM(Transaction_NetValue) "
+ 11834: 's = s & " * CASE "
+ 11835: 's = s & "                            WHEN Transaction_Date > '2024-08-25' THEN 0.008"
+ 11836: 's = s & "                            ELSE 0.01"
+ 11837: 's = s & "                        END AS mCount"
+ 11838: '
+ 11839: 'S = S & "            ,CashOutDisc = (SELECT "
+ 11840: 'S = S & "                     SUM((RechargeValue + Transaction_NetValue) * "
+ 11841: 'S = S & "                            CASE "
+ 11842: 'S = S & "                                WHEN Transaction_Date > '2024-08-25' THEN 0.008 "
+ 11843: 'S = S & "                                ELSE 0.01 "
+ 11844: 'S = S & "                            END) AS mCount "
+ 11845: 
+ 11846: 
+ 11847: 
+ 11848: 'S = S & " ,CashOutDisc = (SELECT "
+ 11849: 'S = S & "     SUM((RechargeValue + Transaction_NetValue) * "
+ 11850: 'S = S & "         CASE "
+ 11851: 'S = S & "             WHEN Transaction_Date > '2025-07-21' THEN cost "
+ 11852: 'S = S & "             WHEN Transaction_Date > '2024-08-25' THEN 0.008 "
+ 11853: 'S = S & "             ELSE 0.01 "
+ 11854: 'S = S & "         END)  AS mCount "
+ 11855: 
+ 11856: S = S & " ,CashOutDisc = (SELECT "
+ 11857: S = S & "     SUM( "
+ 11858: S = S & "         CASE "
+ 11859: S = S & "             WHEN Transaction_Date > '2025-06-30' THEN ISNULL(cost,0) - ISNULL(CashBack,0) "
+ 11860: S = S & "             WHEN Transaction_Date > '2024-08-25' THEN (RechargeValue + Transaction_NetValue) * 0.008 "
+ 11861: S = S & "             ELSE (RechargeValue + Transaction_NetValue) * 0.01 "
+ 11862: S = S & "         END "
+ 11863: S = S & "     ) AS mCount "
+ 11864: 
+ 11865: 
+ 11866: S = S & "                 From transactions"
+ 11867: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11868: S = S & "                 AND Transaction_Type IN (21)"
+ 11869: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 11870: S = S & "                 AND ISNULL(IsWallet, 0) = 1 AND IsNull(transactions.HaveGuarantee,0) = 0 and IsNull(transactions.OtherItems,0) = 0 and  IsNull(transactions.InstallmentService,0) = 0)"
+ 11871: S = S & "            ,TotalRevSS = (SELECT"
+ 11872: S = S & "                     SUM(Transaction_NetValue) As mCount"
+ 11873: S = S & "                 From transactions"
+ 11874: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11875: S = S & "                 AND Transaction_Type IN (21)"
+ 11876: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 11877: S = S & "                 AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0   and IsNull(Transactions.OtherItems,0) = 0 and IsNull(Transactions.InstallmentService,0) = 0)"
+ 11878: 
+ 11879: 
+ 11880:      
+ 11881: 
+ 11882: S = S & "            ,NetPOS = (SELECT" & vbCrLf
+ 11883: S = S & "                     SUM(RechargeValue) As mCount" & vbCrLf
+ 11884: S = S & "                 From transactions" & vbCrLf
+ 11885: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & "" & vbCrLf
+ 11886: S = S & "                 AND Transaction_Type IN (21)" & vbCrLf
+ 11887: S = S & "                 AND BranchId = TblBranchesData.branch_id" & vbCrLf
+ 11888: S = S & "                 AND ISNULL(RechargeValue, 0) <> 0" & vbCrLf
+ 11889: S = S & "                 AND IsNull(HaveGuarantee,0) = 1)" & vbCrLf
+ 11890: 
+ 11891: S = S & "            ,TotalRevPOS = (SELECT" & vbCrLf
+ 11892: S = S & "                     SUM(Transaction_NetValue) As mCount" & vbCrLf
+ 11893: S = S & "                 From transactions" & vbCrLf
+ 11894: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & "" & vbCrLf
+ 11895: S = S & "                 AND Transaction_Type IN (21)" & vbCrLf
+ 11896: S = S & "                 AND BranchId = TblBranchesData.branch_id" & vbCrLf
+ 11897: S = S & "                 AND ISNULL(Transaction_NetValue, 0) <> 0" & vbCrLf
+ 11898: S = S & "                 AND IsNull(HaveGuarantee,0) = 1 AND IsNull(transactions.OtherItems,0) = 0 and  IsNull(transactions.InstallmentService,0) = 0)" & vbCrLf
+ 11899: 
+ 11900:    
+ 11901:    S = S & "            ,CountPOS = (SELECT"
+ 11902: S = S & "                     COUNT(*) AS mCount"
+ 11903: S = S & "                 From transactions"
+ 11904: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11905: S = S & "                 AND Transaction_Type IN (21)"
+ 11906: S = S & "                 AND BranchId = TblBranchesData.branch_id"
+ 11907: 
+ 11908: S = S & "                 AND IsNull(HaveGuarantee,0) = 1 and IsNull(transactions.OtherItems,0) = 0 and  IsNull(transactions.InstallmentService,0) = 0)"
+ 11909: 
+ 11910: 
+ 11911: 
+ 11912: S = S & "            ,TotalTawki3y = (SELECT" & vbCrLf
+ 11913: S = S & "                     SUM(Transaction_NetValue) As mCount" & vbCrLf
+ 11914: S = S & "                 From transactions" & vbCrLf
+ 11915: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & "" & vbCrLf
+ 11916: S = S & "                 AND Transaction_Type IN (21)" & vbCrLf
+ 11917: S = S & "                 AND BranchId = TblBranchesData.branch_id" & vbCrLf
+ 11918: S = S & "                 AND ISNULL(Transaction_NetValue, 0) <> 0" & vbCrLf
+ 11919: S = S & "                 AND IsNull(OtherItems,0) = 1)" & vbCrLf
+ 11920: 
+ 11921: 
+ 11922:    S = S & "            ,CountTawki3y = (SELECT"
+ 11923: S = S & "                     COUNT(*) AS mCount"
+ 11924: S = S & "                 From transactions"
+ 11925: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 11926: S = S & "                 AND Transaction_Type IN (21)"
+ 11927: S = S & "                 AND BranchId = TblBranchesData.branch_id"
+ 11928: 
+ 11929: S = S & "                 AND IsNull(OtherItems,0) = 1)"
+ 11930: 
+ 11931: 
+ 11932: 
+ 11933: 
+ 11934: 
+ 11935: S = S & "         From TblBranchesData"
+ 11936: 'If SystemOptions.IsReadOnly Then
+ 11937: '    S = S & "        Where 1 = 1 "
+ 11938: 'Else
+ 11939:     S = S & "        Where TblBranchesData.branch_id in(" & Current_branchSql2 & ")"
+ 11940: 'End If
+ 11941: 
+ 11942: S = S & "         ) t"
+ 11943:       
+ 11944:      
+ 11945:   
+ 11946:   
+ 11947:   
+ 11948:   
+ 11949:   
+ 11950:  
+ 11951:  '              txtBankBalcne = GetAccountBalance("110102005", txtDate.value, DateAdd("D", -1, txtDate.value), mBranchID)
+ 11952:                
+ 11953:  '              txtBankBalanceCharge = GetAccountBalance("410101006", txtDate.value, DateAdd("D", -1, txtDate.value), mBranchID, True)
+ 11954:  
+ 11955: '---------------------------
+ 11956:         
+ 11957:         
+ 11958:         
+ 11959:         
+ 11960:  
+ 11961: 
+ 11962:         
+ 11963:         
+ 11964:     If Option1(0).value = True Then
+ 11965:         StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "CloseReprotTotalFast.rpt"
+ 11966:     ElseIf Option1(1).value = True Then
+ 11967:         StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "CloseReprotTotalByDay.rpt"
+ 11968:     ElseIf Option1(2).value = True Then
+ 11969:         StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "CloseReprotTotal.rpt"
+ 11970:     End If
+ 11971:         
+ 11972:        StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "CloseReprotTotal.rpt"
+ 11973:     If Dir(StrFileName) = "" Then
+ 11974:         'GetMsgs 139, vbExclamation
+ 11975:         Screen.MousePointer = vbDefault
+ 11976:         Exit Sub
+ 11977:     End If
+ 11978: 
+ 11979: '    Set RsData = New ADODB.Recordset
+ 11980: '    RsData.Open S, Cn, adOpenStatic, adLockReadOnly, adCmdText
+ 11981: 
+ 11982: '    If RsData.BOF Or RsData.EOF Then
+ 11983: '        'GetMsgs 138, vbExclamation
+ 11984: '        If SystemOptions.UserInterface = ArabicInterface Then
+ 11985: '        Msg = "لاتوجد بيانات للعرض"
+ 11986: '        Else
+ 11987: '        Msg = "No Data"
+ 11988: '        End If
+ 11989: '        MsgBox Msg, vbExclamation + vbMsgBoxRight + vbMsgBoxRtlReading, App.title
+ 11990: '        RsData.Close
+ 11991: '        Set RsData = Nothing
+ 11992: '        Screen.MousePointer = vbDefault
+ 11993: '        Exit Sub
+ 11994: '    End If
+ 11995: 
+ 11996: 
+ 11997: Dim Cmd As New ADODB.Command
+ 11998: Set Cmd.ActiveConnection = Cn
+ 11999: Cmd.CommandType = adCmdStoredProc
+ 12000: Cmd.CommandText = "dbo.RPT_CloseReportTotal_VB"
+ 12001: 
+ 12002: Cmd.Parameters.Append Cmd.CreateParameter("@FromDate", adDate, adParamInput, , txtFromDate.value)
+ 12003: Cmd.Parameters.Append Cmd.CreateParameter("@ToDate", adDate, adParamInput, , txtToDate.value)
+ 12004: Cmd.Parameters.Append Cmd.CreateParameter("@UserId", adInteger, adParamInput, , val(user_id))
+ 12005: 
+ 12006: Set RsData = Cmd.Execute
+ 12007: 
+ 12008:     Screen.MousePointer = vbArrowHourglass
+ 12009:     Set xReport = xApp.OpenReport(StrFileName)
+ 12010:     xReport.Database.SetDataSource RsData
+ 12011: 
+ 12012:     Dim cCompanyInfo As New ClsCompanyInfo
+ 12013:     
+ 12014:     
+ 12015:     xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 12016:     xReport.ParameterFields(5).AddCurrentValue DcbranchID.Text   'RPTCompany_Name_Arabic
+ 12017: '    xReport.ParameterFields(13).AddCurrentValue CStr(txtDate.value)    'RPTCompany_Name_Arabic
+ 12018:     xReport.ParameterFields(8).AddCurrentValue txtFromDate.value
+ 12019:     xReport.ParameterFields(10).AddCurrentValue txtToDate.value
+ 12020: '    xReport.ParameterFields(10).AddCurrentValue val(txtTotalRechargeValue.Text)   'RPTCompany_Name_Arabic
+ 12021: '    xReport.ParameterFields(11).AddCurrentValue val(txtTotalRev.Text)   'RPTCompany_Name_Arabic
+ 12022: '    xReport.ParameterFields(12).AddCurrentValue val(txtNet.Text)   'RPTCompany_Name_Arabic
+ 12023: '   ' xReport.ParameterFields(13).AddCurrentValue Trim(user_name)
+ 12024: '    xReport.ParameterFields(13).AddCurrentValue Trim(user_name)
+ 12025: '    xReport.ParameterFields(15).AddCurrentValue Trim(txtActValue.Text)   'RPTCompany_Name_Arabic
+ 12026: 
+ 12027: 'xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 12028: 'xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 12029:     
+ 12030:     
+ 12031:     If SystemOptions.UserInterface = ArabicInterface Then
+ 12032: 
+ 12033:          
+ 12034:     xReport.reporttitle = StrReportTitle
+ 12035:     xReport.EnableParameterPrompting = False
+ 12036:     xReport.ApplicationName = App.title
+ 12037:     xReport.ReportAuthor = App.title
+ 12038:     End If
+ 12039:     Set CViewer = New ClsReportViewer
+ 12040:     CViewer.FireReport xReport, WindowTarget, "", , , , StrFileName, , S
+ 12041:     
+ 12042:     RsData.Close
+ 12043:     Set RsData = Nothing
+ 12044:     Screen.MousePointer = vbDefault
+ 12045: End Sub
+ 12046: 
+ 12047: 
+ 12048: 
+ 12049: 

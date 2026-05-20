@@ -1,0 +1,1675 @@
+﻿  9735: Private Sub Command15_Click()
+  9736: 
+  9737: 
+  9738:     On Error GoTo EH
+  9739: 
+  9740:     Dim RsData As New ADODB.Recordset
+  9741:     Dim xApp As New CRAXDRT.Application
+  9742:     Dim xReport As CRAXDRT.Report
+  9743:     Dim CViewer As ClsReportViewer
+  9744:     Dim StrReportTitle As String
+  9745:     Dim StrFileName As String
+  9746:     Dim Msg As String
+  9747:     Dim rsDummy As New ADODB.Recordset
+  9748:     Dim RsTrans As New ADODB.Recordset
+  9749:     Dim cCompanyInfo As New ClsCompanyInfo
+  9750: 
+  9751:     Dim Current_branchSql2 As String
+  9752:     Dim StrAccountCodeCridet As String ' POS account per branch mapping
+  9753:     Dim BankChargeAccountCode As String
+  9754:     Dim BranchCsv As String
+  9755: 
+  9756:     Screen.MousePointer = vbArrowHourglass
+  9757: 
+  9758:     '==================== نفس منطقك لاستخراج فروع المستخدم ====================
+  9759:     Current_branchSql2 = "SELECT BranchID FROM dbo.TblUsersBranches " & _
+  9760:                          "WHERE (UserID = " & val(user_id) & ") " & _
+  9761:                          "AND BranchID IN (" & _
+  9762:                          "    SELECT branch_id " & _
+  9763:                          "    FROM TblBranchesData " & _
+  9764:                          "    WHERE (IsNull(isStoped, 0) = 0 OR IsNull(IsStopedDate, '9999-12-31') > " & SQLDate(txtFromDate.value, True) & ")" & _
+  9765:                          ")"
+  9766: 
+  9767:     'حوّل نتيجة الاستعلام لقائمة CSV علشان نمرّرها للـSP
+  9768:     BranchCsv = GetCsvFromQuery(Cn, Current_branchSql2)  ' مثال: "1,2,3"
+  9769:     'لو هتسمح لكل الفروع اللي لها حركات: خليه = "" أو vbNullString
+  9770:     'If Len(BranchCsv) = 0 Then BranchCsv = vbNullString
+  9771: 
+  9772:     '==================== تأكيد إغلاق الـPOS لليوم (نفس منطقك) ====================
+  9773:     Dim SCheck As String
+  9774:     SCheck = "Select BranchId from TBLClosePos Where OrderDate = " & SQLDate(txtDate.value, True)
+  9775:     RsTrans.Open SCheck, Cn, adOpenKeyset, adLockOptimistic
+  9776:     If RsTrans.EOF Then cmdRefreshBox_Click
+  9777:     RsTrans.Close
+  9778: 
+  9779:     '==================== اختار ملف التقرير ====================
+  9780:     If Option1(0).value = True Then
+  9781:         StrFileName = App.path & "\REPORTS\REPORTS NEW\CloseReprotTotalFast.rpt"
+  9782:     ElseIf Option1(1).value = True Then
+  9783:         StrFileName = App.path & "\REPORTS\REPORTS NEW\CloseReprotTotalByDay.rpt"
+  9784:     ElseIf Option1(2).value = True Then
+  9785:         StrFileName = App.path & "\REPORTS\REPORTS NEW\CloseReprotTotal.rpt"
+  9786:     End If
+  9787:     ' إجبارياً على الملف ده زي ما بتعمل:
+  9788:     StrFileName = App.path & "\REPORTS\REPORTS NEW\CloseReprotTotal2FastWithDisc.rpt"
+  9789:     If Dir(StrFileName) = "" Then
+  9790:         Screen.MousePointer = vbDefault
+  9791:         Exit Sub
+  9792:     End If
+  9793: 
+  9794:     '==================== جهّز باراميترات الـSP ====================
+  9795:     StrAccountCodeCridet = get_account_code_branch(217, my_branch) ' POS account
+  9796:     BankChargeAccountCode = "a3a1a1a1a6"                            ' زوّدها من إعداداتك لو محتاج
+  9797: 
+  9798:     Dim Cmd As New ADODB.Command
+  9799:     With Cmd
+  9800:         .ActiveConnection = Cn
+  9801:         .CommandText = "dbo.BranchDailyRollup_Parity"
+  9802:         .CommandType = adCmdStoredProc
+  9803: 
+  9804:         ' @FromDate, @ToDate
+  9805:         AddParam Cmd, "@FromDate", adDBTimeStamp, adParamInput, 16, CDate(txtFromDate.value)
+  9806:         AddParam Cmd, "@ToDate", adDBTimeStamp, adParamInput, 16, CDate(txtToDate.value)
+  9807: 
+  9808:         ' @PosAccountCode, @BankChargeAccountCode
+  9809:         AddParam Cmd, "@PosAccountCode", adVarWChar, adParamInput, 50, Trim$(StrAccountCodeCridet)
+  9810:         AddParam Cmd, "@BankChargeAccountCode", adVarWChar, adParamInput, 50, Trim$(BankChargeAccountCode)
+  9811: 
+  9812:         ' @P_BranchList (CSV أو NULL)
+  9813:         If Len(Trim$(BranchCsv)) > 0 Then
+  9814:             AddParam Cmd, "@P_BranchList", adLongVarWChar, adParamInput, Len(BranchCsv), BranchCsv
+  9815:         Else
+  9816:             'مرّر NULL علشان الـSP يجيب كل الفروع اللي لها حركات
+  9817:             Dim p As ADODB.Parameter
+  9818:             Set p = .CreateParameter("@P_BranchList", adLongVarWChar, adParamInput, 0, Null)
+  9819:             .Parameters.Append p
+  9820:         End If
+  9821:     End With
+  9822: 
+  9823:     '==================== نفّذ الـSP ويرجع Recordset مباشرة ====================
+  9824:     RsData.CursorLocation = adUseClient
+  9825:     RsData.Open Cmd, , adOpenStatic, adLockReadOnly
+  9826: 
+  9827:     '==================== إعدادات التقرير ====================
+  9828:     Set xReport = xApp.OpenReport(StrFileName)
+  9829:     xReport.Database.SetDataSource RsData
+  9830: 
+  9831:     xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName
+  9832:     xReport.ParameterFields(5).AddCurrentValue DcbranchID.Text
+  9833:     xReport.ParameterFields(8).AddCurrentValue txtFromDate.value
+  9834:     xReport.ParameterFields(10).AddCurrentValue txtToDate.value
+  9835: 
+  9836:     ' أمثلة القيم البنكية زي ما كان في كودك (لو لسه محتاجها):
+  9837:     Dim FirstPeriodDateInthisYear As Date
+  9838:     Dim Balance As Double
+  9839:     getFirstPeriodDateInthisYear FirstPeriodDateInthisYear
+  9840:     Balance = GetActualAccountBalance("a1a2a1a2a5", , FirstPeriodDateInthisYear, txtToDate.value)
+  9841: 
+  9842:     ' تجميعة أرصدة البنوك (نفس منطقك القديم)
+  9843:     Dim S As String
+  9844:     S = " Select * from ACCOUNTS where Account_Code in (Select BanksData.Account_Code from tblUsers inner join BanksData On BanksData.BankID = tblUsers.BankID" & _
+  9845:         " where TblUsers.UserID In (Select userid from Transactions where Transaction_Type in (9,21)) GROUP BY BanksData.Account_Code)"
+  9846: 
+  9847:     rsDummy.Open S, Cn, adOpenStatic, adLockReadOnly
+  9848: 
+  9849:     Dim i As Long
+  9850:     i = 0
+  9851:     Do While Not rsDummy.EOF
+  9852:         txtBankBalcne(i) = GetAccountBalance(Trim(rsDummy!account_serial & ""), txtDate.value, DateAdd("D", -1, txtDate.value), , , True)
+  9853:         rsDummy.MoveNext
+  9854:         i = i + 1
+  9855:     Loop
+  9856: 
+  9857:     Dim StrAccountCodeDebt As String
+  9858:     StrAccountCodeDebt = get_account_code_branch(217, my_branch)
+  9859:     xReport.ParameterFields(16).AddCurrentValue val(GetAccountBalance("", txtDate.value, DateAdd("D", -1, txtDate.value), , , True, , Trim(StrAccountCodeDebt)))
+  9860: 
+  9861:     xReport.ParameterFields(14).AddCurrentValue val(txtBankBalcne(0))
+  9862:     xReport.ParameterFields(15).AddCurrentValue val(txtBankBalcne(1))
+  9863: 
+  9864:     If SystemOptions.UserInterface = ArabicInterface Then
+  9865:         xReport.reporttitle = StrReportTitle
+  9866:         xReport.EnableParameterPrompting = False
+  9867:         xReport.ApplicationName = App.title
+  9868:         xReport.ReportAuthor = App.title
+  9869:     End If
+  9870: 
+  9871:     Set CViewer = New ClsReportViewer
+  9872:     CViewer.FireReport xReport, WindowTarget, "", , , , StrFileName, , ""   ' آخر S كانت SQL؛ بقت فاضية لأننا استخدمنا SP
+  9873: 
+  9874:     rsDummy.Close
+  9875:     RsData.Close
+  9876:     Set rsDummy = Nothing
+  9877:     Set RsData = Nothing
+  9878: 
+  9879:     Screen.MousePointer = vbDefault
+  9880:     Exit Sub
+  9881: 
+  9882: EH:
+  9883:     Screen.MousePointer = vbDefault
+  9884:     MsgBox "Error: " & Err.Description, vbExclamation, App.title
+  9885: 
+  9886: 
+  9887: End Sub
+  9888: 
+  9889: Private Sub Command16_Click()
+  9890: 
+  9891: 
+  9892:     On Error GoTo EH
+  9893: 
+  9894:     Dim RsData As ADODB.Recordset
+  9895:     Dim Cmd    As ADODB.Command
+  9896: 
+  9897:     Dim xApp    As CRAXDRT.Application
+  9898:     Dim xReport As CRAXDRT.Report
+  9899:     Dim CViewer As ClsReportViewer
+  9900:     Dim StrFileName As String
+  9901: 
+  9902:     '====[ 1) جهّز Command للستورد ]====
+  9903:     Set Cmd = New ADODB.Command
+  9904:     Set Cmd.ActiveConnection = Cn                 ' نفس Connection المفتوح عندك
+  9905:     Cmd.CommandType = adCmdStoredProc
+  9906:     Cmd.CommandText = "dbo.DiscountDetails_Report"
+  9907: 
+  9908:     ' FromDate
+  9909:     Cmd.Parameters.Append Cmd.CreateParameter("@FromDate", adDBTimeStamp, adParamInput, , CDate(txtFromDate.value))
+  9910:     ' ToDate
+  9911:     Cmd.Parameters.Append Cmd.CreateParameter("@ToDate", adDBTimeStamp, adParamInput, , CDate(txtToDate.value))
+  9912:     ' BranchList CSV (NVARCHAR(MAX)) - ابعث Null لو فاضية
+  9913:     Dim pBranch As ADODB.Parameter
+  9914:     Set pBranch = Cmd.CreateParameter("@P_BranchList", adVarWChar, adParamInput, 4000)
+  9915: '    If Trim$(txtBranchList.Text) = "" Then
+  9916: '        pBranch.value = Null
+  9917: '    Else
+  9918: '        pBranch.value = Trim$(txtBranchList.Text)   ' مثال: "1,2,3"
+  9919: '    End If
+  9920:     Cmd.Parameters.Append pBranch
+  9921: 
+  9922:     '====[ 2) نفّذ وخد Recordset ثابت للـReport ]====
+  9923:     Set RsData = New ADODB.Recordset
+  9924:     RsData.CursorLocation = adUseClient
+  9925:     RsData.Open Cmd, , adOpenStatic, adLockReadOnly    ' مهم Static/ReadOnly
+  9926: 
+  9927:     '====[ 3) افتح تقرير كريستال ومرّر الـDataSource ]====
+  9928:     StrFileName = App.path & "\REPORTS\REPORTS NEW\CloseReprotTotalWithDiscDet.rpt"
+  9929:     If Dir$(StrFileName) = "" Then
+  9930:         MsgBox "لم يتم العثور على ملف التقرير: " & StrFileName, vbExclamation
+  9931:         GoTo CleanUp
+  9932:     End If
+  9933: 
+  9934:     Set xApp = New CRAXDRT.Application
+  9935:     Set xReport = xApp.OpenReport(StrFileName)
+  9936:     xReport.Database.SetDataSource RsData
+  9937: 
+  9938:     '====[ 4) مرّر باراميترات العرض (اختياري حسب تقريرك) ]====
+  9939:     ' أمثلة شائعة (بدّل الفهارس/الأسماء حسب تقريرك):
+  9940:     ' xReport.ParameterFields("CompanyName").AddCurrentValue cCompanyInfo.ArabCompanyName
+  9941:     ' xReport.ParameterFields("FromDate").AddCurrentValue txtFromDate.Value
+  9942:     ' xReport.ParameterFields("ToDate").AddCurrentValue   txtToDate.Value
+  9943:     ' xReport.ParameterFields("BranchCsv").AddCurrentValue txtBranchList.Text
+  9944: 
+  9945:     '====[ 5) اعرض التقرير في الفيوور المعتاد ]====
+  9946:     Set CViewer = New ClsReportViewer
+  9947:     CViewer.FireReport xReport, WindowTarget, "", , , , StrFileName, , ""  ' زى القديم
+  9948: 
+  9949: CleanUp:
+  9950:     On Error Resume Next
+  9951:     If Not RsData Is Nothing Then If RsData.State <> adStateClosed Then RsData.Close
+  9952:     Set RsData = Nothing
+  9953:     Set Cmd = Nothing
+  9954:     Exit Sub
+  9955: 
+  9956: EH:
+  9957:     MsgBox "خطأ أثناء عرض تقرير الخصومات: " & vbCrLf & Err.Description, vbCritical
+  9958:     Resume CleanUp
+  9959: End Sub
+  9960: 
+  9961: 
+  9962: 
+  9963: Private Sub Command3_Click()
+  9964:   Dim MySQL As String
+  9965:     Dim RsData As New ADODB.Recordset
+  9966:     Dim xApp As New CRAXDRT.Application
+  9967:     Dim xReport As CRAXDRT.Report
+  9968:     Dim CViewer As ClsReportViewer
+  9969:     Dim StrReportTitle As String
+  9970:     Dim StrFileName As String
+  9971:     Dim Msg As String
+  9972:  
+  9973: '--------------------------------------------------------------------------------------------
+  9974:    Dim Begin As Boolean
+  9975:    Begin = True
+  9976:    
+  9977:     Dim mTableName As String, mTableName2 As String
+  9978:    
+  9979:   
+  9980:     
+  9981:     
+  9982: S = " Select  Transactions.NoteSerial1, DoctorsTypeID,Transactions.SalesRec,tblDoctorsType.Name, Transactions.Transaction_Date,Transactions.Transaction_NetValue,tblDoctorsType.Valuee from Transactions"
+  9983: S = S & " Inner join tblDoctorsType on Transactions.DoctorsTypeID = tblDoctorsType.ID"
+  9984: S = S & " Where 1 = 1"
+  9985: If SystemOptions.usertype = UserAdmin Or SystemOptions.usertype = UserAdminAll Then
+  9986:     S = S & " "
+  9987: Else
+  9988:     S = S & " and  Transactions.UserID  = " & user_id
+  9989: End If
+  9990: 
+  9991: S = S & " and IsNull(IsReturn,0) = 0 "
+  9992:       
+  9993:        
+  9994:     If Not IsNull(txtFromDate.value) Then
+  9995:         If Begin = True Then
+  9996:             S = S + " and dbo.Transactions.Transaction_Date >=" & SQLDate(txtFromDate.value, True) & ""
+  9997:         Else
+  9998:             S = S + " where dbo.Transactions.Transaction_Date >=" & SQLDate(txtFromDate.value, True) & ""
+  9999:             Begin = True
+ 10000:         End If
+ 10001:     End If
+ 10002: 
+ 10003:     If Not IsNull(txtToDate.value) Then
+ 10004:         If Begin = True Then
+ 10005:             S = S + " and dbo.Transactions.Transaction_Date <=" & SQLDate(txtToDate.value, True) & ""
+ 10006:         Else
+ 10007:             S = S + " where dbo.Transactions.Transaction_Date <=" & SQLDate(txtToDate.value, True) & ""
+ 10008:             Begin = True
+ 10009:         End If
+ 10010:     End If
+ 10011: 
+ 10012: 
+ 10013:         StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "SalesManTotal.rpt"
+ 10014:         
+ 10015:     If Option1(0).value = True Then
+ 10016:         StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "SalesManTotal.rpt"
+ 10017:     ElseIf Option1(1).value = True Then
+ 10018:         StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "SalesManTotalByDay.rpt"
+ 10019:     ElseIf Option1(2).value = True Then
+ 10020:         StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "rptTotalCash.rpt"
+ 10021:     End If
+ 10022:         
+ 10023:        
+ 10024:     If Dir(StrFileName) = "" Then
+ 10025:         'GetMsgs 139, vbExclamation
+ 10026:         Screen.MousePointer = vbDefault
+ 10027:         Exit Sub
+ 10028:     End If
+ 10029: 
+ 10030:     Set RsData = New ADODB.Recordset
+ 10031:     RsData.Open S, Cn, adOpenStatic, adLockReadOnly, adCmdText
+ 10032: 
+ 10033: '    If RsData.BOF Or RsData.EOF Then
+ 10034: '        'GetMsgs 138, vbExclamation
+ 10035: '        If SystemOptions.UserInterface = ArabicInterface Then
+ 10036: '        Msg = "لاتوجد بيانات للعرض"
+ 10037: '        Else
+ 10038: '        Msg = "No Data"
+ 10039: '        End If
+ 10040: '        MsgBox Msg, vbExclamation + vbMsgBoxRight + vbMsgBoxRtlReading, App.title
+ 10041: '        RsData.Close
+ 10042: '        Set RsData = Nothing
+ 10043: '        Screen.MousePointer = vbDefault
+ 10044: '        Exit Sub
+ 10045: '    End If
+ 10046: 
+ 10047:     Screen.MousePointer = vbArrowHourglass
+ 10048:     Set xReport = xApp.OpenReport(StrFileName)
+ 10049:     xReport.Database.SetDataSource RsData
+ 10050: 
+ 10051:     Dim cCompanyInfo As New ClsCompanyInfo
+ 10052:     
+ 10053:     
+ 10054:     xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 10055:     xReport.ParameterFields(5).AddCurrentValue DcbranchID.Text   'RPTCompany_Name_Arabic
+ 10056: '    xReport.ParameterFields(13).AddCurrentValue CStr(txtDate.value)    'RPTCompany_Name_Arabic
+ 10057:     xReport.ParameterFields(8).AddCurrentValue txtFromDate.value
+ 10058:     xReport.ParameterFields(10).AddCurrentValue txtToDate.value
+ 10059: '    xReport.ParameterFields(10).AddCurrentValue val(txtTotalRechargeValue.Text)   'RPTCompany_Name_Arabic
+ 10060: '    xReport.ParameterFields(11).AddCurrentValue val(txtTotalRev.Text)   'RPTCompany_Name_Arabic
+ 10061: '    xReport.ParameterFields(12).AddCurrentValue val(txtNet.Text)   'RPTCompany_Name_Arabic
+ 10062: '   ' xReport.ParameterFields(13).AddCurrentValue Trim(user_name)
+ 10063: '    xReport.ParameterFields(13).AddCurrentValue Trim(user_name)
+ 10064: '    xReport.ParameterFields(15).AddCurrentValue Trim(txtActValue.Text)   'RPTCompany_Name_Arabic
+ 10065: 
+ 10066: 'xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 10067: 'xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 10068:     
+ 10069:     
+ 10070:     If SystemOptions.UserInterface = ArabicInterface Then
+ 10071: 
+ 10072:          
+ 10073:     xReport.reporttitle = StrReportTitle
+ 10074:     xReport.EnableParameterPrompting = False
+ 10075:     xReport.ApplicationName = App.title
+ 10076:     xReport.ReportAuthor = App.title
+ 10077:     End If
+ 10078:     Set CViewer = New ClsReportViewer
+ 10079:     CViewer.FireReport xReport, WindowTarget, "", , , , StrFileName, , S
+ 10080:     
+ 10081:     RsData.Close
+ 10082:     Set RsData = Nothing
+ 10083:     Screen.MousePointer = vbDefault
+ 10084: 
+ 10085: End Sub
+ 10086: 
+ 10087: 
+ 10088: Private Sub SaveAccountValue()
+ 10089: Dim MySQL As String
+ 10090:     Dim RsData As New ADODB.Recordset
+ 10091:     Dim xApp As New CRAXDRT.Application
+ 10092:     Dim xReport As CRAXDRT.Report
+ 10093:     Dim CViewer As ClsReportViewer
+ 10094:     Dim StrReportTitle As String
+ 10095:     Dim StrFileName As String
+ 10096:     Dim Msg As String
+ 10097:     Dim rsDummy As New ADODB.Recordset
+ 10098:     Dim RsTrans As New ADODB.Recordset
+ 10099: '--------------------------------------------------------------------------------------------
+ 10100:    Dim Begin As Boolean
+ 10101:    Begin = True
+ 10102:    
+ 10103:    
+ 10104:    
+ 10105:    Dim ii As Long
+ 10106:    Dim i As Long
+ 10107:    i = DateDiff("D", txtFromDate.value, txtToDate.value)
+ 10108:    Dim mDate As Date
+ 10109:     Dim mDate2 As Date
+ 10110:    
+ 10111:     Dim mTableName As String, mTableName2 As String
+ 10112:    
+ 10113:   For i = 1 To ii
+ 10114:         mDate = DateAdd("D", i, txtFromDate.value)
+ 10115:         mDate2 = DateAdd("D", i - 1, txtFromDate.value)
+ 10116:         
+ 10117:         txtDate.value = mDate
+ 10118:         
+ 10119:      '   GetAccountBalance mDate, mDate2, mBranchID
+ 10120:         i = i + 1
+ 10121:   Next
+ 10122:         
+ 10123: 
+ 10124:    
+ 10125:    
+ 10126: End Sub
+ 10127: 
+ 10128: Function GetAccountBalance(ByVal mAccountCode As String, ByVal mDate As Date, ByVal mDate2 As Date, Optional ByVal BranchID As Long = 0, Optional ByVal isDebitOnly As Boolean = False, Optional ByVal isCreditOnly As Boolean = False, Optional ByVal isCreditOrDebit As Boolean = False, Optional ByVal mAccountCode2 As String = "") As Double
+ 10129:         Dim MySQL As String
+ 10130:     Dim RsData As New ADODB.Recordset
+ 10131:     Dim xApp As New CRAXDRT.Application
+ 10132:     Dim xReport As CRAXDRT.Report
+ 10133:     Dim CViewer As ClsReportViewer
+ 10134:     Dim StrReportTitle As String
+ 10135:     Dim StrFileName As String
+ 10136:     Dim Msg As String
+ 10137:     Dim rsDummy As New ADODB.Recordset
+ 10138:     Dim RsTrans As New ADODB.Recordset
+ 10139: 
+ 10140:         '
+ 10141:         
+ 10142:         
+ 10143:         MySQL = " Select last_account,"
+ 10144:         MySQL = MySQL & " ProfitBalance,"
+ 10145:         MySQL = MySQL & "        Parent_Account_Code,"
+ 10146:         MySQL = MySQL & "        AccountTypes,"
+ 10147:         MySQL = MySQL & "        Account_Code,"
+ 10148:         MySQL = MySQL & "        Account_Serial,"
+ 10149:         MySQL = MySQL & "        Account_Name,"
+ 10150:         MySQL = MySQL & "        Account_NameEng,"
+ 10151:         MySQL = MySQL & "        debitBalance                                         = (SELECT Sum(DEV_Value1)"
+ 10152:         MySQL = MySQL & "                        FROM   (SELECT Account_Code,"
+ 10153:         MySQL = MySQL & "                                       DEV_Value1 = CASE"
+ 10154:         MySQL = MySQL & "                                                      WHEN Credit_Or_Debit = 0 THEN Value * 1"
+ 10155:         MySQL = MySQL & "                                                      ELSE 0"
+ 10156:         MySQL = MySQL & "                                                    END,"
+ 10157:         MySQL = MySQL & "                                       DEV_Value2 = CASE"
+ 10158:         MySQL = MySQL & "                                                      WHEN Credit_Or_Debit = 1 THEN Value * -1"
+ 10159:         MySQL = MySQL & "                                                      ELSE 0"
+ 10160:         MySQL = MySQL & "                                                    End"
+ 10161:         MySQL = MySQL & "                                FROM   dbo.DOUBLE_ENTREY_VOUCHERS AS d"
+ 10162:         MySQL = MySQL & "                                WHERE  ( d.Credit_Or_Debit = 0"
+ 10163:                                                 
+ 10164:                                                 
+ 10165:                                                 
+ 10166:         MySQL = MySQL & "                                         AND d.RecordDate >= " & SQLDate(mDate, True) & ""
+ 10167:         MySQL = MySQL & "                                         AND d.RecordDate <= " & SQLDate(mDate, True) & " )"
+ 10168:         
+ 10169:         
+ 10170:         
+ 10171:         MySQL = MySQL & "                                       AND d.Account_Code = A.Account_Code"
+ 10172:         MySQL = MySQL & "                                       AND ( d.Posted IS NULL )"
+ 10173:         If BranchID = 0 Then
+ 10174:            ' MySQL = MySQL & "                                       ) x),"
+ 10175:             MySQL = MySQL & "        AND 1 = " & 1 & " ) x),"
+ 10176:         Else
+ 10177:             MySQL = MySQL & "                                       AND d.branch_id = " & BranchID & " ) x),"
+ 10178:         End If
+ 10179:         Dim mDate3 As Date
+ 10180:         mDate3 = DateAdd("D", 0, txtDate.value)
+ 10181:         
+ 10182:         MySQL = MySQL & "        CreditBalance                                        = (SELECT Sum(DEV_Value2)"
+ 10183:         MySQL = MySQL & "                         FROM   (SELECT Account_Code,"
+ 10184:         MySQL = MySQL & "                                        DEV_Value1 = CASE"
+ 10185:         MySQL = MySQL & "                                                       WHEN Credit_Or_Debit = 0 THEN Value * 1"
+ 10186:         MySQL = MySQL & "                                                       ELSE 0"
+ 10187:         MySQL = MySQL & "                                                     END,"
+ 10188:         MySQL = MySQL & "                                        DEV_Value2 = CASE"
+ 10189:         MySQL = MySQL & "                                                       WHEN Credit_Or_Debit = 1 THEN Value * -1"
+ 10190:         MySQL = MySQL & "                                                       ELSE 0"
+ 10191:         MySQL = MySQL & "                                                     End"
+ 10192:         MySQL = MySQL & "                                 FROM   dbo.DOUBLE_ENTREY_VOUCHERS AS d1"
+ 10193:         MySQL = MySQL & "                                 WHERE  ( d1.Credit_Or_Debit = 1"
+ 10194:         
+ 10195:         
+ 10196:         MySQL = MySQL & "                                          AND d1.RecordDate >= " & SQLDate(mDate, True) & ""
+ 10197:         MySQL = MySQL & "                                          AND d1.RecordDate <= " & SQLDate(mDate, True) & " )"
+ 10198:         
+ 10199:         
+ 10200:         
+ 10201:         MySQL = MySQL & "                                        AND d1.Account_Code = A.Account_Code"
+ 10202:         MySQL = MySQL & "                                        AND ( d1.Posted IS NULL )"
+ 10203:         'MySQL = MySQL & "                                        AND d1.branch_id =  " & BranchID & " ) x),"
+ 10204:         
+ 10205:         If BranchID = 0 Then
+ 10206:             'MySQL = MySQL & "                                       ) x),"
+ 10207:             MySQL = MySQL & "                                       AND 1 = " & 1 & " ) x),"
+ 10208:         Else
+ 10209:             MySQL = MySQL & "                                       AND d1.branch_id = " & BranchID & " ) x),"
+ 10210:         End If
+ 10211: 
+ 10212: 
+ 10213:         MySQL = MySQL & "        OpeningBalance                                       = (SELECT Sum(DEV_Value1) + Sum(DEV_Value2)"
+ 10214:         MySQL = MySQL & "                          FROM   (SELECT Account_Code,"
+ 10215:         MySQL = MySQL & "                                         DEV_Value1 = CASE"
+ 10216:         MySQL = MySQL & "                                                        WHEN Credit_Or_Debit = 0 THEN Value * 1"
+ 10217:         MySQL = MySQL & "                                                        ELSE 0"
+ 10218:         MySQL = MySQL & "                                                      END,"
+ 10219:         MySQL = MySQL & "                                         DEV_Value2 = CASE"
+ 10220:         MySQL = MySQL & "                                                        WHEN Credit_Or_Debit = 1 THEN Value * -1"
+ 10221:         MySQL = MySQL & "                                                        ELSE 0"
+ 10222:         MySQL = MySQL & "                                                      End"
+ 10223:         MySQL = MySQL & "                                  FROM   dbo.DOUBLE_ENTREY_VOUCHERS1 AS do"
+ 10224:         MySQL = MySQL & "                                  WHERE  ( do.Account_Code = A.Account_Code"
+ 10225:         MySQL = MySQL & "                                           AND ( do.Posted IS NULL )"
+ 10226:        ' MySQL = MySQL & "                                           AND do.branch_id =  " & BranchID & "  )) x),"
+ 10227:         If BranchID = 0 Then
+ 10228:             'MySQL = MySQL & "                                       )) x),"
+ 10229:             MySQL = MySQL & "                                       AND 1= " & 1 & " )) x),"
+ 10230:         Else
+ 10231:             MySQL = MySQL & "                                       AND do.branch_id = " & BranchID & " )) x),"
+ 10232:         End If
+ 10233: 
+ 10234:         
+ 10235:         MySQL = MySQL & "        OpeningBalancebeformdateMinus1                       = (SELECT Sum(DEV_Value1) + Sum(DEV_Value2)"
+ 10236:         MySQL = MySQL & "                                          FROM   (SELECT Account_Code,"
+ 10237:         MySQL = MySQL & "                                                         DEV_Value1 = CASE"
+ 10238:         MySQL = MySQL & "                                                                        WHEN Credit_Or_Debit = 0 THEN Value * 1"
+ 10239:         MySQL = MySQL & "                                                                        ELSE 0"
+ 10240:         MySQL = MySQL & "                                                                      END,"
+ 10241:         MySQL = MySQL & "                                                         DEV_Value2 = CASE"
+ 10242:         MySQL = MySQL & "                                                                        WHEN Credit_Or_Debit = 1 THEN Value * -1"
+ 10243:         MySQL = MySQL & "                                                                        ELSE 0"
+ 10244:         MySQL = MySQL & "                                                                      End"
+ 10245:         MySQL = MySQL & "                                                  FROM   dbo.DOUBLE_ENTREY_VOUCHERS AS do"
+ 10246:         
+ 10247:         
+ 10248:         MySQL = MySQL & "                                                  WHERE  ( do.RecordDate >= '01-Jan-2023'"
+ 10249:         MySQL = MySQL & "                                                           AND do.RecordDate <= " & SQLDate(mDate2, True) & " )"
+ 10250:         
+ 10251:         
+ 10252:         MySQL = MySQL & "                                                         AND do.Account_Code = A.Account_Code"
+ 10253:         MySQL = MySQL & "                                                         AND ( do.Posted IS NULL )"
+ 10254:         'MySQL = MySQL & "                                                         AND do.branch_id =  " & BranchID & " ) x),"
+ 10255:         If BranchID = 0 Then
+ 10256:             'MySQL = MySQL & "                                       ) x),"
+ 10257:             MySQL = MySQL & "                                       AND 1 = " & 1 & " ) x),"
+ 10258:         Else
+ 10259:             MySQL = MySQL & "                                       AND do.branch_id = " & BranchID & " ) x),"
+ 10260:         End If
+ 10261:         
+ 10262:         MySQL = MySQL & "        OpeningBalancebeformStartCurrentyearTOFromDAteminus1 = (SELECT Sum(DEV_Value1) + Sum(DEV_Value2)"
+ 10263:         MySQL = MySQL & "                                                                FROM   (SELECT Account_Code,"
+ 10264:         MySQL = MySQL & "                                                                               DEV_Value1 = CASE"
+ 10265:         MySQL = MySQL & "                                                                                              WHEN Credit_Or_Debit = 0 THEN Value * 1"
+ 10266:         MySQL = MySQL & "                                                                                              ELSE 0"
+ 10267:         MySQL = MySQL & "                                                                                            END,"
+ 10268:         MySQL = MySQL & "                                                                               DEV_Value2 = CASE"
+ 10269:         MySQL = MySQL & "                                                                                              WHEN Credit_Or_Debit = 1 THEN Value * -1"
+ 10270:         MySQL = MySQL & "                                                                                              ELSE 0"
+ 10271:         MySQL = MySQL & "                                                                                            End"
+ 10272:         MySQL = MySQL & "                                                                        FROM   dbo.DOUBLE_ENTREY_VOUCHERS AS do"
+ 10273:         
+ 10274:         
+ 10275:         
+ 10276:         MySQL = MySQL & "                                                                        WHERE  ( do.RecordDate >= '01-Jan-2023'"
+ 10277:         MySQL = MySQL & "                                                                                 AND do.RecordDate < " & SQLDate(mDate, True) & " )"
+ 10278:                                                                                       
+ 10279:                                                                                       
+ 10280:         MySQL = MySQL & "                                                                               AND do.Account_Code = A.Account_Code"
+ 10281:         MySQL = MySQL & "                                                                               AND ( do.Posted IS NULL )"
+ 10282:        ' MySQL = MySQL & "                                                                               AND do.branch_id =  " & BranchID & " ) x)"
+ 10283:         If BranchID = 0 Then
+ 10284:             'MySQL = MySQL & "                                       ) x),"
+ 10285:             MySQL = MySQL & "                                       AND 1 = " & 1 & " ) x)"
+ 10286:         Else
+ 10287:             MySQL = MySQL & "                                       AND do.branch_id = " & BranchID & " ) x)"
+ 10288:         End If
+ 10289:         
+ 10290:         MySQL = MySQL & " FROM   ACCOUNTS A"
+ 10291:         MySQL = MySQL & " Where a.last_account = 1"
+ 10292:         
+ 10293: 
+ 10294:         
+ 10295:         If mAccountCode2 = "" Then
+ 10296:             MySQL = MySQL & " AND A.Account_Serial = '" & mAccountCode & "'"
+ 10297:         Else
+ 10298:             MySQL = MySQL & " AND A.Account_Code = '" & mAccountCode2 & "'"
+ 10299:         End If
+ 10300:        MySQL = MySQL & " AND ( A.Account_Code IN(SELECT Account_Code"
+ 10301:         MySQL = MySQL & "                                From DOUBLE_ENTREY_VOUCHERS"
+ 10302:         MySQL = MySQL & "                                Where 1 = 1"
+ 10303:         If BranchID = 0 Then
+ 10304:             'MySQL = MySQL & "                                        )"
+ 10305:             
+ 10306:             MySQL = MySQL & "                                       AND 1 =" & 1 & " )"
+ 10307:         Else
+ 10308:             
+ 10309:             MySQL = MySQL & "                                       AND Branch_id =" & BranchID & " )"
+ 10310:         End If
+ 10311:         MySQL = MySQL & "               OR A.Account_Code IN(SELECT Account_Code"
+ 10312:         MySQL = MySQL & "                                    From DOUBLE_ENTREY_VOUCHERS1"
+ 10313:         MySQL = MySQL & "                                    Where 1 = 1"
+ 10314:         
+ 10315:         
+ 10316:         If BranchID = 0 Then
+ 10317:             'MySQL = MySQL & "                                        )"
+ 10318:             MySQL = MySQL & "                                       AND 1 =" & 1 & " )"
+ 10319:         Else
+ 10320:             MySQL = MySQL & "                                       AND Branch_id =" & BranchID & " )"
+ 10321:         End If
+ 10322:         
+ 10323:         
+ 10324:         
+ 10325:         MySQL = MySQL & "               OR A.Account_Code IN(SELECT Account_Code"
+ 10326:         MySQL = MySQL & "                                    From TblyearsData"
+ 10327:         MySQL = MySQL & "                                    WHERE  1 = 1) )"
+ 10328:         MySQL = MySQL & " ORDER  BY Account_Serial"
+ 10329:         
+ 10330:         
+ 10331:         RsData.Open MySQL, Cn, adOpenKeyset, adLockReadOnly
+ 10332:         Dim mBalance As Double
+ 10333:         If Not RsData.EOF Then
+ 10334:             If isDebitOnly Then
+ 10335:                 mBalance = val(val(RsData!debitBalance & ""))
+ 10336:             ElseIf isCreditOnly Then
+ 10337:                 mBalance = Abs(val(RsData!CreditBalance & ""))
+ 10338:             Else
+ 10339:                 mBalance = val(RsData!OpeningBalancebeformdateMinus1 & "") + val(RsData!debitBalance & "") + val(RsData!CreditBalance & "")
+ 10340:             End If
+ 10341:         Else
+ 10342:             mBalance = 0
+ 10343:             
+ 10344:         End If
+ 10345:         GetAccountBalance = mBalance
+ 10346: End Function
+ 10347: Private Sub Command4_Click()
+ 10348: Dim MySQL As String
+ 10349:     Dim RsData As New ADODB.Recordset
+ 10350:     Dim xApp As New CRAXDRT.Application
+ 10351:     Dim xReport As CRAXDRT.Report
+ 10352:     Dim CViewer As ClsReportViewer
+ 10353:     Dim StrReportTitle As String
+ 10354:     Dim StrFileName As String
+ 10355:     Dim Msg As String
+ 10356:     Dim rsDummy As New ADODB.Recordset
+ 10357:     Dim RsTrans As New ADODB.Recordset
+ 10358:     Dim mBranchID As Long
+ 10359: '--------------------------------------------------------------------------------------------
+ 10360:    Dim Begin As Boolean
+ 10361:    Begin = True
+ 10362:    Dim mBankBalance As Double
+ 10363:     Dim mTableName As String, mTableName2 As String
+ 10364:    
+ 10365:    Dim mBankBalanceCharge As Double
+ 10366:  Dim ii As Long
+ 10367:    Dim i As Long
+ 10368:    ii = DateDiff("D", txtFromDate.value, txtToDate.value)
+ 10369:    Dim mDate As Date
+ 10370:     Dim mDate2 As Date
+ 10371:    
+ 10372:     
+ 10373:     
+ 10374:    
+ 10375:    
+ 10376:      
+ 10377:     S = "SELECT branch_id FROM TblBranchesData "
+ 10378:     rsDummy.Open S, Cn, adOpenStatic, adLockReadOnly
+ 10379:     Do While Not rsDummy.EOF
+ 10380:     
+ 10381:     
+ 10382:         mBranchID = val(rsDummy!branch_id & "")
+ 10383:         DcbranchID.BoundText = mBranchID
+ 10384:         i = 0
+ 10385:         For i = 0 To ii
+ 10386:               
+ 10387:               
+ 10388:               mDate = DateAdd("D", i, txtFromDate.value)
+ 10389:               mDate2 = DateAdd("D", i - 1, txtFromDate.value)
+ 10390:               
+ 10391:               txtDate.value = mDate
+ 10392:               
+ 10393:               
+ 10394:                S = "delete  TBLClosePos Where BranchId = " & val(rsDummy!branch_id & "") & " and OrderDate =" & SQLDate(txtDate.value, True)
+ 10395:                Cn.Execute S
+ 10396:                 
+ 10397: 
+ 10398: '
+ 10399:                mBankBalance = GetAccountBalance("110102005", mDate, mDate2, mBranchID)
+ 10400:                
+ 10401:                mBankBalanceCharge = GetAccountBalance("410101006", mDate, mDate2, mBranchID, True)
+ 10402:               
+ 10403:                 SaveNow mBranchID
+ 10404:                 S = "Select * from TBLClosePos Where BranchId = " & mBranchID & " and OrderDate =" & SQLDate(txtDate.value, True)
+ 10405:                 
+ 10406:                 RsTrans.Open S, Cn, adOpenKeyset, adLockOptimistic
+ 10407:                 If RsTrans.EOF Then
+ 10408:                     RsTrans.AddNew
+ 10409:                     RsTrans!BranchID = mBranchID
+ 10410:                     RsTrans!UserID = user_id
+ 10411:                     RsTrans!SaveDate = Date
+ 10412:                     RsTrans!EditDate = Date
+ 10413:                     RsTrans!OrderDate = txtDate.value
+ 10414:                 End If
+ 10415:                 
+ 10416:                 'RsTrans!UserID = user_id
+ 10417:                 RsTrans!OpenBalance = val(txtOpenBalance.Text)
+ 10418:                 RsTrans!CountCards = val(txtCountCards.Text)
+ 10419:                 RsTrans!LastBalance = val(txtLastBalance.Text)
+ 10420:                 RsTrans!CountTransaction = val(txtCountTransaction.Text)
+ 10421:                 RsTrans!TotalRechargeValue = val(txtTotalRechargeValue.Text)
+ 10422:                 RsTrans!TotalSaleDay = val(txtTotalSaleDay.Text)
+ 10423:                 RsTrans!BoxBalance = val(txtBoxBalance.Text)
+ 10424:                 
+ 10425:                 RsTrans!TotalSaleDay2 = val(txtTotalSaleDay2.Text)
+ 10426:                 
+ 10427:                 RsTrans!TotalSaleDay2Vat = val(txtTotalSaleDay2Vat.Text)
+ 10428:                 RsTrans!TotalRevvat = val(txtTotalRevVat.Text)
+ 10429:                 
+ 10430: 
+ 10431: 
+ 10432:                 
+ 10433:                 RsTrans!TotalVat = val(txtTotalVat.Text)
+ 10434:                 
+ 10435:                 
+ 10436:                 RsTrans!TotalRev = val(txtTotalRev.Text)
+ 10437:                 RsTrans!CashOut = val(txtCashOut.Text)
+ 10438:                  RsTrans!CashOutTotal = val(txtCashOutTotal.Text)
+ 10439:                   RsTrans!CashOutDisc = val(txtCashOutDisc.Text)
+ 10440:                   
+ 10441:                    RsTrans!TotalWallet = val(txtTotalWallet.Text)
+ 10442:                    RsTrans!TotalSupply = val(txtTotalSupply.Text)
+ 10443:                    RsTrans!TotalSupplyWallet = val(txtTotalSupplyWallet.Text)
+ 10444:                 
+ 10445:                 
+ 10446:                 RsTrans!TotalRev2 = val(txtTotalRev2.Text)
+ 10447:                 RsTrans!net = val(txtNet.Text)
+ 10448:                 RsTrans!ActValue = val(txtActValue.Text)
+ 10449:                 RsTrans!Diff = val(txtDiff.Text)
+ 10450:                 RsTrans!TotalRev = val(txtTotalRev.Text)
+ 10451:                 RsTrans!BankBalance = mBankBalance
+ 10452:                 RsTrans!BankBalanceCharge = mBankBalanceCharge
+ 10453:                 
+ 10454:                 'RsTrans!NoteSerial1 = mNoteMax
+ 10455:                 'RsTrans!NoteSerial = val(TxtNoteSerial.Text)
+ 10456:                 'RsTrans!NoteID = val(txtNoteID.Text)
+ 10457:                 RsTrans.update
+ 10458:                 RsTrans.Close
+ 10459:               'i = i + 1
+ 10460:         Next
+ 10461:   
+ 10462:   
+ 10463:     
+ 10464:       
+ 10465:         rsDummy.MoveNext
+ 10466:     Loop
+ 10467:     
+ 10468:     
+ 10469:     
+ 10470:     S = " Select  TBLClosePos.*,TblBranchesData.Branch_Name,Branch_Code from TBLClosePos"
+ 10471:     S = S & " Inner join TblBranchesData On TBLClosePos.BranchId = TblBranchesData.Branch_ID"
+ 10472:     
+ 10473:     S = S & " Where 1 = 1"
+ 10474: 
+ 10475:       
+ 10476:        
+ 10477:     If Not IsNull(txtFromDate.value) Then
+ 10478:         If Begin = True Then
+ 10479:             S = S + " and dbo.TBLClosePos.OrderDate  >=" & SQLDate(txtFromDate.value, True) & ""
+ 10480:         Else
+ 10481:             S = S + " where dbo.TBLClosePos.OrderDate >=" & SQLDate(txtFromDate.value, True) & ""
+ 10482:             Begin = True
+ 10483:         End If
+ 10484:     End If
+ 10485: 
+ 10486:     If Not IsNull(txtToDate.value) Then
+ 10487:         If Begin = True Then
+ 10488:             S = S + " and dbo.TBLClosePos.OrderDate <=" & SQLDate(txtToDate.value, True) & ""
+ 10489:         Else
+ 10490:             S = S + " where dbo.TBLClosePos.OrderDate <=" & SQLDate(txtToDate.value, True) & ""
+ 10491:             Begin = True
+ 10492:         End If
+ 10493:     End If
+ 10494: 
+ 10495: 
+ 10496:         
+ 10497:         
+ 10498:     If Option1(0).value = True Then
+ 10499:         StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "CloseReprotTotal.rpt"
+ 10500:     ElseIf Option1(1).value = True Then
+ 10501:         StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "CloseReprotTotalByDay.rpt"
+ 10502:     ElseIf Option1(2).value = True Then
+ 10503:         StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "CloseReprotTotal.rpt"
+ 10504:     End If
+ 10505:         
+ 10506:        StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "CloseReprotTotal.rpt"
+ 10507:     If Dir(StrFileName) = "" Then
+ 10508:         'GetMsgs 139, vbExclamation
+ 10509:         Screen.MousePointer = vbDefault
+ 10510:         Exit Sub
+ 10511:     End If
+ 10512: 
+ 10513:     Set RsData = New ADODB.Recordset
+ 10514:     RsData.Open S, Cn, adOpenStatic, adLockReadOnly, adCmdText
+ 10515: 
+ 10516: '    If RsData.BOF Or RsData.EOF Then
+ 10517: '        'GetMsgs 138, vbExclamation
+ 10518: '        If SystemOptions.UserInterface = ArabicInterface Then
+ 10519: '        Msg = "لاتوجد بيانات للعرض"
+ 10520: '        Else
+ 10521: '        Msg = "No Data"
+ 10522: '        End If
+ 10523: '        MsgBox Msg, vbExclamation + vbMsgBoxRight + vbMsgBoxRtlReading, App.title
+ 10524: '        RsData.Close
+ 10525: '        Set RsData = Nothing
+ 10526: '        Screen.MousePointer = vbDefault
+ 10527: '        Exit Sub
+ 10528: '    End If
+ 10529: 
+ 10530:     Screen.MousePointer = vbArrowHourglass
+ 10531:     Set xReport = xApp.OpenReport(StrFileName)
+ 10532:     xReport.Database.SetDataSource RsData
+ 10533: 
+ 10534:     Dim cCompanyInfo As New ClsCompanyInfo
+ 10535:     
+ 10536:     
+ 10537:     xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 10538:     xReport.ParameterFields(5).AddCurrentValue DcbranchID.Text   'RPTCompany_Name_Arabic
+ 10539: '    xReport.ParameterFields(13).AddCurrentValue CStr(txtDate.value)    'RPTCompany_Name_Arabic
+ 10540:     xReport.ParameterFields(8).AddCurrentValue txtFromDate.value
+ 10541:     xReport.ParameterFields(10).AddCurrentValue txtToDate.value
+ 10542: '    xReport.ParameterFields(10).AddCurrentValue val(txtTotalRechargeValue.Text)   'RPTCompany_Name_Arabic
+ 10543: '    xReport.ParameterFields(11).AddCurrentValue val(txtTotalRev.Text)   'RPTCompany_Name_Arabic
+ 10544: '    xReport.ParameterFields(12).AddCurrentValue val(txtNet.Text)   'RPTCompany_Name_Arabic
+ 10545: '   ' xReport.ParameterFields(13).AddCurrentValue Trim(user_name)
+ 10546: '    xReport.ParameterFields(13).AddCurrentValue Trim(user_name)
+ 10547: '    xReport.ParameterFields(15).AddCurrentValue Trim(txtActValue.Text)   'RPTCompany_Name_Arabic
+ 10548: 
+ 10549: 'xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 10550: 'xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 10551:     
+ 10552:     
+ 10553:     If SystemOptions.UserInterface = ArabicInterface Then
+ 10554: 
+ 10555:          
+ 10556:     xReport.reporttitle = StrReportTitle
+ 10557:     xReport.EnableParameterPrompting = False
+ 10558:     xReport.ApplicationName = App.title
+ 10559:     xReport.ReportAuthor = App.title
+ 10560:     End If
+ 10561:     Set CViewer = New ClsReportViewer
+ 10562:     CViewer.FireReport xReport, WindowTarget, "", , , , StrFileName, , S
+ 10563:     
+ 10564:     RsData.Close
+ 10565:     Set RsData = Nothing
+ 10566:     Screen.MousePointer = vbDefault
+ 10567: End Sub
+ 10568: 
+ 10569: Private Sub Command5_Click()
+ 10570: 
+ 10571: 
+ 10572: Dim MySQL As String
+ 10573:     Dim RsData As New ADODB.Recordset
+ 10574:     Dim xApp As New CRAXDRT.Application
+ 10575:     Dim xReport As CRAXDRT.Report
+ 10576:     Dim CViewer As ClsReportViewer
+ 10577:     Dim StrReportTitle As String
+ 10578:     Dim StrFileName As String
+ 10579:     Dim Msg As String
+ 10580:     Dim rsDummy As New ADODB.Recordset
+ 10581:     Dim RsTrans As New ADODB.Recordset
+ 10582:     Dim mBranchID As Long
+ 10583:     
+ 10584:        Dim Current_branchSql2 As String
+ 10585:     
+ 10586:     
+ 10587:    
+ 10588:     
+ 10589:    
+ 10590:    Current_branchSql2 = "SELECT BranchID FROM dbo.TblUsersBranches " & _
+ 10591:                     "WHERE (UserID = " & val(user_id) & ") " & _
+ 10592:                     "AND BranchID IN (" & _
+ 10593:                     "    SELECT branch_id " & _
+ 10594:                     "    FROM TblBranchesData " & _
+ 10595:                     "    WHERE (IsNull(isStoped, 0) = 0 OR IsNull(IsStopedDate, '9999-12-31') > " & SQLDate(txtFromDate.value, True) & ")" & _
+ 10596:                     ")"
+ 10597: 
+ 10598: 
+ 10599:      
+ 10600: '--------------------------------------------------------------------------------------------
+ 10601:    Dim Begin As Boolean
+ 10602:    Begin = True
+ 10603:    Dim mBankBalance As Double
+ 10604:     Dim mTableName As String, mTableName2 As String
+ 10605:    
+ 10606:    Dim mBankBalanceCharge As Double
+ 10607:  Dim ii As Long
+ 10608:    Dim i As Long
+ 10609:    ii = DateDiff("D", txtFromDate.value, txtToDate.value)
+ 10610:    Dim mDate As Date
+ 10611:     Dim mDate2 As Date
+ 10612:    
+ 10613:     
+ 10614:     
+ 10615:     
+ 10616:      mDate = DateAdd("D", i, txtToDate.value)
+ 10617:               mDate2 = DateAdd("D", i - 1, txtToDate.value)
+ 10618:               'mDate2 = DateAdd("D", i, txtToDate.value)
+ 10619:               
+ 10620:               
+ 10621:               
+ 10622:         S = "Select BranchId from TBLClosePos Where  OrderDate =" & SQLDate(txtDate.value, True)
+ 10623: 
+ 10624:         RsTrans.Open S, Cn, adOpenKeyset, adLockOptimistic
+ 10625:         If RsTrans.EOF Then cmdRefreshBox_Click
+ 10626: 
+ 10627:         RsTrans.Close
+ 10628: 
+ 10629:          'GetAccountBalance
+ 10630:               
+ 10631: 'S = "Select * from TblBranchesData"
+ 10632: 'Set rsDummy = New ADODB.Recordset
+ 10633: 'rsDummy.Open S, Cn, adOpenKeyset, adLockOptimistic
+ 10634: 'Do While Not rsDummy.EOF
+ 10635: '        mBranchID = val(rsDummy!branch_id & "")
+ 10636: '        mBankBalance = GetAccountBalance("110102005", mDate, mDate2, mBranchID)
+ 10637: '
+ 10638: '              mDate = DateAdd("D", i + 3, txtFromDate.value)
+ 10639: '              mDate2 = DateAdd("D", i + 2, txtFromDate.value)
+ 10640: '
+ 10641: '
+ 10642: '
+ 10643: '        'mBankBalanceCharge = GetAccountBalance("410101006", mDate, mDate2, mBranchID, True)
+ 10644: '     '   mBankBalanceCharge = GetAccountBalance("410101006", mDate, mDate2, mBranchID)
+ 10645: '
+ 10646: '
+ 10647: '    rsDummy!BankBalance = mBankBalance
+ 10648: '    rsDummy!BankBalanceCharge = mBankBalanceCharge
+ 10649: '    rsDummy.update
+ 10650: '
+ 10651: '    rsDummy.MoveNext
+ 10652: 'Loop
+ 10653: 
+ 10654: '
+ 10655:            
+ 10656:                
+ 10657:    
+ 10658:    
+ 10659: 
+ 10660:   
+ 10661: 
+ 10662:      
+ 10663:    S = "SELECT"
+ 10664: 'txtTotalSupply = val(txtTotalRechargeValue) + val(txtTotalRevPOS) + val(txtNetPOS) + val(txtTotalRev) + val(txtCashOut) - val(txtCashOutDisc) - val(txtCashOutDisc)
+ 10665: S = S & "        TotalWallet = IsNull(CashOutTotal, 0) + IsNull(CashOut, 0)"
+ 10666: S = S & "       ,TotalSupplyWallet = (IsNull(CashOutTotal,0) + IsNull(CashOut,0)) - IsNull(CashOutDisc,0)"
+ 10667: 'S = S & "       ,TotalSupply = IsNull(TotalRechargeValue,0) +   (IsNull(TotalRevPOS,0)  +   (IsNull(NetPOS,0)  + (IsNull(TotalRevSS,0) - IsNull(mTotalSalCard,0) - IsNull(TotalSaleDay2Vat,0)) + IsNull(CashOut,0) - IsNull(CashOutDisc,0)"
+ 10668: S = S & "       ,TotalSupply = IsNull(TotalRechargeValue, 0) + (IsNull(TotalRevPOS, 0) + IsNull(NetPOS, 0) + IsNull(TotalRevSS, 0) - IsNull(mTotalSalCard, 0) - IsNull(TotalSaleDay2Vat, 0) + IsNull(CashOut, 0) - IsNull(CashOutDisc, 0))"
+ 10669:                         
+ 10670: S = S & "       ,Net = IsNull(TotalRechargeValue,0) + IsNull(BoxBalance,0) + (IsNull(TotalRevSS,0) - IsNull(mTotalSalCard,0) - IsNull(TotalSaleDay2Vat,0)) + IsNull(mTotalSalCard,0) - IsNull(CashOutTotal,0) "
+ 10671: S = S & "       ,ActValue = IsNull(TotalRechargeValue,0) + IsNull(BoxBalance,0) + (IsNull(TotalRevSS,0) - IsNull(mTotalSalCard,0) - IsNull(TotalSaleDay2Vat,0)) + IsNull(mTotalSalCard,0) - IsNull(CashOutTotal,0)"
+ 10672: S = S & "       ,TotalRev = IsNull(TotalRevSS,0) - IsNull(mTotalSalCard ,0)- IsNull(TotalSaleDay2Vat,0)"
+ 10673: 
+ 10674: S = S & "    ,* FROM ("
+ 10675:    
+ 10676: S = S & " SELECT"
+ 10677: S = S & "     TblBranchesData.branch_id,TblBranchesData.branch_name,TblBranchesData.branch_Code, TblBranchesData.Branch_ID as BranchID,BoxBalance = 0,"
+ 10678: S = S & "     BankBalanceCharge = (SELECT "
+ 10679:     
+ 10680: S = S & "        SUM (Value)"
+ 10681:     
+ 10682: 
+ 10683: S = S & "     FROM dbo.DOUBLE_ENTREY_VOUCHERS AS d"
+ 10684: S = S & "     WHERE (d.Credit_Or_Debit = 0)"
+ 10685: 
+ 10686: 
+ 10687: 
+ 10688: S = S & " AND d.RecordDate between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10689: 
+ 10690: 
+ 10691: 
+ 10692: 
+ 10693: S = S & " AND d.Account_Code = 'a3a1a1a1a6'"
+ 10694: S = S & " AND (d.Posted IS NULL)"
+ 10695: 
+ 10696: 
+ 10697: S = S & " AND d.branch_id = TblBranchesData.branch_id)"
+ 10698: 
+ 10699: S = S & "    ,TotalSaleDay = (SELECT"
+ 10700: S = S & "             SUM(Transaction_Details.Price) As PP"
+ 10701: S = S & "         From Transaction_Details"
+ 10702: S = S & "         INNER JOIN Transactions"
+ 10703: S = S & "             ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 10704: S = S & "         INNER JOIN TblItems"
+ 10705: S = S & "             ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 10706: S = S & "         Where TblItems.ItemType = 0"
+ 10707: S = S & "         AND Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10708: S = S & "         AND Transaction_Type IN (21)"
+ 10709: S = S & "         AND Transactions.BranchId = TblBranchesData.branch_id"
+ 10710: S = S & "         AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0"
+ 10711: S = S & "         AND ISNULL(IsReturn, 0) = 0"
+ 10712: S = S & "         AND ISNULL(HaveSerial, 0) = 1)"
+ 10713: Dim StrAccountCodeCridet As String
+ 10714:   StrAccountCodeCridet = get_account_code_branch(217, my_branch)
+ 10715: S = S & " ,PosValue = (Select sum(value ) from DOUBLE_ENTREY_VOUCHERS where Account_Code = '" & Trim(StrAccountCodeCridet) & "'"
+ 10716: S = S & " and Credit_Or_Debit = 1"
+ 10717: S = S & " and RecordDate between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10718: S = S & " and branch_id  = TblBranchesData.branch_id)"
+ 10719: S = S & "    ,TotalSaleDay2 = (SELECT"
+ 10720: S = S & "             SUM(Transaction_Details.Price) As PP"
+ 10721: S = S & "         From Transaction_Details"
+ 10722: S = S & "         INNER JOIN Transactions"
+ 10723: S = S & "             ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 10724: S = S & "         INNER JOIN TblItems"
+ 10725: S = S & "             ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 10726: S = S & "         Where TblItems.ItemType = 0"
+ 10727: S = S & "         AND Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10728: S = S & "         AND Transaction_Type IN (21)"
+ 10729: S = S & "         AND Transactions.BranchId = TblBranchesData.branch_id"
+ 10730: S = S & "         AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0  AND ISNULL(transactions.OtherItems, 0) = 0"
+ 10731: S = S & "         AND ISNULL(IsReturn, 0) = 0"
+ 10732: S = S & "         AND ISNULL(HaveSerial, 0) = 1)"
+ 10733: 
+ 10734: ' ===== داخل الـ SELECT الداخلي (اللى بعد From TblBranchesData) =====
+ 10735: S = S & "    ,TotalReturns = (SELECT " & vbCrLf
+ 10736: S = S & "            SUM(ISNULL(tR.Transaction_NetValue,0) + ISNULL(tR.RechargeValue,0)) " & vbCrLf
+ 10737: S = S & "        FROM Transactions tR " & vbCrLf
+ 10738: S = S & "        WHERE tR.Transaction_Type IN (9) " & vbCrLf
+ 10739: 
+ 10740: S = S & "          AND tR.BranchId = TblBranchesData.branch_id " & vbCrLf
+ 10741: S = S & "          AND ISNULL(tR.NoteID3,0) IN ( " & vbCrLf
+ 10742: S = S & "                SELECT n.NoteID " & vbCrLf
+ 10743: S = S & "                FROM Notes n " & vbCrLf
+ 10744: S = S & "                WHERE n.NoteDate BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & vbCrLf
+ 10745: S = S & "                  AND n.branch_no = TblBranchesData.branch_id " & vbCrLf
+ 10746: S = S & "          )" & vbCrLf
+ 10747: S = S & "    )" & vbCrLf
+ 10748: 
+ 10749: S = S & "    ,CountReturns = (SELECT " & vbCrLf
+ 10750: S = S & "            COUNT(*) " & vbCrLf
+ 10751: S = S & "        FROM Transactions tR " & vbCrLf
+ 10752: S = S & "        WHERE tR.Transaction_Type IN (9) " & vbCrLf
+ 10753: 
+ 10754: S = S & "          AND tR.BranchId = TblBranchesData.branch_id " & vbCrLf
+ 10755: S = S & "          AND ISNULL(tR.NoteID3,0) IN ( " & vbCrLf
+ 10756: S = S & "                SELECT n.NoteID " & vbCrLf
+ 10757: S = S & "                FROM Notes n " & vbCrLf
+ 10758: S = S & "                WHERE n.NoteDate BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & vbCrLf
+ 10759: S = S & "                  AND n.branch_no = TblBranchesData.branch_id " & vbCrLf
+ 10760: S = S & "          )" & vbCrLf
+ 10761: S = S & "    )" & vbCrLf
+ 10762: 
+ 10763: 
+ 10764: 
+ 10765: S = S & "    ,TotalSaleDay2Vat = (SELECT"
+ 10766: S = S & "             SUM(Transaction_Details.Vat) As PP"
+ 10767: S = S & "         From Transaction_Details"
+ 10768: S = S & "         INNER JOIN Transactions"
+ 10769: S = S & "             ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 10770: S = S & "         INNER JOIN TblItems"
+ 10771: S = S & "             ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 10772: S = S & "         Where TblItems.ItemType = 0"
+ 10773: S = S & "         AND Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10774: S = S & "         AND Transaction_Type IN (21)"
+ 10775: S = S & "         AND Transactions.BranchId = TblBranchesData.branch_id"
+ 10776: S = S & "         AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0"
+ 10777: S = S & "         AND ISNULL(IsReturn, 0) = 0 and ISNULL(transactions.OtherItems, 0) = 0"
+ 10778: S = S & "         AND ISNULL(HaveSerial, 0) = 1)"
+ 10779: S = S & "    ,CountTransaction"
+ 10780: S = S & "     = (SELECT"
+ 10781: S = S & "             COUNT(Transaction_Details.Price) As PP"
+ 10782: S = S & "         From Transaction_Details"
+ 10783: S = S & "         INNER JOIN Transactions"
+ 10784: S = S & "             ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 10785: S = S & "         INNER JOIN TblItems"
+ 10786: S = S & "             ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 10787: S = S & "         Where IsNull(Transaction_Details.Price, 0) <> 0"
+ 10788: S = S & "         AND TblItems.ItemType = 1"
+ 10789: S = S & "                 AND Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10790: S = S & "                 AND Transaction_Type IN (21)"
+ 10791: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 10792: S = S & "                 AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0   AND ISNULL(transactions.OtherItems, 0) = 0"
+ 10793: S = S & "                 AND ISNULL(HaveSerial, 0) = 0)"
+ 10794: 
+ 10795: 
+ 10796: S = S & "            ,txtCountCashOut = (SELECT"
+ 10797: S = S & "                     COUNT(*) AS mCount"
+ 10798: S = S & "                 From transactions"
+ 10799: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10800: S = S & "                 AND Transaction_Type IN (21)"
+ 10801: S = S & "                 AND BranchId = TblBranchesData.branch_id"
+ 10802: 
+ 10803: S = S & "                 AND ISNULL(IsWallet, 0) = 1  and IsNull(Transactions.InstallmentService,0) = 0 AND ISNULL(transactions.OtherItems, 0) = 0)"
+ 10804: 
+ 10805: S = S & "    ,CountTransactionCash"
+ 10806: S = S & "     = (SELECT"
+ 10807: S = S & "             COUNT(Transaction_Details.Price) As PP"
+ 10808: S = S & "         From Transaction_Details"
+ 10809: S = S & "         INNER JOIN Transactions"
+ 10810: S = S & "             ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 10811: S = S & "         INNER JOIN TblItems"
+ 10812: S = S & "             ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 10813: S = S & "         Where IsNull(Transaction_Details.Price, 0) <> 0"
+ 10814: S = S & "         AND TblItems.ItemType = 1"
+ 10815: S = S & "                 AND Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10816: S = S & "                 AND Transaction_Type IN (21)"
+ 10817: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 10818: S = S & "                 AND ISNULL(IsWallet, 0) = 1  and IsNull(Transactions.InstallmentService,0) = 0 AND ISNULL(transactions.OtherItems, 0) = 0"
+ 10819: S = S & "                 )"
+ 10820: 
+ 10821: S = S & "            ,CountCards = (SELECT"
+ 10822: S = S & "                     COUNT(*) AS mCount"
+ 10823: S = S & "                 From transactions"
+ 10824: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10825: S = S & "                 AND Transaction_Type IN (21)"
+ 10826: S = S & "                 AND BranchId = TblBranchesData.branch_id"
+ 10827: S = S & "                 AND ISNULL(VisaNumber, '') <> ''"
+ 10828: S = S & "                 AND ISNULL(IsWallet, 0) = 0  and IsNull(Transactions.HaveGuarantee,0) = 0)"
+ 10829: S = S & "            ,TotalRechargeValue = (SELECT"
+ 10830: S = S & "                     SUM(RechargeValue) As mCount"
+ 10831: S = S & "                 From transactions"
+ 10832: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10833: S = S & "                 AND Transaction_Type IN (21)"
+ 10834: S = S & "                 AND BranchId = TblBranchesData.branch_id"
+ 10835: S = S & "                 AND ISNULL(RechargeValue, 0) <> 0"
+ 10836: S = S & "                 AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0   AND ISNULL(transactions.OtherItems, 0) = 0 and IsNull(Transactions.InstallmentService,0) = 0 )"
+ 10837: S = S & "            ,TotalVat = (SELECT"
+ 10838: S = S & "                     SUM(Vat) As mCount"
+ 10839: S = S & "                 From transactions"
+ 10840: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10841: S = S & "                 AND Transaction_Type IN (21)"
+ 10842: S = S & "                 AND BranchId = TblBranchesData.branch_id"
+ 10843: S = S & "                 AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0  AND ISNULL(transactions.OtherItems, 0) = 0 )"
+ 10844: S = S & "            ,mTotalSalCard = (SELECT"
+ 10845: S = S & "                     SUM(Transaction_Details.Price) As PP"
+ 10846: S = S & "                 From Transaction_Details"
+ 10847: S = S & "                 INNER JOIN Transactions"
+ 10848: S = S & "                     ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 10849: S = S & "                 INNER JOIN TblItems"
+ 10850: S = S & "                     ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 10851: S = S & "                 Where TblItems.ItemType = 0"
+ 10852: S = S & "                 AND Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10853: S = S & "                 AND Transaction_Type IN (21)"
+ 10854: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 10855: S = S & "                 AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0 and IsNull(Transactions.InstallmentService,0) = 0 AND ISNULL(transactions.OtherItems, 0) = 0"
+ 10856: 
+ 10857: S = S & "                 AND ISNULL(HaveSerial, 0) = 1)"
+ 10858: 
+ 10859: S = S & "            ,TotalRev2 = (SELECT"
+ 10860: S = S & "                     SUM(Transaction_Details.Price) As PP"
+ 10861: S = S & "                 From Transaction_Details"
+ 10862: S = S & "                 INNER JOIN Transactions"
+ 10863: S = S & "                     ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 10864: S = S & "                 INNER JOIN TblItems"
+ 10865: S = S & "                     ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 10866: S = S & "                 WHERE Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10867: S = S & "                 AND Transaction_Type IN (21)"
+ 10868: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 10869: S = S & "                 AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0   AND ISNULL(transactions.OtherItems, 0) = 0 "
+ 10870: 
+ 10871: S = S & "                 AND ISNULL(HaveSerial, 0) = 0)"
+ 10872: 
+ 10873: S = S & "            ,TotalRevVat = (SELECT"
+ 10874: S = S & "                     SUM(Transaction_Details.Vat) As PP2"
+ 10875: S = S & "                 From Transaction_Details"
+ 10876: S = S & "                 INNER JOIN Transactions"
+ 10877: S = S & "                     ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 10878: S = S & "                 INNER JOIN TblItems"
+ 10879: S = S & "                     ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 10880: S = S & "                 WHERE Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10881: S = S & "                 AND Transaction_Type IN (21)"
+ 10882: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 10883: S = S & "                 AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0  "
+ 10884: 
+ 10885: S = S & "                 AND ISNULL(HaveSerial, 0) = 0)"
+ 10886: S = S & "            ,CashOut = (SELECT"
+ 10887: S = S & "                     SUM(Transaction_NetValue) As mCount"
+ 10888: S = S & "                 From transactions"
+ 10889: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10890: S = S & "                 AND Transaction_Type IN (21)"
+ 10891: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 10892: S = S & "                 AND ISNULL(IsWallet, 0) = 1 and IsNull(Transactions.InstallmentService,0) = 0 AND ISNULL(transactions.OtherItems, 0) = 0)"
+ 10893: S = S & "            ,CashOutTotal = (SELECT"
+ 10894: S = S & "                     SUM(RechargeValue) As mCount"
+ 10895: S = S & "                 From transactions"
+ 10896: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10897: S = S & "                 AND Transaction_Type IN (21)"
+ 10898: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 10899: S = S & "                 AND ISNULL(IsWallet, 0) = 1 and IsNull(Transactions.InstallmentService,0) = 0 AND ISNULL(transactions.OtherItems, 0) = 0)"
+ 10900: 'S = S & "            ,CashOutDisc = (SELECT"
+ 10901: 
+ 10902: 
+ 10903: 's = s & "                     (SUM(RechargeValue) + SUM(Transaction_NetValue)) "
+ 10904: 's = s & " * CASE "
+ 10905: 's = s & "                            WHEN Transaction_Date > '2024-08-25' THEN 0.008"
+ 10906: 's = s & "                            ELSE 0.01"
+ 10907: 's = s & "                        END AS mCount"
+ 10908: 
+ 10909: 'S = S & "                        SUM("
+ 10910: 'S = S & "                                (RechargeValue + Transaction_NetValue) *"
+ 10911: 'S = S & "                                CASE"
+ 10912: 'S = S & "                                    WHEN Transaction_Date > '2024-08-25' THEN 0.008"
+ 10913: 'S = S & "                                    ELSE 0.01"
+ 10914: 'S = S & "                                End"
+ 10915: 'S = S & "                            ) AS mCount"
+ 10916: 
+ 10917: 'Wael
+ 10918: 
+ 10919: 'S = S & " ,CashOutDisc = (SELECT "
+ 10920: 'S = S & "     SUM((RechargeValue + Transaction_NetValue) * "
+ 10921: 'S = S & "         CASE "
+ 10922: 'S = S & "             WHEN Transaction_Date > '2025-06-30' THEN cost "
+ 10923: 'S = S & "             WHEN Transaction_Date > '2024-08-25' THEN 0.008 "
+ 10924: 'S = S & "             ELSE 0.01 "
+ 10925: 'S = S & "         END)  AS mCount "
+ 10926: S = S & " ,CashOutDisc = (SELECT "
+ 10927: S = S & "     SUM( "
+ 10928: S = S & "         CASE "
+ 10929: S = S & "             WHEN Transaction_Date > '2025-06-30' THEN ISNULL(cost,0) - ISNULL(CashBack,0) "
+ 10930: S = S & "             WHEN Transaction_Date > '2024-08-25' THEN (RechargeValue + Transaction_NetValue) * 0.008 "
+ 10931: S = S & "             ELSE (RechargeValue + Transaction_NetValue) * 0.01 "
+ 10932: S = S & "         END "
+ 10933: S = S & "     ) AS mCount "
+ 10934: 
+ 10935:     
+ 10936: S = S & "                 From transactions"
+ 10937: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10938: S = S & "                 AND Transaction_Type IN (21)"
+ 10939: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 10940: S = S & "                 AND ISNULL(IsWallet, 0) = 1  )"
+ 10941: S = S & "            ,TotalRevSS = (SELECT"
+ 10942: S = S & "                     SUM(Transaction_NetValue) As mCount"
+ 10943: S = S & "                 From transactions"
+ 10944: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10945: S = S & "                 AND Transaction_Type IN (21)"
+ 10946: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 10947: S = S & "                 AND ISNULL(IsWallet, 0) = 0 and IsNull(Transactions.HaveGuarantee,0) = 0  AND ISNULL(transactions.OtherItems, 0) = 0)"
+ 10948: 
+ 10949: 
+ 10950: 
+ 10951: S = S & "            ,NetPOS = (SELECT" & vbCrLf
+ 10952: S = S & "                     SUM(RechargeValue) As mCount" & vbCrLf
+ 10953: S = S & "                 From transactions" & vbCrLf
+ 10954: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & "" & vbCrLf
+ 10955: S = S & "                 AND Transaction_Type IN (21)" & vbCrLf
+ 10956: S = S & "                 AND BranchId = TblBranchesData.branch_id" & vbCrLf
+ 10957: S = S & "                 AND ISNULL(RechargeValue, 0) <> 0" & vbCrLf
+ 10958: S = S & "                 AND IsNull(HaveGuarantee,0) = 1)" & vbCrLf
+ 10959: 
+ 10960: S = S & "            ,TotalRevPOS = (SELECT" & vbCrLf
+ 10961: S = S & "                     SUM(Transaction_NetValue) As mCount" & vbCrLf
+ 10962: S = S & "                 From transactions" & vbCrLf
+ 10963: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & "" & vbCrLf
+ 10964: S = S & "                 AND Transaction_Type IN (21)" & vbCrLf
+ 10965: S = S & "                 AND BranchId = TblBranchesData.branch_id" & vbCrLf
+ 10966: S = S & "                 AND ISNULL(Transaction_NetValue, 0) <> 0" & vbCrLf
+ 10967: S = S & "                 AND IsNull(HaveGuarantee,0) = 1)" & vbCrLf
+ 10968: 
+ 10969: 
+ 10970: 
+ 10971: S = S & "            ,TotalInstallmentRevVat = (SELECT" & vbCrLf
+ 10972: S = S & "                     SUM(Transaction_NetValue) As mCount" & vbCrLf
+ 10973: S = S & "                 From transactions" & vbCrLf
+ 10974: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & "" & vbCrLf
+ 10975: S = S & "                 AND Transaction_Type IN (21)" & vbCrLf
+ 10976: S = S & "                 AND BranchId = TblBranchesData.branch_id" & vbCrLf
+ 10977: S = S & "                 AND ISNULL(Transaction_NetValue, 0) <> 0" & vbCrLf
+ 10978: S = S & "                 AND IsNull(InstallmentService,0) = 1)" & vbCrLf
+ 10979: 
+ 10980: 
+ 10981: S = S & "            ,TotalInstallmentRev = (SELECT"
+ 10982: S = S & "                     SUM(Transaction_Details.Price) As PP"
+ 10983: S = S & "                 From Transaction_Details"
+ 10984: S = S & "                 INNER JOIN Transactions"
+ 10985: S = S & "                     ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 10986: S = S & "                 INNER JOIN TblItems"
+ 10987: S = S & "                     ON Transaction_Details.Item_ID = TblItems.ItemID"
+ 10988: S = S & "                 WHERE Transactions.Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & ""
+ 10989: S = S & "                 AND Transaction_Type IN (21)"
+ 10990: S = S & "                 AND Transactions.BranchId = TblBranchesData.branch_id"
+ 10991: S = S & "                 and IsNull(Transactions.InstallmentService,0) = 1 "
+ 10992: 
+ 10993: S = S & "                 AND ISNULL(HaveSerial, 0) = 0)"
+ 10994: 
+ 10995: 
+ 10996: 
+ 10997: 
+ 10998: S = S & "            ,InstallmentTotal = (SELECT" & vbCrLf
+ 10999: S = S & "                     SUM(RechargeValue  + Isnull(AmountLimit,0) + Isnull(RatioAMount,0)) As mCount" & vbCrLf
+ 11000: S = S & "                 From transactions" & vbCrLf
+ 11001: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & "" & vbCrLf
+ 11002: S = S & "                 AND Transaction_Type IN (21)" & vbCrLf
+ 11003: S = S & "                 AND BranchId = TblBranchesData.branch_id" & vbCrLf
+ 11004: S = S & "                 AND ISNULL(RechargeValue, 0) <> 0" & vbCrLf
+ 11005: S = S & "                 AND IsNull(InstallmentService,0) = 1)" & vbCrLf
+ 11006: 
+ 11007: S = S & "            ,CountInstallment = (SELECT" & vbCrLf
+ 11008: S = S & "                     COUNT(*) AS mCount" & vbCrLf
+ 11009: S = S & "                 From transactions" & vbCrLf
+ 11010: S = S & "                 WHERE Transaction_Date between " & SQLDate(txtFromDate.value, True) & " and " & SQLDate(txtToDate.value, True) & "" & vbCrLf
+ 11011: S = S & "                 AND Transaction_Type IN (21)" & vbCrLf
+ 11012: S = S & "                 AND BranchId = TblBranchesData.branch_id" & vbCrLf
+ 11013: S = S & "                 AND ISNULL(RechargeValue, 0) <> 0" & vbCrLf
+ 11014: S = S & "                 AND IsNull(InstallmentService,0) = 1)" & vbCrLf
+ 11015: 
+ 11016: 
+ 11017: 
+ 11018: 
+ 11019: 
+ 11020: 
+ 11021: Dim DateFrom As String
+ 11022: DateFrom = Format(DateAdd("D", -1, txtFromDate.value), "dd-MMM-yyyy")  ' إنقاص يوم واحد من التاريخ وتنسيقه بالشكل المطلوب
+ 11023: 
+ 11024: 
+ 11025: 
+ 11026: 
+ 11027: 'Dim DateFrom2 As String
+ 11028: 'DateFrom2 = Format(DateAdd("D", -2, txtFromDate.value), "dd-MMM-yyyy")
+ 11029: '
+ 11030: 's = s & "       ,BoxValue = (SELECT dbo.GetAccountBalanceCash("
+ 11031: 's = s & "                               (SELECT TOP 1 Account_Code"
+ 11032: 's = s & "                                FROM TblBoxesData"
+ 11033: 's = s & "                                WHERE TblBoxesData.BoxID IN"
+ 11034: 's = s & "                                    (SELECT boxid2 FROM TblUsers WHERE TblUsers.BranchId = TblBranchesData.Branch_ID)"
+ 11035: 's = s & "                               ),"
+ 11036: 's = s & "                               '" & SQLDate(CDate(DateFrom2)) & "', '" & SQLDate(CDate(DateFrom)) & "',"  ' إرسال التاريخ مع تنسيق 'dd-MMM-yyyy'
+ 11037: 's = s & "                               TblBranchesData.Branch_ID,"
+ 11038: 's = s & "                               0, 0, 1, ''"
+ 11039: 's = s & "                           )"
+ 11040: 's = s & "                       )"
+ 11041: 
+ 11042: 
+ 11043: 
+ 11044: S = S & "       ,BoxValue =  (Select Sum(TBLClosePos.BoxBalance) from TBLClosePos where TBLClosePos.OrderDate  between " & SQLDate(txtFromDate.value, True) & " And " & SQLDate(txtToDate.value, True) & " and TBLClosePos.BranchID =TblBranchesData.Branch_ID)"
+ 11045: S = S & "       ,IsClosed = CASE WHEN EXISTS ("
+ 11046: S = S & "            SELECT 1 FROM NOTES n"
+ 11047: S = S & "            WHERE n.NoteType = 29806"
+ 11048: S = S & "              AND n.branch_no = TblBranchesData.branch_id"
+ 11049: S = S & "              AND n.NoteDate BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & ""
+ 11050: S = S & "       ) THEN 1 ELSE 0 END"
+ 11051: 
+ 11052: S = S & "       ,CloseStatus = CASE WHEN EXISTS ("
+ 11053: S = S & "            SELECT 1 FROM NOTES n"
+ 11054: S = S & "            WHERE n.NoteType = 29806"
+ 11055: S = S & "              AND n.branch_no = TblBranchesData.branch_id"
+ 11056: S = S & "              AND n.NoteDate BETWEEN " & SQLDate(txtFromDate.value, True) & " AND " & SQLDate(txtToDate.value, True) & ""
+ 11057: S = S & "       ) THEN N'تم الاغلاق' ELSE N'غير مغلق' END"
+ 11058: 
+ 11059: S = S & "         From TblBranchesData ) t"
+ 11060: S = S & "         where t.branch_id In (Select Transactions.BranchId from Transactions where Transaction_Date  between " & SQLDate(txtFromDate.value, True) & " And " & SQLDate(txtToDate.value, True) & ")"
+ 11061: S = S & "        and t.branch_id in(" & Current_branchSql2 & ")"
+ 11062: 
+ 11063:      
+ 11064:   
+ 11065: 
+ 11066:  '              txtBankBalcne = GetAccountBalance("110102005", txtDate.value, DateAdd("D", -1, txtDate.value), mBranchID)
+ 11067:                
+ 11068:  '              txtBankBalanceCharge = GetAccountBalance("410101006", txtDate.value, DateAdd("D", -1, txtDate.value), mBranchID, True)
+ 11069:  
+ 11070: '---------------------------
+ 11071:         
+ 11072:         
+ 11073:         
+ 11074:         
+ 11075:  
+ 11076: 
+ 11077:         
+ 11078:         
+ 11079:      If Option1(0).value = True Then
+ 11080:         StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "CloseReprotTotal2FastByBranch.rpt"
+ 11081:     ElseIf Option1(1).value = True Then
+ 11082:         StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "CloseReprotTotal2FastByBranch.rpt"
+ 11083:     ElseIf Option1(2).value = True Then
+ 11084:         StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "CloseReprotTotal2FastByBranch.rpt"
+ 11085:     End If
+ 11086:         
+ 11087:        
+ 11088:        StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "CloseReprotTotal2FastByBranch.rpt"
+ 11089:     If Dir(StrFileName) = "" Then
+ 11090:         'GetMsgs 139, vbExclamation
+ 11091:         Screen.MousePointer = vbDefault
+ 11092:         Exit Sub
+ 11093:     End If
+ 11094: 
+ 11095:  
+ 11096: 
+ 11097:     Dim cCompanyInfo As New ClsCompanyInfo
+ 11098:     
+ 11099:     
+ 11100: 
+ 11101: Dim StrAccountCodeDebt  As String
+ 11102:   StrAccountCodeDebt = get_account_code_branch(217, my_branch)
+ 11103:   
+ 11104:   
+ 11105:   S = "EXEC dbo.RPT_CloseReportTotal_ByBranchDay " & _
+ 11106:     "" & SQLDate(txtFromDate.value, True) & "," & _
+ 11107:     "" & SQLDate(txtToDate.value, True) & "," & _
+ 11108:     CStr(val(user_id)) & "," & CStr(val(DcbranchID.BoundText)) & ",  " & _
+ 11109:     "'" & get_account_code_branch(217, val(DcbranchID.BoundText)) & "'"
+ 11110:    Set RsData = New ADODB.Recordset
+ 11111:     RsData.Open S, Cn, adOpenStatic, adLockReadOnly, adCmdText
+ 11112: 
+ 11113: '    If RsData.BOF Or RsData.EOF Then
+ 11114: '        'GetMsgs 138, vbExclamation
+ 11115: '        If SystemOptions.UserInterface = ArabicInterface Then
+ 11116: '        Msg = "لاتوجد بيانات للعرض"
+ 11117: '        Else
+ 11118: '        Msg = "No Data"
+ 11119: '        End If
+ 11120: '        MsgBox Msg, vbExclamation + vbMsgBoxRight + vbMsgBoxRtlReading, App.title
+ 11121: '        RsData.Close
+ 11122: '        Set RsData = Nothing
+ 11123: '        Screen.MousePointer = vbDefault
+ 11124: '        Exit Sub
+ 11125: '    End If
+ 11126: 
+ 11127:     Screen.MousePointer = vbArrowHourglass
+ 11128:     Set xReport = xApp.OpenReport(StrFileName)
+ 11129:     xReport.Database.SetDataSource RsData
+ 11130:  xReport.ParameterFields(16).AddCurrentValue val(GetAccountBalance("", txtDate.value, DateAdd("D", -1, txtDate.value), , , True, , Trim(StrAccountCodeDebt)))
+ 11131:     
+ 11132:      xReport.ParameterFields(14).AddCurrentValue val(txtBankBalcne(0))
+ 11133:      xReport.ParameterFields(15).AddCurrentValue val(txtBankBalcne(1))
+ 11134:      'xReport.ParameterFields(12).AddCurrentValue CStr(txtBankBalcne(1))
+ 11135:      'xReport.ParameterFields(13).AddCurrentValue txtBankBalcne(2)
+ 11136:      
+ 11137:      
+ 11138:      
+ 11139: '    xReport.ParameterFields(10).AddCurrentValue val(txtTotalRechargeValue.Text)   'RPTCompany_Name_Arabic
+ 11140: '    xReport.ParameterFields(11).AddCurrentValue val(txtTotalRev.Text)   'RPTCompany_Name_Arabic
+ 11141: '    xReport.ParameterFields(12).AddCurrentValue val(txtNet.Text)   'RPTCompany_Name_Arabic
+ 11142: '   ' xReport.ParameterFields(13).AddCurrentValue Trim(user_name)
+ 11143: '    xReport.ParameterFields(13).AddCurrentValue Trim(user_name)
+ 11144: '    xReport.ParameterFields(15).AddCurrentValue Trim(txtActValue.Text)   'RPTCompany_Name_Arabic
+ 11145: 
+ 11146: 'xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 11147: 'xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 11148:     
+ 11149:         xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 11150:     xReport.ParameterFields(5).AddCurrentValue DcbranchID.Text   'RPTCompany_Name_Arabic
+ 11151: '    xReport.ParameterFields(13).AddCurrentValue CStr(txtDate.value)    'RPTCompany_Name_Arabic
+ 11152:     xReport.ParameterFields(8).AddCurrentValue txtFromDate.value
+ 11153:     xReport.ParameterFields(10).AddCurrentValue txtToDate.value
+ 11154:     Dim Balance As Double
+ 11155:     ' get_balanceFromGlNew "a1a2a1a2a5", , , True, txtToDate.value, txtToDate.value, , , Balance
+ 11156:      
+ 11157:      Dim FirstPeriodDateInthisYear  As Date
+ 11158:      getFirstPeriodDateInthisYear FirstPeriodDateInthisYear
+ 11159: 
+ 11160:     
+ 11161:     'get_balanceFromGlNew Accountcode, , , , FirstPeriodDateInthisYear, Date, , , Balance, Val(Me.DcBranch.BoundText)
+ 11162: 
+ 11163:     Balance = GetActualAccountBalance("a1a2a1a2a5", , FirstPeriodDateInthisYear, txtToDate.value)
+ 11164:     
+ 11165: 
+ 11166: 
+ 11167: S = " Select * from ACCOUNTS where Account_Code in (Select BanksData.Account_Code from tblUsers inner join BanksData On BanksData.BankID = tblUsers.BankID"
+ 11168: S = S & " where TblUsers.UserID In (Select userid from Transactions where Transaction_Type in (9,21))"
+ 11169: S = S & " GROUP BY BanksData.Account_Code)"
+ 11170: 
+ 11171: Set rsDummy = New ADODB.Recordset
+ 11172: rsDummy.Open S, Cn, adOpenStatic, adLockReadOnly
+ 11173: 
+ 11174: i = 0
+ 11175: Do While Not rsDummy.EOF
+ 11176:     txtBankBalcne(i) = GetAccountBalance(Trim(rsDummy!account_serial & ""), txtDate.value, DateAdd("D", -1, txtDate.value), , , True)
+ 11177:     rsDummy.MoveNext
+ 11178:     i = i + 1
+ 11179: Loop
+ 11180:     If SystemOptions.UserInterface = ArabicInterface Then
+ 11181: 
+ 11182:          
+ 11183:     xReport.reporttitle = StrReportTitle
+ 11184:     xReport.EnableParameterPrompting = False
+ 11185:     xReport.ApplicationName = App.title
+ 11186:     xReport.ReportAuthor = App.title
+ 11187:     End If
+ 11188:     Set CViewer = New ClsReportViewer
+ 11189:     CViewer.FireReport xReport, WindowTarget, "", , , , StrFileName, , S
+ 11190:     rsDummy.Close
+ 11191:     RsData.Close
+ 11192:     Set rsDummy = Nothing
+ 11193:     Set RsData = Nothing
+ 11194:     Screen.MousePointer = vbDefault
+ 11195: 
+ 11196: 
+ 11197: End Sub
+ 11198: 
+ 11199: Private Sub Command6_Click()
+ 11200: 
+ 11201: 'Dim frm As New ProjectsBillAlarm
+ 11202: ''frm.C1Tab1.TabVisible(0) = False
+ 11203: ''frm.C1Tab1.TabVisible(1) = False
+ 11204: ''frm.C1Tab1.TabVisible(2) = False
+ 11205: ''frm.C1Tab1.TabVisible(3) = False
+ 11206: ''frm.C1Tab1.TabVisible(4) = False
+ 11207: ''frm.C1Tab1.TabVisible(5) = False
+ 11208: ''frm.C1Tab1.TabVisible(6) = False
+ 11209: ''frm.C1Tab1.TabVisible(7) = False
+ 11210: ''frm.C1Tab1.TabVisible(8) = False
+ 11211: ''
+ 11212: ''
+ 11213: ''frm.C1Tab1.TabVisible(0) = True
+ 11214: ''frm.C1Tab1.TabVisible(3) = True
+ 11215: ''frm.C1Tab1.TabVisible(5) = True
+ 11216: ''frm.C1Tab1.TabVisible(6) = True
+ 11217: ProjectsBillAlarm.SendForm = "Dash"
+ 11218: ProjectsBillAlarm.show
+ 11219: 
+ 11220: 
+ 11221: End Sub
+ 11222: 
+ 11223: Private Sub Command7_Click()
+ 11224: Dim MySQL As String
+ 11225:     Dim RsData As New ADODB.Recordset
+ 11226:     Dim xApp As New CRAXDRT.Application
+ 11227:     Dim xReport As CRAXDRT.Report
+ 11228:     Dim CViewer As ClsReportViewer
+ 11229:     Dim StrReportTitle As String
+ 11230:     Dim StrFileName As String
+ 11231:     Dim Msg As String
+ 11232:     Dim rsDummy As New ADODB.Recordset
+ 11233:     Dim RsTrans As New ADODB.Recordset
+ 11234:     Dim mBranchID As Long
+ 11235: '--------------------------------------------------------------------------------------------
+ 11236:    Dim Begin As Boolean
+ 11237:    Begin = True
+ 11238:    Dim mBankBalance As Double
+ 11239:     Dim mTableName As String, mTableName2 As String
+ 11240:    
+ 11241:    Dim mBankBalanceCharge As Double
+ 11242:  Dim ii As Long
+ 11243:    Dim i As Long
+ 11244:    ii = DateDiff("D", txtFromDate.value, txtToDate.value)
+ 11245:    Dim mDate As Date
+ 11246:     Dim mDate2 As Date
+ 11247:    
+ 11248:     
+ 11249: 
+ 11250:     
+ 11251:    
+ 11252:    S = " SELECT"
+ 11253: S = S & "      Transaction_NetValue ,NoID,RechargeValue,transactions.NoteSerial1,Transactions.CashCustomerName,Transactions.CashCustomerPhone,dbo.Transactions.Transaction_Date"
+ 11254: S = S & "    ,(Transactions.VAT) VAT"
+ 11255: S = S & "    ,ItemDit"
+ 11256: S = S & "    ,TblItemShows.NameShow"
+ 11257: S = S & "    ,(Transactions.Comm1) Comm1"
+ 11258: S = S & "        ,(RechargeValue)  * TblItemShows.Comm2 /100 as  Comm2"
+ 11259: S = S & "        ,(RechargeValue)  * TblItemShows.Comm3 /100 as  Comm3"
+ 11260: 
+ 11261: S = S & "    ,TblItemShows.Account_code"
+ 11262: S = S & "    ,TblItemShows.Account_code2"
+ 11263: S = S & "    ,TblItemShows.Account_code3,TblItemShows.Account_code4"
+ 11264: S = S & " From transactions"
+ 11265: S = S & " INNER JOIN TblItemShows"
+ 11266: S = S & "     ON TblItemShows.ID = Transactions.ItemDit"
+ 11267: S = S & " INNER JOIN Transaction_Details"
+ 11268: S = S & "     ON Transaction_Details.Transaction_ID = Transactions.Transaction_ID"
+ 11269: S = S & " LEFT OUTER JOIN TblItemShowDitails"
+ 11270: S = S & "     ON TblItemShowDitails.id2 = TblItemShows.id"
+ 11271: S = S & "   Where  Transaction_Type = 21 "
+ 11272: S = S & "    and IsNull(NoID,'') <> ''"
+ 11273: 
+ 11274:       
+ 11275:       
+ 11276:       
+ 11277: 
+ 11278: S = " SELECT"
+ 11279: S = S & "     Transaction_NetValue,TblBranchesData.branch_name,TblBranchesData.branch_Code,"
+ 11280: 
+ 11281: S = S & "     RechargeValue, transactions.AmountLimit ,transactions.RatioAMount,"
+ 11282: S = S & "     transactions.NoteSerial1,"
+ 11283: S = S & "     Transactions.CashCustomerName,"
+ 11284: S = S & "     Transactions.CashCustomerPhone,"
+ 11285: S = S & "     dbo.Transactions.Transaction_Date,"
+ 11286: S = S & "     (Transactions.VAT) VAT,"
+ 11287: S = S & "     ItemDit,"
+ 11288: S = S & "     (Transactions.Comm1) Comm1,"
+ 11289: S = S & "     (RechargeValue) ss,"
+ 11290: 
+ 11291: S = S & "     Comm1 = CASE"
+ 11292: S = S & "         WHEN RechargeValue > tblitems.GreaterThanAmount THEN tblitems.AmountLimit"
+ 11293: S = S & "         ELSE 0"
+ 11294: S = S & "     END,"
+ 11295:     
+ 11296: S = S & "     transactions.ManualNo3 as NoID,"
+ 11297: S = S & "     transactions.RatioAMount as Comm2"
+ 11298: S = S & " From transactions"
+ 11299: 
+ 11300: S = S & " INNER JOIN tblitems"
+ 11301: S = S & "     ON transactions.ItemIDService3 = tblitems.ItemID"
+ 11302: S = S & "     Inner join TblBranchesData On TblBranchesData.branch_id = Transactions.BranchId"
+ 11303: 
+ 11304: S = S & " LEFT JOIN tblItemsCash"
+ 11305: S = S & "     ON transactions.ItemIDService3 = tblItemsCash.ItemID"
+ 11306: S = S & "     AND RechargeValue BETWEEN tblItemsCash.FromPrice AND tblItemsCash.ToPrice"
+ 11307: 
+ 11308: S = S & " Where Transaction_Type = 21"
+ 11309: S = S & " AND ISNULL(transactions.InstallmentService, 0) = 1"
+ 11310: 
+ 11311: 
+ 11312:        
+ 11313:     If Not IsNull(txtFromDate.value) Then
+ 11314:         If Begin = True Then
+ 11315:             S = S + " and Transactions.Transaction_Date  >=" & SQLDate(txtFromDate.value, True) & ""
+ 11316:         Else
+ 11317:             S = S + " where Transactions.Transaction_Date >=" & SQLDate(txtFromDate.value, True) & ""
+ 11318:             Begin = True
+ 11319:         End If
+ 11320:     End If
+ 11321: 
+ 11322:     If Not IsNull(txtToDate.value) Then
+ 11323:         If Begin = True Then
+ 11324:             S = S + " and Transactions.Transaction_Date <=" & SQLDate(txtToDate.value, True) & ""
+ 11325:         Else
+ 11326:             S = S + " where Transactions.Transaction_Date <=" & SQLDate(txtToDate.value, True) & ""
+ 11327:             Begin = True
+ 11328:         End If
+ 11329:     End If
+ 11330: If SystemOptions.usertype = UserAdmin Or SystemOptions.usertype = UserAdminAll Then
+ 11331:     
+ 11332: Else
+ 11333:     S = S & "and Transactions.BranchId = " & val(DcbranchID.BoundText)
+ 11334: End If
+ 11335: 
+ 11336: '    If DcbranchID.Enabled And Trim(DcbranchID.Text) <> "" Then
+ 11337: '        If Begin = True Then
+ 11338: '            S = S & "and TblBranchesData.branch_id = " & val(DcbranchID.BoundText)
+ 11339: '        Else
+ 11340: '            S = S & "where  TblBranchesData.branch_id = " & val(DcbranchID.BoundText)
+ 11341: '        End If
+ 11342: '    End If
+ 11343:         
+ 11344:     
+ 11345:     StrFileName = App.path & "\REPORTS\REPORTS NEW\" & "DiscountReprotTotal.rpt"
+ 11346:    
+ 11347:     If Dir(StrFileName) = "" Then
+ 11348:         'GetMsgs 139, vbExclamation
+ 11349:         Screen.MousePointer = vbDefault
+ 11350:         Exit Sub
+ 11351:     End If
+ 11352: 
+ 11353:     Set RsData = New ADODB.Recordset
+ 11354:     RsData.Open S, Cn, adOpenStatic, adLockReadOnly, adCmdText
+ 11355: 
+ 11356: '    If RsData.BOF Or RsData.EOF Then
+ 11357: '        'GetMsgs 138, vbExclamation
+ 11358: '        If SystemOptions.UserInterface = ArabicInterface Then
+ 11359: '        Msg = "لاتوجد بيانات للعرض"
+ 11360: '        Else
+ 11361: '        Msg = "No Data"
+ 11362: '        End If
+ 11363: '        MsgBox Msg, vbExclamation + vbMsgBoxRight + vbMsgBoxRtlReading, App.title
+ 11364: '        RsData.Close
+ 11365: '        Set RsData = Nothing
+ 11366: '        Screen.MousePointer = vbDefault
+ 11367: '        Exit Sub
+ 11368: '    End If
+ 11369: 
+ 11370:     Screen.MousePointer = vbArrowHourglass
+ 11371:     Set xReport = xApp.OpenReport(StrFileName)
+ 11372:     xReport.Database.SetDataSource RsData
+ 11373: 
+ 11374:     Dim cCompanyInfo As New ClsCompanyInfo
+ 11375:     
+ 11376:     
+ 11377:     xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 11378:     xReport.ParameterFields(5).AddCurrentValue DcbranchID.Text   'RPTCompany_Name_Arabic
+ 11379: '    xReport.ParameterFields(13).AddCurrentValue CStr(txtDate.value)    'RPTCompany_Name_Arabic
+ 11380:     xReport.ParameterFields(8).AddCurrentValue txtFromDate.value
+ 11381:     xReport.ParameterFields(10).AddCurrentValue txtToDate.value
+ 11382: '    xReport.ParameterFields(10).AddCurrentValue val(txtTotalRechargeValue.Text)   'RPTCompany_Name_Arabic
+ 11383: '    xReport.ParameterFields(11).AddCurrentValue val(txtTotalRev.Text)   'RPTCompany_Name_Arabic
+ 11384: '    xReport.ParameterFields(12).AddCurrentValue val(txtNet.Text)   'RPTCompany_Name_Arabic
+ 11385: '   ' xReport.ParameterFields(13).AddCurrentValue Trim(user_name)
+ 11386: '    xReport.ParameterFields(13).AddCurrentValue Trim(user_name)
+ 11387: '    xReport.ParameterFields(15).AddCurrentValue Trim(txtActValue.Text)   'RPTCompany_Name_Arabic
+ 11388: 
+ 11389: 'xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 11390: 'xReport.ParameterFields(1).AddCurrentValue cCompanyInfo.ArabCompanyName 'RPTCompany_Name_Arabic
+ 11391:     
+ 11392:     
+ 11393:     If SystemOptions.UserInterface = ArabicInterface Then
+ 11394: 
+ 11395:          
+ 11396:     xReport.reporttitle = StrReportTitle
+ 11397:     xReport.EnableParameterPrompting = False
+ 11398:     xReport.ApplicationName = App.title
+ 11399:     xReport.ReportAuthor = App.title
+ 11400:     End If
+ 11401:     Set CViewer = New ClsReportViewer
+ 11402:     CViewer.FireReport xReport, WindowTarget, "", , , , StrFileName, , S
+ 11403:     
+ 11404:     RsData.Close
+ 11405:     Set RsData = Nothing
+ 11406:     Screen.MousePointer = vbDefault
+ 11407: 
+ 11408: End Sub
+ 11409: 

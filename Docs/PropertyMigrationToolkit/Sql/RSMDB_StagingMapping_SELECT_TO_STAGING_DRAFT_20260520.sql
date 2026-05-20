@@ -25,7 +25,7 @@ SET @SourceDbQuoted = QUOTENAME(@SourceDatabase);
 /* Owners: VB6 uses TblAqar.ownerid -> TblCustemers.CusID. Owner rows are staged as owners, not renters. */
 SET @Sql = N'
 INSERT INTO dbo.PropertyMigrationSourceOwner(MigrationBatchId,CustomerCode,SourceDatabaseName,SourceTableName,SourceId,SourceCode,ArName,EnName,AccountCode,Mobile,Phone,VATNo,BankAccountNo,BankName,DepartmentId,Notes)
-SELECT @BatchId,@CustomerCode,@SourceDatabase,N''TblCustemers'',CAST(c.CusID AS nvarchar(200)),ISNULL(c.Fullcode,CAST(c.CusID AS nvarchar(50))),c.CusName,c.CusNamee,
+SELECT DISTINCT @BatchId,@CustomerCode,@SourceDatabase,N''TblCustemers'',CAST(c.CusID AS nvarchar(200)),ISNULL(c.Fullcode,CAST(c.CusID AS nvarchar(50))),c.CusName,c.CusNamee,
        COALESCE(NULLIF(c.Account_Code,N''''),NULLIF(c.Account_Code_As_Supplier,N''''),NULLIF(c.Account_Code2,N'''')),c.Cus_mobile,c.Cus_Phone,c.VATNO,c.BankAccount,c.BankName,c.BranchId,
        N''RSMDB owner from TblAqar.ownerid''
 FROM ' + @SourceDbQuoted + N'.dbo.TblAqar a
@@ -186,4 +186,5 @@ SELECT 'RSMDBStagingDraft' Stage,
        (SELECT COUNT(*) FROM dbo.PropertyMigrationSourceIssue WHERE MigrationBatchId=@MigrationBatchId) IssuesReviewOnly,
        (SELECT COUNT(*) FROM dbo.PropertyMigrationSourceOwnerBalance WHERE MigrationBatchId=@MigrationBatchId) OwnerBalances,
        (SELECT COUNT(*) FROM dbo.PropertyMigrationSourceTermination WHERE MigrationBatchId=@MigrationBatchId) TerminationsReviewOnly;
+
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using MyERP.Areas.MainErp.Interfaces;
@@ -378,10 +379,6 @@ WHERE bill_id = @BillId;", connection))
                 var total = model.Total.GetValueOrDefault();
                 var vat = model.VatValue.GetValueOrDefault();
                 var net = model.NetValue.GetValueOrDefault();
-                if (net == 0m)
-                {
-                    net = total + vat;
-                }
 
                 if (model.ExtractItems == null || model.ExtractItems.Count == 0)
                 {
@@ -409,6 +406,47 @@ WHERE d.bill_id = @BillId;", connection, transaction))
                         cleanDetails.ExecuteNonQuery();
                     }
                 }
+
+
+                var projectItemSnapshots = LoadProjectItemSnapshots(connection, transaction, project.Id);
+                decimal computedTotal = 0m;
+                foreach (var item in model.ExtractItems)
+                {
+                    if (item.CurrentQuantity <= 0m)
+                    {
+                        continue;
+                    }
+
+                    ProjectMainDesSnapshot snapshot;
+                    if (!projectItemSnapshots.TryGetValue(item.PrMainDesID, out snapshot))
+                    {
+                        throw new InvalidOperationException("??? ??????? ??? ????? ?? ??? ????? ????????.");
+                    }
+
+                    item.Item = snapshot.Item;
+                    item.FullCode = snapshot.FullCode;
+                    item.ContractQuantity = snapshot.ContractQuantity;
+                    item.Price = snapshot.Price;
+                    item.PreviousQuantity = snapshot.PreviousQuantity;
+                    item.PreviousValue = snapshot.PreviousValue;
+
+                    var computedCurrentValue = Math.Round(item.CurrentQuantity * snapshot.Price, 6);
+                    if (computedCurrentValue <= 0m)
+                    {
+                        throw new InvalidOperationException("?? ???? ??? ??? ????? ????? ????? ????? ?? ???? ???? ?? ???.");
+                    }
+
+                    item.CurrentValue = computedCurrentValue;
+                    computedTotal += computedCurrentValue;
+                }
+
+                if (computedTotal <= 0m)
+                {
+                    throw new InvalidOperationException("?? ???? ??? ?????? ???? ???? ????? ?????.");
+                }
+
+                total = computedTotal;
+                net = (total - model.AdvancedPayment.GetValueOrDefault() - model.PerforValue.GetValueOrDefault() - model.GeneralDiscount.GetValueOrDefault()) + vat;
 
                 using (var command = new SqlCommand((isEdit ? @"
 UPDATE dbo.project_billl SET
@@ -878,7 +916,7 @@ VALUES
             var items = new System.Collections.Generic.List<ProjectMainDesViewModel>();
             try
             {
-                using (var command = new SqlCommand("SELECT ID, ProjectID, Name, Price, Qty, Total FROM dbo.ProjectMainDes WHERE ProjectID = @pId", connection))
+                using (var command = new SqlCommand("SELECT ID, ProjectID, Name, Price, Qty, Total, Remarks FROM dbo.ProjectMainDes WHERE ProjectID = @pId", connection))
                 {
                     command.Parameters.AddWithValue("@pId", projectId);
                     using (var reader = command.ExecuteReader())
@@ -892,7 +930,8 @@ VALUES
                                 Item = ReadString(reader, "Name"),
                                 Price = ReadDecimal(reader, "Price").GetValueOrDefault(),
                                 Quantity = ReadDecimal(reader, "Qty").GetValueOrDefault(),
-                                Value = ReadDecimal(reader, "Total").GetValueOrDefault()
+                                Value = ReadDecimal(reader, "Total").GetValueOrDefault(),
+                                Remarks = HasColumn(reader, "Remarks") ? ReadString(reader, "Remarks") : string.Empty
                             });
                         }
                     }
@@ -920,13 +959,18 @@ VALUES
                 foreach (var item in items)
                 {
                     if (string.IsNullOrWhiteSpace(item.Item)) continue;
-                    using (var command = new SqlCommand("INSERT INTO dbo.ProjectMainDes (ProjectID, Name, Price, Qty, Total) VALUES (@pId, @name, @price, @qty, @total)", connection, transaction))
+                    var newId = NextId(connection, transaction, "ProjectMainDes", "ID");
+                    var lineTotal = Math.Round(item.Quantity * item.Price, 6);
+                    using (var command = new SqlCommand("INSERT INTO dbo.ProjectMainDes (ID, ProjectID, Name, FullCode, Price, Qty, Total, Remarks, QtyExe, TotalExe) VALUES (@id, @pId, @name, @fullCode, @price, @qty, @total, @remarks, 0, 0)", connection, transaction))
                     {
+                        command.Parameters.AddWithValue("@id", newId);
                         command.Parameters.AddWithValue("@pId", projectId);
                         command.Parameters.AddWithValue("@name", (object)item.Item ?? DBNull.Value);
+                        command.Parameters.AddWithValue("@fullCode", newId.ToString());
                         command.Parameters.AddWithValue("@price", item.Price);
                         command.Parameters.AddWithValue("@qty", item.Quantity);
-                        command.Parameters.AddWithValue("@total", item.Value);
+                        command.Parameters.AddWithValue("@total", lineTotal);
+                        command.Parameters.AddWithValue("@remarks", (object)item.Remarks ?? DBNull.Value);
                         command.ExecuteNonQuery();
                     }
                 }
@@ -1065,6 +1109,51 @@ WHERE id = @Id;";
             return reader.IsDBNull(ordinal) ? (double?)null : Convert.ToDouble(reader.GetValue(ordinal));
         }
 
+        private static bool HasColumn(IDataRecord reader, string column)
+        {
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                if (string.Equals(reader.GetName(i), column, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static IDictionary<int, ProjectMainDesSnapshot> LoadProjectItemSnapshots(SqlConnection connection, SqlTransaction transaction, int projectId)
+        {
+            var result = new Dictionary<int, ProjectMainDesSnapshot>();
+            using (var command = new SqlCommand(@"
+SELECT ID, Name, FullCode, ISNULL(Qty, 0) AS Qty, ISNULL(Price, 0) AS Price,
+       ISNULL(QtyExe, 0) AS QtyExe, ISNULL(TotalExe, 0) AS TotalExe
+FROM dbo.ProjectMainDes WITH (UPDLOCK, HOLDLOCK)
+WHERE ProjectID = @ProjectId;", connection, transaction))
+            {
+                command.Parameters.AddWithValue("@ProjectId", projectId);
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var id = ReadInt(reader, "ID").GetValueOrDefault();
+                        result[id] = new ProjectMainDesSnapshot
+                        {
+                            Id = id,
+                            Item = ReadString(reader, "Name"),
+                            FullCode = ReadString(reader, "FullCode"),
+                            ContractQuantity = ReadDecimal(reader, "Qty").GetValueOrDefault(),
+                            Price = ReadDecimal(reader, "Price").GetValueOrDefault(),
+                            PreviousQuantity = ReadDecimal(reader, "QtyExe").GetValueOrDefault(),
+                            PreviousValue = ReadDecimal(reader, "TotalExe").GetValueOrDefault()
+                        };
+                    }
+                }
+            }
+
+            return result;
+        }
+
         private static string ResolveLeafAccount(SqlConnection connection, SqlTransaction transaction, string accountCode, string fallbackSearchTerm, string fallbackSearchTermEng)
         {
             if (!string.IsNullOrWhiteSpace(accountCode))
@@ -1113,6 +1202,17 @@ WHERE id = @Id;";
             public int? BranchNo { get; set; }
             public DateTime? StartDate { get; set; }
             public string AccountUnderImp { get; set; }
+        }
+
+        private class ProjectMainDesSnapshot
+        {
+            public int Id { get; set; }
+            public string Item { get; set; }
+            public string FullCode { get; set; }
+            public decimal ContractQuantity { get; set; }
+            public decimal Price { get; set; }
+            public decimal PreviousQuantity { get; set; }
+            public decimal PreviousValue { get; set; }
         }
     }
 }
