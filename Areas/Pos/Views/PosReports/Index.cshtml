@@ -458,6 +458,10 @@
                     renderFinancialClosingReport(data, effectiveReportKey);
                     return;
                 }
+                if (isOperationalCrystalReport(effectiveReportKey)) {
+                    renderOperationalCrystalReport(data, effectiveReportKey);
+                    return;
+                }
 
                 var html = '<div class="responsive-table"><table class="pos-table"><thead><tr>';
                 for (var c = 0; c < data.columns.length; c++) {
@@ -518,6 +522,177 @@
                     || reportKey === "finance-closing"
                     || reportKey === "revenues"
                     || reportKey === "finance-closing-discounts";
+            }
+            function isOperationalCrystalReport(reportKey) {
+                reportKey = String(reportKey || "").toLowerCase();
+                return reportKey === "daily-trans"
+                    || reportKey === "daily-trans-2"
+                    || reportKey === "sales-complete"
+                    || reportKey === "sales-complete-2"
+                    || reportKey === "sales-governorates"
+                    || reportKey === "sales-departments"
+                    || reportKey === "sales-sectors"
+                    || reportKey === "sales-analytical"
+                    || reportKey === "items-sales-details";
+            }
+            function renderOperationalCrystalReport(data, requestedKey) {
+                var layout = getOperationalCrystalLayout(requestedKey || data.reportKey || data.ReportKey);
+                var cols = layout.columns;
+                var totals = {};
+                var html = ''
+                    + '<div class="crystal-report">'
+                    + '<div class="crystal-title">' + escapeHtml(layout.title || data.reportName || "تقرير") + '</div>'
+                    + (layout.source ? '<div class="crystal-source">' + escapeHtml(layout.source) + '</div>' : '')
+                    + '<div class="responsive-table"><table class="pos-table crystal-table"><thead><tr>';
+
+                for (var i = 0; i < cols.length; i++) {
+                    html += '<th' + (cols[i].warn ? ' class="warn-head"' : '') + '>'
+                        + '<span>' + escapeHtml(cols[i].title) + '</span>'
+                        + (cols[i].note ? '<small>' + escapeHtml(cols[i].note) + '</small>' : '')
+                        + '</th>';
+                }
+                html += '</tr></thead><tbody>';
+
+                for (var r = 0; r < data.rows.length; r++) {
+                    var issueStatus = readAny(data.rows[r], ["CardIssueStatus"]);
+                    var isProblem = isProblemStatus(issueStatus);
+                    html += '<tr' + (isProblem ? ' class="card-issue-problem"' : '') + '>';
+                    for (var c = 0; c < cols.length; c++) {
+                        var col = cols[c];
+                        var value = getOperationalCrystalValue(data.rows[r], col, r);
+                        if (col.total) {
+                            var numberValue = readNumber(value);
+                            if (isFinite(numberValue)) {
+                                totals[col.key] = (totals[col.key] || 0) + numberValue;
+                            }
+                        }
+                        html += '<td>' + (col.badge ? formatReportCell(col.key, value) : escapeHtml(formatCell(value))) + '</td>';
+                    }
+                    html += '</tr>';
+                }
+
+                html += '</tbody><tfoot><tr>';
+                for (var t = 0; t < cols.length; t++) {
+                    var totalCol = cols[t];
+                    if (t === 0) {
+                        html += '<th></th>';
+                    } else if (t === 1) {
+                        html += '<th>الإجمالي العام</th>';
+                    } else if (totalCol.total) {
+                        html += '<th>' + escapeHtml(formatCell(totals[totalCol.key] || 0)) + '</th>';
+                    } else {
+                        html += '<th></th>';
+                    }
+                }
+                html += '</tr></tfoot></table></div>';
+                if (hasCardIssueCheck(data.rows) && (String(requestedKey || "").toLowerCase() === "daily-trans" || String(requestedKey || "").toLowerCase() === "daily-trans-2")) {
+                    html += buildCardProblemsSummary(data.rows);
+                }
+                html += '</div>';
+                byId("reportResult").innerHTML = html;
+            }
+            function getOperationalCrystalLayout(reportKey) {
+                reportKey = String(reportKey || "").toLowerCase();
+                if (reportKey === "items-sales-details") {
+                    return {
+                        title: "تقرير مبيعات الأصناف تفصيلي",
+                        source: "FrmReports XPChk(2) / Inventory\\sales5.rpt / sales910.rpt",
+                        columns: [
+                            { key: "RowNo", title: "م" },
+                            { key: "Transaction_Date", title: "التاريخ" },
+                            { key: "Transaction_Serial", title: "رقم الحركة", aliases: ["Transaction_ID"] },
+                            { key: "branch_name", title: "الفرع", aliases: ["BranchName", "branch_namee"] },
+                            { key: "StoreName", title: "المخزن" },
+                            { key: "ItemCode", title: "كود الصنف" },
+                            { key: "ItemName", title: "اسم الصنف" },
+                            { key: "GroupName", title: "المجموعة" },
+                            { key: "UnitName", title: "الوحدة" },
+                            { key: "Quantity", title: "الكمية", total: true },
+                            { key: "Price", title: "السعر", aliases: ["localprice"], total: true },
+                            { key: "TotalDiscountPerLine", title: "خصم السطر", total: true },
+                            { key: "ItemDiscountValue", title: "خصم الصنف", total: true },
+                            { key: "LineNet", title: "الصافي", total: true },
+                            { key: "OpeningReSalesQty", title: "كمية المرتجع", total: true },
+                            { key: "OpeningReSalesValue", title: "قيمة المرتجع", total: true },
+                            { key: "CusName", title: "العميل", aliases: ["CusNamee"] },
+                            { key: "TransactionTypeName", title: "نوع الحركة", aliases: ["TransactionEnglishName"] },
+                            { key: "VisaNumber", title: "رقم الكارت" },
+                            { key: "lotNo", title: "Lot" },
+                            { key: "ExpiryDate", title: "الصلاحية" }
+                        ]
+                    };
+                }
+                if (reportKey === "daily-trans" || reportKey === "daily-trans-2") {
+                    return {
+                        title: reportKey === "daily-trans-2" ? "تقرير يومي بالحركات 2" : "تقرير يومي بالحركات",
+                        source: reportKey === "daily-trans-2" ? "FrmReports XPChk(93) / DailyReprotTotalCayshny2Sector.rpt" : "FrmReports XPChk(90) / DailyReprotTotalCayshny2.rpt",
+                        columns: [
+                            { key: "RowNo", title: "م" },
+                            { key: "Transaction_Date", title: "التاريخ" },
+                            { key: "branch_Code", title: "كود الفرع", aliases: ["BranchCode"] },
+                            { key: "BranchName", title: "الفرع", aliases: ["branch_name", "branch_namee"] },
+                            { key: "SectionName", title: "القطاع" },
+                            { key: "GovernmentName", title: "المحافظة" },
+                            { key: "ActivitesTypeName", title: "النشاط" },
+                            { key: "Count1", title: "خدمة 1", total: true },
+                            { key: "Count1Return", title: "مرتجع 1", total: true },
+                            { key: "Count2", title: "خدمة 2", total: true },
+                            { key: "Count2Return", title: "مرتجع 2", total: true },
+                            { key: "Count3", title: "خدمة 3", total: true },
+                            { key: "Count3Return", title: "مرتجع 3", total: true },
+                            { key: "Count4", title: "خدمة 4", total: true },
+                            { key: "Count4Return", title: "مرتجع 4", total: true },
+                            { key: "Count5", title: "خدمة 5", total: true },
+                            { key: "Count5Return", title: "مرتجع 5", total: true },
+                            { key: "Count6", title: "خدمة 6", total: true },
+                            { key: "Count6Return", title: "مرتجع 6", total: true },
+                            { key: "Count7", title: "خدمة 7", total: true },
+                            { key: "Count7Return", title: "مرتجع 7", total: true },
+                            { key: "Count8", title: "خدمة 8", total: true },
+                            { key: "Count8Return", title: "مرتجع 8", total: true },
+                            { key: "Count9", title: "خدمة 9", total: true },
+                            { key: "Count9Return", title: "مرتجع 9", total: true },
+                            { key: "CountTotal", title: "إجمالي العدد", aliases: ["CountTotalMonth"], total: true },
+                            { key: "Transaction_NetValue", title: "صافي الحركة", aliases: ["NetValue", "PayedValue"], total: true },
+                            { key: "RechargeValue", title: "قيمة الشحن", total: true },
+                            { key: "VatDet", title: "الضريبة", aliases: ["VAT", "Vat"], total: true },
+                            { key: "CardIssueStatus", title: "فحص الكارت", badge: true }
+                        ]
+                    };
+                }
+                return {
+                    title: getReportTitle(reportKey),
+                    source: "FrmReports / Crystal parity layout",
+                    columns: [
+                        { key: "RowNo", title: "م" },
+                        { key: "BranchName", title: "بيان الفرع", aliases: ["branch_name", "branch_namee"] },
+                        { key: "SectionName", title: "القطاع" },
+                        { key: "GovernmentName", title: "المحافظة" },
+                        { key: "TotalSupply", title: "إجمالي التوريد", note: "داخل الضريبة", total: true },
+                        { key: "TotalRechargeValue", title: "أصل مبلغ الشحن", total: true },
+                        { key: "TotalRev2", title: "رسوم الشحن", note: "بدون ضريبة", total: true },
+                        { key: "TotalRevVat", title: "ضريبة رسوم الشحن", total: true },
+                        { key: "TotalRevWithVat", title: "رسوم الشحن", note: "شامل الضريبة", total: true },
+                        { key: "CountTransaction", title: "عدد عمليات الشحن", total: true },
+                        { key: "CountCards", title: "كروت كيشني", note: "عدد", aliases: ["TotalCards", "CountCard"], total: true },
+                        { key: "CardValue", title: "كروت كيشني", note: "قيمة", aliases: ["TotalSaleDay2", "CardsValue"], total: true },
+                        { key: "WalletBalance", title: "رصيد Wallet", aliases: ["WalletNet"], total: true },
+                        { key: "WalletSupply", title: "توريد Wallet", aliases: ["TotalWallet"], total: true },
+                        { key: "ReturnsCount", title: "مرتجعات", note: "عدد", aliases: ["ReturnCount", "CountReturns"], total: true },
+                        { key: "TotalReturns", title: "مرتجعات", note: "قيمة", total: true },
+                        { key: "NetCashOut", title: "صافي كاش أوت", total: true }
+                    ]
+                };
+            }
+            function getOperationalCrystalValue(row, col, rowIndex) {
+                if (col.key === "RowNo") {
+                    return rowIndex + 1;
+                }
+                var value = readAny(row, [col.key].concat(col.aliases || []));
+                if (value !== null && value !== undefined) {
+                    return value;
+                }
+                return "";
             }
             function formatReportCell(key, value) {
                 if (String(key || "").toLowerCase() === "cardissuestatus") {

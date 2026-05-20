@@ -113,14 +113,6 @@ internal static class Program
             {
                 await RunStepAsync("FinanceApproval", FinanceApprovalAsync);
             }
-            if (_config.IncludeAccountingPilotExecute)
-            {
-                await RunStepAsync("AccountingPilotExecute", AccountingPilotExecuteAsync);
-            }
-            if (_config.IncludeAccountingRollback)
-            {
-                await RunStepAsync("AccountingRollback", AccountingRollbackAsync);
-            }
             if (_config.IncludeOperationalLinkResolution)
             {
                 await RunStepAsync("OperationalLinkResolution", OperationalLinkResolutionAsync);
@@ -132,6 +124,18 @@ internal static class Program
             if (_config.IncludeCashingType8ReceiptCandidateBuild)
             {
                 await RunStepAsync("CashingType8ReceiptCandidateBuild", CashingType8ReceiptCandidateBuildAsync);
+            }
+            if (_config.IncludeCashingType8FinanceApproval)
+            {
+                await RunStepAsync("CashingType8FinanceApproval", CashingType8FinanceApprovalAsync);
+            }
+            if (_config.IncludeAccountingPilotExecute)
+            {
+                await RunStepAsync("AccountingPilotExecute", AccountingPilotExecuteAsync);
+            }
+            if (_config.IncludeAccountingRollback)
+            {
+                await RunStepAsync("AccountingRollback", AccountingRollbackAsync);
             }
             await RunStepAsync("Migration", MigrationAsync);
             await RunStepAsync("Reconciliation", () => RunSqlTemplateAsync("Reconciliation_Generic.sql", readOnly: true));
@@ -387,6 +391,18 @@ SELECT
             AddInfo("CashingType8ReceiptCandidateBuild", $"No customer-specific CashingType=8 candidate builder is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
         }
 
+        private async Task CashingType8FinanceApprovalAsync()
+        {
+            if (_config.SourceDatabaseName.Equals("RSMDB", StringComparison.OrdinalIgnoreCase))
+            {
+                await RunSqlTemplateAsync("RSMDB_CashingType8_FinanceApproval_20260520.sql", readOnly: false);
+                AddInfo("CashingType8FinanceApproval", "Built RSMDB CashingType=8 finance approval pack and impact simulation on clone only. No receipts, journals, or posting were created.");
+                return;
+            }
+
+            AddInfo("CashingType8FinanceApproval", $"No customer-specific CashingType=8 finance approval template is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
+        }
+
         private async Task ReadOnlySafetyValidationAsync()
         {
             await using var target = new SqlConnection(BuildConnectionString(_config.TargetCloneDatabaseName));
@@ -506,6 +522,10 @@ SELECT Contracts = CASE WHEN OBJECT_ID(N'dbo.PropertyContract') IS NULL THEN 0 E
             if (_config.IncludeCashingType8ReceiptCandidateBuild)
             {
                 AddInfo("ExecutionPlan", "CashingType8ReceiptCandidateBuild stage enabled: builds property receipt pilot candidates and finance review pack only.");
+            }
+            if (_config.IncludeCashingType8FinanceApproval)
+            {
+                AddInfo("ExecutionPlan", "CashingType8FinanceApproval stage enabled: creates scoped finance review pack and approval impact simulation only; no accounting migration.");
             }
             AddInfo("ExecutionPlan", $"Selected modules: Accounting={_config.IncludeAccounting}, Receipts={_config.IncludeHistoricalReceipts}, Issues={_config.IncludeIssues}, Journals={_config.IncludeJournalEntries}, AdvancePayments={_config.IncludeAdvancePayments}, Terminations={_config.IncludeTerminations}.");
             AddInfo("ExecutionPlan", $"ControlledPipelineOnly={_config.SkipCustomerSpecificMigrationTemplates}.");
@@ -834,6 +854,7 @@ internal sealed class MigrationRunnerConfig
     public bool IncludeOperationalLinkResolution { get; set; }
     public bool IncludeReceiptAllocationDiscovery { get; set; }
     public bool IncludeCashingType8ReceiptCandidateBuild { get; set; }
+    public bool IncludeCashingType8FinanceApproval { get; set; }
     public bool ExcludeUnsafePayments { get; set; } = true;
     public bool BackupVerified { get; set; }
     public bool ExecutionPlanApproved { get; set; }

@@ -82,7 +82,7 @@ BEGIN
 
     CREATE TABLE #SelectedAccounts
     (
-        Account_Code NVARCHAR(50) NOT NULL PRIMARY KEY
+        Account_Code NVARCHAR(50) COLLATE DATABASE_DEFAULT NOT NULL PRIMARY KEY
     );
 
     INSERT INTO #SelectedAccounts (Account_Code)
@@ -96,19 +96,19 @@ BEGIN
     (
         Double_Entry_Vouchers_ID INT NULL,
         DEV_ID_Line_No INT NULL,
-        Account_Code NVARCHAR(50) NULL,
+        Account_Code NVARCHAR(50) COLLATE DATABASE_DEFAULT NULL,
         RecordDate DATETIME NULL,
         NoteSerial DECIMAL(38, 0) NULL,
         NoteSerial1 DECIMAL(38, 0) NULL,
         NoteType INT NULL,
         branch_id INT NULL,
-        Description NVARCHAR(4000) NULL,
+        Description NVARCHAR(4000) COLLATE DATABASE_DEFAULT NULL,
         Debit DECIMAL(38, 6) NULL,
         Credit DECIMAL(38, 6) NULL,
         project_id INT NULL,
         pandid INT NULL,
         operid INT NULL,
-        UserName NVARCHAR(255) NULL
+        UserName NVARCHAR(255) COLLATE DATABASE_DEFAULT NULL
     );
 
     INSERT INTO #MovementBase
@@ -338,5 +338,6 @@ BEGIN
     ORDER BY AccountSerial, AccountCode, RecordDate, NoteSerial;
 END;
 GO
+
 
 
