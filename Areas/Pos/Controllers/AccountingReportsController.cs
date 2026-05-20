@@ -35,7 +35,7 @@ namespace MyERP.Areas.Pos.Controllers
             }
 
             ViewBag.AccountingReportsArea = "Pos";
-            return View(BuildPageModel(context, filter));
+            return View(BuildPageModel(context, filter, false));
         }
 
         [HttpPost]
@@ -51,7 +51,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية عرض تقارير الحسابات");
             }
 
-            var model = BuildPageModel(context, filter);
+            var model = BuildPageModel(context, filter, true);
             if (model.ActiveReport == null)
             {
                 model.Message = "اختر التقرير أولا";
@@ -77,7 +77,7 @@ namespace MyERP.Areas.Pos.Controllers
                 return new HttpStatusCodeResult(403, "ليست لديك صلاحية تصدير هذا التقرير");
             }
 
-            var model = BuildPageModel(context, filter);
+            var model = BuildPageModel(context, filter, false);
             if (model.ActiveReport == null)
             {
                 return new HttpStatusCodeResult(400, "اختر التقرير أولا");
@@ -99,10 +99,23 @@ namespace MyERP.Areas.Pos.Controllers
             return Json(_reportRepository.GetAccountTree(parentCode, term), JsonRequestBehavior.AllowGet);
         }
 
-        private HtmlReportPageViewModel BuildPageModel(PosUserContext context, HtmlReportFilterModel filter)
+        [HttpGet]
+        public ActionResult Branches()
+        {
+            var context = GetPosContext();
+            if (context == null || !CanOpen(context))
+            {
+                return new HttpStatusCodeResult(403);
+            }
+
+            var forcedBranch = !IsAdmin(context) && context.BranchId.HasValue ? context.BranchId : null;
+            return Json(_service.GetBranches(forcedBranch), JsonRequestBehavior.AllowGet);
+        }
+
+        private HtmlReportPageViewModel BuildPageModel(PosUserContext context, HtmlReportFilterModel filter, bool loadBranches)
         {
             var forcedBranch = !IsAdmin(context) && context.BranchId.HasValue ? context.BranchId : null;
-            return _service.BuildPage(filter, forcedBranch);
+            return _service.BuildPage(filter, forcedBranch, loadBranches);
         }
 
         private static bool CanOpen(PosUserContext context)

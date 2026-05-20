@@ -27,7 +27,7 @@ namespace MyERP.Areas.MainErp.Controllers
         {
             ViewBag.ActiveScreen = "accounting-reports";
             ViewBag.AccountingReportsArea = "MainErp";
-            return View("~/Areas/Pos/Views/AccountingReports/Index.cshtml", _service.BuildPage(filter, null));
+            return View("~/Areas/Pos/Views/AccountingReports/Index.cshtml", _service.BuildPage(filter, null, false));
         }
 
         [HttpPost]
@@ -35,7 +35,7 @@ namespace MyERP.Areas.MainErp.Controllers
         {
             ViewBag.ActiveScreen = "accounting-reports";
             ViewBag.AccountingReportsArea = "MainErp";
-            var model = _service.BuildPage(filter, null);
+            var model = _service.BuildPage(filter, null, true);
             if (model.ActiveReport == null)
             {
                 model.Message = "اختر التقرير أولا";
@@ -49,7 +49,7 @@ namespace MyERP.Areas.MainErp.Controllers
         [HttpPost]
         public ActionResult Export([Bind(Prefix = "Filter")] HtmlReportFilterModel filter)
         {
-            var model = _service.BuildPage(filter, null);
+            var model = _service.BuildPage(filter, null, false);
             if (model.ActiveReport == null)
             {
                 return new HttpStatusCodeResult(400, "اختر التقرير أولا");
@@ -77,6 +77,12 @@ namespace MyERP.Areas.MainErp.Controllers
         public ActionResult AccountTree(string parentCode, string term)
         {
             return Json(_reportRepository.GetAccountTree(parentCode, term), JsonRequestBehavior.AllowGet);
+        }
+
+        [HttpGet]
+        public ActionResult Branches()
+        {
+            return Json(_service.GetBranches(null), JsonRequestBehavior.AllowGet);
         }
 
         private SqlConnection CreateMainConnection()

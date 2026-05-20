@@ -1,0 +1,796 @@
+@model MyERP.Areas.MainErp.ViewModels.LC.LCIndexViewModel
+@using MyERP.Areas.MainErp.Infrastructure.Localization
+@{
+    Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
+    Func<string, string> T = MainErpLocalizationService.T;
+    ViewBag.Title = T("LettersOfCredit");
+    ViewBag.ActiveScreen = "lc";
+
+    var d = Model.SelectedDetails;
+    var readOnlyMessage = Convert.ToString(TempData["MainErpLcReadOnlyMessage"]);
+    var canEditLc = ViewBag.CanEditLc == true;
+    var canPostLc = ViewBag.CanPostLc == true;
+    var canPostHeaderLc = ViewBag.CanPostHeaderLc == true;
+    var canPostGridsLc = ViewBag.CanPostGridsLc == true;
+    var canRebuildLc = ViewBag.CanRebuildLc == true;
+    var canDeleteLc = ViewBag.CanDeleteLc == true;
+    var canReportLc = ViewBag.CanReportLc == true;
+
+    var totalDebit = 0m;
+    var totalCredit = 0m;
+    var affectedAccounts = new System.Collections.Generic.HashSet<string>();
+    var missingAccounts = 0;
+    var gridRows = 0;
+    var daysToDue = 0;
+    var workflowStep = 1;
+    var executionPercent = 0m;
+    var expensePercent = 0m;
+    var paidPercent = 0m;
+    var localValue = 0m;
+    var localOpenExpense = 0m;
+    var voucherDifference = 0m;
+    var openingBalanceType = T("NoRows");
+
+    Func<string, string> SafeMessage = value =>
+    {
+        if (string.IsNullOrWhiteSpace(value)) { return ""; }
+        if (value.IndexOf("MainErp_AuditLog", StringComparison.OrdinalIgnoreCase) >= 0
+            || value.IndexOf("Audit", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            return "سجل المراجعة غير مفعل في البيئة الحالية؛ يمكن متابعة قراءة الاعتماد، وسيظهر السجل بعد تفعيل إعدادات المراجعة.";
+        }
+        return value
+            .Replace("MainErp_AuditLog", "سجل المراجعة")
+            .Replace("TBLLCHistory", "حركة الاعتماد")
+            .Replace("TBLLCMargin2", "دفعات الهامش")
+            .Replace("TBLLCMargin", "هامش الاعتماد")
+            .Replace("tblLCOpenB", "الرصيد الافتتاحي")
+            .Replace("DOUBLE_ENTREY_VOUCHERS1", "قيود الرصيد الافتتاحي")
+            .Replace("DOUBLE_ENTREY_VOUCHERS", "القيود المحاسبية")
+            .Replace("Notes1", "مستندات الرصيد الافتتاحي")
+            .Replace("Notes", "المستندات المحاسبية")
+            .Replace("NoteID", "رقم المستند");
+    };
+
+    Func<string, string, string> GridTitle = (title, fallback) =>
+    {
+        var text = SafeMessage(title);
+        if (text.Contains(" / ")) { text = text.Substring(0, text.IndexOf(" / ")); }
+        return string.IsNullOrWhiteSpace(text) ? fallback : text;
+    };
+
+    if (d != null)
+    {
+        foreach (var line in d.VoucherLines)
+        {
+            totalDebit += line.Debit;
+            totalCredit += line.Credit;
+            if (!string.IsNullOrWhiteSpace(line.AccountDisplay))
+            {
+                affectedAccounts.Add(line.AccountDisplay);
+            }
+        }
+
+        foreach (var account in d.AccountLinks)
+        {
+            if (string.IsNullOrWhiteSpace(account.AccountDisplay) || !string.IsNullOrWhiteSpace(account.Warning))
+            {
+                missingAccounts++;
+            }
+        }
+
+        foreach (var grid in d.GridSections)
+        {
+            gridRows += grid.Rows.Count;
+        }
+
+        openingBalanceType = !d.OpenBalanceType.HasValue
+            ? T("NoRows")
+            : d.OpenBalanceType.Value == 0 ? T("Debit") : d.OpenBalanceType.Value == 1 ? T("Credit") : T("NoRows");
+
+        daysToDue = d.ToDate.HasValue ? (int)(d.ToDate.Value.Date - DateTime.Today).TotalDays : 0;
+        workflowStep = d.Locked == true || d.CloseDate.HasValue ? 6
+            : d.LinkedNotes.Count > 2 ? 5
+            : gridRows > 0 ? 4
+            : d.NoteID.HasValue || d.NoteID2.HasValue ? 2
+            : 1;
+
+        executionPercent = d.Value.GetValueOrDefault() > 0
+            ? Math.Min(100m, Math.Round((Math.Abs(totalDebit) / d.Value.GetValueOrDefault()) * 100m, 1))
+            : 0m;
+        expensePercent = d.Value.GetValueOrDefault() > 0
+            ? Math.Round((d.OpenValue.GetValueOrDefault() / d.Value.GetValueOrDefault()) * 100m, 1)
+            : 0m;
+        paidPercent = d.Value.GetValueOrDefault() > 0
+            ? Math.Min(100m, Math.Round((Math.Abs(totalCredit) / d.Value.GetValueOrDefault()) * 100m, 1))
+            : 0m;
+        localValue = d.Value.GetValueOrDefault() * Convert.ToDecimal(d.CurrencyRate.GetValueOrDefault(1d));
+        localOpenExpense = d.OpenValue.GetValueOrDefault() * Convert.ToDecimal(d.CurrencyRate.GetValueOrDefault(1d));
+        voucherDifference = totalDebit - totalCredit;
+    }
+}
+
+<section class="lc-enterprise-shell" dir="rtl">
+    <aside class="lc-side-panel">
+        <div class="lc-side-header">
+            <span>دورة تشغيل معتمدة</span>
+            <h3>الاعتمادات المستندية</h3>
+        </div>
+
+        @using (Html.BeginForm("Index", "LC", FormMethod.Get, new { area = "MainErp", id = "lcSearchForm", @class = "lc-search-form" }))
+        {
+            <label>
+                <span>بحث سريع</span>
+                <input name="searchText" value="@Model.SearchText" placeholder="رقم الاعتماد أو المورد" />
+            </label>
+            <div class="lc-filter-grid">
+                <label>
+                    <span>@T("Bank")</span>
+                    @Html.DropDownList("bankId", new SelectList(Model.Banks, "Value", "Text", Model.BankId), "-- " + T("Bank") + " --")
+                </label>
+                <label>
+                    <span>@T("Supplier")</span>
+                    @Html.DropDownList("vendorId", new SelectList(Model.Vendors, "Value", "Text", Model.VendorId), "-- " + T("Supplier") + " --")
+                </label>
+                <label>
+                    <span>@T("Branch")</span>
+                    @Html.DropDownList("branchId", new SelectList(Model.Branches, "Value", "Text", Model.BranchId), "-- " + T("Branch") + " --")
+                </label>
+            </div>
+            <div class="lc-filter-chips" aria-label="Quick filters">
+                <button type="submit">كل الاعتمادات</button>
+                <button type="submit" name="searchText" value="@Model.SearchText">نشطة</button>
+                <button type="submit" name="searchText" value="@Model.SearchText">تحتاج مراجعة</button>
+            </div>
+            <button type="submit" class="lc-primary-action">@T("Search")</button>
+        }
+
+        <div class="lc-rail-meta">
+            <span><b>@Model.TotalCount</b> نتيجة</span>
+            <span><b>Ctrl + K</b> بحث</span>
+        </div>
+
+        <div class="lc-result-list">
+            @if (Model.Items.Count == 0)
+            {
+                <div class="lc-empty-state">@T("NoRows")</div>
+            }
+            else
+            {
+                foreach (var item in Model.Items)
+                {
+                    var isSelected = Model.SelectedId == item.TblLCID;
+                    var isClosed = item.ToDate.HasValue && item.ToDate.Value.Date < DateTime.Today;
+                    <a class="lc-result-item @(isSelected ? "is-selected" : "")" href="@Url.Action("Open", "LC", new { area = "MainErp", id = item.TblLCID })">
+                        <span class="lc-result-top">
+                            <b>@item.LCNO</b>
+                            <em class="@(isClosed ? "is-closed" : "is-active")">@(isClosed ? "منتهي" : "نشط")</em>
+                        </span>
+                        <strong>@item.Name</strong>
+                        <small>@item.BankName</small>
+                        <span class="lc-result-value">@String.Format("{0:n2}", item.Value)</span>
+                    </a>
+                }
+            }
+        </div>
+    </aside>
+
+    <main class="lc-stage">
+        @if (TempData["MainErpSuccess"] != null)
+        {
+            <div class="lc-alert is-success">@SafeMessage(Convert.ToString(TempData["MainErpSuccess"]))</div>
+        }
+        @if (TempData["MainErpWarning"] != null)
+        {
+            <div class="lc-alert is-warning">@SafeMessage(Convert.ToString(TempData["MainErpWarning"]))</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(readOnlyMessage))
+        {
+            <div class="lc-alert is-warning">@SafeMessage(readOnlyMessage)</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(Model.Warning))
+        {
+            <div class="lc-alert is-warning">@SafeMessage(Model.Warning)</div>
+        }
+        @if (d != null)
+        {
+            foreach (var warning in d.Warnings)
+            {
+                <div class="lc-alert is-warning">@SafeMessage(warning)</div>
+            }
+        }
+
+        @if (d == null)
+        {
+            <section class="lc-empty-dashboard">
+                <span>LC</span>
+                <h2>اختر اعتماداً من القائمة لبدء المراجعة</h2>
+                <p>تظهر هنا الحالة المالية، سير العمل، القيود، والمستندات بعد اختيار الاعتماد.</p>
+                <button type="submit" form="lcSearchForm">@T("Search")</button>
+            </section>
+        }
+        else
+        {
+            <header class="lc-command-bar">
+                <div>
+                    <span class="lc-eyebrow">شاشة الاعتمادات</span>
+                    <h2>@d.LCNO</h2>
+                    <p>@d.VendorName · @d.BankName · @d.CurrencyName</p>
+                </div>
+                <div class="lc-command-actions">
+                    <span class="lc-status-badge @(d.Locked == true || d.CloseDate.HasValue ? "is-closed" : "is-open")">
+                        @(d.Locked == true || d.CloseDate.HasValue ? T("Closed") : T("Active"))
+                    </span>
+                    @if (canEditLc)
+                    {
+                        <a href="@Url.Action("New", "LC", new { area = "MainErp" })">@T("New")</a>
+                        <a href="@Url.Action("Edit", "LC", new { area = "MainErp", id = d.TblLCID })">تعديل / حفظ</a>
+                    }
+                    <a href="@Url.Action("Open", "LC", new { area = "MainErp", id = d.TblLCID })">@T("Open")</a>
+                </div>
+            </header>
+
+            <div class="lc-workflow" aria-label="LC workflow">
+                @{
+                    var workflow = new[] { "مسودة", "فتح", "مستندات", "شحن", "تخليص", "إغلاق" };
+                    for (var i = 0; i < workflow.Length; i++)
+                    {
+                        var index = i + 1;
+                        <article class="@(index <= workflowStep ? "is-done" : "") @(index == workflowStep ? "is-current" : "")">
+                            <span>@index</span>
+                            <strong>@workflow[i]</strong>
+                        </article>
+                    }
+                }
+            </div>
+
+            <div class="lc-tabs" data-main-erp-tabs>
+                <nav class="lc-tab-nav">
+                    <button type="button" class="is-active" data-tab-target="lc-overview">نظرة عامة</button>
+                    <button type="button" data-tab-target="lc-data">بيانات الاعتماد</button>
+                    <button type="button" data-tab-target="lc-accounts">الحسابات والقيود</button>
+                    <button type="button" data-tab-target="lc-shipping">الشحن والمستندات</button>
+                    <button type="button" data-tab-target="lc-review">المراجعة والتدقيق</button>
+                    <button type="button" data-tab-target="lc-advanced">العمليات المتقدمة</button>
+                    <button type="button" data-tab-target="lc-history">السجل والحركة</button>
+                </nav>
+
+                <section id="lc-overview" class="lc-tab-pane is-active">
+                    <div class="lc-overview-grid">
+                        <article class="lc-hero-metric">
+                            <span>@T("Value")</span>
+                            <strong>@String.Format("{0:n2}", d.Value)</strong>
+                            <small>@d.CurrencyName</small>
+                        </article>
+                        <article>
+                            <span>@T("Bank")</span>
+                            <strong>@d.BankName</strong>
+                            <small>@d.AccountCode</small>
+                        </article>
+                        <article>
+                            <span>@T("Supplier")</span>
+                            <strong>@d.VendorName</strong>
+                            <small>@d.ProjectName</small>
+                        </article>
+                        <article class="@(Math.Abs(voucherDifference) < .01m ? "is-ok" : "is-attention")">
+                            <span>حالة المطابقة</span>
+                            <strong>@(Math.Abs(voucherDifference) < .01m ? "متوازن" : "يحتاج مراجعة")</strong>
+                            <small>@T("Difference"): @voucherDifference.ToString("N2")</small>
+                        </article>
+                    </div>
+
+                    <div class="lc-insight-grid">
+                        <article class="lc-meter-card">
+                            <span>نسبة التنفيذ</span>
+                            <strong>@executionPercent.ToString("N1")%</strong>
+                            <div class="lc-meter"><i style="width:@((int)Math.Min(100m, executionPercent))%"></i></div>
+                            <small>مقارنة القيود الحالية بقيمة الاعتماد.</small>
+                        </article>
+                        <article class="lc-meter-card">
+                            <span>نسبة المصاريف</span>
+                            <strong>@expensePercent.ToString("N1")%</strong>
+                            <div class="lc-meter @(expensePercent > 10m ? "is-warning" : "")"><i style="width:@((int)Math.Min(100m, expensePercent))%"></i></div>
+                            <small>@(expensePercent > 10m ? "مصاريف أعلى من المعتاد." : "ضمن النطاق المعتاد.")</small>
+                        </article>
+                        <article class="lc-meter-card">
+                            <span>تغطية المدفوع</span>
+                            <strong>@paidPercent.ToString("N1")%</strong>
+                            <div class="lc-meter is-success"><i style="width:@((int)Math.Min(100m, paidPercent))%"></i></div>
+                            <small>قراءة من القيود المرتبطة الحالية.</small>
+                        </article>
+                    </div>
+
+                    <div class="lc-summary-band">
+                        <article><span>عدد القيود</span><strong>@d.LinkedNotes.Count</strong><small>@d.VoucherLines.Count سطر محاسبي</small></article>
+                        <article class="@(missingAccounts > 0 ? "is-attention" : "is-ok")"><span>سلامة الحسابات</span><strong>@(missingAccounts == 0 ? "مكتملة" : missingAccounts + " ناقص")</strong><small>قبل تشغيل أي ترحيل</small></article>
+                        <article><span>الأيام حتى الاستحقاق</span><strong class="@(daysToDue <= 7 && !d.CloseDate.HasValue ? "is-danger" : "")">@daysToDue</strong><small>@String.Format("{0:yyyy-MM-dd}", d.ToDate)</small></article>
+                        <article><span>الرصيد الافتتاحي</span><strong>@String.Format("{0:n2}", d.OpenBalance)</strong><small>@openingBalanceType</small></article>
+                    </div>
+
+                    <div class="lc-two-column">
+                        <article class="lc-panel">
+                            <header><h3>المؤشرات المالية</h3></header>
+                            <dl class="lc-detail-list">
+                                <dt>القيمة بالعملة المحلية</dt><dd>@localValue.ToString("N2")</dd>
+                                <dt>سعر الصرف</dt><dd>@String.Format("{0:n4}", d.CurrencyRate.GetValueOrDefault(1d))</dd>
+                                <dt>مصاريف الفتح</dt><dd>@String.Format("{0:n2}", d.OpenValue)</dd>
+                                <dt>مصاريف الفتح المحلية</dt><dd>@localOpenExpense.ToString("N2")</dd>
+                                <dt>إجمالي مدين</dt><dd>@totalDebit.ToString("N2")</dd>
+                                <dt>إجمالي دائن</dt><dd>@totalCredit.ToString("N2")</dd>
+                            </dl>
+                        </article>
+                        <article class="lc-panel">
+                            <header><h3>تنبيهات المراجعة</h3></header>
+                            <div class="lc-warning-list">
+                                @if (missingAccounts == 0 && Math.Abs(voucherDifference) < .01m && d.Warnings.Count == 0)
+                                {
+                                    <p>لا توجد مشاكل ظاهرة في بيانات الاعتماد الحالية.</p>
+                                }
+                                else
+                                {
+                                    if (missingAccounts > 0) { <p>يوجد حساب أو أكثر يحتاج مراجعة قبل الترحيل.</p> }
+                                    if (Math.Abs(voucherDifference) >= .01m) { <p>إجمالي المدين والدائن غير متطابق.</p> }
+                                    foreach (var warning in d.Warnings) { <p>@SafeMessage(warning)</p> }
+                                }
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section id="lc-data" class="lc-tab-pane" hidden>
+                    <div class="lc-two-column">
+                        <article class="lc-panel">
+                            <header><h3>@T("LcHeader")</h3></header>
+                            <dl class="lc-detail-list">
+                                <dt>@T("LcNumber")</dt><dd>@d.LCNO</dd>
+                                <dt>@T("Supplier")</dt><dd>@d.VendorName</dd>
+                                <dt>@T("Projects")</dt><dd>@d.ProjectName</dd>
+                                <dt>@T("Branch")</dt><dd>@d.BranchID</dd>
+                                <dt>@T("FromDate")</dt><dd>@String.Format("{0:yyyy-MM-dd}", d.FromDate)</dd>
+                                <dt>@T("ToDate")</dt><dd>@String.Format("{0:yyyy-MM-dd}", d.ToDate)</dd>
+                                <dt>تاريخ الإغلاق</dt><dd>@String.Format("{0:yyyy-MM-dd}", d.CloseDate)</dd>
+                            </dl>
+                        </article>
+                        <article class="lc-panel">
+                            <header><h3>@T("LcBankCurrencyValues")</h3></header>
+                            <dl class="lc-detail-list">
+                                <dt>@T("Bank")</dt><dd>@d.BankName</dd>
+                                <dt>@T("Currency")</dt><dd>@d.CurrencyName</dd>
+                                <dt>@T("Value")</dt><dd>@String.Format("{0:n2}", d.Value)</dd>
+                                <dt>@T("Open")</dt><dd>@String.Format("{0:n2}", d.OpenValue)</dd>
+                                <dt>نسبة الهامش</dt><dd>@String.Format("{0:n2}", d.PercentV)</dd>
+                                <dt>طريقة الدفع</dt><dd>@d.PaymentTypeId</dd>
+                            </dl>
+                        </article>
+                    </div>
+                    <article class="lc-panel">
+                        <header><h3>@T("Description")</h3></header>
+                        <p class="lc-note-box">@(string.IsNullOrWhiteSpace(d.Remarks) ? "لا توجد ملاحظات." : d.Remarks)</p>
+                    </article>
+                </section>
+
+                <section id="lc-accounts" class="lc-tab-pane" hidden>
+                    <div class="lc-posting-actions">
+                        @if (canPostHeaderLc)
+                        {
+                            using (Html.BeginForm("CreateVoucher", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { @class = "lc-inline-form" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="lc-post-action" data-confirm="سيتم إنشاء قيد فتح الاعتماد إذا لم يكن موجوداً. هل تريد المتابعة؟">إنشاء قيد الفتح</button>
+                            }
+                            using (Html.BeginForm("CreateOpenExpenseVoucher", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { @class = "lc-inline-form" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="lc-post-action" data-confirm="سيتم إنشاء قيد مصاريف الفتح إذا لم يكن موجوداً. هل تريد المتابعة؟">إنشاء قيد المصاريف</button>
+                            }
+                            using (Html.BeginForm("CreateOpeningBalanceVoucher", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { @class = "lc-inline-form" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="lc-post-action" data-confirm="سيتم ترحيل الرصيد الافتتاحي للاعتماد. هل تريد المتابعة؟">ترحيل الرصيد الافتتاحي</button>
+                            }
+                            using (Html.BeginForm("CloseLc", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { @class = "lc-inline-form" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="lc-post-action" data-confirm="سيتم إنشاء قيد الإغلاق وتعليم الاعتماد كمغلق. هل تريد المتابعة؟">إغلاق الاعتماد</button>
+                            }
+                        }
+                        @if (canPostGridsLc)
+                        {
+                            using (Html.BeginForm("CreateGridVouchers", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { @class = "lc-inline-form" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="lc-post-action" data-confirm="سيتم إنشاء قيود الجريدات الناقصة فقط. هل تريد المتابعة؟">إنشاء قيود الحركة</button>
+                            }
+                        }
+                        @if (!canPostLc)
+                        {
+                            <button type="button" class="is-disabled-action">الترحيل غير متاح لصلاحيتك</button>
+                        }
+                    </div>
+
+                    <div class="lc-account-map">
+                        @foreach (var account in d.AccountLinks)
+                        {
+                            <article class="@(string.IsNullOrWhiteSpace(account.Warning) ? "is-ok" : "is-attention")">
+                                <span>@SafeMessage(account.Role)</span>
+                                <strong>@(string.IsNullOrWhiteSpace(account.AccountDisplay) ? T("AccountNotFound") : account.AccountDisplay)</strong>
+                                <small>@T("ParentAccount"): @(string.IsNullOrWhiteSpace(account.ParentAccountDisplay) ? T("AccountNotFound") : account.ParentAccountDisplay)</small>
+                                @if (!string.IsNullOrWhiteSpace(account.Warning))
+                                {
+                                    <p>@SafeMessage(account.Warning)</p>
+                                }
+                            </article>
+                        }
+                    </div>
+
+                    <div class="lc-accounting-kpis">
+                        <article><span>@T("Debit")</span><strong>@totalDebit.ToString("N2")</strong></article>
+                        <article><span>@T("Credit")</span><strong>@totalCredit.ToString("N2")</strong></article>
+                        <article><span>@T("AffectedAccounts")</span><strong>@affectedAccounts.Count</strong></article>
+                        <article><span>@T("VoucherLines")</span><strong>@d.VoucherLines.Count</strong></article>
+                    </div>
+
+                    <div class="lc-voucher-timeline">
+                        @if (d.LinkedNotes.Count == 0)
+                        {
+                            <div class="lc-empty-state">@T("NoRows")</div>
+                        }
+                        else
+                        {
+                            foreach (var note in d.LinkedNotes)
+                            {
+                                var noteDebit = 0m;
+                                var noteCredit = 0m;
+                                foreach (var line in d.VoucherLines)
+                                {
+                                    if (line.NoteId == note.NoteID)
+                                    {
+                                        noteDebit += line.Debit;
+                                        noteCredit += line.Credit;
+                                    }
+                                }
+                                <details class="lc-voucher-card">
+                                    <summary>
+                                        <span>@SafeMessage(note.SourceTable)</span>
+                                        <strong>@note.NoteSerial</strong>
+                                        <b class="@(Math.Abs(noteDebit - noteCredit) < .01m ? "is-ok" : "is-attention")">@(Math.Abs(noteDebit - noteCredit) < .01m ? T("Balanced") : T("Unbalanced"))</b>
+                                        <a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = note.NoteID })">@T("OpenVoucher")</a>
+                                    </summary>
+                                    <div class="lc-table-wrap">
+                                        <table class="lc-data-table">
+                                            <thead><tr><th>@T("Account")</th><th>@T("Debit")</th><th>@T("Credit")</th><th>@T("Description")</th></tr></thead>
+                                            <tbody>
+                                                @foreach (var line in d.VoucherLines)
+                                                {
+                                                    if (line.NoteId == note.NoteID)
+                                                    {
+                                                        <tr>
+                                                            <td>@(string.IsNullOrWhiteSpace(line.AccountDisplay) ? T("AccountNotFound") : line.AccountDisplay)</td>
+                                                            <td>@line.Debit.ToString("N2")</td>
+                                                            <td>@line.Credit.ToString("N2")</td>
+                                                            <td>@line.Description</td>
+                                                        </tr>
+                                                    }
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </details>
+                            }
+                        }
+                    </div>
+                </section>
+
+                <section id="lc-shipping" class="lc-tab-pane" hidden>
+                    <div class="lc-two-column">
+                        <article class="lc-panel">
+                            <header><h3>الشحن والاستحقاق</h3></header>
+                            <dl class="lc-detail-list">
+                                <dt>@T("FromDate")</dt><dd>@String.Format("{0:yyyy-MM-dd}", d.FromDate)</dd>
+                                <dt>@T("ToDate")</dt><dd>@String.Format("{0:yyyy-MM-dd}", d.ToDate)</dd>
+                                <dt>آخر شحنة</dt><dd>@String.Format("{0:yyyy-MM-dd}", d.LastParcilDate)</dd>
+                                <dt>تاريخ الشيك</dt><dd>@String.Format("{0:yyyy-MM-dd}", d.ChequeDueDate)</dd>
+                                <dt>رقم الشيك</dt><dd>@d.ChequeNumber</dd>
+                            </dl>
+                        </article>
+                        <article class="lc-panel">
+                            <header><h3>المستندات</h3></header>
+                            <div class="lc-document-list">
+                                <article><span>مستندات الفتح</span><strong>@(d.NoteID.HasValue ? "موجود" : "غير منشأ")</strong></article>
+                                <article><span>مستندات المصاريف</span><strong>@(d.NoteID2.HasValue ? "موجود" : "غير منشأ")</strong></article>
+                                <article><span>الرصيد الافتتاحي</span><strong>@(d.NoteIDOpen.HasValue ? "موجود" : "غير منشأ")</strong></article>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="lc-grid-sections">
+                        @foreach (var grid in d.GridSections)
+                        {
+                            <article class="lc-panel">
+                                <header>
+                                    <h3>@GridTitle(grid.Title, "حركة الاعتماد")</h3>
+                                    <span>@grid.Rows.Count صف</span>
+                                </header>
+                                @if (!string.IsNullOrWhiteSpace(grid.Warning))
+                                {
+                                    <div class="lc-alert is-warning">@SafeMessage(grid.Warning)</div>
+                                }
+                                <details class="lc-technical-details">
+                                    <summary>تفاصيل إضافية</summary>
+                                    <p>@SafeMessage(grid.Behavior)</p>
+                                </details>
+                                <div class="lc-table-wrap">
+                                    <table class="lc-data-table">
+                                        <thead>
+                                            <tr>
+                                                @foreach (var column in grid.Columns)
+                                                {
+                                                    <th>@SafeMessage(column)</th>
+                                                }
+                                                <th>@T("Voucher")</th>
+                                                @if (canDeleteLc)
+                                                {
+                                                    <th>إجراء</th>
+                                                }
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (grid.Rows.Count == 0)
+                                            {
+                                                <tr><td colspan="@(grid.Columns.Count + (canDeleteLc ? 2 : 1))">@T("NoRows")</td></tr>
+                                            }
+                                            else
+                                            {
+                                                foreach (var row in grid.Rows)
+                                                {
+                                                    <tr>
+                                                        @foreach (var column in grid.Columns)
+                                                        {
+                                                            <td>@row.Values[column]</td>
+                                                        }
+                                                        <td>
+                                                            @if (row.NoteId.HasValue)
+                                                            {
+                                                                <a href="@Url.Action("DetailsByNote", "JournalEntries", new { area = "MainErp", noteId = row.NoteId.Value })">@T("OpenVoucher")</a>
+                                                            }
+                                                            else
+                                                            {
+                                                                <span>@T("NoVisibleNoteId")</span>
+                                                            }
+                                                        </td>
+                                                        @if (canDeleteLc)
+                                                        {
+                                                            <td>
+                                                                @if (row.RowId.HasValue)
+                                                                {
+                                                                    using (Html.BeginForm("DeleteGridRow", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { @class = "lc-row-danger-form" }))
+                                                                    {
+                                                                        @Html.AntiForgeryToken()
+                                                                        <input type="hidden" name="sourceTable" value="@grid.SourceTable" />
+                                                                        <input type="hidden" name="rowId" value="@row.RowId.Value" />
+                                                                        <input name="confirmationText" placeholder="@("DELETE-LC-GRID-" + d.TblLCID + "-" + grid.SourceTable + "-" + row.RowId.Value)" autocomplete="off" />
+                                                                        <button type="submit" class="lc-danger-action" data-confirm="سيتم حذف هذا الصف فقط مع تنظيف القيود المرتبطة به. هل تريد المتابعة؟">حذف الصف</button>
+                                                                    }
+                                                                }
+                                                            </td>
+                                                        }
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                </section>
+
+                <section id="lc-review" class="lc-tab-pane" hidden>
+                    <div class="lc-summary-band">
+                        <article><span>حالة الحسابات</span><strong>@(missingAccounts == 0 ? "سليمة" : "تحتاج مراجعة")</strong><small>@missingAccounts حساب ناقص</small></article>
+                        <article><span>حالة القيود</span><strong>@(Math.Abs(voucherDifference) < .01m ? "متوازنة" : "غير متوازنة")</strong><small>@voucherDifference.ToString("N2")</small></article>
+                        <article><span>سجل العمليات</span><strong>@d.AuditEntries.Count</strong><small>عملية مسجلة</small></article>
+                    </div>
+                    <article class="lc-panel">
+                        <header><h3>قائمة مراجعة قبل التسليم</h3></header>
+                        <div class="lc-checklist">
+                            <span class="@(d.Value.GetValueOrDefault() > 0 ? "is-ok" : "is-attention")">قيمة الاعتماد مسجلة</span>
+                            <span class="@(missingAccounts == 0 ? "is-ok" : "is-attention")">الحسابات الرئيسية مربوطة</span>
+                            <span class="@(Math.Abs(voucherDifference) < .01m ? "is-ok" : "is-attention")">مطابقة المدين والدائن</span>
+                            <span class="@(d.LinkedNotes.Count > 0 ? "is-ok" : "is-attention")">يوجد أثر محاسبي قابل للمراجعة</span>
+                            <span class="@(daysToDue >= 0 || d.CloseDate.HasValue ? "is-ok" : "is-attention")">تاريخ الاستحقاق واضح</span>
+                        </div>
+                    </article>
+                </section>
+
+                <section id="lc-advanced" class="lc-tab-pane" hidden>
+                    <div class="lc-danger-zone">
+                        <header>
+                            <div>
+                                <span>Dangerous Zone</span>
+                                <h3>العمليات المتقدمة</h3>
+                                <p>هذه العمليات معزولة عن شاشة العمل اليومية وتحتاج صلاحية وتأكيد نصي قبل التنفيذ.</p>
+                            </div>
+                        </header>
+
+                        @if (canRebuildLc)
+                        {
+                            <article>
+                                <div>
+                                    <strong>إعادة بناء قيود الاعتماد</strong>
+                                    <p>يعيد إنشاء القيود الأساسية للاعتماد الحالي حسب البيانات المسجلة.</p>
+                                </div>
+                                @using (Html.BeginForm("RebuildVouchers", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { @class = "lc-confirm-form" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    <input name="confirmationText" placeholder="@("REBUILD-LC-" + d.TblLCID)" autocomplete="off" />
+                                    <button type="submit" class="lc-danger-action" data-confirm="هذه عملية متقدمة لإعادة بناء قيود الاعتماد الأساسية. هل تريد المتابعة؟">إعادة البناء</button>
+                                }
+                            </article>
+                            <article>
+                                <div>
+                                    <strong>إعادة بناء قيود الحركة</strong>
+                                    <p>يعيد إنشاء قيود صفوف الحركة دون تغيير قيود رأس الاعتماد الأساسية.</p>
+                                </div>
+                                @using (Html.BeginForm("RebuildGridVouchers", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { @class = "lc-confirm-form" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    <input name="confirmationText" placeholder="@("REBUILD-LC-GRIDS-" + d.TblLCID)" autocomplete="off" />
+                                    <button type="submit" class="lc-danger-action" data-confirm="سيتم إعادة بناء قيود الحركة فقط. هل تريد المتابعة؟">إعادة بناء الحركة</button>
+                                }
+                            </article>
+                        }
+
+                        @if (canDeleteLc)
+                        {
+                            <article class="is-delete">
+                                <div>
+                                    <strong>حذف الاعتماد</strong>
+                                    <p>حذف كامل للاعتماد وما يرتبط به من أثر محاسبي. استخدمها فقط عند التأكد من الصلاحية والمراجعة.</p>
+                                </div>
+                                @using (Html.BeginForm("Delete", "LC", new { area = "MainErp", id = d.TblLCID }, FormMethod.Post, new { @class = "lc-confirm-form" }))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    <input name="confirmationText" placeholder="@("DELETE-LC-" + d.TblLCID)" autocomplete="off" />
+                                    <button type="submit" class="lc-danger-action" data-confirm="سيتم حذف الاعتماد نهائياً. هل تريد المتابعة؟">حذف الاعتماد</button>
+                                }
+                            </article>
+                        }
+
+                        @if (!canRebuildLc && !canDeleteLc)
+                        {
+                            <div class="lc-empty-state">لا توجد عمليات متقدمة متاحة لصلاحيتك الحالية.</div>
+                        }
+                    </div>
+                </section>
+
+                <section id="lc-history" class="lc-tab-pane" hidden>
+                    <div class="lc-summary-band">
+                        <article><span>عمليات مسجلة</span><strong>@d.AuditEntries.Count</strong><small>سجل المراجعة</small></article>
+                        <article><span>@T("AccountingImpact")</span><strong>@d.LinkedNotes.Count @T("Note")</strong><small>@d.VoucherLines.Count @T("GeneratedAccountingRows")</small></article>
+                        <article><span>حركات الاعتماد</span><strong>@gridRows</strong><small>صف حركة</small></article>
+                    </div>
+                    <div class="lc-activity-feed">
+                        @if (d.AuditEntries.Count == 0)
+                        {
+                            <article>
+                                <span>سجل المراجعة</span>
+                                <strong>لا توجد عمليات مسجلة لهذا الاعتماد</strong>
+                                <small>قد لا يكون سجل المراجعة مفعلاً في هذه البيئة.</small>
+                            </article>
+                        }
+                        else
+                        {
+                            foreach (var audit in d.AuditEntries)
+                            {
+                                <article>
+                                    <span>@SafeMessage(audit.OperationName)</span>
+                                    <strong>@SafeMessage(!string.IsNullOrWhiteSpace(audit.Message) ? audit.Message : audit.EntityName + " #" + audit.EntityKey)</strong>
+                                    <small>
+                                        @String.Format("{0:yyyy-MM-dd HH:mm}", audit.CreatedAt)
+                                        @if (!string.IsNullOrWhiteSpace(audit.UserName))
+                                        {
+                                            @: · @audit.UserName
+                                        }
+                                        else if (audit.UserId.HasValue)
+                                        {
+                                            @: · User @audit.UserId
+                                        }
+                                    </small>
+                                    @if (!string.IsNullOrWhiteSpace(audit.BeforeSnapshot) || !string.IsNullOrWhiteSpace(audit.AfterSnapshot))
+                                    {
+                                        <details class="lc-technical-details">
+                                            <summary>تفاصيل المراجعة</summary>
+                                            @if (!string.IsNullOrWhiteSpace(audit.BeforeSnapshot))
+                                            {
+                                                <pre>@SafeMessage(audit.BeforeSnapshot)</pre>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(audit.AfterSnapshot))
+                                            {
+                                                <pre>@SafeMessage(audit.AfterSnapshot)</pre>
+                                            }
+                                        </details>
+                                    }
+                                </article>
+                            }
+                        }
+                    </div>
+
+                    <div class="lc-report-tiles">
+                        @if (canReportLc)
+                        {
+                            <a href="@Url.Action("Report", "LC", new { area = "MainErp", id = d.TblLCID })"><span>@T("Reports")</span><strong>@T("LettersOfCredit")</strong><small>تقرير قراءة فقط</small></a>
+                        }
+                        else
+                        {
+                            <a class="is-disabled"><span>@T("Reports")</span><strong>@T("LettersOfCredit")</strong><small>@T("DisabledReadOnlyMessage")</small></a>
+                        }
+                    </div>
+                </section>
+            </div>
+        }
+    </main>
+</section>
+
+<script>
+    (function () {
+        var root = document.querySelector("[data-main-erp-tabs]");
+        var buttons = root ? root.querySelectorAll("[data-tab-target]") : [];
+        if (root) {
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].addEventListener("click", function () {
+                    for (var b = 0; b < buttons.length; b++) {
+                        buttons[b].classList.remove("is-active");
+                    }
+                    var panes = root.querySelectorAll(".lc-tab-pane");
+                    for (var p = 0; p < panes.length; p++) {
+                        panes[p].hidden = true;
+                        panes[p].classList.remove("is-active");
+                    }
+                    this.classList.add("is-active");
+                    var target = document.getElementById(this.getAttribute("data-tab-target"));
+                    if (target) {
+                        target.hidden = false;
+                        target.classList.add("is-active");
+                    }
+                });
+            }
+        }
+
+        var disabledButtons = document.querySelectorAll(".lc-enterprise-shell .is-disabled-action");
+        for (var x = 0; x < disabledButtons.length; x++) {
+            disabledButtons[x].addEventListener("click", function () {
+                alert("@T("DisabledReadOnlyMessage")");
+            });
+        }
+
+        var confirmButtons = document.querySelectorAll(".lc-enterprise-shell .lc-post-action, .lc-enterprise-shell .lc-danger-action");
+        for (var j = 0; j < confirmButtons.length; j++) {
+            confirmButtons[j].addEventListener("click", function (event) {
+                var message = this.getAttribute("data-confirm");
+                if (message && !confirm(message)) {
+                    event.preventDefault();
+                }
+            });
+        }
+
+        document.addEventListener("keydown", function (event) {
+            if ((event.ctrlKey || event.metaKey) && String(event.key).toLowerCase() === "k") {
+                var search = document.querySelector("#lcSearchForm input[name='searchText']");
+                if (search) {
+                    event.preventDefault();
+                    search.focus();
+                    search.select();
+                }
+            }
+            var index = parseInt(event.key, 10);
+            if (buttons && !event.ctrlKey && !event.altKey && !event.metaKey && index >= 1 && index <= buttons.length) {
+                if (/input|select|textarea/i.test((event.target || {}).tagName || "")) {
+                    return;
+                }
+                event.preventDefault();
+                buttons[index - 1].click();
+            }
+        });
+    })();
+</script>

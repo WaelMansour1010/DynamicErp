@@ -4,12 +4,13 @@
     Layout = string.Equals(areaName, "MainErp", StringComparison.OrdinalIgnoreCase) ? "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml" : null;
     ViewBag.Title = "تقارير الحسابات";
     var accountTreeUrl = Url.Action("AccountTree", "AccountingReports", new { area = areaName });
+    var branchesUrl = Url.Action("Branches", "AccountingReports", new { area = areaName });
     var fromDateText = Model.Filter.FromDate.HasValue ? Model.Filter.FromDate.Value.ToString("yyyy-MM-dd") : "";
     var toDateText = Model.Filter.ToDate.HasValue ? Model.Filter.ToDate.Value.ToString("yyyy-MM-dd") : "";
 }
 <link href="@Url.Content("~/Areas/Pos/Content/html-reports.css?v=20260520-accounting-clean-ui")" rel="stylesheet" />
 
-<main class="html-report-page erp-ui-page accounting-reports-page" data-account-tree-url="@accountTreeUrl">
+<main class="html-report-page erp-ui-page accounting-reports-page" data-account-tree-url="@accountTreeUrl" data-branches-url="@branchesUrl">
     <header class="erp-hero-card">
         <div>
             <h1>تقارير الحسابات</h1>
@@ -69,15 +70,25 @@
             <div class="erp-filter-grid">
                 <label class="erp-field">
                     <span>من تاريخ</span>
-                    @Html.TextBoxFor(m => m.Filter.FromDate, new { type = "text", value = fromDateText, @class = "gregorian-date-input", inputmode = "numeric", autocomplete = "off", placeholder = "yyyy-MM-dd", pattern = "\\d{4}-\\d{2}-\\d{2}" })
+                    <input type="text" name="Filter.FromDate" id="Filter_FromDate" value="@fromDateText" class="gregorian-date-input" inputmode="numeric" autocomplete="off" placeholder="yyyy-MM-dd" pattern="\d{4}-\d{2}-\d{2}" />
                 </label>
                 <label class="erp-field">
                     <span>إلى تاريخ</span>
-                    @Html.TextBoxFor(m => m.Filter.ToDate, new { type = "text", value = toDateText, @class = "gregorian-date-input", inputmode = "numeric", autocomplete = "off", placeholder = "yyyy-MM-dd", pattern = "\\d{4}-\\d{2}-\\d{2}" })
+                    <input type="text" name="Filter.ToDate" id="Filter_ToDate" value="@toDateText" class="gregorian-date-input" inputmode="numeric" autocomplete="off" placeholder="yyyy-MM-dd" pattern="\d{4}-\d{2}-\d{2}" />
                 </label>
                 <label class="erp-field">
                     <span>الفرع</span>
-                    @Html.DropDownListFor(m => m.Filter.BranchId, new SelectList(Model.Branches, "Id", "Name", Model.Filter.BranchId), "كل الفروع")
+                    <select name="Filter.BranchId" id="Filter_BranchId" class="js-branch-lazy-select" data-loaded="@(Model.Branches.Count > 0 ? "true" : "false")">
+                        <option value="">كل الفروع</option>
+                        @foreach (var branch in Model.Branches)
+                        {
+                            <option value="@branch.Id" @(Model.Filter.BranchId == branch.Id ? "selected" : "")>@branch.Name</option>
+                        }
+                        @if (Model.Branches.Count == 0 && Model.Filter.BranchId.HasValue)
+                        {
+                            <option value="@Model.Filter.BranchId.Value" selected>فرع @Model.Filter.BranchId.Value</option>
+                        }
+                    </select>
                 </label>
                 <label class="erp-field">
                     <span>النشاط</span>
@@ -244,6 +255,43 @@
             && date.getMonth() === Number(parts[1]) - 1
             && date.getDate() === Number(parts[2]);
     }
+    function loadBranchesAfterReportChoice() {
+        var reportKey = (byId("ReportKey") && byId("ReportKey").value || "").trim();
+        var select = byId("Filter_BranchId");
+        var page = document.querySelector(".accounting-reports-page");
+        var url = page ? page.getAttribute("data-branches-url") : "";
+        if (!reportKey || !select || !url || select.getAttribute("data-loaded") === "true" || select.getAttribute("data-loading") === "true") {
+            return;
+        }
+        select.setAttribute("data-loading", "true");
+        var selected = select.value || "";
+        fetch(url, { credentials: "same-origin" })
+            .then(function (response) {
+                if (!response.ok) { throw new Error("branches"); }
+                return response.json();
+            })
+            .then(function (items) {
+                while (select.options.length > 1) {
+                    select.remove(1);
+                }
+                for (var i = 0; i < items.length; i++) {
+                    var option = document.createElement("option");
+                    option.value = items[i].Id;
+                    option.text = items[i].Name;
+                    if (String(items[i].Id) === String(selected)) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                }
+                select.setAttribute("data-loaded", "true");
+            })
+            .catch(function () {
+                showClientMessage("تعذر تحميل الفروع الآن. يمكن تشغيل التقرير على كل الفروع أو إعادة المحاولة.");
+            })
+            .finally(function () {
+                select.setAttribute("data-loading", "false");
+            });
+    }
     function showProgress(title, details) {
         var progress = byId("accountingReportProgress");
         if (!progress) { return; }
@@ -287,7 +335,13 @@
             options[i].classList.toggle("is-active", options[i] === option);
             options[i].setAttribute("aria-pressed", options[i] === option ? "true" : "false");
         }
+        loadBranchesAfterReportChoice();
     });
+    var branchSelect = byId("Filter_BranchId");
+    if (branchSelect) {
+        branchSelect.addEventListener("focus", loadBranchesAfterReportChoice);
+        branchSelect.addEventListener("mousedown", loadBranchesAfterReportChoice);
+    }
     var form = byId("accountingReportForm");
     if (form) {
         form.addEventListener("submit", function (event) {

@@ -19,7 +19,7 @@ namespace MyERP.Common.AccountingReports
             _repository = repository;
         }
 
-        public HtmlReportPageViewModel BuildPage(HtmlReportFilterModel filter, int? forcedBranchId)
+        public HtmlReportPageViewModel BuildPage(HtmlReportFilterModel filter, int? forcedBranchId, bool loadBranches)
         {
             filter = filter ?? new HtmlReportFilterModel();
             if (!filter.FromDate.HasValue) { filter.FromDate = DateTime.Today; }
@@ -40,10 +40,16 @@ namespace MyERP.Common.AccountingReports
                 Filter = filter,
                 Reports = reports,
                 ActiveReport = active,
-                Branches = forcedBranchId.HasValue
-                    ? _repository.GetBranches().Where(x => x.Id == forcedBranchId.Value).ToList()
-                    : _repository.GetBranches()
+                Branches = loadBranches ? GetBranches(forcedBranchId) : new List<HtmlReportLookupItem>()
             };
+        }
+
+        public IList<HtmlReportLookupItem> GetBranches(int? forcedBranchId)
+        {
+            var branches = _repository.GetBranches();
+            return forcedBranchId.HasValue
+                ? branches.Where(x => x.Id == forcedBranchId.Value).ToList()
+                : branches;
         }
 
         public HtmlReportResultModel Run(HtmlReportFilterModel filter, HtmlReportDefinition report, int userId, bool canChangeDefaults)
