@@ -1,0 +1,104 @@
+table_name|index_name|page_count|avg_fragmentation_in_percent|recommendation
+----------|----------|----------|----------------------------|--------------
+Transactions|IX_POS_Transactions_Report_Returns_Branch|40|55.00|NO_ACTION
+Transaction_Details|IX_Transaction_Details|479371|54.09|REBUILD
+Transactions|IX_POS_Transactions_Card_VisaNumber|3556|26.74|REORGANIZE
+Transactions|IX_POS_Transactions_Search_VisaNumber|4640|23.49|REORGANIZE
+Transactions|IX_POS_KycAvailableCards_Transactions|3096|16.21|REORGANIZE
+Transaction_Details|IX_POS_TransactionDetails_ItemSerial_Transaction|14809|15.96|REORGANIZE
+Transactions|IX_POS_Transactions_Report_ServiceSearch|4394|13.06|REORGANIZE
+Transaction_Details|IX_POS_TransactionDetails_StoreSerials_Report|13883|11.14|REORGANIZE
+Notes|IX_Notes_Header_NoteSerial|5583|10.64|REORGANIZE
+Transactions|IX_Transactions__UserID|2802|10.42|REORGANIZE
+Transactions|<IndexStoreDate, sysname,>|3957|9.65|NO_ACTION
+Transactions|<IndexMaxNote, sysname,>|6460|8.65|NO_ACTION
+Transactions|IX_Transactions_Transaction_Date_Tet_NumPoket_C4A7E173|4758|8.32|NO_ACTION
+Notes|IX_Notes_NoteType_NoteSerial1_64FBFC4C|5152|8.15|NO_ACTION
+Notes|IX_Notes_BoxID|2872|8.08|NO_ACTION
+Transactions|IDX_Transactions_Branch_Date_Visa|4944|7.95|NO_ACTION
+Transactions|IX_POS_Transactions_CashIn_ManualNO|8272|7.89|NO_ACTION
+Transactions|IX_Transactions_Transaction_Type_BranchId_EFF18692|7190|7.87|NO_ACTION
+Transactions|IX_Trans_Branch_Type_Date|5412|7.78|NO_ACTION
+Notes|IX_AI_Notes_1390532379|4366|7.70|NO_ACTION
+Transactions|IX_Transactions_CloseReport|6867|7.60|NO_ACTION
+Notes|IX_Notes__UserID|2999|7.50|NO_ACTION
+Transactions|IX_Transactions_Transaction_Type_StoreID_Transaction_Date_2EFBB756|4659|7.38|NO_ACTION
+Transactions|IX_Tx_Branch_Type_Date_Desc|5369|7.30|NO_ACTION
+Notes|IX_Notes_NoteDate_NoteType_branch_no|5223|7.26|NO_ACTION
+Notes|IX_Notes_Close|5220|7.07|NO_ACTION
+Notes|IX_Notes_NoteDate_NoteType|3591|6.93|NO_ACTION
+Notes|IX_Notes_Transaction_ID|2833|6.88|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_Transaction_ID|20932|6.77|NO_ACTION
+Transactions|IX_POS_Transactions_Search_NoteSerial1|24082|6.66|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_RecordDate|20852|6.53|NO_ACTION
+Transactions|IX_POS_Transactions_KycFollow_VisaNumber|3673|6.29|NO_ACTION
+Transactions|<Indextrans, sysname,>|6474|6.16|NO_ACTION
+Transactions|IX_Transactions_DoctorsTypeID_Tet_NumPoket_Transaction_Date|5224|6.13|NO_ACTION
+Transaction_Details|IX_POS_KycAvailableCards_Details|12487|5.98|NO_ACTION
+Transactions|IX_POS_Transactions_Report_Returns|34|5.88|NO_ACTION
+Transactions|IX_AI_Transactions_2022228087|5649|5.84|NO_ACTION
+Transactions|IX_Transactions_Transaction_Date_Transaction_Type_BranchId_C8AA5607|10698|5.79|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|<IndexFast, sysname,>|74751|5.77|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_Notes_ID|20855|5.65|NO_ACTION
+Transactions|IX_Transactions_Tet_NumPoket_Transaction_Date_9D5672C5|5327|5.59|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|<IndexRecordDate, sysname,>|26365|5.56|NO_ACTION
+Transactions|IX_POS_TodayInvoices_Read|27636|5.49|NO_ACTION
+Transactions|<IndexDate, sysname,>|6655|5.48|NO_ACTION
+Transaction_Details|IDX_Transaction_Details_Transaction_Price_Item|12992|5.46|NO_ACTION
+Notes|IX_Notes_NoteType_branch_no_Prefix|6542|5.24|NO_ACTION
+Transactions|IX_Transactions__CusID|2725|5.21|NO_ACTION
+Transaction_Details|IX_POS_TransactionDetails_Transaction_ItemSerial|9314|4.99|NO_ACTION
+Notes|IX_Notes__CusID|2943|4.99|NO_ACTION
+Transactions|IX_Transactions_TypeDate|5806|4.98|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|IDX_DOUBLE_ENTREY_VOUCHERS_Account_Credit_Date|56751|4.89|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS__ReceiptID|20152|4.73|NO_ACTION
+Transaction_Details|IX_POS_Transaction_Details_SaveIssue|11378|4.58|NO_ACTION
+Transactions|IX_POS_Transactions_OperationalSales_Report|22321|4.57|NO_ACTION
+Transaction_Details|IX_TransactionDetails_CloseReport|15017|4.49|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|IX_DEV_RecordDate|77590|4.41|NO_ACTION
+Transactions|IX_Transactions_StoreID_BranchId_Transaction_Type|25896|4.37|NO_ACTION
+Transactions|IX_Transactions_StoreID_Transaction_Type|25879|4.32|NO_ACTION
+Transactions|IDX_Transactions_VisaNumber|2944|4.28|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|<ccIndex, sysname,>|232219|4.27|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Credit_Or_Debit_notes_all_hideline|223999|4.23|NO_ACTION
+Transaction_Details|PK_Transaction_Details|9735|4.22|NO_ACTION
+Transactions|IX_Transactions__Transaction_Date_951B1E44|4665|4.20|NO_ACTION
+Transactions|IX_Transactions_BranchId_Transaction_Type_0C998935|25794|4.11|NO_ACTION
+Transaction_Details|IX_Transaction_Details_Item_ID_Transaction_ID|14308|4.11|NO_ACTION
+Transactions|IX_Transactions_StoreID_BranchId_Transaction_Date_Transaction_Type|31463|4.03|NO_ACTION
+Transactions|IX_Transactions_StoreID_Transaction_Date_Transaction_Type|31481|3.95|NO_ACTION
+Transactions|IX_POS_Transactions_Search_ManualNO|23506|3.95|NO_ACTION
+Transactions|IX_Transactions_BranchId_Transaction_Date_Transaction_Type|31522|3.92|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|IndexCredit_Or_Debit, sysname,>|30756|3.69|NO_ACTION
+Transaction_Details|<IndexColor, sysname,>|17663|3.66|NO_ACTION
+Transactions|IX_Transactions_CashCustomerName|7531|3.65|NO_ACTION
+Transaction_Details|<IndxTT, sysname,>|14959|3.62|NO_ACTION
+Transactions|<CashCustomerPhoneIndex, sysname,>|6389|3.62|NO_ACTION
+Notes|IX_Notes__MaintananceID|2938|3.61|NO_ACTION
+Transaction_Details|IX_Transaction_Details_TransactionID_ID|45352|3.59|NO_ACTION
+Transactions|IX_Transactions_StoreID|25200|3.54|NO_ACTION
+Transaction_Details|IX_Transaction_Details_Item_ID_UnitId|17636|3.51|NO_ACTION
+Transaction_Details|<ColorIDIndex, sysname,>|18927|3.50|NO_ACTION
+Notes|IX_Notes_OrderIDD_5EF7041D|4893|3.43|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|<IndexSearchEntry, sysname,>|289803|3.32|NO_ACTION
+Transactions|<IndexReturnID, sysname,>|9444|3.22|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Notes_ID|21145|3.15|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Transaction_ID|21636|2.66|NO_ACTION
+Transaction_Details|<Name of Missing Index, sysname,>|32763|2.32|NO_ACTION
+Notes|<IndexNote, sysname,>|4869|2.30|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|PK_DOUBLE_ENTREY_VOUCHERS|596736|2.00|NO_ACTION
+Transactions|IndexBillBasedOn, sysname,>|3224|1.80|NO_ACTION
+Notes|PK_Notes|475504|1.60|NO_ACTION
+Transactions|<Transaction_SerialIndex, sysname,>|5003|1.40|NO_ACTION
+Notes|IX_Notes__BankID|2936|1.40|NO_ACTION
+Notes|IX_Notes_notes_all|2797|1.39|NO_ACTION
+Notes|IX_Notes_salary|2798|1.07|NO_ACTION
+Transactions|PK_Transactions|426192|.99|NO_ACTION
+Transactions|PK_Transactions|689|.00|NO_ACTION
+Notes|PK_Notes|28|.00|NO_ACTION
+Notes|PK_Notes|1|.00|NO_ACTION
+Transaction_Details|IX_Transaction_Details|1|.00|NO_ACTION
+Transaction_Details|IX_Transaction_Details|1|.00|NO_ACTION
+Transactions|PK_Transactions|1|.00|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|PK_DOUBLE_ENTREY_VOUCHERS|1|.00|NO_ACTION
+DOUBLE_ENTREY_VOUCHERS|<IndexSearchEntry, sysname,>|1|.00|NO_ACTION

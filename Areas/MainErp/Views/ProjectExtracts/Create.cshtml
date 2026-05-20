@@ -11,38 +11,210 @@
     <header class="erp-page-header">
         <div>
             <h1>مستخلص مشروع جديد</h1>
-            <p>@Model.ProjectFullCode - @Model.ProjectName</p>
+            <p>إنشاء مستخلص جاري أو ختامي</p>
         </div>
         <div class="main-erp-header-actions">
-            <a class="erp-btn" href="@Url.Action("Edit", "Projects", new { area = "MainErp", id = Model.ProjectId })"><i class="fas fa-arrow-right"></i> رجوع للمشروع</a>
-            <a class="erp-btn" href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp", projectId = Model.ProjectId })"><i class="fas fa-search"></i> مستخلصات المشروع</a>
+            <a class="erp-btn" href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })">
+                <i class="fas fa-arrow-right"></i> القائمة
+            </a>
         </div>
     </header>
 
-    @using (Html.BeginForm("Create", "ProjectExtracts", new { area = "MainErp" }, FormMethod.Post, new { @class = "project-extract-form", autocomplete = "off" }))
+    @if (TempData["ProjectExtracts.Error"] != null)
     {
-        @Html.AntiForgeryToken()
-        @Html.HiddenFor(x => x.ProjectId)
-        @Html.HiddenFor(x => x.ProjectName)
-        @Html.HiddenFor(x => x.ProjectFullCode)
-        @Html.HiddenFor(x => x.BranchNo)
-        @Html.ValidationSummary(false, "", new { @class = "main-erp-warning" })
-
-        <section class="erp-card">
-            <div class="erp-card-head"><h2>بيانات المستخلص</h2></div>
-            <div class="erp-form-grid">
-                <label class="erp-field"><span>تاريخ المستخلص</span><input class="main-erp-input" type="date" name="BillDate" value="@dateValue(Model.BillDate)" required="required" /></label>
-                <label class="erp-field"><span>رقم يدوي</span>@Html.TextBoxFor(x => x.ManualNo, new { @class = "main-erp-input" })</label>
-                <label class="erp-field"><span>قيمة المستخلص</span>@Html.TextBoxFor(x => x.Total, new { @class = "main-erp-input", inputmode = "decimal" })</label>
-                <label class="erp-field"><span>الضريبة</span>@Html.TextBoxFor(x => x.VatValue, new { @class = "main-erp-input", inputmode = "decimal" })</label>
-                <label class="erp-field"><span>الصافي</span>@Html.TextBoxFor(x => x.NetValue, new { @class = "main-erp-input", inputmode = "decimal" })</label>
-                <label class="erp-field" style="grid-column:1/-1"><span>ملاحظات</span>@Html.TextAreaFor(x => x.Remarks, new { @class = "main-erp-input", rows = "4" })</label>
-            </div>
-        </section>
-
-        <footer class="main-erp-actions">
-            <button class="erp-btn erp-btn-primary" type="submit"><i class="fas fa-save"></i> حفظ المستخلص</button>
-            <a class="erp-btn" href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp", projectId = Model.ProjectId })"><i class="fas fa-times"></i> إلغاء</a>
-        </footer>
+        <div class="main-erp-warning">@TempData["ProjectExtracts.Error"]</div>
     }
+
+    <section class="erp-card">
+        <div class="erp-card-head"><h2>البيانات الأساسية</h2></div>
+        <div class="erp-form-grid">
+            <label class="erp-field">
+                <span>المشروع</span>
+                <select class="main-erp-input" id="ProjectIdSelect" name="ProjectId">
+                    <option value="">-- اختر المشروع --</option>
+                    @foreach (var p in Model.Projects)
+                    {
+                        <option value="@p.Value" @(Model.ProjectId.HasValue && Model.ProjectId.Value.ToString() == p.Value ? "selected" : "")>@p.Text</option>
+                    }
+                </select>
+            </label>
+            <label class="erp-field">
+                <span>تاريخ المستخلص</span>
+                <input class="main-erp-input" type="date" name="BillDate" id="BillDate" value="@dateValue(Model.BillDate)" required="required" />
+            </label>
+            <label class="erp-field">
+                <span>رقم يدوي</span>
+                <input class="main-erp-input" type="text" name="ManualNo" id="ManualNo" value="@Model.ManualNo" />
+            </label>
+            <label class="erp-field" style="grid-column:1/-1">
+                <span>ملاحظات</span>
+                <textarea class="main-erp-input" name="Remarks" id="Remarks" rows="2">@Model.Remarks</textarea>
+            </label>
+        </div>
+    </section>
+
+    <!-- Summary Cards -->
+    <section class="erp-card">
+        <div class="erp-card-head"><h2>الملخص المالي</h2></div>
+        <div style="display:flex; gap:12px; padding:12px; flex-wrap:wrap;">
+            <div class="summary-card">
+                <label>إجمالي الأعمال الحالية</label>
+                <input class="main-erp-input" type="number" step="any" id="TotalWork" name="Total" value="@Model.Total" readonly />
+            </div>
+            <div class="summary-card">
+                <label>خصم دفعة مقدمة</label>
+                <input class="main-erp-input calc-trigger" type="number" step="any" id="AdvancedPayment" name="AdvancedPayment" value="@Model.AdvancedPayment" />
+            </div>
+            <div class="summary-card">
+                <label>ضمان حسن أداء</label>
+                <input class="main-erp-input calc-trigger" type="number" step="any" id="PerforValue" name="PerforValue" value="@Model.PerforValue" />
+            </div>
+            <div class="summary-card">
+                <label>الخصم العام</label>
+                <input class="main-erp-input calc-trigger" type="number" step="any" id="GeneralDiscount" name="GeneralDiscount" value="@Model.GeneralDiscount" />
+            </div>
+            <div class="summary-card">
+                <label>الضريبة</label>
+                <input class="main-erp-input calc-trigger" type="number" step="any" id="VatValue" name="VatValue" value="@Model.VatValue" />
+            </div>
+            <div class="summary-card" style="background:#e3f2fd; border:1px solid #90caf9;">
+                <label>الصافي المستحق</label>
+                <input class="main-erp-input" type="number" step="any" id="NetValue" name="NetValue" value="@Model.NetValue" readonly />
+            </div>
+        </div>
+    </section>
+
+    <!-- Items Grid -->
+    <section class="erp-card">
+        <div class="erp-card-head"><h2>بنود المستخلص</h2></div>
+        <div class="erp-card-body" style="padding:15px;" id="GridContainer">
+            @if (Model.ProjectId.HasValue && Model.ProjectId.Value > 0)
+            {
+                @Html.Partial("_ExtractItemsGrid", Model)
+            }
+            else
+            {
+                <p class="text-center text-muted">يرجى اختيار المشروع لعرض البنود</p>
+            }
+        </div>
+    </section>
+
+    <footer class="main-erp-actions">
+        <button class="erp-btn erp-btn-primary" type="button" id="saveExtractBtn" onclick="saveExtract()">
+            <i class="fas fa-save"></i> حفظ المستخلص
+        </button>
+        <a class="erp-btn" href="@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })">
+            <i class="fas fa-times"></i> إلغاء
+        </a>
+    </footer>
 </section>
+
+<script>
+    // ---- عند تغيير المشروع: نعيد تحميل الصفحة بالمشروع الجديد ----
+    document.getElementById('ProjectIdSelect').addEventListener('change', function () {
+        var pid = this.value;
+        if (pid && pid > 0) {
+            window.location.href = '@Url.Action("Create", "ProjectExtracts", new { area = "MainErp" })' + '?projectId=' + pid;
+        }
+    });
+
+    // ---- حساب إجمالي البند عند تغيير الكمية ----
+    $(document).on('input', '#ExtractItemsBody .curr-qty', function () {
+        var row = $(this).closest('tr');
+        var qty = parseFloat($(this).val()) || 0;
+        var price = parseFloat($(this).data('price')) || 0;
+        row.find('.curr-val').val((qty * price).toFixed(2));
+        calculateGrandTotals();
+    });
+
+    // ---- حساب خانات الملخص ----
+    $(document).on('input', '.calc-trigger', calculateGrandTotals);
+
+    function calculateGrandTotals() {
+        var total = 0;
+        $('#ExtractItemsBody .curr-val').each(function () {
+            total += parseFloat($(this).val()) || 0;
+        });
+        $('#TotalWork').val(total.toFixed(2));
+        $('#ExtractTableTotal').text(total.toFixed(2));
+
+        var adv = parseFloat($('#AdvancedPayment').val()) || 0;
+        var perf = parseFloat($('#PerforValue').val()) || 0;
+        var disc = parseFloat($('#GeneralDiscount').val()) || 0;
+        var vat = parseFloat($('#VatValue').val()) || 0;
+        var net = total - adv - perf - disc + vat;
+        $('#NetValue').val(net.toFixed(2));
+    }
+
+    // ---- جمع البنود وإرسالها ----
+    function saveExtract() {
+        var projectId = $('#ProjectIdSelect').val();
+        if (!projectId || projectId <= 0) {
+            alert('يرجى اختيار المشروع أولاً.');
+            return;
+        }
+
+        var billDate = $('#BillDate').val();
+        if (!billDate) {
+            alert('يرجى إدخال تاريخ المستخلص.');
+            return;
+        }
+
+        var items = [];
+        $('#ExtractItemsBody tr').each(function () {
+            var currQtyInput = $(this).find('.curr-qty');
+            if (currQtyInput.length) {
+                var currQty = parseFloat(currQtyInput.val()) || 0;
+                if (currQty > 0) {
+                    items.push({
+                        PrMainDesID: parseInt($(this).find('.pr-main-des-id').val()) || 0,
+                        CurrentQuantity: currQty,
+                        Price: parseFloat(currQtyInput.data('price')) || 0,
+                        CurrentValue: parseFloat($(this).find('.curr-val').val()) || 0,
+                        PreviousQuantity: parseFloat(currQtyInput.data('prev-qty')) || 0
+                    });
+                }
+            }
+        });
+
+        var data = {
+            ProjectId: projectId,
+            BillDate: billDate,
+            ManualNo: $('#ManualNo').val(),
+            Remarks: $('#Remarks').val(),
+            Total: parseFloat($('#TotalWork').val()) || 0,
+            AdvancedPayment: parseFloat($('#AdvancedPayment').val()) || 0,
+            PerforValue: parseFloat($('#PerforValue').val()) || 0,
+            GeneralDiscount: parseFloat($('#GeneralDiscount').val()) || 0,
+            VatValue: parseFloat($('#VatValue').val()) || 0,
+            NetValue: parseFloat($('#NetValue').val()) || 0,
+            ExtractItems: items
+        };
+
+        $('#saveExtractBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> جارٍ الحفظ...');
+
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("CreateJson", "ProjectExtracts", new { area = "MainErp" })',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (r) {
+                if (r && r.success) {
+                    window.location.href = '@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })';
+                } else {
+                    alert(r && r.message ? r.message : 'حدث خطأ أثناء الحفظ.');
+                    $('#saveExtractBtn').prop('disabled', false).html('<i class="fas fa-save"></i> حفظ المستخلص');
+                }
+            },
+            error: function () {
+                alert('فشل الاتصال بالخادم، يرجى المحاولة مرة أخرى.');
+                $('#saveExtractBtn').prop('disabled', false).html('<i class="fas fa-save"></i> حفظ المستخلص');
+            }
+        });
+    }
+
+    // ---- تفعيل الحسابات عند تحميل الصفحة ----
+    $(document).ready(function () {
+        calculateGrandTotals();
+    });
+</script>

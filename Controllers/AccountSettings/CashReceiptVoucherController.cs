@@ -1042,22 +1042,26 @@ namespace MyERP.Controllers.AccountSettings
                     cashReceiptVoucher.ChildrenId = null;
                 }
 
-                if (cashReceiptVoucher.CashReceiptPaymentMethodId == 1)
+                var paymentValidation = ResolveAndValidateReceiptPayment(cashReceiptVoucher);
+                if (!paymentValidation.IsValid)
+                {
+                    LogCashReceiptVoucherSaveTrace("Payment method validation failed", cashReceiptVoucher, paymentValidation.Message);
+                    return Json(new { success = "false", message = paymentValidation.Message, stage = "Payment method validation" });
+                }
+
+                cashReceiptVoucher.CashReceiptPaymentMethodId = paymentValidation.LegacyPaymentMethodId;
+
+                if (paymentValidation.PaymentKind == PaymentMethodPostingKind.Cash)
                 {
                     cashReceiptVoucher.ChartOfAccountId = null;
                     cashReceiptVoucher.BankAccountId = null;
                 }
-                else if (cashReceiptVoucher.CashReceiptPaymentMethodId == 2)
+                else if (paymentValidation.PaymentKind == PaymentMethodPostingKind.Bank || paymentValidation.PaymentKind == PaymentMethodPostingKind.Cheque)
                 {
                     cashReceiptVoucher.CashBoxId = null;
                     cashReceiptVoucher.ChartOfAccountId = null;
                 }
-                else if (cashReceiptVoucher.CashReceiptPaymentMethodId == 3)
-                {
-                    cashReceiptVoucher.CashBoxId = null;
-                    cashReceiptVoucher.ChartOfAccountId = null;
-                }
-                else if (cashReceiptVoucher.CashReceiptPaymentMethodId == 4)
+                else if (paymentValidation.PaymentKind == PaymentMethodPostingKind.Account)
                 {
                     cashReceiptVoucher.CashBoxId = null;
                     cashReceiptVoucher.BankAccountId = null;
@@ -2256,6 +2260,133 @@ WHERE je.SourceId = @CashReceiptVoucherId
                 new SqlParameter("@CashReceiptVoucherId", cashReceiptVoucherId),
                 new SqlParameter("@Payments", MyXML.GetXML(servicePayments ?? new List<SalesInvoiceActualPayment>())),
                 new SqlParameter("@UserId", userId));
+        }
+
+        private PaymentMethodPostingValidation ResolveAndValidateReceiptPayment(CashReceiptVoucher voucher)
+        {
+            if (voucher.CashReceiptPaymentMethodId == null || voucher.CashReceiptPaymentMethodId <= 0)
+                return PaymentMethodPostingValidation.Fail("يجب اختيار طريقة الدفع.");
+
+            var method = db.CashReceiptPaymentMethods
+                .Where(m => m.Id == voucher.CashReceiptPaymentMethodId && m.IsActive == true && m.IsDeleted == false)
+                .Select(m => new { m.Id, m.Code, m.ArName, m.EnName })
+                .FirstOrDefault();
+
+            if (method == null)
+                return PaymentMethodPostingValidation.Fail("طريقة الدفع غير موجودة أو غير مفعلة.");
+
+            var kind = ResolvePaymentMethodKind(method.Id, method.Code, method.ArName, method.EnName);
+            if (kind == PaymentMethodPostingKind.Unknown)
+                return PaymentMethodPostingValidation.Fail("طريقة الدفع غير معرفة محاسبياً. برجاء استخدام كود يبدأ بـ CASH أو BANK أو مراجعة إعدادات طرق الدفع.");
+
+            if (kind == PaymentMethodPostingKind.Cash)
+            {
+                if (voucher.CashBoxId == null || voucher.CashBoxId <= 0)
+                    return PaymentMethodPostingValidation.Fail("يجب اختيار الخزنة لطريقة الدفع النقدي.");
+
+                var cashBox = db.CashBoxes
+                    .Where(c => c.Id == voucher.CashBoxId && c.IsActive == true && c.IsDeleted == false)
+                    .Select(c => new { c.AccountId })
+                    .FirstOrDefault();
+
+                if (cashBox == null || cashBox.AccountId == null)
+                    return PaymentMethodPostingValidation.Fail("الخزنة المختارة غير مرتبطة بحساب محاسبي، ولا يمكن إنشاء قيد آمن.");
+            }
+            else if (kind == PaymentMethodPostingKind.Bank || kind == PaymentMethodPostingKind.Cheque)
+            {
+                if (voucher.BankAccountId == null || voucher.BankAccountId <= 0)
+                    return PaymentMethodPostingValidation.Fail("يجب اختيار الحساب البنكي لطريقة الدفع البنكية.");
+
+                var bankAccount = db.BankAccounts
+                    .Where(b => b.Id == voucher.BankAccountId && b.IsActive == true && b.IsDeleted == false)
+                    .Select(b => new { b.AccountId, b.BankAccountReceiptId })
+                    .FirstOrDefault();
+
+                if (bankAccount == null || (bankAccount.BankAccountReceiptId == null && bankAccount.AccountId == null))
+                    return PaymentMethodPostingValidation.Fail("الحساب البنكي المختار غير مرتبط بحساب محاسبي للقبض، ولا يمكن إنشاء قيد آمن.");
+            }
+            else if (kind == PaymentMethodPostingKind.Account)
+            {
+                if (voucher.ChartOfAccountId == null || voucher.ChartOfAccountId <= 0)
+                    return PaymentMethodPostingValidation.Fail("يجب اختيار الحساب لطريقة الدفع على الحساب.");
+            }
+
+            return PaymentMethodPostingValidation.Success(kind, LegacyPaymentMethodId(kind));
+        }
+
+        private PaymentMethodPostingKind ResolvePaymentMethodKind(int id, string code, string arName, string enName)
+        {
+            if (id == 1)
+                return PaymentMethodPostingKind.Cash;
+            if (id == 2)
+                return PaymentMethodPostingKind.Bank;
+            if (id == 3)
+                return PaymentMethodPostingKind.Cheque;
+            if (id == 4)
+                return PaymentMethodPostingKind.Account;
+
+            var marker = ((code ?? "") + " " + (enName ?? "") + " " + (arName ?? "")).Trim().ToUpperInvariant();
+            if (marker.StartsWith("CASH") || marker.Contains(" نقد"))
+                return PaymentMethodPostingKind.Cash;
+            if (marker.StartsWith("BANK") || marker.Contains("TRANSFER") || marker.Contains("حوال") || marker.Contains("بنك"))
+                return PaymentMethodPostingKind.Bank;
+            if (marker.StartsWith("CHEQUE") || marker.StartsWith("CHECK") || marker.Contains("شيك"))
+                return PaymentMethodPostingKind.Cheque;
+            if (marker.StartsWith("ACCOUNT"))
+                return PaymentMethodPostingKind.Account;
+
+            return PaymentMethodPostingKind.Unknown;
+        }
+
+        private int LegacyPaymentMethodId(PaymentMethodPostingKind kind)
+        {
+            if (kind == PaymentMethodPostingKind.Cash)
+                return 1;
+            if (kind == PaymentMethodPostingKind.Bank)
+                return 2;
+            if (kind == PaymentMethodPostingKind.Cheque)
+                return 3;
+            if (kind == PaymentMethodPostingKind.Account)
+                return 4;
+
+            return 0;
+        }
+
+        private enum PaymentMethodPostingKind
+        {
+            Unknown = 0,
+            Cash = 1,
+            Bank = 2,
+            Cheque = 3,
+            Account = 4
+        }
+
+        private class PaymentMethodPostingValidation
+        {
+            public bool IsValid { get; set; }
+            public string Message { get; set; }
+            public PaymentMethodPostingKind PaymentKind { get; set; }
+            public int LegacyPaymentMethodId { get; set; }
+
+            public static PaymentMethodPostingValidation Success(PaymentMethodPostingKind kind, int legacyPaymentMethodId)
+            {
+                return new PaymentMethodPostingValidation
+                {
+                    IsValid = true,
+                    PaymentKind = kind,
+                    LegacyPaymentMethodId = legacyPaymentMethodId
+                };
+            }
+
+            public static PaymentMethodPostingValidation Fail(string message)
+            {
+                return new PaymentMethodPostingValidation
+                {
+                    IsValid = false,
+                    Message = message,
+                    PaymentKind = PaymentMethodPostingKind.Unknown
+                };
+            }
         }
 
         /// <summary>

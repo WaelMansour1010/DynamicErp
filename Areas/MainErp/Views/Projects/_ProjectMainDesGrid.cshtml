@@ -1,0 +1,104 @@
+@model MyERP.Areas.MainErp.ViewModels.Projects.ProjectEditViewModel
+
+<div class="table-responsive">
+    <table class="table table-centered table-bordered mb-0" id="ProjectMainDesTable">
+        <thead class="thead-light">
+            <tr>
+                <th style="width:35%">اسم البند</th>
+                <th style="width:15%">الكمية (التعاقدية)</th>
+                <th style="width:15%">السعر</th>
+                <th style="width:15%">الإجمالي</th>
+                <th style="width:15%">ملاحظات</th>
+                <th style="width:5%">حذف</th>
+            </tr>
+        </thead>
+        <tbody id="ProjectItemsBody">
+            @if (Model != null && Model.ProjectItems != null)
+            {
+                foreach (var item in Model.ProjectItems)
+                {
+                    <tr>
+                        <td>
+                            <input type="hidden" class="item-id" value="@item.Id" />
+                            <input type="text" class="item-name form-control form-control-sm" value="@item.Item" placeholder="اسم البند" />
+                        </td>
+                        <td>
+                            <input type="number" step="any" min="0" class="item-qty form-control form-control-sm" value="@item.Quantity" />
+                        </td>
+                        <td>
+                            <input type="number" step="any" min="0" class="item-price form-control form-control-sm" value="@item.Price" />
+                        </td>
+                        <td>
+                            <input type="number" step="any" class="item-total form-control form-control-sm" value="@item.Value" readonly />
+                        </td>
+                        <td>
+                            <input type="text" class="item-remarks form-control form-control-sm" value="" />
+                        </td>
+                        <td class="text-center">
+                            <a href="javascript:void(0);" onclick="removeProjectItem(this)" class="text-danger">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-2">
+    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addProjectItem()">
+        <i class="fas fa-plus"></i> إضافة بند
+    </button>
+</div>
+
+<script>
+    function addProjectItem() {
+        var tr = '<tr>' +
+            '<td><input type="hidden" class="item-id" value="0" />' +
+            '<input type="text" class="item-name form-control form-control-sm" placeholder="اسم البند" /></td>' +
+            '<td><input type="number" step="any" min="0" class="item-qty form-control form-control-sm" value="0" /></td>' +
+            '<td><input type="number" step="any" min="0" class="item-price form-control form-control-sm" value="0" /></td>' +
+            '<td><input type="number" step="any" class="item-total form-control form-control-sm" value="0" readonly /></td>' +
+            '<td><input type="text" class="item-remarks form-control form-control-sm" /></td>' +
+            '<td class="text-center"><a href="javascript:void(0);" onclick="removeProjectItem(this)" class="text-danger"><i class="fas fa-trash-alt"></i></a></td>' +
+            '</tr>';
+        $('#ProjectItemsBody').append(tr);
+    }
+
+    function removeProjectItem(btn) {
+        var tbody = $('#ProjectItemsBody');
+        if (tbody.find('tr').length > 1) {
+            $(btn).closest('tr').remove();
+        } else {
+            var row = $(btn).closest('tr');
+            row.find('.item-name').val('');
+            row.find('.item-qty, .item-price, .item-total').val('0');
+            row.find('.item-remarks').val('');
+        }
+    }
+
+    $(document).on('input', '#ProjectItemsBody .item-qty, #ProjectItemsBody .item-price', function () {
+        var row = $(this).closest('tr');
+        var qty = parseFloat(row.find('.item-qty').val()) || 0;
+        var price = parseFloat(row.find('.item-price').val()) || 0;
+        row.find('.item-total').val((qty * price).toFixed(2));
+    });
+
+    function getProjectItems() {
+        var items = [];
+        $('#ProjectItemsBody tr').each(function () {
+            var name = $(this).find('.item-name').val();
+            if (name && name.trim() !== '') {
+                items.push({
+                    Id: parseInt($(this).find('.item-id').val()) || 0,
+                    Item: name.trim(),
+                    Quantity: parseFloat($(this).find('.item-qty').val()) || 0,
+                    Price: parseFloat($(this).find('.item-price').val()) || 0,
+                    Value: parseFloat($(this).find('.item-total').val()) || 0
+                });
+            }
+        });
+        return items;
+    }
+</script>

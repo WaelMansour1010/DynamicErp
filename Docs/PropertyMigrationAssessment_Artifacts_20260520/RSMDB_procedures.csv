@@ -1,0 +1,3801 @@
+﻿"DatabaseName","SchemaName","ProcedureName","definition"
+"RSMDB","dbo","Account_BulkMoveUnderParent_Alt","
+CREATE PROCEDURE dbo.Account_BulkMoveUnderParent_Alt
+    @NewParentCode   NVARCHAR(50),
+    @AccountCodesCsv NVARCHAR(MAX),       -- مثال:  '220501','220502','220503'
+    @Reason          NVARCHAR(400) = NULL,
+    @BatchId         UNIQUEIDENTIFIER = NULL,
+    @MovedByUserId   INT = NULL,
+    @MovedByUser     NVARCHAR(100) = NULL,
+    @AppName         NVARCHAR(100) = N'VB6'
+AS
+BEGIN
+    SET NOCOUNT ON; SET XACT_ABORT ON;
+
+    IF OBJECT_ID('tempdb..#list') IS NOT NULL DROP TABLE #list;
+    CREATE TABLE #list (Account_Code NVARCHAR(50) PRIMARY KEY);
+
+    DECLARE @xml XML;
+    SET @xml = CAST(('<r><i>' + REPLACE(REPLACE(@AccountCodesCsv, '''', ''), ',', '</i><i>') + '</i></r>') AS XML);
+
+    INSERT INTO #list(Account_Code)
+    SELECT DISTINCT LTRIM(RTRIM(T.c.value('.', 'nvarchar(50)')))
+    FROM @xml.nodes('/r/i') AS T(c)
+    WHERE LTRIM(RTRIM(T.c.value('.', 'nvarchar(50)'))) <> N'';
+
+    IF NOT EXISTS (SELECT 1 FROM #list) RETURN;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        DECLARE @ParentSerial NVARCHAR(200), @LevelNo INT, @Digits INT;
+
+        SELECT @ParentSerial = A.Account_Serial
+        FROM dbo.ACCOUNTS AS A WITH (UPDLOCK, HOLDLOCK)
+        WHERE A.Account_Code = @NewParentCode;
+
+        IF @ParentSerial IS NULL
+        BEGIN
+            RAISERROR(N'الأب المحدد لا يملك Serial.', 16, 1);
+            ROLLBACK TRAN; RETURN;
+        END
+
+        SELECT TOP (1) @LevelNo = L.[Level]
+        FROM dbo.AccountsLevelsDetails AS L
+        WHERE LEN(@ParentSerial) = (SELECT SUM(NoOfDigits) FROM dbo.AccountsLevelsDetails L2 WHERE L2.[Level] <= L.[Level])
+        ORDER BY L.[Level];
+
+        SET @LevelNo = ISNULL(@LevelNo, 0) + 1;
+
+        SELECT @Digits = NoOfDigits FROM dbo.AccountsLevelsDetails WHERE [Level] = @LevelNo;
+        IF @Digits IS NULL OR @Digits <= 0
+        BEGIN
+            RAISERROR(N'تعذّر تحديد عدد الخانات للمستوى التالي.', 16, 1);
+            ROLLBACK TRAN; RETURN;
+        END
+
+        DECLARE @Base INT;
+        SELECT @Base = ISNULL(MAX(CAST(RIGHT(Account_Serial, @Digits) AS INT)), 0)
+        FROM dbo.ACCOUNTS WITH (UPDLOCK, HOLDLOCK)
+        WHERE Parent_Account_Code = @NewParentCode
+          AND Account_Serial LIKE @ParentSerial + N'%'
+          AND LEN(Account_Serial) = LEN(@ParentSerial) + @Digits;
+
+        ;WITH cte AS
+        (
+            SELECT A.Account_Code,
+                   ROW_NUMBER() OVER (ORDER BY A.Account_Code) AS rn
+            FROM dbo.ACCOUNTS A
+            JOIN #list L ON L.Account_Code = A.Account_Code
+            WHERE ISNULL(A.Parent_Account_Code, N'') <> @NewParentCode
+        ),
+        toUpdate AS
+        (
+            SELECT U.Account_Code,
+                   NewSerial = @ParentSerial 
+                              + RIGHT(REPLICATE(N'0', @Digits) 
+                              + CONVERT(VARCHAR(20), @Base + rn), @Digits)
+            FROM cte AS U
+        )
+        UPDATE A
+        SET A.Parent_Account_Code = @NewParentCode,
+            A.Account_Serial      = TU.NewSerial
+        OUTPUT
+            DELETED.Account_Code,
+            DELETED.Parent_Account_Code,
+            DELETED.Account_Serial,
+            INSERTED.Parent_Account_Code,
+            INSERTED.Account_Serial,
+            @Reason,
+            @BatchId,
+            @MovedByUserId,
+            @MovedByUser,
+            HOST_NAME(),
+            @AppName,
+            SYSDATETIME()
+        INTO dbo.AccountMoveLog
+        (
+            Account_Code, OldParentCode, OldSerial,
+            NewParentCode, NewSerial,
+            Reason, BatchId, MovedByUserId, MovedByUserName, Workstation, AppName, MovedAt
+        )
+        FROM dbo.ACCOUNTS A
+        JOIN toUpdate TU ON TU.Account_Code = A.Account_Code;
+
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRAN;
+        DECLARE @msg NVARCHAR(4000) = ERROR_MESSAGE();
+        RAISERROR(@msg, 16, 1);
+    END CATCH
+END
+"
+"RSMDB","dbo","Account_MoveUnderParent","
+CREATE PROCEDURE dbo.Account_MoveUnderParent
+    @AccountCode    NVARCHAR(50),
+    @NewParentCode  NVARCHAR(50),
+    @Reason         NVARCHAR(400) = NULL,
+    @BatchId        UNIQUEIDENTIFIER = NULL,
+    @MovedByUserId  INT = NULL,
+    @MovedByUser    NVARCHAR(100) = NULL,
+    @AppName        NVARCHAR(100) = N'Dynamic',
+    @NewSerial      NVARCHAR(200) OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+    SET XACT_ABORT ON;
+
+    DECLARE @OldParent NVARCHAR(50), @OldSerial NVARCHAR(200);
+    DECLARE @ParentSerial NVARCHAR(200);
+    DECLARE @LevelNo INT, @Digits INT, @MaxTail INT, @NextNum INT;
+
+    BEGIN TRY
+        BEGIN TRAN;
+
+        /* قفل صف الحساب أثناء التحديث */
+        SELECT 
+            @OldParent = Parent_Account_Code,
+            @OldSerial = Account_Serial
+        FROM dbo.ACCOUNTS WITH (UPDLOCK, HOLDLOCK)
+        WHERE Account_Code = @AccountCode;
+
+        /* سيريال الأب الجديد */
+        SELECT @ParentSerial = Account_Serial
+        FROM dbo.ACCOUNTS
+        WHERE Account_Code = @NewParentCode;
+
+        IF @ParentSerial IS NULL
+        BEGIN
+            RAISERROR(N'الأب المحدد لا يملك Serial.', 16, 1);
+            ROLLBACK TRAN; RETURN;
+        END
+
+        /* تحديد مستوى الأب ثم مستوى الابن (Level الأب + 1)
+           حساب مستوى الأب يتم بمطابقة طول سيرياله مع مجموع NoOfDigits حتى هذا المستوى */
+        SELECT TOP (1) @LevelNo = L.[Level]
+        FROM dbo.AccountsLevelsDetails AS L
+        WHERE LEN(@ParentSerial) = (
+            SELECT SUM(NoOfDigits) FROM dbo.AccountsLevelsDetails L2 WHERE L2.[Level] <= L.[Level]
+        )
+        ORDER BY L.[Level];
+
+        SET @LevelNo = ISNULL(@LevelNo, 0) + 1;
+
+        SELECT @Digits = NoOfDigits 
+        FROM dbo.AccountsLevelsDetails 
+        WHERE [Level] = @LevelNo;
+
+        IF @Digits IS NULL OR @Digits <= 0
+        BEGIN
+            RAISERROR(N'تعذّر تحديد عدد الخانات للمستوى التالي.', 16, 1);
+            ROLLBACK TRAN; RETURN;
+        END
+
+        /* أكبر ذيل موجود تحت الأب */
+        SELECT @MaxTail = MAX(CAST(RIGHT(Account_Serial, @Digits) AS INT))
+        FROM dbo.ACCOUNTS
+        WHERE Parent_Account_Code = @NewParentCode
+          AND Account_Serial LIKE @ParentSerial + N'%'
+          AND LEN(Account_Serial) = LEN(@ParentSerial) + @Digits;
+
+        SET @NextNum = ISNULL(@MaxTail, 0) + 1;
+
+        /* توليد السيريال الجديد وضمان عدم التعارض */
+        DECLARE @Tail NVARCHAR(50);
+        SET @Tail = RIGHT(REPLICATE(N'0', @Digits) + CONVERT(VARCHAR(20), @NextNum), @Digits);
+        SET @NewSerial = @ParentSerial + @Tail;
+
+        WHILE EXISTS (SELECT 1 FROM dbo.ACCOUNTS WHERE Account_Serial = @NewSerial)
+        BEGIN
+            SET @NextNum = @NextNum + 1;
+            SET @Tail = RIGHT(REPLICATE(N'0', @Digits) + CONVERT(VARCHAR(20), @NextNum), @Digits);
+            SET @NewSerial = @ParentSerial + @Tail;
+        END
+
+        /* التحديث */
+        UPDATE dbo.ACCOUNTS
+        SET Parent_Account_Code = @NewParentCode,
+            Account_Serial      = @NewSerial
+        WHERE Account_Code = @AccountCode;
+
+        /* اللوج */
+        INSERT INTO dbo.AccountMoveLog
+        (Account_Code, OldParentCode, OldSerial, NewParentCode, NewSerial,
+         Reason, BatchId, MovedByUserId, MovedByUserName, Workstation, AppName)
+        VALUES
+        (@AccountCode, @OldParent, @OldSerial, @NewParentCode, @NewSerial,
+         @Reason, @BatchId, @MovedByUserId, @MovedByUser, HOST_NAME(), @AppName);
+
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0 ROLLBACK TRAN;
+        DECLARE @msg NVARCHAR(4000) = ERROR_MESSAGE();
+        RAISERROR(@msg, 16, 1);
+    END CATCH
+END
+"
+"RSMDB","dbo","dt_addtosourcecontrol","create proc dbo.dt_addtosourcecontrol
+    @vchSourceSafeINI varchar(255) = '',
+    @vchProjectName   varchar(255) ='',
+    @vchComment       varchar(255) ='',
+    @vchLoginName     varchar(255) ='',
+    @vchPassword      varchar(255) =''
+
+as
+
+set nocount on
+
+declare @iReturn int
+declare @iObjectId int
+select @iObjectId = 0
+
+declare @iStreamObjectId int
+select @iStreamObjectId = 0
+
+declare @VSSGUID varchar(100)
+select @VSSGUID = 'SQLVersionControl.VCS_SQL'
+
+declare @vchDatabaseName varchar(255)
+select @vchDatabaseName = db_name()
+
+declare @iReturnValue int
+select @iReturnValue = 0
+
+declare @iPropertyObjectId int
+declare @vchParentId varchar(255)
+
+declare @iObjectCount int
+select @iObjectCount = 0
+
+    exec @iReturn = sp_OACreate @VSSGUID, @iObjectId OUT
+    if @iReturn <> 0 GOTO E_OAError
+
+
+    /* Create Project in SS */
+    exec @iReturn = sp_OAMethod @iObjectId,
+                                'AddProjectToSourceSafe',
+                                NULL,
+                                @vchSourceSafeINI,
+                                @vchProjectName output,
+                                @@SERVERNAME,
+                                @vchDatabaseName,
+                                @vchLoginName,
+                                @vchPassword,
+                                @vchComment
+
+
+    if @iReturn <> 0 GOTO E_OAError
+
+    exec @iReturn = sp_OAGetProperty @iObjectId, 'GetStreamObject', @iStreamObjectId OUT
+
+    if @iReturn <> 0 GOTO E_OAError
+
+    /* Set Database Properties */
+
+    begin tran SetProperties
+
+    /* add high level object */
+
+    exec @iPropertyObjectId = dbo.dt_adduserobject_vcs 'VCSProjectID'
+
+    select @vchParentId = CONVERT(varchar(255),@iPropertyObjectId)
+
+    exec dbo.dt_setpropertybyid @iPropertyObjectId, 'VCSProjectID', @vchParentId , NULL
+    exec dbo.dt_setpropertybyid @iPropertyObjectId, 'VCSProject' , @vchProjectName , NULL
+    exec dbo.dt_setpropertybyid @iPropertyObjectId, 'VCSSourceSafeINI' , @vchSourceSafeINI , NULL
+    exec dbo.dt_setpropertybyid @iPropertyObjectId, 'VCSSQLServer', @@SERVERNAME, NULL
+    exec dbo.dt_setpropertybyid @iPropertyObjectId, 'VCSSQLDatabase', @vchDatabaseName, NULL
+
+    if @@error <> 0 GOTO E_General_Error
+
+    commit tran SetProperties
+
+    declare cursorProcNames cursor for
+        select convert(varchar(255), name) from sysobjects where type = 'P' and name not like 'dt_%'
+    open cursorProcNames
+
+    while 1 = 1
+    begin
+        declare @vchProcName varchar(255)
+        fetch next from cursorProcNames into @vchProcName
+        if @@fetch_status <> 0
+            break
+
+        select colid, text into #ProcLines
+        from syscomments
+        where id = object_id(@vchProcName)
+        order by colid
+
+        declare @iCurProcLine int
+        declare @iProcLines int
+        select @iCurProcLine = 1
+        select @iProcLines = (select count(*) from #ProcLines)
+        while @iCurProcLine <= @iProcLines
+        begin
+            declare @pos int
+            select @pos = 1
+            declare @iCurLineSize int
+            select @iCurLineSize = len((select text from #ProcLines where colid = @iCurProcLine))
+            while @pos <= @iCurLineSize
+            begin
+                declare @vchProcLinePiece varchar(255)
+                select @vchProcLinePiece = convert(varchar(255),
+                    substring((select text from #ProcLines where colid = @iCurProcLine),
+                              @pos, 255 ))
+                exec @iReturn = sp_OAMethod @iStreamObjectId, 'AddStream', @iReturnValue OUT, @vchProcLinePiece
+                if @iReturn <> 0 GOTO E_OAError
+                select @pos = @pos + 255
+            end
+            select @iCurProcLine = @iCurProcLine + 1
+        end
+        drop table #ProcLines
+
+        exec @iReturn = sp_OAMethod @iObjectId,
+                                    'CheckIn_StoredProcedure',
+                                    NULL,
+                                    @sProjectName = @vchProjectName,
+                                    @sSourceSafeINI = @vchSourceSafeINI,
+                                    @sServerName = @@SERVERNAME,
+                                    @sDatabaseName = @vchDatabaseName,
+                                    @sObjectName = @vchProcName,
+                                    @sComment = @vchComment,
+                                    @sLoginName = @vchLoginName,
+                                    @sPassword = @vchPassword,
+                                    @iVCSFlags = 0,
+                                    @iActionFlag = 0,
+                                    @sStream = ''
+
+        if @iReturn = 0 select @iObjectCount = @iObjectCount + 1
+
+    end
+
+CleanUp:
+	close cursorProcNames
+	deallocate cursorProcNames
+    select @vchProjectName
+    select @iObjectCount
+    return
+
+E_General_Error:
+    /* this is an all or nothing.  No specific error messages */
+    goto CleanUp
+
+E_OAError:
+    exec dbo.dt_displayoaerror @iObjectId, @iReturn
+    goto CleanUp
+
+
+"
+"RSMDB","dbo","dt_addtosourcecontrol_u","create proc dbo.dt_addtosourcecontrol_u
+    @vchSourceSafeINI nvarchar(255) = '',
+    @vchProjectName   nvarchar(255) ='',
+    @vchComment       nvarchar(255) ='',
+    @vchLoginName     nvarchar(255) ='',
+    @vchPassword      nvarchar(255) =''
+
+as
+
+set nocount on
+
+declare @iReturn int
+declare @iObjectId int
+select @iObjectId = 0
+
+declare @iStreamObjectId int
+select @iStreamObjectId = 0
+
+declare @VSSGUID nvarchar(100)
+select @VSSGUID = N'SQLVersionControl.VCS_SQL'
+
+declare @vchDatabaseName varchar(255)
+select @vchDatabaseName = db_name()
+
+declare @iReturnValue int
+select @iReturnValue = 0
+
+declare @iPropertyObjectId int
+declare @vchParentId nvarchar(255)
+
+declare @iObjectCount int
+select @iObjectCount = 0
+
+    exec @iReturn = sp_OACreate @VSSGUID, @iObjectId OUT
+    if @iReturn <> 0 GOTO E_OAError
+
+
+    /* Create Project in SS */
+    exec @iReturn = sp_OAMethod @iObjectId,
+                                'AddProjectToSourceSafe',
+                                NULL,
+                                @vchSourceSafeINI,
+                                @vchProjectName output,
+                                @@SERVERNAME,
+                                @vchDatabaseName,
+                                @vchLoginName,
+                                @vchPassword,
+                                @vchComment
+
+
+    if @iReturn <> 0 GOTO E_OAError
+
+    exec @iReturn = sp_OAGetProperty @iObjectId, N'GetStreamObject', @iStreamObjectId OUT
+
+    if @iReturn <> 0 GOTO E_OAError
+
+    /* Set Database Properties */
+
+    begin tran SetProperties
+
+    /* add high level object */
+
+    exec @iPropertyObjectId = dbo.dt_adduserobject_vcs 'VCSProjectID'
+
+    select @vchParentId = CONVERT(nvarchar(255),@iPropertyObjectId)
+
+    exec dbo.dt_setpropertybyid_u @iPropertyObjectId, 'VCSProjectID', @vchParentId , NULL
+    exec dbo.dt_setpropertybyid_u @iPropertyObjectId, 'VCSProject' , @vchProjectName , NULL
+    exec dbo.dt_setpropertybyid_u @iPropertyObjectId, 'VCSSourceSafeINI' , @vchSourceSafeINI , NULL
+    exec dbo.dt_setpropertybyid_u @iPropertyObjectId, 'VCSSQLServer', @@SERVERNAME, NULL
+    exec dbo.dt_setpropertybyid_u @iPropertyObjectId, 'VCSSQLDatabase', @vchDatabaseName, NULL
+
+    if @@error <> 0 GOTO E_General_Error
+
+    commit tran SetProperties
+
+    declare cursorProcNames cursor for
+        select convert(nvarchar(255), name) from sysobjects where type = N'P' and name not like N'dt_%'
+    open cursorProcNames
+
+    while 1 = 1
+    begin
+        declare @vchProcName nvarchar(255)
+        fetch next from cursorProcNames into @vchProcName
+        if @@fetch_status <> 0
+            break
+
+        select colid, text into #ProcLines
+        from syscomments
+        where id = object_id(@vchProcName)
+        order by colid
+
+        declare @iCurProcLine int
+        declare @iProcLines int
+        select @iCurProcLine = 1
+        select @iProcLines = (select count(*) from #ProcLines)
+        while @iCurProcLine <= @iProcLines
+        begin
+            declare @pos int
+            select @pos = 1
+            declare @iCurLineSize int
+            select @iCurLineSize = len((select text from #ProcLines where colid = @iCurProcLine))
+            while @pos <= @iCurLineSize
+            begin
+                declare @vchProcLinePiece nvarchar(255)
+                select @vchProcLinePiece = convert(nvarchar(255),
+                    substring((select text from #ProcLines where colid = @iCurProcLine),
+                              @pos, 255 ))
+                exec @iReturn = sp_OAMethod @iStreamObjectId, N'AddStream', @iReturnValue OUT, @vchProcLinePiece
+                if @iReturn <> 0 GOTO E_OAError
+                select @pos = @pos + 255
+            end
+            select @iCurProcLine = @iCurProcLine + 1
+        end
+        drop table #ProcLines
+
+        exec @iReturn = sp_OAMethod @iObjectId,
+                                    'CheckIn_StoredProcedure',
+                                    NULL,
+                                    @sProjectName = @vchProjectName,
+                                    @sSourceSafeINI = @vchSourceSafeINI,
+                                    @sServerName = @@SERVERNAME,
+                                    @sDatabaseName = @vchDatabaseName,
+                                    @sObjectName = @vchProcName,
+                                    @sComment = @vchComment,
+                                    @sLoginName = @vchLoginName,
+                                    @sPassword = @vchPassword,
+                                    @iVCSFlags = 0,
+                                    @iActionFlag = 0,
+                                    @sStream = ''
+
+        if @iReturn = 0 select @iObjectCount = @iObjectCount + 1
+
+    end
+
+CleanUp:
+	close cursorProcNames
+	deallocate cursorProcNames
+    select @vchProjectName
+    select @iObjectCount
+    return
+
+E_General_Error:
+    /* this is an all or nothing.  No specific error messages */
+    goto CleanUp
+
+E_OAError:
+    exec dbo.dt_displayoaerror_u @iObjectId, @iReturn
+    goto CleanUp
+
+
+"
+"RSMDB","dbo","dt_adduserobject","/*
+**	Add an object to the dtproperties table
+*/
+create procedure dbo.dt_adduserobject
+as
+	set nocount on
+	/*
+	** Create the user object if it does not exist already
+	*/
+	begin transaction
+		insert dbo.dtproperties (property) VALUES ('DtgSchemaOBJECT')
+		update dbo.dtproperties set objectid=@@identity 
+			where id=@@identity and property='DtgSchemaOBJECT'
+	commit
+	return @@identity
+"
+"RSMDB","dbo","dt_adduserobject_vcs","create procedure dbo.dt_adduserobject_vcs
+    @vchProperty varchar(64)
+
+as
+
+set nocount on
+
+declare @iReturn int
+    /*
+    ** Create the user object if it does not exist already
+    */
+    begin transaction
+        select @iReturn = objectid from dbo.dtproperties where property = @vchProperty
+        if @iReturn IS NULL
+        begin
+            insert dbo.dtproperties (property) VALUES (@vchProperty)
+            update dbo.dtproperties set objectid=@@identity
+                    where id=@@identity and property=@vchProperty
+            select @iReturn = @@identity
+        end
+    commit
+    return @iReturn
+
+
+"
+"RSMDB","dbo","dt_checkinobject","create proc dbo.dt_checkinobject
+    @chObjectType  char(4),
+    @vchObjectName varchar(255),
+    @vchComment    varchar(255)='',
+    @vchLoginName  varchar(255),
+    @vchPassword   varchar(255)='',
+    @iVCSFlags     int = 0,
+    @iActionFlag   int = 0,   /* 0 => AddFile, 1 => CheckIn */
+    @txStream1     Text = '', /* There is a bug that if items are NULL they do not pass to OLE servers */
+    @txStream2     Text = '',
+    @txStream3     Text = ''
+
+
+as
+
+set nocount on
+
+declare @iReturn int
+declare @iObjectId int
+select @iObjectId = 0
+
+declare @VSSGUID varchar(100)
+select @VSSGUID = 'SQLVersionControl.VCS_SQL'
+
+
+declare @iPropertyObjectId int
+select @iPropertyObjectId  = 0
+
+    select @iPropertyObjectId = (select objectid from dbo.dtproperties where property = 'VCSProjectID')
+
+    declare @vchProjectName   varchar(255)
+    declare @vchSourceSafeINI varchar(255)
+    declare @vchServerName    varchar(255)
+    declare @vchDatabaseName  varchar(255)
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSProject',       @vchProjectName   OUT
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSSourceSafeINI', @vchSourceSafeINI OUT
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSSQLServer',     @vchServerName    OUT
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSSQLDatabase',   @vchDatabaseName  OUT
+
+    if @chObjectType = 'PROC'
+    begin
+        if @iActionFlag = 1
+        begin
+            /* Procedure Can have up to three streams
+            Drop Stream, Create Stream, GRANT stream */
+
+            begin tran compile_all
+
+            /* try to compile the streams */
+            exec (@txStream1)
+            if @@error <> 0 GOTO E_Compile_Fail
+
+            exec (@txStream2)
+            if @@error <> 0 GOTO E_Compile_Fail
+
+            exec (@txStream3)
+            if @@error <> 0 GOTO E_Compile_Fail
+        end
+
+        exec @iReturn = sp_OACreate @VSSGUID, @iObjectId OUT
+        if @iReturn <> 0 GOTO E_OAError
+
+        if @iActionFlag = 1
+        begin
+            exec @iReturn = sp_OAMethod @iObjectId,
+                                        'CheckIn_StoredProcedure',
+                                        NULL,
+                                        @sProjectName = @vchProjectName,
+                                        @sSourceSafeINI = @vchSourceSafeINI,
+                                        @sServerName = @vchServerName,
+                                        @sDatabaseName = @vchDatabaseName,
+                                        @sObjectName = @vchObjectName,
+                                        @sComment = @vchComment,
+                                        @sLoginName = @vchLoginName,
+                                        @sPassword = @vchPassword,
+                                        @iVCSFlags = @iVCSFlags,
+                                        @iActionFlag = @iActionFlag,
+                                        @sStream = @txStream2
+        end
+        else
+        begin
+            declare @iStreamObjectId int
+            declare @iReturnValue int
+
+            exec @iReturn = sp_OAGetProperty @iObjectId, 'GetStreamObject', @iStreamObjectId OUT
+            if @iReturn <> 0 GOTO E_OAError
+
+            select colid, text into #ProcLines
+            from syscomments
+            where id = object_id(@vchObjectName)
+            order by colid
+
+            declare @iCurProcLine int
+            declare @iProcLines int
+            select @iCurProcLine = 1
+            select @iProcLines = (select count(*) from #ProcLines)
+            while @iCurProcLine <= @iProcLines
+            begin
+                declare @pos int
+                select @pos = 1
+                declare @iCurLineSize int
+                select @iCurLineSize = len((select text from #ProcLines where colid = @iCurProcLine))
+                while @pos <= @iCurLineSize
+                begin
+                    declare @vchProcLinePiece varchar(255)
+                    select @vchProcLinePiece = convert(varchar(255),
+                        substring((select text from #ProcLines where colid = @iCurProcLine),
+                                  @pos, 255 ))
+                    exec @iReturn = sp_OAMethod @iStreamObjectId, 'AddStream', @iReturnValue OUT, @vchProcLinePiece
+                    if @iReturn <> 0 GOTO E_OAError
+                    select @pos = @pos + 255
+                end
+                select @iCurProcLine = @iCurProcLine + 1
+            end
+            drop table #ProcLines
+
+            exec @iReturn = sp_OAMethod @iObjectId,
+                                        'CheckIn_StoredProcedure',
+                                        NULL,
+                                        @sProjectName = @vchProjectName,
+                                        @sSourceSafeINI = @vchSourceSafeINI,
+                                        @sServerName = @vchServerName,
+                                        @sDatabaseName = @vchDatabaseName,
+                                        @sObjectName = @vchObjectName,
+                                        @sComment = @vchComment,
+                                        @sLoginName = @vchLoginName,
+                                        @sPassword = @vchPassword,
+                                        @iVCSFlags = @iVCSFlags,
+                                        @iActionFlag = @iActionFlag,
+                                        @sStream = ''
+        end
+
+        if @iReturn <> 0 GOTO E_OAError
+
+        if @iActionFlag = 1
+        begin
+            commit tran compile_all
+            if @@error <> 0 GOTO E_Compile_Fail
+        end
+
+    end
+
+CleanUp:
+    return
+
+E_Compile_Fail:
+    declare @lerror int
+    select @lerror = @@error
+    rollback tran compile_all
+    RAISERROR (@lerror,16,-1)
+    goto CleanUp
+
+E_OAError:
+    if @iActionFlag = 1 rollback tran compile_all
+    exec dbo.dt_displayoaerror @iObjectId, @iReturn
+    goto CleanUp
+
+
+"
+"RSMDB","dbo","dt_checkinobject_u","create proc dbo.dt_checkinobject_u
+    @chObjectType  char(4),
+    @vchObjectName nvarchar(255),
+    @vchComment    nvarchar(255)='',
+    @vchLoginName  nvarchar(255),
+    @vchPassword   nvarchar(255)='',
+    @iVCSFlags     int = 0,
+    @iActionFlag   int = 0,   /* 0 => AddFile, 1 => CheckIn */
+    @txStream1     Text = '', /* There is a bug that if items are NULL they do not pass to OLE servers */
+    @txStream2     Text = '',
+    @txStream3     Text = ''
+
+
+as
+
+set nocount on
+
+declare @iReturn int
+declare @iObjectId int
+select @iObjectId = 0
+
+declare @VSSGUID nvarchar(100)
+select @VSSGUID = N'SQLVersionControl.VCS_SQL'
+
+
+declare @iPropertyObjectId int
+select @iPropertyObjectId  = 0
+
+    select @iPropertyObjectId = (select objectid from dbo.dtproperties where property = 'VCSProjectID')
+
+    declare @vchProjectName   nvarchar(255)
+    declare @vchSourceSafeINI nvarchar(255)
+    declare @vchServerName    nvarchar(255)
+    declare @vchDatabaseName  nvarchar(255)
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSProject',       @vchProjectName   OUT
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSSourceSafeINI', @vchSourceSafeINI OUT
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSSQLServer',     @vchServerName    OUT
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSSQLDatabase',   @vchDatabaseName  OUT
+
+    if @chObjectType = 'PROC'
+    begin
+        if @iActionFlag = 1
+        begin
+            /* Procedure Can have up to three streams
+            Drop Stream, Create Stream, GRANT stream */
+
+            begin tran compile_all
+
+            /* try to compile the streams */
+            exec (@txStream1)
+            if @@error <> 0 GOTO E_Compile_Fail
+
+            exec (@txStream2)
+            if @@error <> 0 GOTO E_Compile_Fail
+
+            exec (@txStream3)
+            if @@error <> 0 GOTO E_Compile_Fail
+        end
+
+        exec @iReturn = sp_OACreate @VSSGUID, @iObjectId OUT
+        if @iReturn <> 0 GOTO E_OAError
+
+        if @iActionFlag = 1
+        begin
+            exec @iReturn = sp_OAMethod @iObjectId,
+                                        N'CheckIn_StoredProcedure',
+                                        NULL,
+                                        @sProjectName = @vchProjectName,
+                                        @sSourceSafeINI = @vchSourceSafeINI,
+                                        @sServerName = @vchServerName,
+                                        @sDatabaseName = @vchDatabaseName,
+                                        @sObjectName = @vchObjectName,
+                                        @sComment = @vchComment,
+                                        @sLoginName = @vchLoginName,
+                                        @sPassword = @vchPassword,
+                                        @iVCSFlags = @iVCSFlags,
+                                        @iActionFlag = @iActionFlag,
+                                        @sStream = @txStream2
+        end
+        else
+        begin
+            declare @iStreamObjectId int
+            declare @iReturnValue int
+
+            exec @iReturn = sp_OAGetProperty @iObjectId, N'GetStreamObject', @iStreamObjectId OUT
+            if @iReturn <> 0 GOTO E_OAError
+
+            select colid, text into #ProcLines
+            from syscomments
+            where id = object_id(@vchObjectName)
+            order by colid
+
+            declare @iCurProcLine int
+            declare @iProcLines int
+            select @iCurProcLine = 1
+            select @iProcLines = (select count(*) from #ProcLines)
+            while @iCurProcLine <= @iProcLines
+            begin
+                declare @pos int
+                select @pos = 1
+                declare @iCurLineSize int
+                select @iCurLineSize = len((select text from #ProcLines where colid = @iCurProcLine))
+                while @pos <= @iCurLineSize
+                begin
+                    declare @vchProcLinePiece nvarchar(255)
+                    select @vchProcLinePiece = convert(nvarchar(255),
+                        substring((select text from #ProcLines where colid = @iCurProcLine),
+                                  @pos, 255 ))
+                    exec @iReturn = sp_OAMethod @iStreamObjectId, N'AddStream', @iReturnValue OUT, @vchProcLinePiece
+                    if @iReturn <> 0 GOTO E_OAError
+                    select @pos = @pos + 255
+                end
+                select @iCurProcLine = @iCurProcLine + 1
+            end
+            drop table #ProcLines
+
+            exec @iReturn = sp_OAMethod @iObjectId,
+                                        N'CheckIn_StoredProcedure',
+                                        NULL,
+                                        @sProjectName = @vchProjectName,
+                                        @sSourceSafeINI = @vchSourceSafeINI,
+                                        @sServerName = @vchServerName,
+                                        @sDatabaseName = @vchDatabaseName,
+                                        @sObjectName = @vchObjectName,
+                                        @sComment = @vchComment,
+                                        @sLoginName = @vchLoginName,
+                                        @sPassword = @vchPassword,
+                                        @iVCSFlags = @iVCSFlags,
+                                        @iActionFlag = @iActionFlag,
+                                        @sStream = ''
+        end
+
+        if @iReturn <> 0 GOTO E_OAError
+
+        if @iActionFlag = 1
+        begin
+            commit tran compile_all
+            if @@error <> 0 GOTO E_Compile_Fail
+        end
+
+    end
+
+CleanUp:
+    return
+
+E_Compile_Fail:
+    declare @lerror int
+    select @lerror = @@error
+    rollback tran compile_all
+    RAISERROR (@lerror,16,-1)
+    goto CleanUp
+
+E_OAError:
+    if @iActionFlag = 1 rollback tran compile_all
+    exec dbo.dt_displayoaerror_u @iObjectId, @iReturn
+    goto CleanUp
+
+
+"
+"RSMDB","dbo","dt_checkoutobject","create proc dbo.dt_checkoutobject
+    @chObjectType  char(4),
+    @vchObjectName varchar(255),
+    @vchComment    varchar(255),
+    @vchLoginName  varchar(255),
+    @vchPassword   varchar(255),
+    @iVCSFlags     int = 0,
+    @iActionFlag   int = 0/* 0 => Checkout, 1 => GetLatest, 2 => UndoCheckOut */
+
+as
+
+set nocount on
+
+declare @iReturn int
+declare @iObjectId int
+select @iObjectId =0
+
+declare @VSSGUID varchar(100)
+select @VSSGUID = 'SQLVersionControl.VCS_SQL'
+
+declare @iReturnValue int
+select @iReturnValue = 0
+
+declare @vchTempText varchar(255)
+
+/* this is for our strings */
+declare @iStreamObjectId int
+select @iStreamObjectId = 0
+
+    declare @iPropertyObjectId int
+    select @iPropertyObjectId = (select objectid from dbo.dtproperties where property = 'VCSProjectID')
+
+    declare @vchProjectName   varchar(255)
+    declare @vchSourceSafeINI varchar(255)
+    declare @vchServerName    varchar(255)
+    declare @vchDatabaseName  varchar(255)
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSProject',       @vchProjectName   OUT
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSSourceSafeINI', @vchSourceSafeINI OUT
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSSQLServer',     @vchServerName    OUT
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSSQLDatabase',   @vchDatabaseName  OUT
+
+    if @chObjectType = 'PROC'
+    begin
+        /* Procedure Can have up to three streams
+           Drop Stream, Create Stream, GRANT stream */
+
+        exec @iReturn = sp_OACreate @VSSGUID, @iObjectId OUT
+
+        if @iReturn <> 0 GOTO E_OAError
+
+        exec @iReturn = sp_OAMethod @iObjectId,
+                                    'CheckOut_StoredProcedure',
+                                    NULL,
+                                    @sProjectName = @vchProjectName,
+                                    @sSourceSafeINI = @vchSourceSafeINI,
+                                    @sObjectName = @vchObjectName,
+                                    @sServerName = @vchServerName,
+                                    @sDatabaseName = @vchDatabaseName,
+                                    @sComment = @vchComment,
+                                    @sLoginName = @vchLoginName,
+                                    @sPassword = @vchPassword,
+                                    @iVCSFlags = @iVCSFlags,
+                                    @iActionFlag = @iActionFlag
+
+        if @iReturn <> 0 GOTO E_OAError
+
+
+        exec @iReturn = sp_OAGetProperty @iObjectId, 'GetStreamObject', @iStreamObjectId OUT
+
+        if @iReturn <> 0 GOTO E_OAError
+
+        create table #commenttext (id int identity, sourcecode varchar(255))
+
+
+        select @vchTempText = 'STUB'
+        while @vchTempText IS NOT NULL
+        begin
+            exec @iReturn = sp_OAMethod @iStreamObjectId, 'GetStream', @iReturnValue OUT, @vchTempText OUT
+            if @iReturn <> 0 GOTO E_OAError
+
+            if (@vchTempText IS NOT NULL) insert into #commenttext (sourcecode) select @vchTempText
+        end
+
+        select 'VCS'=sourcecode from #commenttext order by id
+        select 'SQL'=text from syscomments where id = object_id(@vchObjectName) order by colid
+
+    end
+
+CleanUp:
+    return
+
+E_OAError:
+    exec dbo.dt_displayoaerror @iObjectId, @iReturn
+    GOTO CleanUp
+
+
+"
+"RSMDB","dbo","dt_checkoutobject_u","create proc dbo.dt_checkoutobject_u
+    @chObjectType  char(4),
+    @vchObjectName nvarchar(255),
+    @vchComment    nvarchar(255),
+    @vchLoginName  nvarchar(255),
+    @vchPassword   nvarchar(255),
+    @iVCSFlags     int = 0,
+    @iActionFlag   int = 0/* 0 => Checkout, 1 => GetLatest, 2 => UndoCheckOut */
+
+as
+
+set nocount on
+
+declare @iReturn int
+declare @iObjectId int
+select @iObjectId =0
+
+declare @VSSGUID nvarchar(100)
+select @VSSGUID = N'SQLVersionControl.VCS_SQL'
+
+declare @iReturnValue int
+select @iReturnValue = 0
+
+declare @vchTempText nvarchar(255)
+
+/* this is for our strings */
+declare @iStreamObjectId int
+select @iStreamObjectId = 0
+
+    declare @iPropertyObjectId int
+    select @iPropertyObjectId = (select objectid from dbo.dtproperties where property = 'VCSProjectID')
+
+    declare @vchProjectName   nvarchar(255)
+    declare @vchSourceSafeINI nvarchar(255)
+    declare @vchServerName    nvarchar(255)
+    declare @vchDatabaseName  nvarchar(255)
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSProject',       @vchProjectName   OUT
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSSourceSafeINI', @vchSourceSafeINI OUT
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSSQLServer',     @vchServerName    OUT
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSSQLDatabase',   @vchDatabaseName  OUT
+
+    if @chObjectType = 'PROC'
+    begin
+        /* Procedure Can have up to three streams
+           Drop Stream, Create Stream, GRANT stream */
+
+        exec @iReturn = sp_OACreate @VSSGUID, @iObjectId OUT
+
+        if @iReturn <> 0 GOTO E_OAError
+
+        exec @iReturn = sp_OAMethod @iObjectId,
+                                    N'CheckOut_StoredProcedure',
+                                    NULL,
+                                    @sProjectName = @vchProjectName,
+                                    @sSourceSafeINI = @vchSourceSafeINI,
+                                    @sObjectName = @vchObjectName,
+                                    @sServerName = @vchServerName,
+                                    @sDatabaseName = @vchDatabaseName,
+                                    @sComment = @vchComment,
+                                    @sLoginName = @vchLoginName,
+                                    @sPassword = @vchPassword,
+                                    @iVCSFlags = @iVCSFlags,
+                                    @iActionFlag = @iActionFlag
+
+        if @iReturn <> 0 GOTO E_OAError
+
+
+        exec @iReturn = sp_OAGetProperty @iObjectId, N'GetStreamObject', @iStreamObjectId OUT
+
+        if @iReturn <> 0 GOTO E_OAError
+
+        create table #commenttext (id int identity, sourcecode nvarchar(255))
+
+
+        select @vchTempText = N'STUB'
+        while @vchTempText IS NOT NULL
+        begin
+            exec @iReturn = sp_OAMethod @iStreamObjectId, N'GetStream', @iReturnValue OUT, @vchTempText OUT
+            if @iReturn <> 0 GOTO E_OAError
+
+            if (@vchTempText IS NOT NULL) insert into #commenttext (sourcecode) select @vchTempText
+        end
+
+        select N'VCS'=sourcecode from #commenttext order by id
+        select N'SQL'=text from syscomments where id = object_id(@vchObjectName) order by colid
+
+    end
+
+CleanUp:
+    return
+
+E_OAError:
+    exec dbo.dt_displayoaerror_u @iObjectId, @iReturn
+    GOTO CleanUp
+
+
+"
+"RSMDB","dbo","dt_displayoaerror","CREATE PROCEDURE dbo.dt_displayoaerror
+    @iObject int,
+    @iresult int
+as
+
+set nocount on
+
+declare @vchOutput      varchar(255)
+declare @hr             int
+declare @vchSource      varchar(255)
+declare @vchDescription varchar(255)
+
+    exec @hr = sp_OAGetErrorInfo @iObject, @vchSource OUT, @vchDescription OUT
+
+    select @vchOutput = @vchSource + ': ' + @vchDescription
+    raiserror (@vchOutput,16,-1)
+
+    return
+
+"
+"RSMDB","dbo","dt_displayoaerror_u","CREATE PROCEDURE dbo.dt_displayoaerror_u
+    @iObject int,
+    @iresult int
+as
+
+set nocount on
+
+declare @vchOutput      nvarchar(255)
+declare @hr             int
+declare @vchSource      nvarchar(255)
+declare @vchDescription nvarchar(255)
+
+    exec @hr = sp_OAGetErrorInfo @iObject, @vchSource OUT, @vchDescription OUT
+
+    select @vchOutput = @vchSource + ': ' + @vchDescription
+    raiserror (@vchOutput,16,-1)
+
+    return
+
+"
+"RSMDB","dbo","dt_droppropertiesbyid","/*
+**	Drop one or all the associated properties of an object or an attribute 
+**
+**	dt_dropproperties objid, null or '' -- drop all properties of the object itself
+**	dt_dropproperties objid, property -- drop the property
+*/
+create procedure dbo.dt_droppropertiesbyid
+	@id int,
+	@property varchar(64)
+as
+	set nocount on
+
+	if (@property is null) or (@property = '')
+		delete from dbo.dtproperties where objectid=@id
+	else
+		delete from dbo.dtproperties 
+			where objectid=@id and property=@property
+
+"
+"RSMDB","dbo","dt_dropuserobjectbyid","/*
+**	Drop an object from the dbo.dtproperties table
+*/
+create procedure dbo.dt_dropuserobjectbyid
+	@id int
+as
+	set nocount on
+	delete from dbo.dtproperties where objectid=@id
+"
+"RSMDB","dbo","dt_generateansiname","/* 
+**	Generate an ansi name that is unique in the dtproperties.value column 
+*/ 
+create procedure dbo.dt_generateansiname(@name varchar(255) output) 
+as 
+	declare @prologue varchar(20) 
+	declare @indexstring varchar(20) 
+	declare @index integer 
+ 
+	set @prologue = 'MSDT-A-' 
+	set @index = 1 
+ 
+	while 1 = 1 
+	begin 
+		set @indexstring = cast(@index as varchar(20)) 
+		set @name = @prologue + @indexstring 
+		if not exists (select value from dtproperties where value = @name) 
+			break 
+		 
+		set @index = @index + 1 
+ 
+		if (@index = 10000) 
+			goto TooMany 
+	end 
+ 
+Leave: 
+ 
+	return 
+ 
+TooMany: 
+ 
+	set @name = 'DIAGRAM' 
+	goto Leave 
+"
+"RSMDB","dbo","dt_getobjwithprop","/*
+**	Retrieve the owner object(s) of a given property
+*/
+create procedure dbo.dt_getobjwithprop
+	@property varchar(30),
+	@value varchar(255)
+as
+	set nocount on
+
+	if (@property is null) or (@property = '')
+	begin
+		raiserror('Must specify a property name.',-1,-1)
+		return (1)
+	end
+
+	if (@value is null)
+		select objectid id from dbo.dtproperties
+			where property=@property
+
+	else
+		select objectid id from dbo.dtproperties
+			where property=@property and value=@value
+"
+"RSMDB","dbo","dt_getobjwithprop_u","/*
+**	Retrieve the owner object(s) of a given property
+*/
+create procedure dbo.dt_getobjwithprop_u
+	@property varchar(30),
+	@uvalue nvarchar(255)
+as
+	set nocount on
+
+	if (@property is null) or (@property = '')
+	begin
+		raiserror('Must specify a property name.',-1,-1)
+		return (1)
+	end
+
+	if (@uvalue is null)
+		select objectid id from dbo.dtproperties
+			where property=@property
+
+	else
+		select objectid id from dbo.dtproperties
+			where property=@property and uvalue=@uvalue
+"
+"RSMDB","dbo","dt_getpropertiesbyid","/*
+**	Retrieve properties by id's
+**
+**	dt_getproperties objid, null or '' -- retrieve all properties of the object itself
+**	dt_getproperties objid, property -- retrieve the property specified
+*/
+create procedure dbo.dt_getpropertiesbyid
+	@id int,
+	@property varchar(64)
+as
+	set nocount on
+
+	if (@property is null) or (@property = '')
+		select property, version, value, lvalue
+			from dbo.dtproperties
+			where  @id=objectid
+	else
+		select property, version, value, lvalue
+			from dbo.dtproperties
+			where  @id=objectid and @property=property
+"
+"RSMDB","dbo","dt_getpropertiesbyid_u","/*
+**	Retrieve properties by id's
+**
+**	dt_getproperties objid, null or '' -- retrieve all properties of the object itself
+**	dt_getproperties objid, property -- retrieve the property specified
+*/
+create procedure dbo.dt_getpropertiesbyid_u
+	@id int,
+	@property varchar(64)
+as
+	set nocount on
+
+	if (@property is null) or (@property = '')
+		select property, version, uvalue, lvalue
+			from dbo.dtproperties
+			where  @id=objectid
+	else
+		select property, version, uvalue, lvalue
+			from dbo.dtproperties
+			where  @id=objectid and @property=property
+"
+"RSMDB","dbo","dt_getpropertiesbyid_vcs","create procedure dbo.dt_getpropertiesbyid_vcs
+    @id       int,
+    @property varchar(64),
+    @value    varchar(255) = NULL OUT
+
+as
+
+    set nocount on
+
+    select @value = (
+        select value
+                from dbo.dtproperties
+                where @id=objectid and @property=property
+                )
+
+"
+"RSMDB","dbo","dt_getpropertiesbyid_vcs_u","create procedure dbo.dt_getpropertiesbyid_vcs_u
+    @id       int,
+    @property varchar(64),
+    @value    nvarchar(255) = NULL OUT
+
+as
+
+    set nocount on
+
+    select @value = (
+        select uvalue
+                from dbo.dtproperties
+                where @id=objectid and @property=property
+                )
+
+"
+"RSMDB","dbo","dt_isundersourcecontrol","create proc dbo.dt_isundersourcecontrol
+    @vchLoginName varchar(255) = '',
+    @vchPassword  varchar(255) = '',
+    @iWhoToo      int = 0 /* 0 => Just check project; 1 => get list of objs */
+
+as
+
+set nocount on
+
+declare @iReturn int
+declare @iObjectId int
+select @iObjectId = 0
+
+declare @VSSGUID varchar(100)
+select @VSSGUID = 'SQLVersionControl.VCS_SQL'
+
+declare @iReturnValue int
+select @iReturnValue = 0
+
+declare @iStreamObjectId int
+select @iStreamObjectId   = 0
+
+declare @vchTempText varchar(255)
+
+    declare @iPropertyObjectId int
+    select @iPropertyObjectId = (select objectid from dbo.dtproperties where property = 'VCSProjectID')
+
+    declare @vchProjectName   varchar(255)
+    declare @vchSourceSafeINI varchar(255)
+    declare @vchServerName    varchar(255)
+    declare @vchDatabaseName  varchar(255)
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSProject',       @vchProjectName   OUT
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSSourceSafeINI', @vchSourceSafeINI OUT
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSSQLServer',     @vchServerName    OUT
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSSQLDatabase',   @vchDatabaseName  OUT
+
+    if (@vchProjectName IS NULL) or (@vchSourceSafeINI  IS NULL) or (@vchServerName IS NULL) or (@vchDatabaseName IS NULL)
+    begin
+        RAISERROR('Not Under Source Control',16,-1)
+        return
+    end
+
+    if @iWhoToo = 1
+    begin
+
+        /* Get List of Procs in the project */
+        exec @iReturn = sp_OACreate @VSSGUID, @iObjectId OUT
+        if @iReturn <> 0 GOTO E_OAError
+
+        exec @iReturn = sp_OAMethod @iObjectId,
+                                    'GetListOfObjects',
+                                    NULL,
+                                    @vchProjectName,
+                                    @vchSourceSafeINI,
+                                    @vchServerName,
+                                    @vchDatabaseName,
+                                    @vchLoginName,
+                                    @vchPassword
+
+        if @iReturn <> 0 GOTO E_OAError
+
+        exec @iReturn = sp_OAGetProperty @iObjectId, 'GetStreamObject', @iStreamObjectId OUT
+
+        if @iReturn <> 0 GOTO E_OAError
+
+        create table #ObjectList (id int identity, vchObjectlist varchar(255))
+
+        select @vchTempText = 'STUB'
+        while @vchTempText IS NOT NULL
+        begin
+            exec @iReturn = sp_OAMethod @iStreamObjectId, 'GetStream', @iReturnValue OUT, @vchTempText OUT
+            if @iReturn <> 0 GOTO E_OAError
+
+            if (@vchTempText IS NOT NULL) insert into #ObjectList (vchObjectlist ) select @vchTempText
+        end
+
+        select vchObjectlist from #ObjectList order by id
+    end
+
+CleanUp:
+    return
+
+E_OAError:
+    exec dbo.dt_displayoaerror @iObjectId, @iReturn
+    goto CleanUp
+
+
+"
+"RSMDB","dbo","dt_isundersourcecontrol_u","create proc dbo.dt_isundersourcecontrol_u
+    @vchLoginName nvarchar(255) = '',
+    @vchPassword  nvarchar(255) = '',
+    @iWhoToo      int = 0 /* 0 => Just check project; 1 => get list of objs */
+
+as
+
+	set nocount on
+
+	declare @iReturn int
+	declare @iObjectId int
+	select @iObjectId = 0
+
+	declare @VSSGUID nvarchar(100)
+	select @VSSGUID = N'SQLVersionControl.VCS_SQL'
+
+	declare @iReturnValue int
+	select @iReturnValue = 0
+
+	declare @iStreamObjectId int
+	select @iStreamObjectId   = 0
+
+	declare @vchTempText nvarchar(255)
+
+    declare @iPropertyObjectId int
+    select @iPropertyObjectId = (select objectid from dbo.dtproperties where property = 'VCSProjectID')
+
+    declare @vchProjectName   nvarchar(255)
+    declare @vchSourceSafeINI nvarchar(255)
+    declare @vchServerName    nvarchar(255)
+    declare @vchDatabaseName  nvarchar(255)
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSProject',       @vchProjectName   OUT
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSSourceSafeINI', @vchSourceSafeINI OUT
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSSQLServer',     @vchServerName    OUT
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSSQLDatabase',   @vchDatabaseName  OUT
+
+    if (@vchProjectName IS NULL) or (@vchSourceSafeINI  IS NULL) or (@vchServerName IS NULL) or (@vchDatabaseName IS NULL)
+    begin
+        RAISERROR(N'Not Under Source Control',16,-1)
+        return
+    end
+
+    if @iWhoToo = 1
+    begin
+
+        /* Get List of Procs in the project */
+        exec @iReturn = sp_OACreate @VSSGUID, @iObjectId OUT
+        if @iReturn <> 0 GOTO E_OAError
+
+        exec @iReturn = sp_OAMethod @iObjectId,
+                                    N'GetListOfObjects',
+                                    NULL,
+                                    @vchProjectName,
+                                    @vchSourceSafeINI,
+                                    @vchServerName,
+                                    @vchDatabaseName,
+                                    @vchLoginName,
+                                    @vchPassword
+
+        if @iReturn <> 0 GOTO E_OAError
+
+        exec @iReturn = sp_OAGetProperty @iObjectId, N'GetStreamObject', @iStreamObjectId OUT
+
+        if @iReturn <> 0 GOTO E_OAError
+
+        create table #ObjectList (id int identity, vchObjectlist nvarchar(255))
+
+        select @vchTempText = N'STUB'
+        while @vchTempText IS NOT NULL
+        begin
+            exec @iReturn = sp_OAMethod @iStreamObjectId, N'GetStream', @iReturnValue OUT, @vchTempText OUT
+            if @iReturn <> 0 GOTO E_OAError
+
+            if (@vchTempText IS NOT NULL) insert into #ObjectList (vchObjectlist ) select @vchTempText
+        end
+
+        select vchObjectlist from #ObjectList order by id
+    end
+
+CleanUp:
+    return
+
+E_OAError:
+    exec dbo.dt_displayoaerror_u @iObjectId, @iReturn
+    goto CleanUp
+
+
+"
+"RSMDB","dbo","dt_removefromsourcecontrol","create procedure dbo.dt_removefromsourcecontrol
+
+as
+
+    set nocount on
+
+    declare @iPropertyObjectId int
+    select @iPropertyObjectId = (select objectid from dbo.dtproperties where property = 'VCSProjectID')
+
+    exec dbo.dt_droppropertiesbyid @iPropertyObjectId, null
+
+    /* -1 is returned by dt_droppopertiesbyid */
+    if @@error <> 0 and @@error <> -1 return 1
+
+    return 0
+
+
+"
+"RSMDB","dbo","dt_setpropertybyid","/*
+**	If the property already exists, reset the value; otherwise add property
+**		id -- the id in sysobjects of the object
+**		property -- the name of the property
+**		value -- the text value of the property
+**		lvalue -- the binary value of the property (image)
+*/
+create procedure dbo.dt_setpropertybyid
+	@id int,
+	@property varchar(64),
+	@value varchar(255),
+	@lvalue image
+as
+	set nocount on
+	declare @uvalue nvarchar(255) 
+	set @uvalue = convert(nvarchar(255), @value) 
+	if exists (select * from dbo.dtproperties 
+			where objectid=@id and property=@property)
+	begin
+		--
+		-- bump the version count for this row as we update it
+		--
+		update dbo.dtproperties set value=@value, uvalue=@uvalue, lvalue=@lvalue, version=version+1
+			where objectid=@id and property=@property
+	end
+	else
+	begin
+		--
+		-- version count is auto-set to 0 on initial insert
+		--
+		insert dbo.dtproperties (property, objectid, value, uvalue, lvalue)
+			values (@property, @id, @value, @uvalue, @lvalue)
+	end
+
+"
+"RSMDB","dbo","dt_setpropertybyid_u","/*
+**	If the property already exists, reset the value; otherwise add property
+**		id -- the id in sysobjects of the object
+**		property -- the name of the property
+**		uvalue -- the text value of the property
+**		lvalue -- the binary value of the property (image)
+*/
+create procedure dbo.dt_setpropertybyid_u
+	@id int,
+	@property varchar(64),
+	@uvalue nvarchar(255),
+	@lvalue image
+as
+	set nocount on
+	-- 
+	-- If we are writing the name property, find the ansi equivalent. 
+	-- If there is no lossless translation, generate an ansi name. 
+	-- 
+	declare @avalue varchar(255) 
+	set @avalue = null 
+	if (@uvalue is not null) 
+	begin 
+		if (convert(nvarchar(255), convert(varchar(255), @uvalue)) = @uvalue) 
+		begin 
+			set @avalue = convert(varchar(255), @uvalue) 
+		end 
+		else 
+		begin 
+			if 'DtgSchemaNAME' = @property 
+			begin 
+				exec dbo.dt_generateansiname @avalue output 
+			end 
+		end 
+	end 
+	if exists (select * from dbo.dtproperties 
+			where objectid=@id and property=@property)
+	begin
+		--
+		-- bump the version count for this row as we update it
+		--
+		update dbo.dtproperties set value=@avalue, uvalue=@uvalue, lvalue=@lvalue, version=version+1
+			where objectid=@id and property=@property
+	end
+	else
+	begin
+		--
+		-- version count is auto-set to 0 on initial insert
+		--
+		insert dbo.dtproperties (property, objectid, value, uvalue, lvalue)
+			values (@property, @id, @avalue, @uvalue, @lvalue)
+	end
+"
+"RSMDB","dbo","dt_validateloginparams","create proc dbo.dt_validateloginparams
+    @vchLoginName  varchar(255),
+    @vchPassword   varchar(255)
+as
+
+set nocount on
+
+declare @iReturn int
+declare @iObjectId int
+select @iObjectId =0
+
+declare @VSSGUID varchar(100)
+select @VSSGUID = 'SQLVersionControl.VCS_SQL'
+
+    declare @iPropertyObjectId int
+    select @iPropertyObjectId = (select objectid from dbo.dtproperties where property = 'VCSProjectID')
+
+    declare @vchSourceSafeINI varchar(255)
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSSourceSafeINI', @vchSourceSafeINI OUT
+
+    exec @iReturn = sp_OACreate @VSSGUID, @iObjectId OUT
+    if @iReturn <> 0 GOTO E_OAError
+
+    exec @iReturn = sp_OAMethod @iObjectId,
+                                'ValidateLoginParams',
+                                NULL,
+                                @sSourceSafeINI = @vchSourceSafeINI,
+                                @sLoginName = @vchLoginName,
+                                @sPassword = @vchPassword
+    if @iReturn <> 0 GOTO E_OAError
+
+CleanUp:
+    return
+
+E_OAError:
+    exec dbo.dt_displayoaerror @iObjectId, @iReturn
+    GOTO CleanUp
+
+
+"
+"RSMDB","dbo","dt_validateloginparams_u","create proc dbo.dt_validateloginparams_u
+    @vchLoginName  nvarchar(255),
+    @vchPassword   nvarchar(255)
+as
+
+set nocount on
+
+declare @iReturn int
+declare @iObjectId int
+select @iObjectId =0
+
+declare @VSSGUID nvarchar(100)
+select @VSSGUID = N'SQLVersionControl.VCS_SQL'
+
+    declare @iPropertyObjectId int
+    select @iPropertyObjectId = (select objectid from dbo.dtproperties where property = 'VCSProjectID')
+
+    declare @vchSourceSafeINI nvarchar(255)
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSSourceSafeINI', @vchSourceSafeINI OUT
+
+    exec @iReturn = sp_OACreate @VSSGUID, @iObjectId OUT
+    if @iReturn <> 0 GOTO E_OAError
+
+    exec @iReturn = sp_OAMethod @iObjectId,
+                                N'ValidateLoginParams',
+                                NULL,
+                                @sSourceSafeINI = @vchSourceSafeINI,
+                                @sLoginName = @vchLoginName,
+                                @sPassword = @vchPassword
+    if @iReturn <> 0 GOTO E_OAError
+
+CleanUp:
+    return
+
+E_OAError:
+    exec dbo.dt_displayoaerror_u @iObjectId, @iReturn
+    GOTO CleanUp
+
+
+"
+"RSMDB","dbo","dt_vcsenabled","create proc dbo.dt_vcsenabled
+
+as
+
+set nocount on
+
+declare @iObjectId int
+select @iObjectId = 0
+
+declare @VSSGUID varchar(100)
+select @VSSGUID = 'SQLVersionControl.VCS_SQL'
+
+    declare @iReturn int
+    exec @iReturn = sp_OACreate @VSSGUID, @iObjectId OUT
+    if @iReturn <> 0 raiserror('', 16, -1) /* Can't Load Helper DLLC */
+
+
+"
+"RSMDB","dbo","dt_verstamp006","/*
+**	This procedure returns the version number of the stored
+**    procedures used by the Microsoft Visual Database Tools.
+**    Current version is 7.0.00.
+*/
+create procedure dbo.dt_verstamp006
+as
+	select 7000
+"
+"RSMDB","dbo","dt_whocheckedout","create proc dbo.dt_whocheckedout
+        @chObjectType  char(4),
+        @vchObjectName varchar(255),
+        @vchLoginName  varchar(255),
+        @vchPassword   varchar(255)
+
+as
+
+set nocount on
+
+declare @iReturn int
+declare @iObjectId int
+select @iObjectId =0
+
+declare @VSSGUID varchar(100)
+select @VSSGUID = 'SQLVersionControl.VCS_SQL'
+
+    declare @iPropertyObjectId int
+
+    select @iPropertyObjectId = (select objectid from dbo.dtproperties where property = 'VCSProjectID')
+
+    declare @vchProjectName   varchar(255)
+    declare @vchSourceSafeINI varchar(255)
+    declare @vchServerName    varchar(255)
+    declare @vchDatabaseName  varchar(255)
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSProject',       @vchProjectName   OUT
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSSourceSafeINI', @vchSourceSafeINI OUT
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSSQLServer',     @vchServerName    OUT
+    exec dbo.dt_getpropertiesbyid_vcs @iPropertyObjectId, 'VCSSQLDatabase',   @vchDatabaseName  OUT
+
+    if @chObjectType = 'PROC'
+    begin
+        exec @iReturn = sp_OACreate @VSSGUID, @iObjectId OUT
+
+        if @iReturn <> 0 GOTO E_OAError
+
+        declare @vchReturnValue varchar(255)
+        select @vchReturnValue = ''
+
+        exec @iReturn = sp_OAMethod @iObjectId,
+                                    'WhoCheckedOut',
+                                    @vchReturnValue OUT,
+                                    @sProjectName = @vchProjectName,
+                                    @sSourceSafeINI = @vchSourceSafeINI,
+                                    @sObjectName = @vchObjectName,
+                                    @sServerName = @vchServerName,
+                                    @sDatabaseName = @vchDatabaseName,
+                                    @sLoginName = @vchLoginName,
+                                    @sPassword = @vchPassword
+
+        if @iReturn <> 0 GOTO E_OAError
+
+        select @vchReturnValue
+
+    end
+
+CleanUp:
+    return
+
+E_OAError:
+    exec dbo.dt_displayoaerror @iObjectId, @iReturn
+    GOTO CleanUp
+
+
+"
+"RSMDB","dbo","dt_whocheckedout_u","create proc dbo.dt_whocheckedout_u
+        @chObjectType  char(4),
+        @vchObjectName nvarchar(255),
+        @vchLoginName  nvarchar(255),
+        @vchPassword   nvarchar(255)
+
+as
+
+set nocount on
+
+declare @iReturn int
+declare @iObjectId int
+select @iObjectId =0
+
+declare @VSSGUID nvarchar(100)
+select @VSSGUID = N'SQLVersionControl.VCS_SQL'
+
+    declare @iPropertyObjectId int
+
+    select @iPropertyObjectId = (select objectid from dbo.dtproperties where property = 'VCSProjectID')
+
+    declare @vchProjectName   nvarchar(255)
+    declare @vchSourceSafeINI nvarchar(255)
+    declare @vchServerName    nvarchar(255)
+    declare @vchDatabaseName  nvarchar(255)
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSProject',       @vchProjectName   OUT
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSSourceSafeINI', @vchSourceSafeINI OUT
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSSQLServer',     @vchServerName    OUT
+    exec dbo.dt_getpropertiesbyid_vcs_u @iPropertyObjectId, 'VCSSQLDatabase',   @vchDatabaseName  OUT
+
+    if @chObjectType = 'PROC'
+    begin
+        exec @iReturn = sp_OACreate @VSSGUID, @iObjectId OUT
+
+        if @iReturn <> 0 GOTO E_OAError
+
+        declare @vchReturnValue nvarchar(255)
+        select @vchReturnValue = ''
+
+        exec @iReturn = sp_OAMethod @iObjectId,
+                                    N'WhoCheckedOut',
+                                    @vchReturnValue OUT,
+                                    @sProjectName = @vchProjectName,
+                                    @sSourceSafeINI = @vchSourceSafeINI,
+                                    @sObjectName = @vchObjectName,
+                                    @sServerName = @vchServerName,
+                                    @sDatabaseName = @vchDatabaseName,
+                                    @sLoginName = @vchLoginName,
+                                    @sPassword = @vchPassword
+
+        if @iReturn <> 0 GOTO E_OAError
+
+        select @vchReturnValue
+
+    end
+
+CleanUp:
+    return
+
+E_OAError:
+    exec dbo.dt_displayoaerror_u @iObjectId, @iReturn
+    GOTO CleanUp
+
+
+"
+"RSMDB","dbo","NewItemsTrans","CREATE PROCEDURE [dbo].[NewItemsTrans] AS
+SELECT     Item_ID, ItemCode, ItemName, Total, Item_Discount, (Total - Item_Discount) AS ItemNet, Transaction_Type, SumQuantity
+FROM         (SELECT     Item_ID, ItemCode, ItemName, Transaction_Type, SUM(Total1) AS Total, SUM(Item_Discount1) AS Item_Discount, SUM(Quantity) 
+                                              AS SumQuantity
+                        FROM         (SELECT     ItemsTrans.Item_ID, ItemsTrans.ItemCode, ItemsTrans.ItemName, (Quantity * Price) AS Total1, 
+                                                                      'Item_Discount1' = CASE WHEN ItemDiscountType = 1 OR
+                                                                      ItemDiscountType = 0 THEN 0 WHEN ItemDiscountType = 2 THEN (ItemDiscount) 
+                                                                      WHEN ItemDiscountType = 3 THEN ((Quantity * Price) * (ItemDiscount / 100)) END, ItemsTrans.Transaction_Type, 
+                                                                      ItemsTrans.Quantity
+                                                FROM         ItemsTrans
+                                                WHERE     Transaction_Type = 2) XTable
+                        GROUP BY Item_ID, ItemCode, ItemName, Transaction_Type) YTable"
+"RSMDB","dbo","Rebuild_ContractRevenue_ForPeriod","CREATE PROC [dbo].[Rebuild_ContractRevenue_ForPeriod]
+(
+    @StartDate date,
+    @EndDate   date
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF @EndDate < @StartDate
+    BEGIN
+        RAISERROR(N'EndDate لا يمكن أن يكون قبل StartDate',16,1);
+        RETURN;
+    END
+
+    DECLARE @GlobalStart date = @StartDate;
+    DECLARE @GlobalEnd   date = @EndDate;
+
+    ---------------------------------------------------
+    -- 1) مسح التوزيعات داخل الفترة من Details1
+    ---------------------------------------------------
+    DELETE FROM dbo.TblContractInsAllocationsDetails1
+    WHERE Installdate >= @GlobalStart
+      AND Installdate <= @GlobalEnd;
+
+    ---------------------------------------------------
+    -- 2) لف على الشهور من أول الفترة لآخرها
+    ---------------------------------------------------
+    DECLARE @CurrentMonth date = DATEFROMPARTS(YEAR(@GlobalStart), MONTH(@GlobalStart), 1);
+    DECLARE @LastMonth    date = DATEFROMPARTS(YEAR(@GlobalEnd),   MONTH(@GlobalEnd),   1);
+
+    WHILE @CurrentMonth <= @LastMonth
+    BEGIN
+        DECLARE @FirstOfMonth date = @CurrentMonth;
+        DECLARE @LastOfMonth  date = EOMONTH(@CurrentMonth);
+
+        IF @FirstOfMonth < @GlobalStart SET @FirstOfMonth = @GlobalStart;
+        IF @LastOfMonth  > @GlobalEnd   SET @LastOfMonth  = @GlobalEnd;
+
+        ------------------------------------------------
+        -- 3) TransID للشهر الحالي (لو مش موجود نخليه NULL)
+        ------------------------------------------------
+        DECLARE @TransID int = NULL;
+
+        SELECT TOP 1 @TransID = TransID
+        FROM dbo.tblContractInsAllocations
+        WHERE MONTH(FromDate) = MONTH(@CurrentMonth)
+          AND YEAR(FromDate)  = YEAR(@CurrentMonth);
+
+        ------------------------------------------------
+        -- 4) تجهيز الأقساط:
+        --    أ) أقساط اتعملها استحقاق سابق (Details)
+        --    ب) + أول دفعة من كل عقد (لو مش متعملها استحقاق سابق)
+        ------------------------------------------------
+        ;WITH AllocatedInstallments AS
+        (
+            SELECT DISTINCT
+                I.Id          AS InstallId,
+                I.ContNo,
+                I.InstallNo,
+                I.Installdate AS StartDate,
+                I.Countsofall,
+                I.NoteSerial1,
+                C.CusID,
+                I.installValue,      -- ✅ مهم
+                I.NetRent,
+                I.RentValue,
+                I.Commissions,
+                I.Insurance,
+                I.Water,
+                I.Electric,
+                I.TelandNet
+            FROM dbo.TblContractInsAllocationsDetails D
+            INNER JOIN dbo.TblContractInstallments I
+                ON I.Id = D.Installid
+            INNER JOIN dbo.TblContract C
+                ON C.ContNo = I.ContNo
+        ),
+        FirstInstallments AS
+        (
+            SELECT 
+                X.InstallId,
+                X.ContNo,
+                X.InstallNo,
+                X.StartDate,
+                X.Countsofall,
+                X.NoteSerial1,
+                X.CusID,
+                X.installValue,      -- ✅ مهم
+                X.NetRent,
+                X.RentValue,
+                X.Commissions,
+                X.Insurance,
+                X.Water,
+                X.Electric,
+                X.TelandNet
+            FROM
+            (
+                SELECT 
+                    I.Id          AS InstallId,
+                    I.ContNo,
+                    I.InstallNo,
+                    I.Installdate AS StartDate,
+                    I.Countsofall,
+                    I.NoteSerial1,
+                    C.CusID,
+                    I.installValue,    -- ✅ مهم
+                    I.NetRent,
+                    I.RentValue,
+                    I.Commissions,
+                    I.Insurance,
+                    I.Water,
+                    I.Electric,
+                    I.TelandNet,
+                    ROW_NUMBER() OVER (PARTITION BY I.ContNo ORDER BY I.Installdate, I.InstallNo) AS RN
+                FROM dbo.TblContractInstallments I
+                INNER JOIN dbo.TblContract C
+                    ON C.ContNo = I.ContNo
+            ) X
+            WHERE X.RN = 1
+              AND NOT EXISTS
+              (
+                  SELECT 1
+                  FROM dbo.TblContractInsAllocationsDetails D
+                  WHERE D.Installid = X.InstallId
+              )
+        ),
+        AllInstallments AS
+        (
+            SELECT 
+                A.InstallId,
+                A.ContNo,
+                A.InstallNo,
+                A.StartDate,
+                A.Countsofall,
+                A.NoteSerial1,
+                A.CusID,
+                A.installValue,
+                A.NetRent,
+                A.RentValue,
+                A.Commissions,
+                A.Insurance,
+                A.Water,
+                A.Electric,
+                A.TelandNet,
+                C.EndDate AS ContractEndDate
+            FROM
+            (
+                SELECT * FROM AllocatedInstallments
+                UNION ALL
+                SELECT * FROM FirstInstallments
+            ) A
+            INNER JOIN dbo.TblContract C
+                ON C.ContNo = A.ContNo
+        ),
+        BasePeriod AS
+        (
+            SELECT
+                A.*,
+                NI.NextInstallStart,
+
+				--Select NetRent,RentValue,* from TblContractInstallments where RentValue <> NetRent
+
+    --            CASE 
+    --                WHEN ISNULL(A.NetRent,0) <> 0 THEN ISNULL(A.NetRent,0)
+    --                ELSE ISNULL(A.RentValue,0)
+                ISNULL(A.RentValue,0) AS EffectiveRent,
+
+                CASE
+                    WHEN NI.NextInstallStart IS NOT NULL
+                        THEN DATEADD(DAY,-1, NI.NextInstallStart)
+                    WHEN A.ContractEndDate IS NOT NULL
+                        THEN A.ContractEndDate
+                    WHEN ISNULL(A.Countsofall,0) > 0
+                        THEN DATEADD(DAY,-1, DATEADD(MONTH, A.Countsofall, A.StartDate))
+                    ELSE A.StartDate
+                END AS EndDate
+            FROM AllInstallments A
+            OUTER APPLY
+            (
+                SELECT MIN(I2.Installdate) AS NextInstallStart
+                FROM dbo.TblContractInstallments I2
+                WHERE I2.ContNo      = A.ContNo
+                  AND I2.Installdate > A.StartDate
+            ) NI
+        ),
+        WithPosted AS
+        (
+            SELECT
+                B.*,
+
+                ISNULL(P.PostedTotal,0)    AS PostedTotal,
+                ISNULL(P.PostedRent,0)     AS PostedRent,
+                ISNULL(P.PostedComm,0)     AS PostedComm,
+                ISNULL(P.PostedIns,0)      AS PostedIns,
+                ISNULL(P.PostedWater,0)    AS PostedWater,
+                ISNULL(P.PostedElectric,0) AS PostedElectric,
+                ISNULL(P.PostedTeland,0)   AS PostedTeland,
+                P.PostedThroughDate,
+
+                CASE
+                    WHEN P.PostedThroughDate IS NOT NULL THEN DATEADD(DAY, 1, P.PostedThroughDate)
+                    ELSE B.StartDate
+                END AS RemainingStart,
+
+                -- ✅ TotalValue من الدفعة فقط (وبديلها installValue لو البنود صفر)
+                CASE 
+                    WHEN (
+                        ISNULL(B.EffectiveRent,0)
+                      + ISNULL(B.Commissions,0)
+                      + ISNULL(B.Water,0)
+                      + ISNULL(B.Electric,0)
+                      + ISNULL(B.TelandNet,0)
+                    ) > 0
+                    THEN (
+                        ISNULL(B.EffectiveRent,0)
+                      + ISNULL(B.Commissions,0)
+                      + ISNULL(B.Water,0)
+                      + ISNULL(B.Electric,0)
+                      + ISNULL(B.TelandNet,0)
+                    )
+                    ELSE ISNULL(B.installValue,0)
+                END AS TotalValue
+            FROM BasePeriod B
+            OUTER APPLY
+            (
+                SELECT
+                    PostedThroughDate = MAX(EOMONTH(D2.Installdate)),
+                    PostedTotal    = SUM(ISNULL(D2.installValue,0)),
+                    PostedRent     = SUM(ISNULL(D2.RentValue,0)),
+                    PostedComm     = SUM(ISNULL(D2.Commissions,0)),
+                    PostedIns      = SUM(ISNULL(D2.Insurance,0)),
+                    PostedWater    = SUM(ISNULL(D2.Water,0)),
+                    PostedElectric = SUM(ISNULL(D2.Electric,0)),
+                    PostedTeland   = SUM(ISNULL(D2.TelandNet,0))
+                FROM dbo.tblContractInsAllocationsDetails2 D2
+                WHERE D2.Installid = B.InstallId
+                  AND D2.Installdate >= B.StartDate
+                  AND D2.Installdate <= B.EndDate
+            ) P
+        ),
+        FinalPeriods AS
+        (
+            SELECT
+                I.*,
+
+                -- ✅ استبعاد أي دفعة قيمتها = 0 (ممنوع اختراع قيم)
+                CASE 
+                    WHEN ISNULL(I.TotalValue,0) <= 0 THEN 0
+                    WHEN I.EndDate IS NULL THEN 0
+                    WHEN I.RemainingStart > I.EndDate THEN 0
+                    ELSE DATEDIFF(DAY, I.RemainingStart, I.EndDate) + 1
+                END AS RemainingDays,
+
+                CASE 
+                    WHEN ISNULL(I.TotalValue,0) <= 0 THEN 0
+                    WHEN (I.TotalValue - I.PostedTotal) < 0 THEN 0
+                    ELSE (I.TotalValue - I.PostedTotal)
+                END AS RemainingTotal,
+
+                CASE WHEN (ISNULL(I.EffectiveRent,0) - I.PostedRent) < 0 THEN 0 ELSE (ISNULL(I.EffectiveRent,0) - I.PostedRent) END AS RemainingRent,
+                CASE WHEN (ISNULL(I.Commissions,0)   - I.PostedComm) < 0 THEN 0 ELSE (ISNULL(I.Commissions,0)   - I.PostedComm) END AS RemainingComm,
+                0 AS RemainingIns,
+                CASE WHEN (ISNULL(I.Water,0)         - I.PostedWater)< 0 THEN 0 ELSE (ISNULL(I.Water,0)         - I.PostedWater)END AS RemainingWater,
+                CASE WHEN (ISNULL(I.Electric,0)      - I.PostedElectric) < 0 THEN 0 ELSE (ISNULL(I.Electric,0)  - I.PostedElectric) END AS RemainingElectric,
+                CASE WHEN (ISNULL(I.TelandNet,0)     - I.PostedTeland) < 0 THEN 0 ELSE (ISNULL(I.TelandNet,0)   - I.PostedTeland) END AS RemainingTeland
+            FROM WithPosted I
+        ),
+        Overlapping AS
+        (
+            SELECT *
+            FROM FinalPeriods I
+            WHERE I.EndDate IS NOT NULL
+              AND I.RemainingDays > 0
+              AND I.RemainingTotal > 0     -- ✅ لازم يبقى في فلوس فعلًا
+              AND I.RemainingStart <= @LastOfMonth
+              AND I.EndDate        >= @FirstOfMonth
+        ),
+        MonthPortions AS
+        (
+            SELECT
+                I.*,
+                CASE 
+                    WHEN I.RemainingStart > @FirstOfMonth THEN I.RemainingStart
+                    ELSE @FirstOfMonth
+                END AS PeriodStart,
+                CASE
+                    WHEN I.EndDate < @LastOfMonth THEN I.EndDate
+                    ELSE @LastOfMonth
+                END AS PeriodEnd
+            FROM Overlapping I
+        )
+        INSERT INTO dbo.TblContractInsAllocationsDetails1
+        (
+            TransID,
+            InstallNo,
+            NoteSerial,
+            Installid,
+            Installdate,
+            InstalldateH,
+            CusID,
+            installValue,
+            RentValue,
+            Commissions,
+            Insurance,
+            Water,
+            Electric,
+            TelandNet,
+            allocations,
+            Countsofall,
+            Doneofall
+        )
+        SELECT
+            @TransID                                       AS TransID,
+            M.InstallNo,
+            M.NoteSerial1                                  AS NoteSerial,
+            M.InstallId                                    AS Installid,
+            M.PeriodStart                                  AS Installdate,
+            CONVERT(varchar(10), M.PeriodStart, 131)       AS InstalldateH,
+            M.CusID,
+
+            ROUND( (M.RemainingTotal / M.RemainingDays) * (DATEDIFF(DAY, M.PeriodStart, M.PeriodEnd) + 1), 2 ) AS installValue,
+
+            ROUND( (M.RemainingRent  / M.RemainingDays) * (DATEDIFF(DAY, M.PeriodStart, M.PeriodEnd) + 1), 2 ) AS RentValue,
+            ROUND( (M.RemainingComm  / M.RemainingDays) * (DATEDIFF(DAY, M.PeriodStart, M.PeriodEnd) + 1), 2 ) AS Commissions,
+            0 AS Insurance,
+            ROUND( (M.RemainingWater / M.RemainingDays) * (DATEDIFF(DAY, M.PeriodStart, M.PeriodEnd) + 1), 2 ) AS Water,
+            ROUND( (M.RemainingElectric / M.RemainingDays) * (DATEDIFF(DAY, M.PeriodStart, M.PeriodEnd) + 1), 2 ) AS Electric,
+            ROUND( (M.RemainingTeland / M.RemainingDays) * (DATEDIFF(DAY, M.PeriodStart, M.PeriodEnd) + 1), 2 ) AS TelandNet,
+
+            0                                             AS allocations,
+            M.Countsofall,
+            0                                             AS Doneofall
+        FROM MonthPortions M
+        WHERE DATEDIFF(DAY, M.PeriodStart, M.PeriodEnd) + 1 > 0
+          AND M.RemainingDays > 0
+          AND M.RemainingTotal > 0;
+
+        SET @CurrentMonth = DATEADD(MONTH, 1, @CurrentMonth);
+    END
+END
+"
+"RSMDB","dbo","Rpt_ContractRevenueDetails","/* =========================================================
+   Rpt_ContractRevenueDetails  (FIXED OpeningBalanceDate + GLTotalsBefore)
+   ========================================================= */
+CREATE PROCEDURE [dbo].[Rpt_ContractRevenueDetails]
+    @FromDate   DATETIME = NULL,
+    @ToDate     DATETIME = NULL,
+    @BranchId   INT      = NULL,
+    @AqarTypeId INT      = NULL,
+    @ClientId   INT      = NULL,
+    @OwnerId    INT      = NULL,
+    @ContractNo INT      = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @ToDateEnd DATETIME = CASE WHEN @ToDate IS NULL THEN NULL ELSE DATEADD(DAY,1,@ToDate) END;
+    DECLARE @FromDateMinus1 DATETIME = CASE WHEN @FromDate IS NULL THEN NULL ELSE DATEADD(DAY,-1,@FromDate) END;
+
+    /* ✅ FIX: OpeningBalanceDate = أول سنة بالنظام (IsFirstYear=1) + fallback */
+    DECLARE @OpeningBalanceDate DATETIME =
+    (
+        SELECT MIN(datesatrt)
+        FROM dbo.TblyearsData
+        WHERE ISNULL(IsFirstYear,0) = 1
+    );
+
+    IF @OpeningBalanceDate IS NULL
+        SELECT @OpeningBalanceDate = MIN(datesatrt) FROM dbo.TblyearsData;
+
+    ;WITH
+    -------------------------------------------------------------------------
+    -- 1) إجمالى قيمة العقد (Net بدون تأمين)
+    -------------------------------------------------------------------------
+    InstallAgg AS (
+        SELECT ContNo,
+               SUM(ISNULL(installValue,0) - ISNULL(Insurance,0)) AS TotalContract
+        FROM dbo.TblContractInstallments
+        GROUP BY ContNo
+    ),
+
+    -------------------------------------------------------------------------
+    -- 2) أول قسط لكل عقد (Fallback)
+    -------------------------------------------------------------------------
+    FirstInstallPerContract AS (
+        SELECT ContNo, MIN(Installdate) AS FirstInstDate
+        FROM dbo.TblContractInstallments
+        GROUP BY ContNo
+    ),
+    FirstInstallFallback AS (
+        SELECT
+            c.ContNo,
+            fi.Id AS InstallId,
+            fi.Installdate,
+            (ISNULL(fi.installValue,0) - ISNULL(fi.Insurance,0)) AS installValue
+        FROM dbo.TblContract c
+        JOIN FirstInstallPerContract fp ON fp.ContNo = c.ContNo
+        JOIN dbo.TblContractInstallments fi
+             ON fi.ContNo = fp.ContNo
+            AND fi.Installdate = fp.FirstInstDate
+        LEFT JOIN dbo.tblContractInsAllocationsDetails d ON d.InstallId = fi.Id
+        WHERE ISNULL(c.NoteID,0) <> 0
+          AND d.InstallId IS NULL
+    ),
+
+    -------------------------------------------------------------------------
+    -- 3) مصدر المستحق (Net بدون تأمين)
+    -------------------------------------------------------------------------
+    DueBase AS (
+        SELECT
+            i.ContNo,
+            d.InstallId,
+            d.Installdate,
+            (ISNULL(d.installValue,0) - ISNULL(d.Insurance,0)) AS installValue
+        FROM dbo.tblContractInsAllocationsDetails d
+        JOIN dbo.TblContractInstallments i ON d.InstallId = i.Id
+
+        UNION ALL
+
+        SELECT
+            f.ContNo,
+            f.InstallId,
+            f.Installdate,
+            f.installValue
+        FROM FirstInstallFallback f
+    ),
+
+    -------------------------------------------------------------------------
+    -- 4) مصدر الإيراد (Net بدون تأمين)
+    -------------------------------------------------------------------------
+    RevBase AS (
+        SELECT
+            i.ContNo,
+            d.Installid AS InstallId,
+            d.Installdate,
+            (ISNULL(d.installValue,0) - ISNULL(d.Insurance,0)) AS installValue
+        FROM dbo.tblContractInsAllocationsDetails2 d
+        JOIN dbo.TblContractInstallments i ON d.Installid = i.Id
+    ),
+
+    -------------------------------------------------------------------------
+    -- 5) الأقساط “الصالحة”
+    -------------------------------------------------------------------------
+    ValidInstallments AS (
+        SELECT DISTINCT InstallId FROM DueBase
+        UNION
+        SELECT DISTINCT InstallId FROM RevBase
+    ),
+
+    -------------------------------------------------------------------------
+    -- 6) الأقساط داخل الفترة (أساس التفصيلي)
+    -------------------------------------------------------------------------
+    --InstallmentsInRange AS (
+    --    SELECT i.Id AS InstallId, i.ContNo
+    --    FROM dbo.TblContractInstallments i
+    --    JOIN ValidInstallments v ON v.InstallId = i.Id
+    --    WHERE (@FromDate IS NULL OR i.Installdate >= @FromDate)
+    --      AND (@ToDate   IS NULL OR i.Installdate <= @ToDate)
+    --),
+
+
+
+	InstallmentsInRange AS (
+    SELECT DISTINCT d.InstallId, d.ContNo
+    FROM DueBase d
+    WHERE (@FromDate IS NULL OR d.Installdate >= @FromDate)
+      AND (@ToDateEnd IS NULL OR d.Installdate < @ToDateEnd)
+
+    UNION
+
+    SELECT DISTINCT r.InstallId, r.ContNo
+    FROM RevBase r
+    WHERE (@FromDate IS NULL OR r.Installdate >= @FromDate)
+      AND (@ToDateEnd IS NULL OR r.Installdate < @ToDateEnd)
+),
+ContractsInRange AS (
+    SELECT DISTINCT ContNo FROM InstallmentsInRange
+),
+
+    -------------------------------------------------------------------------
+    -- 7) العقود التي لها أقساط داخل الفترة
+
+    -------------------------------------------------------------------------
+    -- 8) Due Before / Period على مستوى القسط
+    -------------------------------------------------------------------------
+    DueBefore AS (
+        SELECT d.InstallId, SUM(ISNULL(d.installValue,0)) AS DueBefore
+        FROM DueBase d
+        JOIN InstallmentsInRange ir ON ir.InstallId = d.InstallId
+        WHERE @FromDate IS NOT NULL
+          AND d.Installdate < @FromDate
+        GROUP BY d.InstallId
+    ),
+    DuePeriod AS (
+        SELECT d.InstallId, SUM(ISNULL(d.installValue,0)) AS DuePeriod
+        FROM DueBase d
+        JOIN InstallmentsInRange ir ON ir.InstallId = d.InstallId
+        WHERE (@FromDate IS NULL OR d.Installdate >= @FromDate)
+          AND (@ToDateEnd IS NULL OR d.Installdate < @ToDateEnd)
+        GROUP BY d.InstallId
+    ),
+
+    -------------------------------------------------------------------------
+    -- 9) Rev Before / Period على مستوى القسط
+    -------------------------------------------------------------------------
+    RevBefore AS (
+        SELECT d.InstallId, SUM(ISNULL(d.installValue,0)) AS RevBefore
+        FROM RevBase d
+        JOIN InstallmentsInRange ir ON ir.InstallId = d.InstallId
+        WHERE @FromDate IS NOT NULL
+          AND d.Installdate < @FromDate
+        GROUP BY d.InstallId
+    ),
+    RevPeriod AS (
+        SELECT d.InstallId, SUM(ISNULL(d.installValue,0)) AS RevPeriod
+        FROM RevBase d
+        JOIN InstallmentsInRange ir ON ir.InstallId = d.InstallId
+        WHERE (@FromDate IS NULL OR d.Installdate >= @FromDate)
+          AND (@ToDateEnd IS NULL OR d.Installdate < @ToDateEnd)
+        GROUP BY d.InstallId
+    ),
+
+    -------------------------------------------------------------------------
+    -- GLTotals (داخل الفترة)
+    -------------------------------------------------------------------------
+    GLTotals AS (
+        SELECT
+            SUM(CASE WHEN dv.Account_Code = b.a80 THEN dv.Value ELSE 0 END) AS RentDue_GL,
+            SUM(CASE WHEN dv.Account_Code = b.a86 THEN dv.Value ELSE 0 END) AS Revenue_GL
+        FROM dbo.notes n
+        INNER JOIN dbo.DOUBLE_ENTREY_VOUCHERS dv ON dv.Notes_ID = n.NoteID
+        INNER JOIN dbo.branches b ON b.branch_id = n.branch_no
+        WHERE n.NoteType = 57
+          AND (@FromDate IS NULL OR n.NoteDate >= @FromDate)
+          AND (@ToDateEnd IS NULL OR n.NoteDate < @ToDateEnd)
+          AND (@BranchId IS NULL OR n.branch_no = @BranchId)
+    ),
+
+    -------------------------------------------------------------------------
+    -- ✅ GLTotalsBefore (Opening+Before) نفس Debug بالظبط
+    -------------------------------------------------------------------------
+    BranchAcc AS (
+        SELECT b.branch_id, b.a80 AS Account_Code, 80 AS AccKind
+        FROM dbo.branches b
+        WHERE (@BranchId IS NULL OR b.branch_id = @BranchId)
+
+        UNION ALL
+
+        SELECT b.branch_id, b.a86 AS Account_Code, 86 AS AccKind
+        FROM dbo.branches b
+        WHERE (@BranchId IS NULL OR b.branch_id = @BranchId)
+    ),
+    OpenV1 AS (
+        SELECT v1.branch_id, v1.Account_Code,
+               SUM(CASE WHEN v1.Credit_Or_Debit = 0 THEN v1.Value ELSE 0 END)
+             - SUM(CASE WHEN v1.Credit_Or_Debit = 1 THEN v1.Value ELSE 0 END) AS OpeningFromV1
+        FROM dbo.DOUBLE_ENTREY_VOUCHERS1 v1
+        WHERE v1.Posted IS NULL
+        GROUP BY v1.branch_id, v1.Account_Code
+    ),
+    MoveBefore AS (
+        SELECT v2.branch_id, v2.Account_Code,
+               SUM(CASE WHEN v2.Credit_Or_Debit = 0 THEN v2.Value ELSE 0 END)
+             - SUM(CASE WHEN v2.Credit_Or_Debit = 1 THEN v2.Value ELSE 0 END) AS MoveBefore
+        FROM dbo.DOUBLE_ENTREY_VOUCHERS v2
+        WHERE v2.Posted IS NULL
+          AND (@OpeningBalanceDate IS NOT NULL AND v2.RecordDate >= @OpeningBalanceDate)
+          AND (@FromDateMinus1   IS NOT NULL AND v2.RecordDate <= @FromDateMinus1)
+        GROUP BY v2.branch_id, v2.Account_Code
+    ),
+    GLTotalsBefore AS (
+        SELECT
+            SUM(CASE WHEN ba.AccKind = 80 THEN ISNULL(o.OpeningFromV1,0) + ISNULL(m.MoveBefore,0) ELSE 0 END) AS RentDue_GL_Before,
+            SUM(CASE WHEN ba.AccKind = 86 THEN ISNULL(o.OpeningFromV1,0) + ISNULL(m.MoveBefore,0) ELSE 0 END) AS Revenue_GL_Before
+        FROM BranchAcc ba
+        LEFT JOIN OpenV1 o
+            ON o.branch_id = ba.branch_id AND o.Account_Code = ba.Account_Code
+        LEFT JOIN MoveBefore m
+            ON m.branch_id = ba.branch_id AND m.Account_Code = ba.Account_Code
+    )
+
+    -------------------------------------------------------------------------
+    -- النتيجة النهائية: صف واحد لكل قسط داخل الفترة
+    -------------------------------------------------------------------------
+    SELECT
+        c.ContNo,
+        c.NoteSerial1,
+
+        i.Id AS InstallId,
+        i.Installdate AS InstallDate,
+
+        (ISNULL(i.installValue,0) - ISNULL(i.Insurance,0)) AS InstallNetValue,
+        i.NoteSerial1H,
+
+        ISNULL(db.DueBefore,0) AS DueBefore,
+        ISNULL(rb.RevBefore,0) AS RevenueBefore,
+        ISNULL(db.DueBefore,0) - ISNULL(rb.RevBefore,0) AS OpeningNet,
+
+        ISNULL(dp.DuePeriod,0) AS DueInPeriod,
+        ISNULL(rp.RevPeriod,0) AS RevenueInPeriod,
+        ISNULL(dp.DuePeriod,0) - ISNULL(rp.RevPeriod,0) AS PeriodNet,
+
+        (ISNULL(db.DueBefore,0) + ISNULL(dp.DuePeriod,0)) AS DueToDate,
+        (ISNULL(rb.RevBefore,0) + ISNULL(rp.RevPeriod,0)) AS RevenueToDate,
+        (ISNULL(db.DueBefore,0) + ISNULL(dp.DuePeriod,0))
+          - (ISNULL(rb.RevBefore,0) + ISNULL(rp.RevPeriod,0)) AS ClosingNet,
+
+        ia.TotalContract,
+
+        c.ContDate,
+        cu.CusName,
+        cu.CusNamee,
+        ow.CusName  AS OwnerName,
+        ow.CusNamee AS OwnerNameE,
+        br.branch_name,
+        br.branch_namee,
+        aq.aqarname,
+        aqD.unitno,
+
+        gl.RentDue_GL,
+        gl.Revenue_GL,
+        (ISNULL(gl.RentDue_GL,0) - ISNULL(gl.Revenue_GL,0)) AS GL_NetDifference,
+
+        glb.RentDue_GL_Before,
+        glb.Revenue_GL_Before,
+        (ISNULL(glb.RentDue_GL_Before,0) - ISNULL(glb.Revenue_GL_Before,0)) AS GL_BeforeDifference
+
+    FROM InstallmentsInRange ir
+    JOIN dbo.TblContractInstallments i ON i.Id = ir.InstallId
+    JOIN dbo.TblContract c ON c.ContNo = i.ContNo
+    JOIN ContractsInRange cr ON cr.ContNo = c.ContNo
+    LEFT JOIN InstallAgg ia ON ia.ContNo = c.ContNo
+    LEFT JOIN DueBefore db  ON db.InstallId = i.Id
+    LEFT JOIN DuePeriod dp  ON dp.InstallId = i.Id
+    LEFT JOIN RevBefore rb  ON rb.InstallId = i.Id
+    LEFT JOIN RevPeriod rp  ON rp.InstallId = i.Id
+    LEFT JOIN dbo.TblCustemers cu ON cu.CusID = c.CusID
+    LEFT JOIN dbo.TblAqar aq       ON aq.Aqarid = c.Iqar
+    LEFT JOIN dbo.TblAqarDetai aqD ON aqD.Id = c.UnitNo
+    LEFT JOIN dbo.TblCustemers ow  ON ow.CusID = aq.ownerid
+    LEFT JOIN dbo.TblBranchesData br ON br.branch_id = aq.BranchId
+    CROSS JOIN GLTotals gl
+    CROSS JOIN GLTotalsBefore glb
+    WHERE 1=1
+      AND (@BranchId   IS NULL OR aq.BranchId   = @BranchId)
+      AND (@AqarTypeId IS NULL OR aq.Aqarid     = @AqarTypeId)
+      AND (@ClientId   IS NULL OR c.CusID       = @ClientId)
+      AND (@OwnerId    IS NULL OR aq.ownerid    = @OwnerId)
+      AND (@ContractNo IS NULL OR c.ContNo      = @ContractNo)
+    ORDER BY c.ContNo, i.Installdate, i.Id;
+END"
+"RSMDB","dbo","Rpt_ContractRevenueSummary","
+
+/* =========================================================
+   Rpt_ContractRevenueSummary  (FIXED OpeningBalanceDate + GLTotalsBefore)
+   ========================================================= */
+CREATE PROCEDURE [dbo].[Rpt_ContractRevenueSummary]
+    @FromDate   DATETIME = NULL,
+    @ToDate     DATETIME = NULL,
+    @BranchId   INT      = NULL,
+    @AqarTypeId INT      = NULL,
+    @ClientId   INT      = NULL,
+    @OwnerId    INT      = NULL,
+    @ContractNo INT      = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @ToDateEnd DATETIME = CASE WHEN @ToDate IS NULL THEN NULL ELSE DATEADD(DAY,1,@ToDate) END;
+    DECLARE @FromDateMinus1 DATETIME = CASE WHEN @FromDate IS NULL THEN NULL ELSE DATEADD(DAY,-1,@FromDate) END;
+
+    /* ✅ FIX: OpeningBalanceDate = أول سنة بالنظام (IsFirstYear=1) + fallback */
+    DECLARE @OpeningBalanceDate DATETIME =
+    (
+        SELECT MIN(datesatrt)
+        FROM dbo.TblyearsData
+        WHERE ISNULL(IsFirstYear,0) = 1
+    );
+
+    IF @OpeningBalanceDate IS NULL
+        SELECT @OpeningBalanceDate = MIN(datesatrt) FROM dbo.TblyearsData;
+
+    ;WITH
+    ---------------------------------------------------------
+    -- 1) إجمالى قيمة العقد من الأقساط (Net بدون التأمين)
+    ---------------------------------------------------------
+    InstallAgg AS (
+        SELECT ContNo,
+               SUM(ISNULL(installValue,0) - ISNULL(Insurance,0)) AS TotalContract
+        FROM dbo.TblContractInstallments
+        GROUP BY ContNo
+    ),
+
+    ---------------------------------------------------------
+    -- 2) أول قسط لكل عقد (Fallback)
+    ---------------------------------------------------------
+    FirstInstallPerContract AS (
+        SELECT ContNo, MIN(Installdate) AS FirstInstDate
+        FROM dbo.TblContractInstallments
+        GROUP BY ContNo
+    ),
+    FirstInstallFallback AS (
+        SELECT
+            c.ContNo,
+            fi.Id AS InstallId,
+            fi.Installdate,
+            (ISNULL(fi.installValue,0) - ISNULL(fi.Insurance,0)) AS installValue
+        FROM dbo.TblContract c
+        JOIN FirstInstallPerContract fp ON fp.ContNo = c.ContNo
+        JOIN dbo.TblContractInstallments fi
+             ON fi.ContNo = fp.ContNo
+            AND fi.Installdate = fp.FirstInstDate
+        LEFT JOIN dbo.tblContractInsAllocationsDetails d ON d.InstallId = fi.Id
+        WHERE ISNULL(c.NoteID,0) <> 0
+          AND d.InstallId IS NULL
+    ),
+
+    ---------------------------------------------------------
+    -- 3) مصدر الاستحقاق (استحقاقات + Fallback)
+    ---------------------------------------------------------
+    DueBase AS (
+        SELECT
+            i.ContNo,
+            d.InstallId,
+            d.Installdate,
+            (ISNULL(d.installValue,0) - ISNULL(d.Insurance,0)) AS installValue
+        FROM dbo.tblContractInsAllocationsDetails d
+        JOIN dbo.TblContractInstallments i ON d.InstallId = i.Id
+
+        UNION ALL
+
+        SELECT
+            f.ContNo,
+            f.InstallId,
+            f.Installdate,
+            f.installValue
+        FROM FirstInstallFallback f
+    ),
+
+    ---------------------------------------------------------
+    -- 4) مصدر الإيراد (إثبات الإيراد)
+    ---------------------------------------------------------
+    RevBase AS (
+        SELECT
+            i.ContNo,
+            d.Installid AS InstallId,
+            d.Installdate,
+            (ISNULL(d.installValue,0) - ISNULL(d.Insurance,0)) AS installValue
+        FROM dbo.tblContractInsAllocationsDetails2 d
+        JOIN dbo.TblContractInstallments i ON d.Installid = i.Id
+    ),
+
+    ---------------------------------------------------------
+    -- 5) الدفعات الصحيحة للمستحق (استحقاق أو Fallback)
+    ---------------------------------------------------------
+    ValidInstallments AS (
+        SELECT DISTINCT InstallId FROM DueBase
+    ),
+
+    ---------------------------------------------------------
+    -- 6) العقود داخل نطاق التقرير
+    ---------------------------------------------------------
+    ContractsInRange AS (
+        -- (أ) دفعات صالحة تاريخها الأصلي داخل الفترة
+        SELECT DISTINCT i.ContNo
+        FROM dbo.TblContractInstallments i
+        JOIN ValidInstallments v ON v.InstallId = i.Id
+        WHERE (@FromDate IS NULL OR i.Installdate >= @FromDate)
+          AND (@ToDate   IS NULL OR i.Installdate <= @ToDate)
+
+        UNION
+
+        -- (ب) من الإيرادات فقط
+        SELECT DISTINCT r.ContNo
+        FROM RevBase r
+        WHERE (@FromDate IS NULL OR r.Installdate >= @FromDate)
+          AND (@ToDateEnd IS NULL OR r.Installdate < @ToDateEnd)
+    ),
+
+    ---------------------------------------------------------
+    -- 7) مستحقات سابقة على مستوى العقد
+    ---------------------------------------------------------
+    DueBeforeContract AS (
+        SELECT d.ContNo, SUM(ISNULL(d.installValue,0)) AS DueBefore
+        FROM DueBase d
+        JOIN ContractsInRange cr ON cr.ContNo = d.ContNo
+        WHERE @FromDate IS NOT NULL
+          AND d.Installdate < @FromDate
+        GROUP BY d.ContNo
+    ),
+
+    ---------------------------------------------------------
+    -- 8) مستحقات خلال الفترة على مستوى العقد
+    ---------------------------------------------------------
+    DuePeriodContract AS (
+        SELECT d.ContNo, SUM(ISNULL(d.installValue,0)) AS DuePeriod
+        FROM DueBase d
+        JOIN dbo.TblContractInstallments i ON i.Id = d.InstallId
+        JOIN ContractsInRange cr ON cr.ContNo = d.ContNo
+        WHERE (@FromDate IS NULL OR d.Installdate >= @FromDate)
+          AND (@ToDateEnd IS NULL OR d.Installdate < @ToDateEnd)
+          AND (@FromDate IS NULL OR i.Installdate >= @FromDate)
+          AND (@ToDate   IS NULL OR i.Installdate <= @ToDate)
+        GROUP BY d.ContNo
+    ),
+
+    ---------------------------------------------------------
+    -- 9) إيرادات سابقة على مستوى العقد
+    ---------------------------------------------------------
+    RevBeforeContract AS (
+        SELECT r.ContNo, SUM(ISNULL(r.installValue,0)) AS RevBefore
+        FROM RevBase r
+        JOIN ContractsInRange cr ON cr.ContNo = r.ContNo
+        WHERE @FromDate IS NOT NULL
+          AND r.Installdate < @FromDate
+        GROUP BY r.ContNo
+    ),
+
+    ---------------------------------------------------------
+    -- 10) إيرادات خلال الفترة على مستوى العقد
+    ---------------------------------------------------------
+    RevPeriodContract AS (
+        SELECT r.ContNo, SUM(ISNULL(r.installValue,0)) AS RevPeriod
+        FROM RevBase r
+        JOIN ContractsInRange cr ON cr.ContNo = r.ContNo
+        WHERE (@FromDate IS NULL OR r.Installdate >= @FromDate)
+          AND (@ToDateEnd IS NULL OR r.Installdate < @ToDateEnd)
+        GROUP BY r.ContNo
+    ),
+
+    ---------------------------------------------------------
+    -- GLTotals (داخل الفترة)
+    ---------------------------------------------------------
+    GLTotals AS (
+        SELECT
+            SUM(CASE WHEN dv.Account_Code = b.a80 THEN dv.Value ELSE 0 END) AS RentDue_GL,
+            SUM(CASE WHEN dv.Account_Code = b.a86 THEN dv.Value ELSE 0 END) AS Revenue_GL
+        FROM dbo.notes n
+        INNER JOIN dbo.DOUBLE_ENTREY_VOUCHERS dv ON dv.Notes_ID = n.NoteID
+        INNER JOIN dbo.branches b ON b.branch_id = n.branch_no
+        WHERE n.NoteType = 57
+          AND (@FromDate IS NULL OR n.NoteDate >= @FromDate)
+          AND (@ToDateEnd IS NULL OR n.NoteDate < @ToDateEnd)
+          AND (@BranchId IS NULL OR n.branch_no = @BranchId)
+    ),
+
+    ---------------------------------------------------------
+    -- ✅ GLTotalsBefore (Opening+Before)
+    ---------------------------------------------------------
+    BranchAcc AS (
+        SELECT b.branch_id, b.a80 AS Account_Code, 80 AS AccKind
+        FROM dbo.branches b
+        WHERE (@BranchId IS NULL OR b.branch_id = @BranchId)
+
+        UNION ALL
+
+        SELECT b.branch_id, b.a86 AS Account_Code, 86 AS AccKind
+        FROM dbo.branches b
+        WHERE (@BranchId IS NULL OR b.branch_id = @BranchId)
+    ),
+    OpenV1 AS (
+        SELECT v1.branch_id, v1.Account_Code,
+               SUM(CASE WHEN v1.Credit_Or_Debit = 0 THEN v1.Value ELSE 0 END)
+             - SUM(CASE WHEN v1.Credit_Or_Debit = 1 THEN v1.Value ELSE 0 END) AS OpeningFromV1
+        FROM dbo.DOUBLE_ENTREY_VOUCHERS1 v1
+        WHERE v1.Posted IS NULL
+        GROUP BY v1.branch_id, v1.Account_Code
+    ),
+    MoveBefore AS (
+        SELECT v2.branch_id, v2.Account_Code,
+               SUM(CASE WHEN v2.Credit_Or_Debit = 0 THEN v2.Value ELSE 0 END)
+             - SUM(CASE WHEN v2.Credit_Or_Debit = 1 THEN v2.Value ELSE 0 END) AS MoveBefore
+        FROM dbo.DOUBLE_ENTREY_VOUCHERS v2
+        WHERE v2.Posted IS NULL
+          AND (@OpeningBalanceDate IS NOT NULL AND v2.RecordDate >= @OpeningBalanceDate)
+          AND (@FromDateMinus1   IS NOT NULL AND v2.RecordDate <= @FromDateMinus1)
+        GROUP BY v2.branch_id, v2.Account_Code
+    ),
+    GLTotalsBefore AS (
+        SELECT
+            SUM(CASE WHEN ba.AccKind = 80 THEN ISNULL(o.OpeningFromV1,0) + ISNULL(m.MoveBefore,0) ELSE 0 END) AS RentDue_GL_Before,
+            SUM(CASE WHEN ba.AccKind = 86 THEN ISNULL(o.OpeningFromV1,0) + ISNULL(m.MoveBefore,0) ELSE 0 END) AS Revenue_GL_Before
+        FROM BranchAcc ba
+        LEFT JOIN OpenV1 o
+            ON o.branch_id = ba.branch_id AND o.Account_Code = ba.Account_Code
+        LEFT JOIN MoveBefore m
+            ON m.branch_id = ba.branch_id AND m.Account_Code = ba.Account_Code
+    )
+
+    ---------------------------------------------------------
+    -- النتيجة النهائية: سطر واحد لكل عقد
+    ---------------------------------------------------------
+    SELECT
+        c.ContNo,
+        c.NoteSerial1,
+
+        ISNULL(ia.TotalContract,0) AS TotalContract,
+
+        ISNULL(db.DueBefore,0) AS DueBefore,
+        ISNULL(rb.RevBefore,0) AS RevenueBefore,
+        ISNULL(db.DueBefore,0) - ISNULL(rb.RevBefore,0) AS OpeningNet,
+
+        ISNULL(dp.DuePeriod,0) AS DueInPeriod,
+        ISNULL(rp.RevPeriod,0) AS RevenueInPeriod,
+        ISNULL(dp.DuePeriod,0) - ISNULL(rp.RevPeriod,0) AS PeriodNet,
+
+        (ISNULL(db.DueBefore,0) + ISNULL(dp.DuePeriod,0)) AS DueToDate,
+        (ISNULL(rb.RevBefore,0) + ISNULL(rp.RevPeriod,0)) AS RevenueToDate,
+        (ISNULL(db.DueBefore,0) + ISNULL(dp.DuePeriod,0))
+          - (ISNULL(rb.RevBefore,0) + ISNULL(rp.RevPeriod,0)) AS ClosingNet,
+
+        c.ContDate,
+        cu.CusName,
+        cu.CusNamee,
+        ow.CusName  AS OwnerName,
+        ow.CusNamee AS OwnerNameE,
+        br.branch_name,
+        br.branch_namee,
+        aq.aqarname,
+        aqD.unitno,
+
+        gl.RentDue_GL,
+        gl.Revenue_GL,
+        (ISNULL(gl.RentDue_GL,0) - ISNULL(gl.Revenue_GL,0)) AS GL_NetDifference,
+
+        glb.RentDue_GL_Before,
+        glb.Revenue_GL_Before,
+        (ISNULL(glb.RentDue_GL_Before,0) - ISNULL(glb.Revenue_GL_Before,0)) AS GL_BeforeDifference
+
+    FROM dbo.TblContract c
+    JOIN ContractsInRange cr ON cr.ContNo = c.ContNo
+    LEFT JOIN InstallAgg ia           ON ia.ContNo = c.ContNo
+    LEFT JOIN DueBeforeContract db    ON db.ContNo = c.ContNo
+    LEFT JOIN DuePeriodContract dp    ON dp.ContNo = c.ContNo
+    LEFT JOIN RevBeforeContract rb    ON rb.ContNo = c.ContNo
+    LEFT JOIN RevPeriodContract rp    ON rp.ContNo = c.ContNo
+    LEFT JOIN dbo.TblCustemers cu     ON cu.CusID = c.CusID
+    LEFT JOIN dbo.TblAqar aq          ON aq.Aqarid = c.Iqar
+    LEFT JOIN dbo.TblAqarDetai aqD    ON aqD.Id = c.UnitNo
+    LEFT JOIN dbo.TblCustemers ow     ON ow.CusID = aq.ownerid
+    LEFT JOIN dbo.TblBranchesData br  ON br.branch_id = aq.BranchId
+    CROSS JOIN GLTotals gl
+    CROSS JOIN GLTotalsBefore glb
+    WHERE 1=1
+      AND (@BranchId   IS NULL OR aq.BranchId   = @BranchId)
+      AND (@AqarTypeId IS NULL OR aq.Aqarid     = @AqarTypeId)
+      AND (@ClientId   IS NULL OR c.CusID       = @ClientId)
+      AND (@OwnerId    IS NULL OR aq.ownerid    = @OwnerId)
+      AND (@ContractNo IS NULL OR c.ContNo      = @ContractNo)
+    ORDER BY c.ContNo;
+END
+"
+"RSMDB","dbo","Rpt_ContractRevenueSummaryOld","
+create PROCEDURE [dbo].[Rpt_ContractRevenueSummaryOld]
+    @FromDate   DATETIME = NULL,
+    @ToDate     DATETIME = NULL,
+    @BranchId   INT      = NULL,
+    @AqarTypeId INT      = NULL,
+    @ClientId   INT      = NULL,
+    @OwnerId    INT      = NULL,
+    @ContractNo INT      = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    WITH InstallAgg AS (
+        SELECT ContNo,
+               SUM(ISNULL(installValue,0)) AS TotalContract
+        FROM dbo.TblContractInstallments
+        GROUP BY ContNo
+    ),
+
+    -- كل عقد له أى حركة فى الفترة فى أى من الجداول الثلاثة
+    InstallInRange AS (
+        -- أقساط فى الفترة
+        SELECT DISTINCT ContNo
+        FROM dbo.TblContractInstallments
+        WHERE (@FromDate IS NULL OR Installdate >= @FromDate)
+          AND (@ToDate   IS NULL OR Installdate < DATEADD(DAY,1,@ToDate))
+
+        UNION
+
+        -- مستحقات فى الفترة
+        SELECT DISTINCT i.ContNo
+        FROM dbo.tblContractInsAllocationsDetails d
+        JOIN dbo.TblContractInstallments i ON d.InstallId = i.Id
+        WHERE (@FromDate IS NULL OR d.Installdate >= @FromDate)
+          AND (@ToDate   IS NULL OR d.Installdate < DATEADD(DAY,1,@ToDate))
+
+        UNION
+
+        -- إيرادات فى الفترة
+        SELECT DISTINCT i.ContNo
+        FROM dbo.tblContractInsAllocationsDetails2 d2
+        JOIN dbo.TblContractInstallments i ON d2.Installid = i.Id
+        WHERE (@FromDate IS NULL OR d2.Installdate >= @FromDate)
+          AND (@ToDate   IS NULL OR d2.Installdate < DATEADD(DAY,1,@ToDate))
+    ),
+
+    RevenueAgg AS (
+        SELECT  i.ContNo,
+                SUM(ISNULL(d.installValue,0)) AS RevenueAmount
+        FROM dbo.tblContractInsAllocationsDetails2 d
+        INNER JOIN dbo.TblContractInstallments i
+            ON d.Installid = i.id
+        WHERE (@FromDate IS NULL OR d.Installdate >= @FromDate)
+          AND (@ToDate   IS NULL OR d.Installdate < DATEADD(DAY,1,@ToDate))
+        GROUP BY i.ContNo
+    ),
+
+    DueAggTotal AS (
+        SELECT i.ContNo,
+               SUM(ISNULL(d.installValue,0)) AS TotalDue
+        FROM dbo.tblContractInsAllocationsDetails d
+        INNER JOIN dbo.TblContractInstallments i
+            ON d.InstallId = i.id
+        GROUP BY i.ContNo
+    ),
+
+    DueAggPeriod AS (
+        SELECT i.ContNo,
+               SUM(ISNULL(d.installValue,0)) AS PeriodDue
+        FROM dbo.tblContractInsAllocationsDetails d
+        INNER JOIN dbo.TblContractInstallments i
+            ON d.InstallId = i.id
+        WHERE (@FromDate IS NULL OR d.Installdate >= @FromDate)
+          AND (@ToDate   IS NULL OR d.Installdate < DATEADD(DAY,1,@ToDate))
+        GROUP BY i.ContNo
+    )
+
+    SELECT
+        c.ContNo,
+        c.NoteSerial1,
+        ISNULL(daP.PeriodDue,0)  AS DueInPeriod,
+        ISNULL(daT.TotalDue,0)   AS TotalDue,
+        ISNULL(ra.RevenueAmount,0) AS RevenueAmount,
+        ISNULL(ia.TotalContract,0) AS ContractValue,
+        ISNULL(daP.PeriodDue,0) - ISNULL(ra.RevenueAmount,0) AS Remaining,
+        c.ContDate,
+        cu.CusName,
+        cu.CusNamee,
+        ow.CusName  AS OwnerName,
+        ow.CusNamee AS OwnerNameE,
+        br.branch_name,
+        br.branch_namee,
+        aq.aqarname,
+        aqD.unitno
+    FROM dbo.TblContract c
+        INNER JOIN InstallInRange ir ON c.ContNo = ir.ContNo
+        LEFT JOIN InstallAgg      ia  ON c.ContNo = ia.ContNo
+        LEFT JOIN RevenueAgg      ra  ON c.ContNo = ra.ContNo
+        LEFT JOIN DueAggTotal     daT ON c.ContNo = daT.ContNo
+        LEFT JOIN DueAggPeriod    daP ON c.ContNo = daP.ContNo
+        LEFT JOIN dbo.TblCustemers cu ON c.CusID   = cu.CusID
+        LEFT JOIN dbo.TblAqar      aq ON c.Iqar    = aq.Aqarid
+        LEFT JOIN dbo.TblAqarDetai aqD ON c.UnitNo = aqD.Id
+        LEFT JOIN dbo.TblCustemers ow ON aq.ownerid = ow.CusID
+        LEFT JOIN dbo.TblBranchesData br ON aq.BranchId = br.branch_id
+    WHERE 1 = 1
+      AND (@BranchId   IS NULL OR aq.BranchId   = @BranchId)
+      AND (@AqarTypeId IS NULL OR aq.aqartypeid = @AqarTypeId)
+      AND (@ClientId   IS NULL OR c.CusID       = @ClientId)
+      AND (@OwnerId    IS NULL OR aq.ownerid    = @OwnerId)
+      AND (@ContractNo IS NULL OR c.ContNo      = @ContractNo)
+    ORDER BY c.ContNo;
+END
+"
+"RSMDB","dbo","sp_Get_AccountLedger_ReportData","create PROCEDURE [dbo].[sp_Get_AccountLedger_ReportData]
+    @AccountCodes         NVARCHAR(MAX),      -- CSV
+    @StartDate            DATE,
+    @EndDate              DATE,
+    @BranchID             INT         = 0,
+    @ActivityId           INT         = 0,
+    @RegionID             INT         = 0,
+    @ProjectID            INT         = 0,
+    @NotesType            FLOAT       = 0,
+    @ShowHiddenInvoices   BIT         = 1,    -- 1=show hidden, 0=hide
+    @IsDetailedReport     BIT         = 0,    -- 1=with item details
+    @IncludeSeedRow       BIT         = 1,    -- (لن تُستخدم)
+    @ComputeOpeningInSP   BIT         = 1,    -- (لن تُستخدم)
+    @OpeningMode          TINYINT     = 1     -- (لن يُستخدم)
+	,@Debug        BIT = 0,               -- يطبع بلوكات تشخيص
+@DebugAccount NVARCHAR(50) = NULL    -- حساب للتركيز (اختياري)
+
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    /* 0) حساب تاريخ الافتتاح: أقرب Opening <= @StartDate من TblyearsData */
+ 
+
+    /* 1) قائمة الحسابات */
+  IF OBJECT_ID('tempdb..#Acc') IS NOT NULL DROP TABLE #Acc;
+CREATE TABLE #Acc (
+  Account_Code NVARCHAR(50) COLLATE DATABASE_DEFAULT PRIMARY KEY
+);
+
+INSERT INTO #Acc(Account_Code)
+SELECT LTRIM(RTRIM(Item)) COLLATE DATABASE_DEFAULT
+FROM dbo.fn_SplitString(@AccountCodes, N',');
+
+
+    /* 2) كل بيانات التقرير من RptLedger_Sub (بدون فلتر التاريخ) */
+    IF OBJECT_ID('tempdb..#BaseAll') IS NOT NULL DROP TABLE #BaseAll;
+    SELECT
+        R.Account_Code,
+        R.RecordDate AS RecordDateX,
+        CASE WHEN R.Credit_Or_Debit = 0 THEN R.DEV_Value ELSE -R.DEV_Value END AS ValueSigned,
+
+        R.ChqueNum, R.ManualNo, R.RecordDateH, R.Double_Entry_Vouchers_ID,
+        R.DEV_Value, R.Credit_Or_Debit, R.DEV_DES, R.DevDESE, R.Account_Name,
+        R.DEV_ID_Line_No, R.NotesTypeName, R.UserID, R.UserName,
+        R.ReceiptID, R.Notes_ID, R.OperaID, R.Transaction_ID, R.Transaction_Serial,
+        R.Transaction_Date, R.Posted, R.TransactionTypeName, R.PostedDate, R.PostedUserID,
+        R.Account_Interval_ID, R.NoteDate, R.NoteType, R.NoteSerial, R.Note_Value,
+        R.Account_Serial, R.Account_NameEng, R.Parent_Account_Code, R.Branch,
+        R.Sum_account, R.cost_center, R.currenct_code, R.Remark,
+        R.note_value_by_characters, R.foxy_no, R.DEV_ID_Line_No1, R.project_id,
+        R.NotesTypeNamee, R.TransactionEnglishName, R.opr_fullcode, R.NoteSerial1,
+        R.branch_id, R.ActivityTypeId,
+
+        A.opening_balance AS OB_Stored,
+        A.opening_balance_type,
+
+        R.notes_all, R.DEV_ValueE, R.currency, R.rate, R.Name, R.NameE,
+        R.branch_name, R.branch_namee, R.RegionID, R.DescAccount
+    INTO #BaseAll
+    FROM dbo.RptLedger_Sub R
+    JOIN dbo.ACCOUNTS A ON A.Account_Code COLLATE DATABASE_DEFAULT = R.Account_Code COLLATE DATABASE_DEFAULT
+WHERE R.Account_Code COLLATE DATABASE_DEFAULT IN (SELECT Account_Code FROM #Acc)
+      AND (@ShowHiddenInvoices = 1 OR ISNULL(R.IsHiddenInv,0) = 0)
+      AND (@BranchID   = 0 OR ISNULL(R.branch_id,0)      = @BranchID)
+      AND (@ActivityId = 0 OR ISNULL(R.ActivityTypeId,0) = @ActivityId)
+      AND (@RegionID   = 0 OR ISNULL(R.RegionID,0)       = @RegionID)
+      AND (@ProjectID  = 0 OR ISNULL(R.project_id,0)     = @ProjectID)
+      AND (@NotesType  = 0 OR ISNULL(R.NoteType,0)       = @NotesType);
+
+    /* 3) الافتتاح: مباشرة من الجداول (بدون دوال) */
+    -- 3.a) قيود الافتتاح في يوم @OBDate من جدول DOUBLE_ENTREY_VOUCHERS1
+ /* === 0) حدّد تاريخ الافتتاح من TblyearsData لنفس سنة التقرير === */
+
+ /* ============== 3) افتتاح فعلي لكل حساب ============== */
+
+/* أقدم تاريخ افتتاح عام قبل بداية الفترة (fallback) */
+DECLARE @MinOB date =
+(
+    SELECT MIN(OpeneingbalancesDate)
+    FROM dbo.TblyearsData
+    WHERE OpeneingbalancesDate <= @StartDate
+);
+IF @MinOB IS NULL SET @MinOB = @StartDate;
+
+
+/* لكل حساب: آخر تاريخ افتتاح فعلي في V1 <= @StartDate  */
+IF OBJECT_ID('tempdb..#OB_DATE') IS NOT NULL DROP TABLE #OB_DATE;
+SELECT
+    A.Account_Code,
+    OBDate = COALESCE( OA.OBDate, @MinOB )
+INTO #OB_DATE
+FROM #Acc X
+JOIN dbo.ACCOUNTS A
+  ON A.Account_Code = X.Account_Code
+OUTER APPLY
+(
+    SELECT MAX(V.RecordDate) AS OBDate
+    FROM dbo.DOUBLE_ENTREY_VOUCHERS1 V
+    WHERE ( (A.last_account = 1 AND V.Account_Code = A.Account_Code)
+         OR (A.last_account <> 1 AND V.Account_Code LIKE A.Account_Code + 'a%') )
+      AND (V.Posted IS NULL OR V.Posted = 0)
+      AND V.RecordDate <= @StartDate
+) OA;
+/* DEBUG 1: مبدئي */
+IF @Debug = 1
+BEGIN
+  PRINT '=== DEBUG 1 ===';
+  PRINT 'StartDate = ' + CONVERT(varchar(10), @StartDate, 120);
+  PRINT 'EndDate   = ' + CONVERT(varchar(10), @EndDate, 120);
+  PRINT 'MinOB     = ' + CONVERT(varchar(10), @MinOB, 120);
+
+  -- كل حساب وتاريخ الافتتاح اللي اتلقط
+  SELECT TOP (200) 'OB_DATE' AS dbg, Account_Code, OBDate
+  FROM #OB_DATE
+  ORDER BY Account_Code;
+
+  -- لو حددت حساب، وريني القيود الافتتاحية الفعلية في اليوم ده
+  IF @DebugAccount IS NOT NULL
+  BEGIN
+    SELECT 'V1 rows at OBDate' AS dbg, V.*
+    FROM dbo.DOUBLE_ENTREY_VOUCHERS1 V
+    JOIN #OB_DATE D
+      ON V.RecordDate = D.OBDate
+     AND (V.Account_Code = @DebugAccount OR V.Account_Code LIKE @DebugAccount + 'a%')
+    WHERE D.Account_Code = @DebugAccount;
+  END
+END
+
+/* رصيد الافتتاح من جدول الافتتاحيات في يوم OBDate لكل حساب */
+IF OBJECT_ID('tempdb..#OB_OPEN') IS NOT NULL DROP TABLE #OB_OPEN;
+SELECT
+    D.Account_Code,
+    OpeningFromOB = ISNULL(
+        SUM(CASE WHEN V.Credit_Or_Debit = 0 THEN V.value ELSE -V.value END), 0
+    )
+INTO #OB_OPEN
+FROM #OB_DATE D
+JOIN dbo.ACCOUNTS A
+  ON A.Account_Code = D.Account_Code
+LEFT JOIN dbo.DOUBLE_ENTREY_VOUCHERS1 V
+  ON V.RecordDate = D.OBDate
+ AND ( (A.last_account = 1 AND V.Account_Code = A.Account_Code)
+    OR (A.last_account <> 1 AND V.Account_Code LIKE A.Account_Code + 'a%') )
+ AND (V.Posted IS NULL OR V.Posted = 0)
+GROUP BY D.Account_Code;
+
+/* حركة من بعد OBDate ولحد قبل StartDate */
+IF OBJECT_ID('tempdb..#OB_MOV') IS NOT NULL DROP TABLE #OB_MOV;
+SELECT
+    D.Account_Code,
+    OpeningFromMoves = ISNULL(
+        SUM(CASE WHEN R.Credit_Or_Debit = 0 THEN R.DEV_Value ELSE -R.DEV_Value END), 0
+    )
+INTO #OB_MOV
+FROM #OB_DATE D
+JOIN dbo.ACCOUNTS A
+  ON A.Account_Code = D.Account_Code
+LEFT JOIN dbo.RptLedger_Sub R
+  ON R.RecordDate > D.OBDate    -- بعد قيد الافتتاح
+ AND R.RecordDate < @StartDate  -- قبل بداية الفترة
+ AND ( (A.last_account = 1 AND R.Account_Code = A.Account_Code)
+    OR (A.last_account <> 1 AND R.Account_Code LIKE A.Account_Code + 'a%') )
+ AND (@ShowHiddenInvoices = 1 OR ISNULL(R.IsHiddenInv,0) = 0)
+ AND (@BranchID   = 0 OR ISNULL(R.branch_id,0)      = @BranchID)
+ AND (@ActivityId = 0 OR ISNULL(R.ActivityTypeId,0) = @ActivityId)
+ AND (@RegionID   = 0 OR ISNULL(R.RegionID,0)       = @RegionID)
+ AND (@ProjectID  = 0 OR ISNULL(R.project_id,0)     = @ProjectID)
+ AND (@NotesType  = 0 OR ISNULL(R.NoteType,0)       = @NotesType)
+GROUP BY D.Account_Code;
+/* DEBUG 2: الافتتاح + الحركة قبل الفترة */
+IF @Debug = 1
+BEGIN
+  PRINT '=== DEBUG 2 ===';
+
+  SELECT TOP (200) 'OB_OPEN' AS dbg, * FROM #OB_OPEN ORDER BY Account_Code;
+  SELECT TOP (200) 'OB_MOV'  AS dbg, * FROM #OB_MOV  ORDER BY Account_Code;
+
+  IF @DebugAccount IS NOT NULL
+  BEGIN
+    -- تفاصيل الحركة قبل الفترة للحساب المحدد
+    SELECT 'Moves before StartDate' AS dbg, R.*
+    FROM dbo.RptLedger_Sub R
+    WHERE R.RecordDate >
+            (SELECT OBDate FROM #OB_DATE WHERE Account_Code = @DebugAccount)
+      AND R.RecordDate < @StartDate
+      AND (R.Account_Code = @DebugAccount OR R.Account_Code LIKE @DebugAccount + 'a%');
+  END
+END
+
+/* الرصيد الافتتاحي النهائي لكل حساب = افتتاح + حركة قبل الفترة */
+IF OBJECT_ID('tempdb..#OB') IS NOT NULL DROP TABLE #OB;
+SELECT
+    A.Account_Code,
+    OpeningBalance = ISNULL(O1.OpeningFromOB,0) + ISNULL(O2.OpeningFromMoves,0)
+INTO #OB
+FROM #Acc X
+JOIN dbo.ACCOUNTS A ON A.Account_Code = X.Account_Code
+LEFT JOIN #OB_OPEN O1 ON O1.Account_Code = A.Account_Code
+LEFT JOIN #OB_MOV  O2 ON O2.Account_Code = A.Account_Code;
+/* DEBUG 3: الرصيد الافتتاحي النهائي */
+IF @Debug = 1
+BEGIN
+  PRINT '=== DEBUG 3 ===';
+  SELECT TOP (200) 'OB_FINAL' AS dbg, * FROM #OB ORDER BY Account_Code;
+
+  IF @DebugAccount IS NOT NULL
+  BEGIN
+    SELECT 'OB of DebugAccount' AS dbg, * FROM #OB WHERE Account_Code = @DebugAccount;
+  END
+END
+
+
+    /* 4) حركات الفترة فقط */
+    IF OBJECT_ID('tempdb..#InRange') IS NOT NULL DROP TABLE #InRange;
+    SELECT *
+    INTO #InRange
+    FROM #BaseAll
+    WHERE RecordDateX IS NULL
+       OR (RecordDateX >= @StartDate AND RecordDateX <= @EndDate);
+
+    /* 5) جدول الإخراج النهائي (شكل ثابت) */
+    IF OBJECT_ID('tempdb..#Main') IS NOT NULL DROP TABLE #Main;
+    CREATE TABLE #Main
+    (
+        ChqueNum NVARCHAR(50) NULL,
+        ManualNo NVARCHAR(50) NULL,
+        RecordDateH NVARCHAR(50) NULL,
+        Double_Entry_Vouchers_ID INT NULL,
+        DEV_Value FLOAT NULL,
+        Credit_Or_Debit SMALLINT NULL,
+        Account_Code NVARCHAR(50) NULL,
+        DEV_DES NVARCHAR(MAX) NULL,
+        DevDESE NVARCHAR(MAX) NULL,
+        Account_Name NVARCHAR(200) NULL,
+        DEV_ID_Line_No INT NULL,
+        NotesTypeName NVARCHAR(100) NULL,
+        UserID INT NULL,
+        UserName NVARCHAR(100) NULL,
+        RecordDate DATETIME NULL,
+        ReceiptID INT NULL,
+        Notes_ID INT NULL,
+        OperaID INT NULL,
+        Transaction_ID INT NULL,
+        Transaction_Serial INT NULL,
+        Transaction_Date DATETIME NULL,
+        Posted BIT NULL,
+        TransactionTypeName NVARCHAR(100) NULL,
+        PostedDate DATETIME NULL,
+        PostedUserID INT NULL,
+        Account_Interval_ID INT NULL,
+        NoteDate DATETIME NULL,
+        NoteType INT NULL,
+        NoteSerial NVARCHAR(50) NULL,
+        Note_Value FLOAT NULL,
+        Account_Serial NVARCHAR(50) NULL,
+        Account_NameEng NVARCHAR(200) NULL,
+        Parent_Account_Code NVARCHAR(50) NULL,
+        Branch NVARCHAR(100) NULL,
+        Sum_account NVARCHAR(100) NULL,
+        cost_center NVARCHAR(100) NULL,
+        currenct_code NVARCHAR(10) NULL,
+        Remark NVARCHAR(MAX) NULL,
+        note_value_by_characters NVARCHAR(MAX) NULL,
+        foxy_no NVARCHAR(50) NULL,
+        DEV_ID_Line_No1 INT NULL,
+        project_id INT NULL,
+        NotesTypeNamee NVARCHAR(100) NULL,
+        TransactionEnglishName NVARCHAR(100) NULL,
+        opr_fullcode NVARCHAR(50) NULL,
+        NoteSerial1 NVARCHAR(50) NULL,
+        branch_id INT NULL,
+        ActivityTypeId INT NULL,
+        opening_balance FLOAT NULL,
+        opening_balance_type SMALLINT NULL,
+        notes_all FLOAT NULL,
+        DEV_ValueE FLOAT NULL,
+        currency NVARCHAR(50) NULL,
+        rate FLOAT NULL,
+        Name NVARCHAR(200) NULL,
+        NameE NVARCHAR(200) NULL,
+        branch_name NVARCHAR(100) NULL,
+        branch_namee NVARCHAR(100) NULL,
+        RegionID INT NULL,
+        DescAccount NVARCHAR(MAX) NULL,
+        CusNamee NVARCHAR(200) NULL,
+        CusName NVARCHAR(200) NULL,
+        Emp_Name NVARCHAR(200) NULL,
+        Emp_Namee NVARCHAR(200) NULL,
+        Emp_Code NVARCHAR(50) NULL,
+        Item_ID INT NULL,
+        ShowQty FLOAT NULL,
+        showPrice FLOAT NULL,
+        Transaction_Type INT NULL,
+        StockEffect INT NULL,
+        ItemCode NVARCHAR(50) NULL,
+        ItemName NVARCHAR(200) NULL,
+        ItemNamee NVARCHAR(200) NULL,
+        UnitId INT NULL,
+        UnitName NVARCHAR(50) NULL,
+        UnitNamee NVARCHAR(50) NULL,
+        discountvalue FLOAT NULL,
+        OpeningBalance FLOAT NULL
+    );
+
+    --/* 6) سطر ""رصيد سابق"" — إلزامي لكل حساب */
+    --INSERT INTO #Main (
+    --    ChqueNum, ManualNo, RecordDateH, Double_Entry_Vouchers_ID,
+    --    DEV_Value, Credit_Or_Debit,
+    --    Account_Code, DEV_DES, DevDESE, Account_Name, DEV_ID_Line_No, NotesTypeName,
+    --    UserID, UserName, RecordDate, ReceiptID, Notes_ID, OperaID,
+    --    Transaction_ID, Transaction_Serial, Transaction_Date, Posted, TransactionTypeName,
+    --    PostedDate, PostedUserID, Account_Interval_ID, NoteDate, NoteType, NoteSerial,
+    --    Note_Value, Account_Serial, Account_NameEng, Parent_Account_Code, Branch, Sum_account,
+    --    cost_center, currenct_code, Remark, note_value_by_characters, foxy_no,
+    --    DEV_ID_Line_No1, project_id, NotesTypeNamee, TransactionEnglishName, opr_fullcode,
+    --    NoteSerial1, branch_id, ActivityTypeId,
+    --    opening_balance, opening_balance_type, notes_all, DEV_ValueE, currency, rate, Name, NameE,
+    --    branch_name, branch_namee, RegionID, DescAccount, CusNamee, CusName, Emp_Name, Emp_Namee, Emp_Code,
+    --    Item_ID, ShowQty, showPrice, Transaction_Type, StockEffect, ItemCode, ItemName, ItemNamee,
+    --    UnitId, UnitName, UnitNamee, discountvalue,
+    --    OpeningBalance
+    --)
+    --SELECT
+    --    NULL, NULL, NULL, NULL,
+    --    -- نوزّع الرصيد على طرف واحد (مدين/دائن) حسب الإشارة
+    --    CASE WHEN OB.OpeningBalance >= 0 THEN OB.OpeningBalance ELSE ABS(OB.OpeningBalance) END,
+    --    CASE WHEN OB.OpeningBalance >= 0 THEN 0 ELSE 1 END,
+    --    A.Account_Code,
+    --    N'رصيد سابق حتى ' + CONVERT(NVARCHAR(10), @StartDate, 120),
+    --    NULL,
+    --    A.Account_Name,
+    --    -1,    -- يظهر أول صف
+    --    NULL,
+    --    NULL, NULL,
+    --    @StartDate,   -- نفس يوم البداية (والترتيب يحطّه أول صف بسبب DEV_ID_Line_No=-1)
+    --    NULL, NULL, NULL,
+    --    NULL, NULL, NULL, 0, NULL,
+    --    NULL, NULL, NULL, NULL, NULL, NULL,
+    --    NULL,
+    --    A.Account_Serial, A.Account_NameEng, A.Parent_Account_Code, NULL, NULL,
+    --    NULL, NULL, NULL, NULL, NULL,
+    --    NULL, NULL, NULL, NULL, NULL,
+    --    NULL, NULL, NULL,
+    --    A.opening_balance, A.opening_balance_type, NULL, NULL, NULL, NULL, NULL, NULL,
+    --    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    --    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    --    NULL, NULL, NULL, NULL,
+    --    OB.OpeningBalance
+    --FROM #Acc X
+    --JOIN dbo.ACCOUNTS A ON A.Account_Code = X.Account_Code
+    --LEFT JOIN #OB OB ON OB.Account_Code = A.Account_Code;
+
+    /* 7) حركات الفترة */
+    INSERT INTO #Main (
+        ChqueNum,ManualNo,RecordDateH,Double_Entry_Vouchers_ID,DEV_Value,Credit_Or_Debit,
+        Account_Code,DEV_DES,DevDESE,Account_Name,DEV_ID_Line_No,NotesTypeName,
+        UserID,UserName,RecordDate,ReceiptID,Notes_ID,OperaID,
+        Transaction_ID,Transaction_Serial,Transaction_Date,Posted,TransactionTypeName,
+        PostedDate,PostedUserID,Account_Interval_ID,NoteDate,NoteType,NoteSerial,Note_Value,
+        Account_Serial,Account_NameEng,Parent_Account_Code,Branch,Sum_account,cost_center,
+        currenct_code,Remark,note_value_by_characters,foxy_no,DEV_ID_Line_No1,project_id,
+        NotesTypeNamee,TransactionEnglishName,opr_fullcode,NoteSerial1,branch_id,ActivityTypeId,
+        opening_balance,opening_balance_type,notes_all,DEV_ValueE,currency,rate,Name,NameE,
+        branch_name,branch_namee,RegionID,DescAccount,CusNamee,CusName,Emp_Name,Emp_Namee,Emp_Code,
+        Item_ID,ShowQty,showPrice,Transaction_Type,StockEffect,ItemCode,ItemName,ItemNamee,
+        UnitId,UnitName,UnitNamee,discountvalue,OpeningBalance
+    )
+    SELECT
+        B.ChqueNum,B.ManualNo,B.RecordDateH,B.Double_Entry_Vouchers_ID,B.DEV_Value,B.Credit_Or_Debit,
+        B.Account_Code,B.DEV_DES,B.DevDESE,B.Account_Name,B.DEV_ID_Line_No,B.NotesTypeName,
+        B.UserID,B.UserName,B.RecordDateX,B.ReceiptID,B.Notes_ID,B.OperaID,
+        B.Transaction_ID,B.Transaction_Serial,B.Transaction_Date,B.Posted,B.TransactionTypeName,
+        B.PostedDate,B.PostedUserID,B.Account_Interval_ID,B.NoteDate,B.NoteType,
+        LTRIM(STR(B.NoteSerial, 38, 0)) AS NoteSerial,B.Note_Value,
+        B.Account_Serial,B.Account_NameEng,B.Parent_Account_Code,B.Branch,B.Sum_account,B.cost_center,
+        B.currenct_code,B.Remark,B.note_value_by_characters,B.foxy_no,B.DEV_ID_Line_No1,B.project_id,
+        B.NotesTypeNamee,B.TransactionEnglishName,B.opr_fullcode,
+        LTRIM(STR(B.NoteSerial1, 38, 0)) AS NoteSerial1,B.branch_id,B.ActivityTypeId,
+        B.OB_Stored,B.opening_balance_type,B.notes_all,B.DEV_ValueE,B.currency,B.rate,B.Name,B.NameE,
+        B.branch_name,B.branch_namee,B.RegionID,B.DescAccount,
+        C.CusNamee,C.CusName,E.Emp_Name,E.Emp_Namee,
+        (SELECT TOP(1) Emp_Code FROM dbo.TblEmployee EE
+         WHERE B.Account_Code IN (ISNULL(EE.Account_code,''),ISNULL(EE.Account_code1,''),ISNULL(EE.Account_code2,''),
+                                  ISNULL(EE.Account_code3,''),ISNULL(EE.Account_code4,''),ISNULL(EE.Account_code5,''))),
+        CASE WHEN @IsDetailedReport=1 THEN TD.Item_ID END,
+        CASE WHEN @IsDetailedReport=1 THEN TD.ShowQty END,
+        CASE WHEN @IsDetailedReport=1 THEN TD.showPrice END,
+        CASE WHEN @IsDetailedReport=1 THEN TT.Transaction_Type END,
+        CASE WHEN @IsDetailedReport=1 THEN TT.StockEffect END,
+        CASE WHEN @IsDetailedReport=1 THEN Itm.ItemCode END,
+        CASE WHEN @IsDetailedReport=1 THEN Itm.ItemName END,
+        CASE WHEN @IsDetailedReport=1 THEN Itm.ItemNamee END,
+        CASE WHEN @IsDetailedReport=1 THEN TD.UnitId END,
+        CASE WHEN @IsDetailedReport=1 THEN U.UnitName END,
+        CASE WHEN @IsDetailedReport=1 THEN U.UnitNamee END,
+        CASE WHEN @IsDetailedReport=1 THEN TD.discountvalue END,
+        COALESCE(OB.OpeningBalance, B.OB_Stored, 0) AS OpeningBalance
+    FROM #InRange B
+    LEFT JOIN #OB OB ON OB.Account_Code = B.Account_Code
+    LEFT JOIN dbo.Transactions TR   ON TR.Transaction_ID = B.Transaction_ID
+    LEFT JOIN dbo.TblCustemers C    ON C.CusID = TR.CusID
+    LEFT JOIN dbo.TblEmployee  E    ON E.Account_Code = B.Account_Code
+    LEFT JOIN dbo.Transaction_Details TD ON (@IsDetailedReport=1 AND TD.Transaction_ID = B.Transaction_ID)
+    LEFT JOIN dbo.Transactions        TR2 ON (@IsDetailedReport=1 AND TR2.Transaction_ID = B.Transaction_ID)
+    LEFT JOIN dbo.TransactionTypes    TT  ON (@IsDetailedReport=1 AND TT.Transaction_Type = TR2.Transaction_Type)
+    LEFT JOIN dbo.TblItems            Itm ON (@IsDetailedReport=1 AND Itm.ItemID = TD.Item_ID)
+    LEFT JOIN dbo.TblUnites           U   ON (@IsDetailedReport=1 AND U.UnitID   = TD.UnitId);
+
+    /* 8) إخراج مرتّب: السطر الافتتاحي يطلع أول حاجة لكل حساب */
+    SELECT *
+    FROM #Main
+    ORDER BY
+        Account_Code,
+        RecordDate,
+        CASE WHEN ISNUMERIC(NoteSerial1) = 1 THEN CAST(NoteSerial1 AS BIGINT) ELSE 0 END,
+        DEV_ID_Line_No;
+
+    /* تنظيف */
+    DROP TABLE #Main;
+    DROP TABLE #InRange;
+    DROP TABLE #OB;
+    --DROP TABLE #MOVES;
+    --DROP TABLE #OB_ONLY;
+    DROP TABLE #BaseAll;
+    DROP TABLE #Acc;
+END
+
+--Select IsFirstYear,* from  dbo.TblyearsData
+--Select * from DOUBLE_ENTREY_VOUCHERS1 where Account_Code = 'a1a2a2a1a4a1'"
+"RSMDB","dbo","sp_GetBranchQRInfo","
+
+
+CREATE PROCEDURE sp_GetBranchQRInfo
+    @BranchID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT
+        BB.branch_namee,
+        ActivityName = 
+            CASE 
+                WHEN NULLIF(LTRIM(RTRIM(TA.namee)), '') IS NOT NULL 
+                THEN TA.namee 
+                ELSE BB.branch_namee 
+            END,
+        VATRegNo = 
+            CASE 
+                WHEN NULLIF(LTRIM(RTRIM(TA.VATRegNo)), '') IS NOT NULL 
+                THEN TA.VATRegNo 
+                ELSE BB.VATRegNo 
+            END
+    FROM 
+        TblBranchesData AS BB
+        LEFT JOIN tblActivitesType AS TA ON TA.id = BB.ActivityTypeId
+    WHERE 
+        BB.branch_id = @BranchID;
+END
+
+
+"
+"RSMDB","dbo","sp_GetEInvoiceDataForReport","
+
+CREATE PROCEDURE sp_GetEInvoiceDataForReport
+    -- هذا هو الباراميتر الوحيد الذي يأتي من المستخدم
+    @InvoiceID NVARCHAR(100), 
+    
+    -- هذه الباراميترات تأتي من كود الفيجوال بيسك (بيانات الشركة)
+    @SellerNameEn NVARCHAR(255),
+    @SellerNameAr NVARCHAR(255),
+    @RegNoCom NVARCHAR(100),
+    @Vatregestriationnumber NVARCHAR(50)
+AS
+BEGIN
+    SET NOCOUNT ON;
+	
+    SELECT  
+        -- استخدام الباراميترات التي تم تمريرها
+        SellerNameEn = @SellerNameEn, 
+        SellerNameAr = @SellerNameAr, 
+        RegNoComCom2 = @RegNoCom,            -- (لاحظ أن اسم الحقل هنا غريب)
+        VatregestriationnumberCom = @Vatregestriationnumber, 
+
+        -- باقي الحقول من الجداول
+        dbo.tblEInvoice.ID, dbo.tblEInvoice.InvoiceID, tblEInvoice.IqarName, 
+        tblEInvoice.ManualInvoiceNo, dbo.tblEInvoice.DefaultInvoicetype, 
+        dbo.tblEInvoice.ErrorMessageS, dbo.tblEInvoice.IssueDate, 
+        dbo.tblEInvoice.IssueTim, dbo.tblEInvoice.DocumentCurrencyCode, 
+        tblEInvoice.NewNO, tblEInvoice.ComResid, 
+        dbo.tblEInvoice.TaxCurrencyCode, dbo.tblEInvoice.StreetName, 
+        dbo.tblEInvoice.BuildingNumber, dbo.tblEInvoice.CityName, 
+        dbo.tblEInvoice.PostalZone, dbo.tblEInvoice.CitySubdivisionName, 
+        dbo.tblEInvoice.RegistrationName, 
+        dbo.tblEInvoice.InvoiceID as NoteSerial11, 
+        dbo.tblEInvoice.CompanyID, dbo.tblEInvoice.CoCRCode, 
+        dbo.tblEInvoice.PayableAmount, dbo.tblEInvoice.VatValue, 
+        dbo.tblEInvoice.Id700, dbo.tblEInvoice.serial, dbo.tblEInvoice.ExcelRow, 
+        dbo.tblEInvoice.ExcelFile, dbo.tblEInvoice.QrCodeData, 
+        dbo.tblEInvoice.QrCodeDataPath, dbo.tblEInvoice.QrCodeImage, 
+        dbo.tblEInvoice.zatcaStatus, dbo.tblEInvoice.InvoiceTypeCodeID, 
+        dbo.tblEInvoice.InvoiceTypeCodename, 
+        dbo.tblEInvoice.AdditionalDocumentReferencePIH, 
+        dbo.tblEInvoice.InvoiceDocumentReferenceID, 
+        dbo.tblEInvoice.AdditionalDocumentReferenceICVUUID, 
+        dbo.tblEInvoice.ActualDeliveryDate, dbo.tblEInvoice.LatestDeliveryDate, 
+        dbo.tblEInvoice.RecTime, dbo.tblEInvoice.Transaction_ID, 
+        dbo.tblEInvoice.warrningmessage, dbo.tblEInvoice.PaymentMeansCode, 
+        dbo.tblEInvoice.InstructionNote, dbo.tblEInvoice.Iban, 
+        dbo.tblEInvoice.paymentnote, dbo.tblEInvoice.AdditionalStreetName, 
+        dbo.tblEInvoice.PlotIdentification, dbo.tblEInvoice.CountrySubentity, 
+        dbo.tblEInvoice.IdentificationCode, dbo.tblEInvoice.last_changed, 
+        dbo.tblEInvoice.Identificationid, dbo.tblEInvoice.schemeID, 
+        dbo.tblEInvoice.TaxCategoryPercent, dbo.tblEInvoice.TaxCategoryID, 
+        dbo.tblEInvoice.Export, dbo.tblEInvoice.branch_id, 
+        dbo.tblEInvoice.branch_name, dbo.tblEInvoice.branchname, 
+        dbo.tblEInvoice.GroupUniqueCode, dbo.tblEInvoice.GroupUniqueFileMaster, 
+        
+        -- حقول من الجدول الثاني
+        dbo.tblEInvoice2.ItemName, 
+        dbo.tblEInvoice2.Price,  -- (تم حذف التكرار الذي كان هنا)
+        dbo.tblEInvoice2.Qty, 
+        dbo.tblEInvoice2.PayableAmount AS PayableAmount2, 
+        dbo.tblEInvoice2.VatValue  VatValue2
+        
+        -- (تم حذف الجزء المكرر من إدخال بيانات الشركة الذي كان في نهاية الكويري)
+        
+    FROM 
+        tblEInvoice 
+        LEFT OUTER JOIN tblEInvoice2 ON tblEInvoice.InvoiceID = tblEInvoice2.InvoiceID
+    WHERE 
+        -- الاستعلام الآمن باستخدام الباراميتر
+        (dbo.tblEInvoice.InvoiceID = @InvoiceID);
+END"
+"RSMDB","dbo","usp_FullDbMaintenance","
+----------------------------------------------------
+-- ستورد بروسيجر الصيانة الكاملة
+----------------------------------------------------
+CREATE PROCEDURE dbo.usp_FullDbMaintenance
+(
+      @RebuildThreshold   FLOAT = 30    -- لو الفراجمنتشن >= القيمة دي: REBUILD
+    , @ReorganizeFrom     FLOAT = 5     -- من القيمة دي لحد الحد الأعلى: REORGANIZE
+    , @MinPageCount       INT   = 100   -- تجاهل الإندكسات الصغيرة أقل من كذا صفحة
+    , @TopMissingIndexes  INT   = 50    -- عدد صفوف ريبورت الـ Missing Indexes
+    , @TopQueries         INT   = 20    -- عدد صفوف ريبورت الـ Top Queries
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    PRINT '===============================================';
+    PRINT 'بدء صيانة الداتا بيز: ' + DB_NAME();
+    PRINT 'التاريخ/الوقت: ' + CONVERT(NVARCHAR(30), GETDATE(), 120);
+    PRINT '===============================================';
+
+    ------------------------------------------------
+    -- 1) صيانة الإندكسات (Rebuild / Reorganize)
+    ------------------------------------------------
+    PRINT 'الخطوة 1: حساب الفراجمنتشن وصيانة الإندكسات...';
+
+    IF OBJECT_ID('tempdb..#Frag') IS NOT NULL DROP TABLE #Frag;
+
+    SELECT 
+          t.name      AS TableName
+        , s.name      AS SchemaName
+        , i.name      AS IndexName
+        , ips.index_id
+        , ips.avg_fragmentation_in_percent AS FragPercent
+        , ips.page_count
+    INTO #Frag
+    FROM sys.dm_db_index_physical_stats(DB_ID(), NULL, NULL, NULL, 'SAMPLED') ips
+    JOIN sys.indexes i   ON ips.object_id = i.object_id AND ips.index_id = i.index_id
+    JOIN sys.tables t    ON t.object_id  = i.object_id
+    JOIN sys.schemas s   ON t.schema_id = s.schema_id
+    WHERE 
+        i.type IN (1,2)              -- clustered, nonclustered
+        AND ips.page_count >= @MinPageCount
+        AND t.is_ms_shipped = 0;
+
+    DECLARE 
+          @TableName   SYSNAME
+        , @SchemaName  SYSNAME
+        , @IndexName   SYSNAME
+        , @IndexId     INT
+        , @Frag        FLOAT
+        , @SQL         NVARCHAR(MAX);
+
+    DECLARE curIndexes CURSOR LOCAL FAST_FORWARD FOR
+        SELECT TableName, SchemaName, IndexName, index_id, FragPercent
+        FROM #Frag
+        WHERE FragPercent >= @ReorganizeFrom
+        ORDER BY FragPercent DESC;
+
+    OPEN curIndexes;
+    FETCH NEXT FROM curIndexes INTO @TableName, @SchemaName, @IndexName, @IndexId, @Frag;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        IF @Frag >= @RebuildThreshold
+        BEGIN
+            -- REBUILD
+            SET @SQL = N'ALTER INDEX [' + @IndexName + N'] ON [' + @SchemaName + N'].[' + @TableName + N'] REBUILD;';
+        END
+        ELSE
+        BEGIN
+            -- REORGANIZE
+            SET @SQL = N'ALTER INDEX [' + @IndexName + N'] ON [' + @SchemaName + N'].[' + @TableName + N'] REORGANIZE;';
+        END
+
+        PRINT @SQL;
+
+        BEGIN TRY
+            EXEC (@SQL);
+        END TRY
+        BEGIN CATCH
+            PRINT 'خطأ أثناء صيانة الإندكس: ' 
+                  + ISNULL(@SchemaName,'') + '.' + ISNULL(@TableName,'') 
+                  + ' - ' + ISNULL(@IndexName,'')
+                  + ' => ' + ERROR_MESSAGE();
+        END CATCH;
+
+        FETCH NEXT FROM curIndexes INTO @TableName, @SchemaName, @IndexName, @IndexId, @Frag;
+    END
+
+    CLOSE curIndexes;
+    DEALLOCATE curIndexes;
+
+    PRINT 'انتهاء خطوة صيانة الإندكسات.';
+    PRINT '-----------------------------------------------';
+
+    ------------------------------------------------
+    -- 2) تحديث الإحصائيات UPDATE STATISTICS
+    ------------------------------------------------
+    PRINT 'الخطوة 2: تحديث الإحصائيات لكل الجداول...';
+
+    DECLARE @FullTableName SYSNAME;
+
+    DECLARE curTables CURSOR LOCAL FAST_FORWARD FOR
+        SELECT QUOTENAME(s.name) + '.' + QUOTENAME(t.name)
+        FROM sys.tables t
+        JOIN sys.schemas s ON t.schema_id = s.schema_id
+        WHERE t.is_ms_shipped = 0;
+
+    OPEN curTables;
+    FETCH NEXT FROM curTables INTO @FullTableName;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SET @SQL = N'UPDATE STATISTICS ' + @FullTableName + ' WITH FULLSCAN;';
+        PRINT @SQL;
+
+        BEGIN TRY
+            EXEC (@SQL);
+        END TRY
+        BEGIN CATCH
+            PRINT 'خطأ أثناء تحديث الإحصائيات للجدول: ' 
+                  + @FullTableName + ' => ' + ERROR_MESSAGE();
+        END CATCH;
+
+        FETCH NEXT FROM curTables INTO @FullTableName;
+    END
+
+    CLOSE curTables;
+    DEALLOCATE curTables;
+
+    PRINT 'انتهاء خطوة تحديث الإحصائيات.';
+    PRINT '-----------------------------------------------';
+
+    ------------------------------------------------
+    -- 3) ريبورت الاقتراحات: Missing Indexes
+    ------------------------------------------------
+    PRINT 'الخطوة 3: عرض اقتراحات الإندكسات الناقصة (Missing Indexes)...';
+
+    SELECT TOP (@TopMissingIndexes)
+          DatabaseName      = DB_NAME(mid.database_id)
+        , SchemaName       = OBJECT_SCHEMA_NAME(mid.object_id, mid.database_id)
+        , TableName        = OBJECT_NAME(mid.object_id, mid.database_id)
+        , TotalReads       = (migs.user_seeks + migs.user_scans)
+        , ImprovementEstimate = migs.avg_total_user_cost * (migs.user_seeks + migs.user_scans)
+        , mid.equality_columns
+        , mid.inequality_columns
+        , mid.included_columns
+        , CreateIndexStatement =
+            'CREATE NONCLUSTERED INDEX IX_Auto_' 
+            + REPLACE(OBJECT_NAME(mid.object_id, mid.database_id), ' ', '_')
+            + '_' + CAST(migs.group_handle AS VARCHAR(10))
+            + ' ON [' + OBJECT_SCHEMA_NAME(mid.object_id, mid.database_id) + '].['
+            + OBJECT_NAME(mid.object_id, mid.database_id) + ']'
+            + ' (' 
+                + ISNULL(mid.equality_columns,'')
+                + CASE 
+                    WHEN mid.equality_columns IS NOT NULL 
+                         AND mid.inequality_columns IS NOT NULL 
+                    THEN ',' ELSE '' END
+                + ISNULL(mid.inequality_columns,'')
+              + ')'
+            + CASE 
+                WHEN mid.included_columns IS NOT NULL 
+                THEN ' INCLUDE (' + mid.included_columns + ')' 
+                ELSE '' 
+              END
+    FROM sys.dm_db_missing_index_group_stats AS migs
+    JOIN sys.dm_db_missing_index_groups       AS mig  ON migs.group_handle = mig.index_group_handle
+    JOIN sys.dm_db_missing_index_details      AS mid  ON mig.index_handle  = mid.index_handle
+    WHERE mid.database_id = DB_ID()
+    ORDER BY ImprovementEstimate DESC;
+
+    PRINT 'انتهاء ريبورت Missing Indexes.';
+    PRINT '-----------------------------------------------';
+
+    ------------------------------------------------
+    -- 4) ريبورت الإندكسات غير المستخدمة (مرشحة للمراجعة)
+    ------------------------------------------------
+    PRINT 'الخطوة 4: عرض الإندكسات غير المستخدمة تقريبًا...';
+
+    ;WITH IndexUsage AS
+    (
+        SELECT 
+              SchemaName   = s.name
+            , TableName    = t.name
+            , IndexName    = i.name
+            , i.index_id
+            , i.is_primary_key
+            , i.is_unique
+            , user_seeks   = COALESCE(us.user_seeks,0)
+            , user_scans   = COALESCE(us.user_scans,0)
+            , user_lookups = COALESCE(us.user_lookups,0)
+            , user_updates = COALESCE(us.user_updates,0)
+            , total_reads  = COALESCE(us.user_seeks,0)
+                            + COALESCE(us.user_scans,0)
+                            + COALESCE(us.user_lookups,0)
+        FROM sys.indexes i
+        JOIN sys.tables t   ON t.object_id = i.object_id
+        JOIN sys.schemas s  ON t.schema_id = s.schema_id
+        LEFT JOIN sys.dm_db_index_usage_stats us
+            ON us.object_id = i.object_id
+           AND us.index_id  = i.index_id
+           AND us.database_id = DB_ID()
+        WHERE 
+            t.is_ms_shipped = 0
+            AND i.type_desc <> 'HEAP'
+    )
+    SELECT 
+          SchemaName
+        , TableName
+        , IndexName
+        , user_seeks
+        , user_scans
+        , user_lookups
+        , user_updates
+        , total_reads
+    FROM IndexUsage
+    WHERE 
+        total_reads = 0    -- مفيش قراءات تقريبًا
+        AND user_updates > 0
+        AND is_primary_key = 0
+        AND is_unique      = 0
+    ORDER BY user_updates DESC;
+
+    PRINT 'انتهاء ريبورت الإندكسات غير المستخدمة.';
+    PRINT '-----------------------------------------------';
+
+    ------------------------------------------------
+    -- 5) ريبورت الاستعلامات التقيلة (Top Expensive Queries)
+    ------------------------------------------------
+    PRINT 'الخطوة 5: عرض أكثر الاستعلامات تكلفة...';
+
+    SELECT TOP (@TopQueries)
+          AvgDuration_ms   = qs.total_elapsed_time / qs.execution_count
+        , qs.execution_count
+        , AvgLogicalReads  = qs.total_logical_reads / qs.execution_count
+        , AvgCPU           = qs.total_worker_time / qs.execution_count
+        , DatabaseName     = DB_NAME(st.dbid)
+        , SchemaName       = OBJECT_SCHEMA_NAME(st.objectid, st.dbid)
+        , ObjectName       = OBJECT_NAME(st.objectid, st.dbid)
+        , QueryText        = SUBSTRING(
+                                st.text,
+                                (qs.statement_start_offset/2)+1,
+                                ((CASE qs.statement_end_offset
+                                    WHEN -1 THEN DATALENGTH(st.text)
+                                    ELSE qs.statement_end_offset
+                                  END - qs.statement_start_offset)/2)+1
+                             )
+    FROM sys.dm_exec_query_stats qs
+    CROSS APPLY sys.dm_exec_sql_text(qs.sql_handle) st
+    WHERE DB_NAME(st.dbid) = DB_NAME()
+    ORDER BY AvgDuration_ms DESC;
+
+    PRINT 'انتهاء ريبورت Top Queries.';
+    PRINT '===============================================';
+    PRINT 'انتهاء ستورد بروسيجر الصيانة الكاملة للداتا بيز.';
+    PRINT '===============================================';
+
+END
+"
+"RSMDB","dbo","usp_QuickDbMaintenance","
+----------------------------------------------------
+-- ستورد بروسيجر الصيانة السريعة/الخفيفة
+----------------------------------------------------
+CREATE PROCEDURE dbo.usp_QuickDbMaintenance
+(
+      @ReorganizeFrom   FLOAT = 10    -- من نسبة فراجمنتشن كام يبدأ يعمل REORGANIZE
+    , @MinPageCount     INT   = 200   -- تجاهل الإندكسات الصغيرة (أقل من كذا صفحة)
+    , @PreviewOnly      BIT   = 0     -- لو 1: يطبع الأوامر بس من غير تنفيذ (للمراجعة)
+)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    PRINT '===============================================';
+    PRINT 'بدء الصيانة السريعة للداتا بيز: ' + DB_NAME();
+    PRINT 'التاريخ/الوقت: ' + CONVERT(NVARCHAR(30), GETDATE(), 120);
+    PRINT '===============================================';
+
+    ------------------------------------------------
+    -- 1) REORGANIZE للإندكسات ذات الفراجمنتشن المتوسط
+    ------------------------------------------------
+    PRINT 'الخطوة 1: حساب الفراجمنتشن وعمل REORGANIZE للإندكسات المتفرجمنتة...';
+
+    IF OBJECT_ID('tempdb..#FragQuick') IS NOT NULL DROP TABLE #FragQuick;
+
+    SELECT 
+          t.name      AS TableName
+        , s.name      AS SchemaName
+        , i.name      AS IndexName
+        , ips.index_id
+        , ips.avg_fragmentation_in_percent AS FragPercent
+        , ips.page_count
+    INTO #FragQuick
+    FROM sys.dm_db_index_physical_stats(DB_ID(), NULL, NULL, NULL, 'LIMITED') ips
+    JOIN sys.indexes i   ON ips.object_id = i.object_id AND ips.index_id = i.index_id
+    JOIN sys.tables t    ON t.object_id  = i.object_id
+    JOIN sys.schemas s   ON t.schema_id = s.schema_id
+    WHERE 
+        i.type IN (1,2)              -- clustered, nonclustered
+        AND ips.page_count >= @MinPageCount
+        AND t.is_ms_shipped = 0
+        AND ips.avg_fragmentation_in_percent >= @ReorganizeFrom;
+
+    DECLARE 
+          @TableName   SYSNAME
+        , @SchemaName  SYSNAME
+        , @IndexName   SYSNAME
+        , @IndexId     INT
+        , @Frag        FLOAT
+        , @SQL         NVARCHAR(MAX);
+
+    DECLARE curQuick CURSOR LOCAL FAST_FORWARD FOR
+        SELECT TableName, SchemaName, IndexName, index_id, FragPercent
+        FROM #FragQuick
+        ORDER BY FragPercent DESC;
+
+    OPEN curQuick;
+    FETCH NEXT FROM curQuick INTO @TableName, @SchemaName, @IndexName, @IndexId, @Frag;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SET @SQL = N'ALTER INDEX [' + @IndexName + N'] ON [' 
+                    + @SchemaName + N'].[' + @TableName + N'] REORGANIZE;';
+
+        PRINT '-- Frag = ' + CONVERT(NVARCHAR(10), @Frag) 
+              + ' | ' + @SchemaName + '.' + @TableName + ' -> ' + @IndexName;
+        PRINT @SQL;
+
+        IF @PreviewOnly = 0
+        BEGIN
+            BEGIN TRY
+                EXEC (@SQL);
+            END TRY
+            BEGIN CATCH
+                PRINT 'خطأ أثناء REORGANIZE للإندكس: '
+                      + ISNULL(@SchemaName,'') + '.' + ISNULL(@TableName,'')
+                      + ' - ' + ISNULL(@IndexName,'')
+                      + ' => ' + ERROR_MESSAGE();
+            END CATCH;
+        END
+
+        FETCH NEXT FROM curQuick INTO @TableName, @SchemaName, @IndexName, @IndexId, @Frag;
+    END
+
+    CLOSE curQuick;
+    DEALLOCATE curQuick;
+
+    PRINT 'انتهاء خطوة REORGANIZE.';
+    PRINT '-----------------------------------------------';
+
+    ------------------------------------------------
+    -- 2) تحديث إحصائيات خفيف باستخدام sp_updatestats
+    ------------------------------------------------
+    PRINT 'الخطوة 2: تحديث الإحصائيات باستخدام sp_updatestats (خفيفة)...';
+
+    IF @PreviewOnly = 0
+    BEGIN
+        -- sp_updatestats يقوم بتحديث الإحصائيات للجداول التي تم تعديل بياناتها فقط
+        EXEC sp_updatestats;
+    END
+    ELSE
+    BEGIN
+        PRINT 'PreviewOnly = 1 => تم تخطي تنفيذ sp_updatestats (عرض فقط).';
+    END
+
+    PRINT 'انتهاء الصيانة السريعة للداتا بيز.';
+    PRINT '===============================================';
+
+END
+"

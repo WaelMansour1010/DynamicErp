@@ -1,0 +1,7 @@
+type_desc|schema_name|object_name
+---------|-----------|-----------
+SQL_STORED_PROCEDURE|dbo|usp_CriticalRecovery_AnalyzeInvoices
+SQL_STORED_PROCEDURE|dbo|usp_CriticalRecovery_ApproveAndExecute
+SQL_STORED_PROCEDURE|dbo|usp_POS_Accounting_Report
+SQL_STORED_PROCEDURE|dbo|usp_POS_Journal_Search
+SQL_STORED_PROCEDURE|dbo|usp_POS_SalesInvoices_Search

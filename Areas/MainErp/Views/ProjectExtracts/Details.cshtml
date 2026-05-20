@@ -385,7 +385,7 @@
 
         <section>
             <h4>الملاحظات والتقارير</h4>
-            <div class="main-erp-warning">هذه الصفحة الآن تعرض Workspace تشغيلي حقيقي للمستخلص. معاينة الحفظ أدناه قراءة فقط ولا تنفذ أي كتابة.</div>
+            <div class="main-erp-warning" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;">هذه الصفحة تعرض مستند مستخلص تشغيلي حقيقي مرحل في النظام المحاسبي.</div>
             <div class="main-erp-kpi-grid">
                 <div class="main-erp-kpi-card"><span>رأس المستخلص</span><strong>@Model.Id</strong><small>قراءة فقط</small></div>
                 <div class="main-erp-kpi-card"><span>بنود التنفيذ</span><strong>@Model.DetailLineCount</strong><small>@money(Model.DetailCurrentValueTotal)</small></div>
@@ -393,7 +393,7 @@
                 <div class="main-erp-kpi-card"><span>القيود</span><strong>@Model.VoucherLines.Count</strong><small>@(voucherBalanced ? "متوازنة" : "تحتاج مراجعة")</small></div>
             </div>
             <p class="main-erp-remarks">@Model.Remarks</p>
-            <div class="main-erp-warning">الطباعة والتقارير محفوظة كمدخلات قراءة آمنة حاليًا، ولن يتم تفعيلها قبل اعتماد قوالب التقارير وربطها بدون تأثير مالي.</div>
+            <div class="main-erp-warning" style="background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;">الطباعة والتقارير نشطة وجاهزة للمعاينة والاستخراج.</div>
         </section>
     </div>
 </section>

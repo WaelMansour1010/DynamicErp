@@ -1,0 +1,118 @@
+﻿"DatabaseName","SchemaName","ViewName","definition"
+"Alromaizan","dbo","vw_AvailableVehicleStock","
+CREATE   VIEW dbo.vw_AvailableVehicleStock
+AS
+SELECT vs.Id, vs.ItemId, vs.ChassisNo, vs.EngineNo, vs.CarTypeId, vs.CarModelId, vs.CarColorId, vs.ManufacturingYear, vs.PlateNo, vs.VehicleNotes,
+       vs.PurchaseInvoiceId, vs.PurchaseInvoiceDetailId, vs.PurchaseDate, vs.PurchaseCost, vs.WarehouseId, vs.BranchId,
+       ct.ArName AS CarTypeName, cm.ArName AS CarModelName, cc.ArName AS CarColorName, w.ArName AS WarehouseName
+FROM dbo.VehicleStock vs
+LEFT JOIN dbo.CarType ct ON ct.Id = vs.CarTypeId
+LEFT JOIN dbo.CarModel cm ON cm.Id = vs.CarModelId
+LEFT JOIN dbo.CarColor cc ON cc.Id = vs.CarColorId
+LEFT JOIN dbo.Warehouse w ON w.Id = vs.WarehouseId
+WHERE vs.IsDeleted = 0 AND vs.VehicleStatusId = 1;
+"
+"Alromaizan","dbo","vw_PropertyBatchDetailed","
+
+CREATE VIEW [dbo].[vw_PropertyBatchDetailed]
+AS
+SELECT 
+    pb.Id,
+    pb.MainDocId,
+    p.Code AS PropertyCode,
+    p.ArName AS PropertyName,
+    pb.BatchNo,
+    pb.BatchDate,
+    
+    -- القيم الأساسية
+    pb.BatchValueBeforeDiscount,
+    pb.Discount,
+    pb.BatchValueAfterDiscount,
+    pb.BatchTaxPercentage,
+    pb.BatchTaxValue,
+    
+    -- إجمالي القيمة
+    ISNULL(pb.BatchValueAfterDiscount, 0) + ISNULL(pb.BatchTaxValue, 0) AS TotalBatchValue,
+    
+    -- السداد
+    pb.Paid,
+    (ISNULL(pb.BatchValueAfterDiscount, 0) + ISNULL(pb.BatchTaxValue, 0)) - ISNULL(pb.Paid, 0) AS Remaining,
+    
+    -- نسبة السداد
+    CASE 
+        WHEN (ISNULL(pb.BatchValueAfterDiscount, 0) + ISNULL(pb.BatchTaxValue, 0)) > 0 
+        THEN (ISNULL(pb.Paid, 0) * 100.0) / (ISNULL(pb.BatchValueAfterDiscount, 0) + ISNULL(pb.BatchTaxValue, 0))
+        ELSE 0 
+    END AS PaymentPercentage,
+    
+    -- حالة السداد
+    CASE 
+        WHEN ISNULL(pb.Paid, 0) = 0 THEN 'غير مسدد'
+        WHEN ISNULL(pb.Paid, 0) >= (ISNULL(pb.BatchValueAfterDiscount, 0) + ISNULL(pb.BatchTaxValue, 0)) THEN 'مسدد بالكامل'
+        ELSE 'مسدد جزئياً'
+    END AS PaymentStatus,
+    
+    pb.IsDelivered,
+    pb.IsDeleted,
+    pb.CreatedDate,
+    pb.ModifiedDate,
+    pb.PaymentDate,
+    pb.UserId
+
+FROM PropertyBatch pb
+INNER JOIN Property p ON pb.MainDocId = p.Id
+WHERE pb.IsDeleted = 0 AND p.IsDeleted = 0
+"
+"Alromaizan","dbo","vw_PropertyPaymentSummary","
+
+CREATE VIEW [dbo].[vw_PropertyPaymentSummary]
+AS
+SELECT 
+    p.Id AS PropertyId,
+    p.Code AS PropertyCode,
+    p.ArName AS PropertyName,
+    p.ContractValue,
+    p.ContractValueWithoutTax,
+    p.TaxValue,
+    
+    -- حسابات الدفعات
+    COUNT(pb.Id) AS TotalBatches,
+    SUM(CASE WHEN pb.IsDeleted = 0 THEN 1 ELSE 0 END) AS ActiveBatches,
+    
+    -- حسابات السداد
+    SUM(CASE WHEN pb.IsDeleted = 0 THEN ISNULL(pb.Paid, 0) ELSE 0 END) AS TotalPaid,
+    SUM(CASE WHEN pb.IsDeleted = 0 THEN 
+        (ISNULL(pb.BatchValueAfterDiscount, 0) + ISNULL(pb.BatchTaxValue, 0)) - ISNULL(pb.Paid, 0) 
+        ELSE 0 END) AS TotalRemaining,
+    
+    -- إحصائيات الدفعات
+    SUM(CASE WHEN pb.IsDeleted = 0 AND ISNULL(pb.Paid, 0) = 0 THEN 1 ELSE 0 END) AS UnpaidBatches,
+    SUM(CASE WHEN pb.IsDeleted = 0 AND ISNULL(pb.Paid, 0) > 0 
+             AND ISNULL(pb.Paid, 0) < (ISNULL(pb.BatchValueAfterDiscount, 0) + ISNULL(pb.BatchTaxValue, 0)) 
+        THEN 1 ELSE 0 END) AS PartiallyPaidBatches,
+    SUM(CASE WHEN pb.IsDeleted = 0 AND ISNULL(pb.Paid, 0) >= 
+             (ISNULL(pb.BatchValueAfterDiscount, 0) + ISNULL(pb.BatchTaxValue, 0)) 
+        THEN 1 ELSE 0 END) AS FullyPaidBatches,
+    
+    -- تواريخ
+    MIN(CASE WHEN pb.IsDeleted = 0 THEN pb.BatchDate END) AS FirstBatchDate,
+    MAX(CASE WHEN pb.IsDeleted = 0 THEN pb.BatchDate END) AS LastBatchDate,
+    MAX(CASE WHEN pb.IsDeleted = 0 AND ISNULL(pb.Paid, 0) > 0 THEN pb.ModifiedDate END) AS LastPaymentDate,
+    
+    -- نسب
+    CASE 
+        WHEN SUM(CASE WHEN pb.IsDeleted = 0 THEN 
+                     ISNULL(pb.BatchValueAfterDiscount, 0) + ISNULL(pb.BatchTaxValue, 0) 
+                 ELSE 0 END) > 0 
+        THEN (SUM(CASE WHEN pb.IsDeleted = 0 THEN ISNULL(pb.Paid, 0) ELSE 0 END) * 100.0) / 
+             SUM(CASE WHEN pb.IsDeleted = 0 THEN 
+                     ISNULL(pb.BatchValueAfterDiscount, 0) + ISNULL(pb.BatchTaxValue, 0) 
+                 ELSE 0 END)
+        ELSE 0 
+    END AS PaymentPercentage
+
+FROM Property p
+LEFT JOIN PropertyBatch pb ON p.Id = pb.MainDocId
+WHERE p.IsDeleted = 0
+GROUP BY p.Id, p.Code, p.ArName, p.ContractValue, p.ContractValueWithoutTax, p.TaxValue
+"

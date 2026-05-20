@@ -1,0 +1,4 @@
+﻿"Id","JournalEntryId","Debit","Credit","CurrencyId","Equivalent","AccountId","SourcePageId","SourceId","Notes","CostCenterId","IsPosted","IsDeleted","IsActive","VendorId","PartyType","PartyId","AccountId2","DepartmentId"
+"6899","2917","92000.0000","0.0000","","","635","10366","2","شركة الكاشح التجارية","","False","False","True","","1","278","",""
+"6900","2917","0.0000","80000.0000","","","807","10366","2","","","False","False","True","","","","",""
+"6901","2917","0.0000","12000.0000","","","719","10366","2","","","False","False","True","","","","",""

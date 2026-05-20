@@ -1,0 +1,65 @@
+﻿[
+    {
+        "Name":  "Properties",
+        "Status":  200,
+        "Uri":  "http://localhost:63735/Property?searchWord=ADNAN-P-",
+        "Contains":  true,
+        "Length":  326670
+    },
+    {
+        "Name":  "Units",
+        "Status":  200,
+        "Uri":  "http://localhost:63735/PropertyUnit?searchWord=ADNAN",
+        "Contains":  true,
+        "Length":  312123
+    },
+    {
+        "Name":  "Contracts1096",
+        "Status":  200,
+        "Uri":  "http://localhost:63735/PropertyContract?searchWord=ADNAN-C-1096",
+        "Contains":  true,
+        "Length":  320545
+    },
+    {
+        "Name":  "Contract1096Edit",
+        "Status":  200,
+        "Uri":  "http://localhost:63735/PropertyContract/AddEdit/1227",
+        "Contains":  true,
+        "Length":  541856
+    },
+    {
+        "Name":  "ContractAdvance2131",
+        "Status":  200,
+        "Uri":  "http://localhost:63735/PropertyContract?searchWord=ADNAN-C-2131",
+        "Contains":  true,
+        "Length":  320533
+    },
+    {
+        "Name":  "ContractLarge1748",
+        "Status":  200,
+        "Uri":  "http://localhost:63735/PropertyContract?searchWord=ADNAN-C-1748",
+        "Contains":  true,
+        "Length":  320537
+    },
+    {
+        "Name":  "ReceiptScreen",
+        "Status":  200,
+        "Uri":  "http://localhost:63735/CashReceiptVoucher/AddEdit?cid=1227",
+        "Contains":  true,
+        "Length":  484440
+    },
+    {
+        "Name":  "TerminationScreen",
+        "Status":  200,
+        "Uri":  "http://localhost:63735/PropertyContractTermination/AddEdit",
+        "Contains":  true,
+        "Length":  414853
+    },
+    {
+        "Name":  "IssueScreen",
+        "Status":  200,
+        "Uri":  "http://localhost:63735/CashIssueVoucher/AddEdit",
+        "Contains":  true,
+        "Length":  539843
+    }
+]

@@ -1,0 +1,814 @@
+=================================================================
+DATABASE SCHEMAS FOR INCOMPLETE PROJECTS & EXTRACTS
+=================================================================
+
+-----------------------------------------------------------------
+TABLE: projects
+-----------------------------------------------------------------
+ColumnName | DataType | MaxLen | IsNullable | DefaultValue
+--------------------------------------------------------
+id | int |  | NO | 
+End_user_Account | varchar | 100 | YES | 
+End_user_name | varchar | 100 | YES | 
+sub_contractor_Account | varchar | 100 | YES | 
+sub_contractor_name | varchar | 100 | YES | 
+Fullcode | nvarchar | 50 | YES | 
+prifix | varchar | 50 | YES | 
+Code | varchar | 50 | YES | 
+Project_name | nvarchar | 4000 | YES | 
+Contract_type | nvarchar | 50 | YES | 
+Project_status | varchar | 50 | YES | 
+expanses_account | nvarchar | 50 | YES | 
+REVENUE_account | nvarchar | 50 | YES | 
+Project_account | nvarchar | 50 | YES | 
+project_cost | money |  | YES | 
+branch_no | int |  | YES | 
+departement | nvarchar | 50 | YES | 
+project_code | nvarchar | 50 | YES | 
+branche_ID | nvarchar | 50 | YES | 
+expanses_account_balance | money |  | YES | 
+expansese_account_balance | money |  | YES | 
+expansesm_account_balance | money |  | YES | 
+expansess_account_balance | money |  | YES | 
+REVENUE_account_balance | money |  | YES | 
+Project_account_balance | money |  | YES | 
+Contract_type_name | nvarchar | 50 | YES | 
+End_user_id | nvarchar | 50 | YES | 
+sub_contractor_id | nvarchar | 50 | YES | 
+general_discount | money |  | YES | 
+cost_after_discount | money |  | YES | 
+total | money |  | YES | 
+sub_discount_total | money |  | YES | 
+net | money |  | YES | 
+Material_account | nvarchar | 50 | YES | 
+Salary_account | nvarchar | 50 | YES | 
+legal | varchar | 50 | YES | 
+items_total | money |  | YES | 
+Legal_account_balance | money |  | YES | 
+CurrencyID | int |  | YES | 
+StartDate | datetime |  | YES | 
+Project_nameE | nvarchar | 4000 | YES | 
+opening_balance_voucher_id | float |  | YES | 
+OpenBalanceDate | datetime |  | YES | 
+OpenBalanceType | int |  | YES | 
+OpenBalance | float |  | YES | 
+OpenBalanceType1 | int |  | YES | 
+OpenBalance1 | float |  | YES | 
+OpenBalanceType2 | int |  | YES | 
+OpenBalance2 | float |  | YES | 
+OpenBalanceType3 | int |  | YES | 
+OpenBalance3 | float |  | YES | 
+OpenBalanceType4 | int |  | YES | 
+OpenBalance4 | float |  | YES | 
+EmpId | int |  | YES | 
+EmpId1 | int |  | YES | 
+Pstate | int |  | YES | 
+CashingValue | float |  | YES | 
+EndDate | datetime |  | YES | 
+DiscountPercentage | float |  | YES | 
+Dept_ID | int |  | YES | 
+Remarkss | nvarchar | 4000 | YES | 
+DpNearEndDate | datetime |  | YES | 
+JobeDO | float |  | YES | 
+JobeDOPercent | float |  | YES | 
+JobeGet | float |  | YES | 
+JobeRest | float |  | YES | 
+JobeTimeLeft | int |  | YES | 
+JobeTime | nvarchar | 100 | YES | 
+JobeWork | int |  | YES | 
+JobeContractorID | int |  | YES | 
+WarrantyNO | int |  | YES | 
+WarrantyValue | float |  | YES | 
+WarrDateStart | datetime |  | YES | 
+WarrDateEnd | datetime |  | YES | 
+WarrExtension | float |  | YES | 
+WarrBank | int |  | YES | 
+Amanhid | int |  | YES | 
+Municipalityid | int |  | YES | 
+UserID | int |  | YES | 
+OrderType | int |  | YES | 
+OrderNo | nvarchar | 4000 | YES | 
+EmpSalary | float |  | YES | 
+MangSalary | float |  | YES | 
+ContractNo | nvarchar | 400 | YES | 
+AccountUnderImp | nvarchar | 55 | YES | 
+UnderImp | int |  | YES | 
+OpenBalance5 | float |  | YES | 
+OpenBalanceType5 | int |  | YES | 
+TotalMainDes | float |  | YES | 
+TypeImport | int |  | YES | 
+Path | nvarchar | 4000 | YES | 
+TotalMainDesExe | float |  | YES | 
+UnderAccountBalance | float |  | YES | 
+AcountGood | nvarchar | 55 | YES | 
+OpenBalance6 | float |  | YES | 
+OpenBalanceType6 | int |  | YES | 
+OpenBalance8 | float |  | YES | 
+OpenBalanceType8 | int |  | YES | 
+Insurance | float |  | YES | 
+NoteSerial | nvarchar | 255 | YES | 
+NoteId | int |  | YES | 
+
+-----------------------------------------------------------------
+TABLE: project_billl
+-----------------------------------------------------------------
+ColumnName | DataType | MaxLen | IsNullable | DefaultValue
+--------------------------------------------------------
+id | int |  | NO | 
+bill_date | datetime |  | YES | 
+project_no | nvarchar | 50 | YES | 
+project_name | nvarchar | 4000 | YES | 
+End_user_name | nvarchar | 4000 | YES | 
+Sub_user_name | nvarchar | 50 | YES | 
+End_user_account | nvarchar | 4000 | YES | 
+Sub_user_account | nvarchar | 4000 | YES | 
+bill_to | nvarchar | 4000 | YES | 
+bill_type | nvarchar | 50 | YES | 
+revenue_account | nvarchar | 50 | YES | 
+note_id | int |  | YES | 
+total | money |  | YES | 
+NoteSerial | varchar | 500 | YES | 
+Branch_NO | int |  | YES | 
+dueDate | datetime |  | YES | 
+subContractorId | int |  | YES | 
+discount1ID | int |  | YES | 
+discount2ID | int |  | YES | 
+discount1value | float |  | YES | 
+discount2value | float |  | YES | 
+Remarks | nvarchar | 4000 | YES | 
+ManualNO | nvarchar | 4000 | YES | 
+duedate1 | datetime |  | YES | 
+discount | float |  | YES | 
+Results | float |  | YES | 
+advancedPayment | float |  | YES | 
+UserID | int |  | YES | 
+BillNo | int |  | YES | 
+Period | int |  | YES | 
+PeriodType | int |  | YES | 
+StartDate | datetime |  | YES | 
+Remarks2 | nvarchar | 4000 | YES | 
+AccountUnderImp | nvarchar | 55 | YES | 
+UnderImp | int |  | YES | 
+totalPayed | int |  | YES | 
+NoteSerial1 | nvarchar | 255 | YES | 
+Prefix | nvarchar | 50 | YES | 
+FATYou | float |  | YES | 
+FATValue | float |  | YES | 
+TotalValue | float |  | YES | 
+AccountCodeVat | nvarchar | 55 | YES | 
+ExPercen | float |  | YES | 
+ExPercenID | int |  | YES | 
+PreVAT | float |  | YES | 
+PreBalaValue | float |  | YES | 
+PreBalaVAT | float |  | YES | 
+PreBalaTotal | float |  | YES | 
+PreBalaPayed | float |  | YES | 
+PreBalaRemain | float |  | YES | 
+PreBalaTransPyed | float |  | YES | 
+PreBalaNet | float |  | YES | 
+PreBalaVATYu | float |  | YES | 
+SumVATLine | float |  | YES | 
+SumValueLine | float |  | YES | 
+StartDateProje | datetime |  | YES | 
+NetValue | float |  | YES | 
+PerforValue | float |  | YES | 
+QrCodeData | nvarchar | 255 | YES | 
+QrCodeDataPath | nvarchar | 255 | YES | 
+QrCodeImage | image | 2147483647 | YES | 
+PostedDate | datetime |  | YES | 
+Approved | bit |  | YES | 
+Posted | int |  | YES | 
+CBoBasedON | int |  | YES | 
+OrDer_no2 | int |  | YES | 
+OrDer_no | int |  | YES | 
+DiscountGMater | float |  | YES | 
+DiscountAccount | nvarchar | 50 | YES | 
+TotalBefore | float |  | YES | 
+Discount4 | float |  | YES | 
+Discount3 | float |  | YES | 
+BondAmt | float |  | YES | 
+RecTime | datetime |  | YES | 
+Doctype | int |  | YES | 
+Currency_id | int |  | YES | 
+Currency_rate | float |  | YES | 
+zatcaStatus | int |  | YES | 
+DateRec | datetime |  | YES | 
+CIBAN | nvarchar | 4000 | YES | 
+InvoiceTypeCodeID | float |  | YES | 
+InvoiceTypeCodename | nvarchar | 255 | YES | 
+DocumentCurrencyCode | nvarchar | 255 | YES | 
+TaxCurrencyCode | nvarchar | 255 | YES | 
+AdditionalDocumentReferencePIH | nvarchar | 4000 | YES | 
+InvoiceDocumentReferenceID | nvarchar | 4000 | YES | 
+AdditionalDocumentReferenceICVUUID | nvarchar | 4000 | YES | 
+ActualDeliveryDate | datetime |  | YES | 
+LatestDeliveryDate | datetime |  | YES | 
+PaymentMeansCode | float |  | YES | 
+InstructionNote | nvarchar | 4000 | YES | 
+Iban | nvarchar | 255 | YES | 
+paymentnote | nvarchar | 4000 | YES | 
+Invoicetype | int |  | YES | 
+warrningmessage | nvarchar | 4000 | YES | 
+ErrorMessageS | nvarchar | 4000 | YES | 
+last_changed | datetime |  | YES | 
+TableName | nvarchar | 4000 | YES | 
+PerformanceBond | float |  | YES | 
+
+-----------------------------------------------------------------
+TABLE: project_bill_details
+-----------------------------------------------------------------
+ColumnName | DataType | MaxLen | IsNullable | DefaultValue
+--------------------------------------------------------
+id | int |  | NO | 
+project_no | nvarchar | 50 | YES | 
+item | nvarchar | 4000 | YES | 
+cost | money |  | YES | 
+exe | money |  | YES | 
+percentage | real |  | YES | 
+exedate | datetime |  | YES | 
+bill_id | int |  | YES | 
+line_no | int |  | YES | 
+item_id | varchar | 50 | YES | 
+Unit_id | int |  | YES | 
+Quantity | int |  | YES | 
+Price | float |  | YES | 
+Pre_Quantity | int |  | YES | 
+Pre_Value | float |  | YES | 
+Pre_Percent | float |  | YES | 
+Curr_Quantity | int |  | YES | 
+Curr_value | float |  | YES | 
+curr_Percent | float |  | YES | 
+tot_quantity | int |  | YES | 
+tot_value | float |  | YES | 
+tot_percent | float |  | YES | 
+item_unit | nvarchar | 255 | YES | 
+qty | float |  | YES | 
+total | float |  | YES | 
+discount | float |  | YES | 
+net | float |  | YES | 
+quntExc | float |  | YES | 
+totEx | float |  | YES | 
+oprid | int |  | YES | 
+discountEXE | float |  | YES | 
+NetExe | float |  | YES | 
+percentage1 | float |  | YES | 
+Pre_Percent1 | float |  | YES | 
+tot_percent1 | float |  | YES | 
+QtyApprov | float |  | YES | 
+TotalApprov | float |  | YES | 
+PriceApprov | float |  | YES | 
+DiscApprov | float |  | YES | 
+NetApprov | float |  | YES | 
+PrMainDesID | int |  | YES | 
+ExPercen | float |  | YES | 
+LineDiscountPercent | float |  | YES | 
+LineDiscount | float |  | YES | 
+linenetaftermainDiscount | float |  | YES | 
+linenetaftermainDiscountBeforevat | float |  | YES | 
+LineVat | float |  | YES | 
+linenetaftermainDiscountWithvat | float |  | YES | 
+PerforVLineDiscount | float |  | YES | 
+LineFinal | float |  | YES | 
+qtySubContractor | float |  | YES | 
+costSubContractor | float |  | YES | 
+OLDTotalwithVat | float |  | YES | 
+CurrenttotalWithvat | float |  | YES | 
+Totalwitvat | float |  | YES | 
+oldPerforValue | float |  | YES | 
+totalPerforValue | float |  | YES | 
+projectName | nvarchar | 4000 | YES | 
+FullCode | nvarchar | 4000 | YES | 
+project_id | int |  | YES | 
+Pre_Quantity_Contr | float |  | YES | 
+AccountCode | nvarchar | 50 | YES | 
+
+-----------------------------------------------------------------
+TABLE: Notes
+-----------------------------------------------------------------
+ColumnName | DataType | MaxLen | IsNullable | DefaultValue
+--------------------------------------------------------
+NoteID | int |  | NO | 
+NoteDate | smalldatetime |  | YES | 
+NoteType | int |  | YES | 
+NoteSerial | float |  | YES | 
+NoteSerial1 | float |  | YES | 
+Note_Value | float |  | YES | 
+BankID | int |  | YES | 
+ChqueNum | nvarchar | 50 | YES | 
+DueDate | smalldatetime |  | YES | 
+NoteHijriDate | nvarchar | 50 | YES | 
+Transaction_ID | int |  | YES | 
+MaintananceID | int |  | YES | 
+Member_ID | int |  | YES | 
+UserID | int |  | YES | 
+Remark | nvarchar | 4000 | YES | 
+ExpensesID | int |  | YES | 
+CashingType | int |  | YES | 
+CusID | int |  | YES | 
+BoxID | int |  | YES | 
+RevenuesID | int |  | YES | 
+RetrunNoteID | int |  | YES | 
+NoteCashingType | int |  | YES | 
+NotePosted | int |  | YES | 
+PostedBy | int |  | YES | 
+PostDate | datetime |  | YES | 
+NumOrderInpot | nvarchar | 50 | YES | 
+Buy | char | 1 | YES | 
+ked_type | nvarchar | 50 | YES | 
+numbering_type | int |  | YES | 
+sanad_year | int |  | YES | 
+sanad_month | int |  | YES | 
+type | nvarchar | 50 | YES | 
+branch_no | int |  | YES | 
+user_name | nvarchar | 50 | YES | 
+DEPARTEMENT | nvarchar | 50 | YES | 
+sanad_type | nvarchar | 50 | YES | 
+sanad_source | nvarchar | 50 | YES | 
+Double_Entry_Vouchers_ID | int |  | YES | 
+DAWRY | bit |  | YES | ((0))
+KALEB | bit |  | YES | ((0))
+projectAccountCode | nvarchar | 50 | YES | 
+foxy_no | float |  | YES | 
+person | nvarchar | 4000 | YES | 
+project_Expensen_account | nvarchar | 50 | YES | 
+salary | int |  | YES | 
+displayed | int |  | YES | 
+Adv_payment_value | money |  | YES | 
+note_value_by_characters | nvarchar | 1000 | YES | 
+too | nvarchar | 1000 | YES | 
+notes_all | int |  | YES | 
+general_cost_center | varchar | 200 | YES | 
+numbering_type1 | int |  | YES | 
+project_id | int |  | YES | 
+Cus_or_sub | int |  | YES | 
+project_depit_or_credit | int |  | YES | 
+EmpAccountCode | varchar | 500 | YES | 
+salary_or_advance | int |  | YES | 
+general_des_notes | varchar | 1000 | YES | 
+BTCashAccountcode | varchar | 500 | YES | 
+ORDER_NO | varchar | 50 | YES | 
+ItemID | int |  | YES | 
+Transaction_ID1 | int |  | YES | 
+auto_des | int |  | YES | 
+BoxIDTo | int |  | YES | 
+BankIDTo | int |  | YES | 
+DrawingType | int |  | YES | 
+ChequeBoxID | int |  | YES | 
+Destribute | bit |  | YES | 
+EmployeeID | int |  | YES | 
+BankName | nvarchar | 255 | YES | 
+AccountsCode | nvarchar | 255 | YES | 
+AdvanceID | int |  | YES | 
+OldNoteSerial1 | nvarchar | 255 | YES | 
+Emp_ID | int |  | YES | 
+Doctype | int |  | YES | 
+AllocationType | int |  | YES | 
+EmpId | int |  | YES | 
+TransferExpenses | float |  | YES | 
+ExpensesRemark | nvarchar | 4000 | YES | 
+RemarkE | nvarchar | 4000 | YES | 
+branch_no1 | int |  | YES | 
+branch_no2 | int |  | YES | 
+Account_Code1 | nvarchar | 255 | YES | 
+Account_Code2 | nvarchar | 255 | YES | 
+PaymentType | int |  | YES | 
+PaymentType1 | int |  | YES | 
+BoxID1 | int |  | YES | 
+BoxID2 | int |  | YES | 
+bankID1 | int |  | YES | 
+bankID2 | int |  | YES | 
+TxtChequeNumber1 | nvarchar | 255 | YES | 
+DtpChequeDueDate1 | datetime |  | YES | 
+NoteDateH | nvarchar | 255 | YES | 
+ManulaNO | nvarchar | 4000 | YES | 
+CarId | int |  | YES | 
+DriverId | int |  | YES | 
+NCashingType | int |  | YES | 
+note_count | int |  | YES | 
+ManualNo | nvarchar | 255 | YES | 
+BookNo | nvarchar | 255 | YES | 
+ContractNo | nvarchar | 255 | YES | 
+ContNo | int |  | YES | 
+akarid | int |  | YES | 
+unittype | int |  | YES | 
+UnitNo | int |  | YES | 
+interval | int |  | YES | 
+intervaltype | int |  | YES | 
+renterName | nvarchar | 4000 | YES | 
+AllowDateH | nvarchar | 10 | YES | 
+AllowDate | datetime |  | YES | 
+NoteSerial2 | float |  | YES | 
+NoteId2 | nvarchar | 255 | YES | 
+Telephone | nvarchar | 255 | YES | 
+StatusEarnest | int |  | YES | 
+FilterID | int |  | YES | 
+FIlterTotal | float |  | YES | 
+commission | float |  | YES | 
+rent | float |  | YES | 
+Water | float |  | YES | 
+Instrunce | float |  | YES | 
+comX | float |  | YES | 
+ComY | float |  | YES | 
+CommissionOut | float |  | YES | 
+NoteOrBonID | int |  | YES | 
+comXold | float |  | YES | 
+ComYold | float |  | YES | 
+NoteOrBonValue | float |  | YES | 
+NoteOrBonSereal | nvarchar | 4000 | YES | 
+FrmPriodDate | datetime |  | YES | 
+ToPriodDate | datetime |  | YES | 
+FrmPriodDateH | nvarchar | 10 | YES | 
+ToPriodDateH | nvarchar | 10 | YES | 
+Remark2 | nvarchar | 4000 | YES | 
+OrderIDD | float |  | YES | 
+AdvanceIDD | int |  | YES | 
+ProjectID | int |  | YES | 
+Pand | int |  | YES | 
+Oper | int |  | YES | 
+subcontractType | int |  | YES | 
+fixedid | int |  | YES | 
+Count | float |  | YES | 
+price | float |  | YES | 
+discount | float |  | YES | 
+Electricity | float |  | YES | 
+commdiscounttype | int |  | YES | 
+Commdiscountvalue | float |  | YES | 
+Commdiscountvalue1 | float |  | YES | 
+CommdiscountAccount | nvarchar | 400 | YES | 
+OrderSerial | nvarchar | 255 | YES | 
+OrderID | int |  | YES | 
+DeptID | int |  | YES | 
+Status | int |  | YES | 
+Prefix | nvarchar | 255 | YES | 
+PayrollMonth | int |  | YES | 
+PayrollYear | int |  | YES | 
+empDes | text | 2147483647 | YES | 
+empDes1 | text | 2147483647 | YES | 
+PayDes | nvarchar | 4000 | YES | 
+PayDes1 | nvarchar | 4000 | YES | 
+Due | int |  | YES | 
+TypAmola | int |  | YES | 
+AmolaValus | float |  | YES | 
+TxtNoSupplerDes | nvarchar | 4000 | YES | 
+TxtOrderSuppler | int |  | YES | 
+NumIqama | nvarchar | 100 | YES | 
+TransferExpensesBranch | float |  | YES | 
+ToCommision | bit |  | YES | 
+BeneficiaryBanck | nvarchar | 255 | YES | 
+BeneficiaryAddress | nvarchar | 4000 | YES | 
+BeneficiaryACNo | nvarchar | 100 | YES | 
+BenefiBanckAddress | nvarchar | 4000 | YES | 
+BenefiBanckCode | nvarchar | 100 | YES | 
+RemitterName | nvarchar | 255 | YES | 
+ReportName | nvarchar | 400 | YES | 
+BenefNumIqama | nvarchar | 100 | YES | 
+BenefCountry | nvarchar | 400 | YES | 
+BenefCity | nvarchar | 400 | YES | 
+BenefStreet | nvarchar | 400 | YES | 
+BenefGovernorate | nvarchar | 400 | YES | 
+Country | nvarchar | 400 | YES | 
+Governorate | nvarchar | 400 | YES | 
+City | nvarchar | 400 | YES | 
+Street | nvarchar | 400 | YES | 
+Adress2 | nvarchar | 4000 | YES | 
+KafelName | nvarchar | 255 | YES | 
+KafeltEL | nvarchar | 255 | YES | 
+BenefTelephone | nvarchar | 255 | YES | 
+BenefIBAN | nvarchar | 255 | YES | 
+BenefPlaceIqama | nvarchar | 255 | YES | 
+KafelAddress | nvarchar | 4000 | YES | 
+BenefDateExpEqama | nvarchar | 20 | YES | 
+BenefBrithDate | datetime |  | YES | 
+BenefPlaceBrith | nvarchar | 2500 | YES | 
+EmpIDD | int |  | YES | 
+LockedInterval | bit |  | YES | 
+TxtEndService | int |  | YES | 
+Month_Req | int |  | YES | 
+Year_Req | int |  | YES | 
+Brnch_Req | int |  | YES | 
+AssestPayd | bit |  | YES | 
+InsuranceValue | float |  | YES | 
+Servce | float |  | YES | 
+PayedOrBon | int |  | YES | 
+RemaiValue | float |  | YES | 
+Total2 | float |  | YES | 
+Sal2 | float |  | YES | 
+net2 | float |  | YES | 
+VlueVaction2 | float |  | YES | 
+TicketValue2 | float |  | YES | 
+Custom2 | float |  | YES | 
+AdvanceTotal2 | float |  | YES | 
+Cash2 | float |  | YES | 
+Salary2 | float |  | YES | 
+SalEntitOther2 | float |  | YES | 
+Other2 | float |  | YES | 
+Advance12 | float |  | YES | 
+InsuranceValue2 | float |  | YES | 
+LastTotal2 | float |  | YES | 
+SalaryVocation2 | float |  | YES | 
+ValueTickt2 | float |  | YES | 
+Totalsalary2 | float |  | YES | 
+CusTiket2 | float |  | YES | 
+CusTiket | float |  | YES | 
+AddOther | float |  | YES | 
+AddOther2 | float |  | YES | 
+ValEndService2 | float |  | YES | 
+ValEndService | float |  | YES | 
+TotalDis2 | float |  | YES | 
+TotalDis | float |  | YES | 
+total | float |  | YES | 
+Sal | float |  | YES | 
+TicketValue | float |  | YES | 
+Custom | float |  | YES | 
+LastTotal | float |  | YES | 
+Cash | float |  | YES | 
+VlueVaction | float |  | YES | 
+AdvanceTotal | float |  | YES | 
+EmpIDEnd | int |  | YES | 
+BrnchIDEnd | int |  | YES | 
+EmpIDVac | int |  | YES | 
+BrnchIDVac | int |  | YES | 
+Salary33 | float |  | YES | 
+SalEntitOther | float |  | YES | 
+Other | float |  | YES | 
+Advance1 | float |  | YES | 
+SalaryVocation | float |  | YES | 
+ValueTickt | float |  | YES | 
+Salary3 | float |  | YES | 
+SalEntitOther3 | float |  | YES | 
+SalaryVocation3 | float |  | YES | 
+Other3 | float |  | YES | 
+ValueTickt3 | float |  | YES | 
+Advance13 | float |  | YES | 
+InsuranceValue3 | float |  | YES | 
+Copied | int |  | YES | 
+Discounts | float |  | YES | 
+Discounts2 | float |  | YES | 
+OnlineData | int |  | YES | 
+TicktConract | float |  | YES | 
+TotlPaidEndSer | float |  | YES | 
+total3 | float |  | YES | 
+Sal3 | float |  | YES | 
+Custom3 | float |  | YES | 
+TicketValue3 | float |  | YES | 
+AddOther3 | float |  | YES | 
+net3 | float |  | YES | 
+ValEndService3 | float |  | YES | 
+AdvanceTotal3 | float |  | YES | 
+VlueVaction3 | float |  | YES | 
+Cash3 | float |  | YES | 
+Discounts3 | float |  | YES | 
+TotalDis3 | float |  | YES | 
+AccountPaym | nvarchar | 55 | YES | 
+EmpBranchID | int |  | YES | 
+ContractorID | int |  | YES | 
+ProjectMainID | int |  | YES | 
+CurrentBalance | float |  | YES | 
+PaymentValue | float |  | YES | 
+Percentage | float |  | YES | 
+PercentageValue | float |  | YES | 
+TypeTrans | int |  | YES | 
+Insurance | float |  | YES | 
+Maintenance2 | float |  | YES | 
+Maintenance3 | float |  | YES | 
+Maintenance | float |  | YES | 
+RemainRent2 | float |  | YES | 
+RemainRent3 | float |  | YES | 
+MaintCondition3 | float |  | YES | 
+MaintCondition2 | float |  | YES | 
+MaintCondition | float |  | YES | 
+MaintClean3 | float |  | YES | 
+MaintClean2 | float |  | YES | 
+MaintClean | float |  | YES | 
+Paints2 | float |  | YES | 
+Paints3 | float |  | YES | 
+Paints | float |  | YES | 
+Maintkitchen2 | float |  | YES | 
+Maintkitchen3 | float |  | YES | 
+Maintkitchen | float |  | YES | 
+Electricity12 | float |  | YES | 
+Electricity13 | float |  | YES | 
+Electricity1 | float |  | YES | 
+MaintDoors2 | float |  | YES | 
+MaintDoors3 | float |  | YES | 
+MaintDoors | float |  | YES | 
+Windows2 | float |  | YES | 
+Windows3 | float |  | YES | 
+Windows | float |  | YES | 
+MaintOther2 | float |  | YES | 
+MaintOther | float |  | YES | 
+MaintOther3 | float |  | YES | 
+Total22 | float |  | YES | 
+Total23 | float |  | YES | 
+TotalAftreIns | float |  | YES | 
+TotalAftreIns2 | float |  | YES | 
+TotalAftreIns3 | float |  | YES | 
+Net | float |  | YES | 
+RemainRent | float |  | YES | 
+Total21 | float |  | YES | 
+posted | bit |  | YES | 
+PostedDate | datetime |  | YES | 
+DisSalary | float |  | YES | 
+DisSalary2 | float |  | YES | 
+DisSalaryPayed | float |  | YES | 
+auto_Sus | int |  | YES | 
+CurrncyID | int |  | YES | 
+Note_ValueE | float |  | YES | 
+Rate | float |  | YES | 
+Price2 | float |  | YES | 
+Price3 | float |  | YES | 
+RemPrice | float |  | YES | 
+LockSalary | int |  | YES | 
+VATVowalNo | int |  | YES | 
+VAT | float |  | YES | 
+VATYou | float |  | YES | 
+TotalValue | float |  | YES | 
+AccountCodeVat | nvarchar | 55 | YES | 
+IncludVAT | int |  | YES | 
+PreVAT | float |  | YES | 
+totalPayed | int |  | YES | 
+Fina_Pruch | int |  | YES | 
+Account_DebitSide | nvarchar | 55 | YES | 
+Account_CreditSide | nvarchar | 55 | YES | 
+TotalNotesValue | float |  | YES | 
+MonthCount | int |  | YES | 
+PurchOrderNo | int |  | YES | 
+CityFromId | int |  | YES | 
+CityToId | int |  | YES | 
+DailyMonthly | int |  | YES | 
+note_v_by_char_WithoutVat | nvarchar | 255 | YES | 
+DailyMonthlyValue | float |  | YES | 
+des2 | nvarchar | 4000 | YES | 
+TradingContractID | int |  | YES | 
+BillTransID | int |  | YES | 
+BillTransNo | nvarchar | 400 | YES | 
+BillMaintID | int |  | YES | 
+BillMaintNo | nvarchar | 400 | YES | 
+Note_Value2 | float |  | YES | 
+note_value_by_characters2 | nvarchar | 4000 | YES | 
+ComResid | int |  | YES | 
+Note_ValueSales | float |  | YES | 
+DeparmentID | int |  | YES | 
+OfficeValue | float |  | YES | 
+RenterValue | float |  | YES | 
+ExpValue | float |  | YES | 
+IqarID2 | int |  | YES | 
+TotalInsurances | float |  | YES | 
+DebitSide | nvarchar | 50 | YES | 
+CreditSide | nvarchar | 50 | YES | 
+TotalPayedOpBalance | float |  | YES | 
+TotalPayments | float |  | YES | 
+NetValue | float |  | YES | 
+PreBalaValue | float |  | YES | 
+PreBalaPayed | float |  | YES | 
+PreBalaRemain | float |  | YES | 
+PreBalaTransPyed | float |  | YES | 
+PreBalaNet | float |  | YES | 
+RemainWater | float |  | YES | 
+BillPrice | float |  | YES | 
+RemainCommissions | float |  | YES | 
+OldRent | float |  | YES | 
+RemainService | float |  | YES | 
+txtOldInsurance | float |  | YES | 
+FilterID2 | int |  | YES | 
+ContainerNo | int |  | YES | 
+installIDCont | float |  | YES | 
+CCOPTion | int |  | YES | 
+OfficeValueNet | float |  | YES | 
+OfficeValueDiscAdd | float |  | YES | 
+AddValue | int |  | YES | 
+SessionCode | nvarchar | 255 | YES | 
+Ser | int |  | YES | 
+ContractReVouchID | int |  | YES | 
+QrCodeData | nvarchar | 255 | YES | 
+QrCodeDataPath | nvarchar | 255 | YES | 
+QrCodeImage | image | 2147483647 | YES | 
+CBoBasedON | int |  | YES | 
+OrDer_no2 | int |  | YES | 
+AcceptianPeriod | float |  | YES | 
+TblLCID | int |  | YES | 
+RowId | uniqueidentifier |  | YES | 
+TableName | nvarchar | 4000 | YES | 
+last_changed | datetime |  | YES | 
+ErrorMessageS | nvarchar | 4000 | YES | 
+warrningmessage | nvarchar | 4000 | YES | 
+RecTime | datetime |  | YES | 
+Currency_id | int |  | YES | 
+Currency_rate | float |  | YES | 
+zatcaStatus | int |  | YES | 
+DateRec | datetime |  | YES | 
+CIBAN | nvarchar | 4000 | YES | 
+InvoiceTypeCodeID | float |  | YES | 
+InvoiceTypeCodename | nvarchar | 255 | YES | 
+DocumentCurrencyCode | nvarchar | 255 | YES | 
+TaxCurrencyCode | nvarchar | 255 | YES | 
+AdditionalDocumentReferencePIH | nvarchar | 4000 | YES | 
+InvoiceDocumentReferenceID | nvarchar | 4000 | YES | 
+AdditionalDocumentReferenceICVUUID | nvarchar | 4000 | YES | 
+ActualDeliveryDate | datetime |  | YES | 
+LatestDeliveryDate | datetime |  | YES | 
+PaymentMeansCode | float |  | YES | 
+InstructionNote | nvarchar | 4000 | YES | 
+Iban | nvarchar | 255 | YES | 
+paymentnote | nvarchar | 4000 | YES | 
+Invoicetype | int |  | YES | 
+FiterWaiver | int |  | YES | 
+FiterWaiverNoteSerial | nvarchar | 255 | YES | 
+ContItem | nvarchar | 255 | YES | 
+PurchaseOrderNo | nvarchar | 255 | YES | 
+LocationName | nvarchar | 255 | YES | 
+RentType | nvarchar | 255 | YES | 
+IsHiddenInv | bit |  | YES | 
+
+-----------------------------------------------------------------
+TABLE: DOUBLE_ENTREY_VOUCHERS
+-----------------------------------------------------------------
+ColumnName | DataType | MaxLen | IsNullable | DefaultValue
+--------------------------------------------------------
+Double_Entry_Vouchers_ID | int |  | NO | 
+DEV_ID_Line_No | int |  | NO | 
+Account_Code | nvarchar | 50 | YES | 
+Value | money |  | YES | 
+Credit_Or_Debit | smallint |  | YES | 
+Double_Entry_Vouchers_Description | nvarchar | 4000 | YES | 
+RecordDate | datetime |  | YES | 
+Notes_ID | int |  | YES | 
+ReceiptID | int |  | YES | 
+OperaID | int |  | YES | 
+Transaction_ID | int |  | YES | 
+AdvanceID | int |  | YES | 
+UserID | int |  | YES | 
+Posted | int |  | YES | 
+PostedDate | datetime |  | YES | 
+PostedUserID | int |  | YES | 
+Account_Interval_ID | int |  | YES | 
+DEV_Serial | nvarchar | 50 | YES | 
+credit_value | money |  | YES | 
+depet_value | money |  | YES | 
+des | nvarchar | 255 | YES | 
+currency | nvarchar | 50 | YES | 
+valuee | money |  | YES | 
+project_bill_no | int |  | YES | 
+rate | float |  | YES | 
+Double_Entry_Vouchers_Descriptione | nvarchar | 4000 | YES | 
+DEV_ID_Line_No1 | float |  | YES | 
+notes_all | int |  | YES | 
+project_id | int |  | YES | 
+opr_fullcode | varchar | 500 | YES | 
+bill_id | int |  | YES | 
+buy | bit |  | YES | ((0))
+ItemID | int |  | YES | 
+Transaction_ID1 | float |  | YES | 
+FixedAssetId | int |  | YES | 
+FixedAssetgroupid | int |  | YES | 
+FixedAssetbranch_id | int |  | YES | 
+branch_id | int |  | YES | 
+Trip | int |  | YES | 
+Carid | float |  | YES | 
+RecordDateH | nvarchar | 255 | YES | 
+ShowQty1 | float |  | YES | 
+showPrice1 | float |  | YES | 
+showPrice2 | float |  | YES | 
+Salaries1 | float |  | YES | 
+Salaries2 | float |  | YES | 
+Departementid | float |  | YES | 
+NEmpid | float |  | YES | 
+Billno | nvarchar | 400 | YES | 
+Aqarid | int |  | YES | 
+unittype | int |  | YES | 
+unitno | int |  | YES | 
+projectid | int |  | YES | 
+operid | int |  | YES | 
+pandid | int |  | YES | 
+fixedid | int |  | YES | 
+Remarks2 | nvarchar | 4000 | YES | 
+hideline | int |  | YES | 
+ToTrans | int |  | YES | 
+Collected | int |  | YES | 
+Copied | int |  | YES | 
+FLgBranch | int |  | YES | 
+Vat | float |  | YES | 
+Vatyo | float |  | YES | 
+AccountCode2 | nvarchar | 55 | YES | 
+FlgVat | int |  | YES | 
+ForcedFlg | int |  | YES | 
+CurrRow | int |  | YES | 
+StrUnit | nvarchar | 55 | YES | 
+Unitss | nvarchar | 55 | YES | 
+TotalValue | float |  | YES | 
+SupplierID | int |  | YES | 
+PriceTotal | float |  | YES | 
+Rate2 | float |  | YES | 
+CusVATNO | nvarchar | 400 | YES | 
+SupplierName | nvarchar | 400 | YES | 
+DescAccount | nvarchar | 4000 | YES | 
+NextAccount_Code | nvarchar | 55 | YES | 
+SessionCode | nvarchar | 255 | YES | 
+VATYou | float |  | YES | 
+IsHidden | int |  | YES | 
+DueDate | datetime |  | YES | 
+IsHiddenInv | bit |  | YES | 
+IsExpens | bit |  | YES | 
+uintid | int |  | YES | 
+mType | int |  | YES | 
+iqarid | int |  | YES | 

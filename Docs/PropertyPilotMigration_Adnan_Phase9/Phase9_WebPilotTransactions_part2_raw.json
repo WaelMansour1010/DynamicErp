@@ -1,0 +1,25 @@
+﻿{
+    "Database":  "Alromaizan_PropertyPilot_Adnan_PilotClone_20260520",
+    "LoginStatus":  302,
+    "LoginRedirect":  "/PointOfSale/PosLogin",
+    "Tests":  [
+                  {
+                      "Name":  "CashIssueDirectExpenseBank",
+                      "Type":  "POST",
+                      "Url":  "http://localhost:63735/CashIssueVoucher/AddEdit",
+                      "Status":  200,
+                      "Pass":  true,
+                      "Response":  "{\"success\":\"true\",\"id\":25}"
+                  },
+                  {
+                      "Name":  "ContractTermination",
+                      "Type":  "POST",
+                      "Url":  "http://localhost:63735/PropertyContractTermination/AddEdit",
+                      "Status":  200,
+                      "Pass":  true,
+                      "Response":  "{\"success\":true}",
+                      "DetailsApiLength":  3868,
+                      "TotalUnpaidAmount":  311928.9800
+                  }
+              ]
+}

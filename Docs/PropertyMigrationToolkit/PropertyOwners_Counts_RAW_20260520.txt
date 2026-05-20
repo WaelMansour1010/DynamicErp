@@ -1,0 +1,51 @@
+﻿
+DbName                                              Metric                         Value
+------                                              ------                         -----
+Adnan                                               TblAqarRows                       28
+Adnan                                               TblAqarOwnerNotNull               28
+Adnan                                               DistinctPropertyOwners             3
+Adnan                                               TblAqrOwinRows                     0
+Adnan                                               TblOwnerPaymentRows                0
+Adnan                                               TblNotesOwnerPaymentRows           0
+Adnan                                               PropertyOwnerRows                  0
+Adnan                                               PropertyWithOwnerRows              0
+Adnan                                               CashIssuePropertyOwnerSource13     0
+RSMDB                                               TblAqarRows                       16
+RSMDB                                               TblAqarOwnerNotNull               16
+RSMDB                                               DistinctPropertyOwners             4
+RSMDB                                               TblAqrOwinRows                     4
+RSMDB                                               TblOwnerPaymentRows                0
+RSMDB                                               TblNotesOwnerPaymentRows           0
+RSMDB                                               PropertyOwnerRows                  0
+RSMDB                                               PropertyWithOwnerRows              0
+RSMDB                                               CashIssuePropertyOwnerSource13     0
+Alromaizan                                          TblAqarRows                        0
+Alromaizan                                          TblAqarOwnerNotNull                0
+Alromaizan                                          DistinctPropertyOwners             0
+Alromaizan                                          TblAqrOwinRows                     0
+Alromaizan                                          TblOwnerPaymentRows                0
+Alromaizan                                          TblNotesOwnerPaymentRows           0
+Alromaizan                                          PropertyOwnerRows                  1
+Alromaizan                                          PropertyWithOwnerRows              0
+Alromaizan                                          CashIssuePropertyOwnerSource13     0
+MyErp                                               TblAqarRows                        0
+MyErp                                               TblAqarOwnerNotNull                0
+MyErp                                               DistinctPropertyOwners             0
+MyErp                                               TblAqrOwinRows                     0
+MyErp                                               TblOwnerPaymentRows                0
+MyErp                                               TblNotesOwnerPaymentRows           0
+MyErp                                               PropertyOwnerRows                 39
+MyErp                                               PropertyWithOwnerRows             41
+MyErp                                               CashIssuePropertyOwnerSource13   260
+Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520 TblAqarRows                        0
+Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520 TblAqarOwnerNotNull                0
+Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520 DistinctPropertyOwners             0
+Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520 TblAqrOwinRows                     0
+Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520 TblOwnerPaymentRows                0
+Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520 TblNotesOwnerPaymentRows           0
+Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520 PropertyOwnerRows                  1
+Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520 PropertyWithOwnerRows              0
+Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520 CashIssuePropertyOwnerSource13     0
+
+
+

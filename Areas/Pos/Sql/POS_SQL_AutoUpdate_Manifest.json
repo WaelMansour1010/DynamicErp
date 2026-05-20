@@ -66,7 +66,8 @@
     { "order": 116, "file": "116_POS_Voucher_ReadProcedures_Compatibility.sql", "autoApply": true, "purpose": "سندات الدفع والصرف والقبض: إجراءات البحث والعرض والـ lookups المتوافقة مع POS/MainERP." },
     { "order": 117, "file": "117_POS_MedicalInsuranceDependents.sql", "autoApply": true, "purpose": "Production table for employee medical insurance dependents linked to employee subscriptions." },
     { "order": 118, "file": "118_POS_MedicalInsurance_PlanPricingAndDependentDetails.sql", "autoApply": true, "purpose": "Medical insurance plan age pricing tiers and detailed employee dependent coverage fields." },
-    { "order": 119, "file": "119_POS_VoucherCoding_StaleCounterSelfHeal.sql", "autoApply": true, "purpose": "POS voucher coding stale counter self-heal and safe reseed for Transactions NoteSerial1 counters." }
+    { "order": 119, "file": "119_POS_VoucherCoding_StaleCounterSelfHeal.sql", "autoApply": true, "purpose": "POS voucher coding stale counter self-heal and safe reseed for Transactions NoteSerial1 counters." },
+    { "order": 120, "file": "120_POS_VoucherCoding_AutoExpandTailDigits.sql", "autoApply": true, "purpose": "POS voucher coding treats no_of_digit as minimum padding and auto-expands invoice tail after 999 without changing old serials." }
   ],
   "manualScripts": [
     { "file": "35_POS_SystemHealthPermissions.sql", "reason": "Requires sysadmin/master login and replacing the app SQL login placeholder." },

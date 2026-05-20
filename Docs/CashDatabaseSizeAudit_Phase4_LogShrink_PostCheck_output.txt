@@ -1,0 +1,43 @@
+Changed database context to 'Cash'.
+POSTCHECK 1: DB status
+database_name|recovery_model_desc|log_reuse_wait_desc
+-------------|-------------------|-------------------
+Cash|SIMPLE|NOTHING
+POSTCHECK 2: Current log file physical metrics
+logical_name|physical_name|size_mb|used_mb|free_mb
+------------|-------------|-------|-------|-------
+SmallAccount_log|F:\DataBase\Cash\Byte-20260519070006-(2a695a3b-e277-44fa-9411-64987baca0b8)-Full\Cash_0.ldf|1030.63|8.08|1022.55
+POSTCHECK 3: SQLPERF log usage
+Database Name|Log Size (MB)|Log Space Used (%)|Status
+-------------|-------------|------------------|------
+master|1.9921875|44.460785|0
+tempdb|7.9921875|8.2661295|0
+model|7.9921875|12.756598|0
+msdb|19.617188|10.899542|0
+Eng|4523.9922|3.5146921|0
+Cash|1030.6172|0.78438282|0
+Adnan|752.67969|2.2498391|0
+erptestEssam|1.4921875|40.314137|0
+jewlofinnovation|34.867188|8.186758|0
+Dania|28163.18|2.9719031|0
+Nagahat|2599.1172|5.0839267|0
+GhalinaERP|5.1171875|56.975189|0
+MyErp|51.179688|6.1603189|0
+2026|13620.242|0.44174686|0
+Mass|13620.242|0.16563983|0
+Baltan|223.30469|8.642375|0
+Zobir|1001.9297|1.3145531|0
+Rwaby|684.24219|58.408379|0
+SaryMass|3.8046875|97.317764|0
+RSMDB|1212.3672|1.5221545|0
+SyncAdminTest|7.9921875|15.084311|0
+BranchPosTest|7.9921875|11.07649|0
+DynamicErp_MigrationRunner_Test|7.9921875|11.528592|0
+DynamicErp_MigrationWeb_Test|7.9921875|12.090665|0
+Alromaizan|12.054688|9.7699289|0
+Alromaizan_PropertyPilot_Adnan_20260520|12.054688|40.598671|0
+DBCC execution completed. If DBCC printed error messages, contact your system administrator.
+POSTCHECK 4: Log autogrowth settings
+logical_name|growth|is_percent_growth|growth_setting
+------------|------|-----------------|--------------
+SmallAccount_log|10|1|10%

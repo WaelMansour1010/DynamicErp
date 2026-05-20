@@ -149,10 +149,12 @@ WHERE id = @Id;", connection))
                         UnderImplementation = ReadInt(reader, "UnderImp"),
                         ContractNo = ReadString(reader, "ContractNo"),
                         Insurance = ReadDouble(reader, "Insurance"),
-                        Remarks = ReadString(reader, "Remarkss")
+                        Remarks = ReadString(reader, "Remarkss"),
+                        AccountUnderImp = ReadString(reader, "AccountUnderImp")
                     };
 
                     reader.Close();
+                    model.ProjectItems = GetProjectItems(connection, id);
                     PopulateLookups(connection, model);
                     return model;
                 }
@@ -176,6 +178,11 @@ WHERE id = @Id;", connection))
                 model.GeneralDiscount = model.GeneralDiscount ?? 0m;
                 model.CostAfterDiscount = Math.Max(0m, model.ProjectCost.Value - model.GeneralDiscount.Value);
 
+                if (model.UnderImplementation == 2 && string.IsNullOrWhiteSpace(model.AccountUnderImp))
+                {
+                    model.AccountUnderImp = GenerateProjectAccount(connection, transaction, model.ProjectName, model.ProjectNameEnglish);
+                }
+
                 EnsureUniqueCode(connection, transaction, model.Id, model.FullCode);
 
                 var exists = Exists(connection, transaction, model.Id);
@@ -186,29 +193,91 @@ WHERE id = @Id;", connection))
                     command.ExecuteNonQuery();
                 }
 
+                SaveProjectItems(connection, transaction, model.Id, model.ProjectItems);
+
                 transaction.Commit();
                 return model.Id;
             }
         }
 
-        public ProjectExtractCreateViewModel BuildExtractCreateModel(int projectId)
+        public ProjectExtractCreateViewModel BuildExtractCreateModel(int? projectId = null)
         {
-            var project = Get(projectId);
-            if (project == null)
+            var model = new ProjectExtractCreateViewModel
             {
-                return null;
-            }
-
-            return new ProjectExtractCreateViewModel
-            {
-                ProjectId = project.Id,
-                ProjectName = project.ProjectName,
-                ProjectFullCode = project.FullCode,
-                BranchNo = project.BranchNo,
                 Total = 0m,
                 VatValue = 0m,
-                NetValue = 0m
+                NetValue = 0m,
+                PerforValue = 0m,
+                AdvancedPayment = 0m,
+                GeneralDiscount = 0m
             };
+
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            {
+                LoadLookup(connection, "SELECT id, Fullcode + N' - ' + Project_name FROM dbo.projects ORDER BY id DESC", model.Projects);
+                
+                if (projectId.HasValue && projectId.Value > 0)
+                {
+                    var project = GetProjectHeader(connection, null, projectId.Value);
+                    if (project != null)
+                    {
+                        model.ProjectId = project.Id;
+                        model.ProjectName = project.Name;
+                        model.ProjectFullCode = project.FullCode;
+                        model.BranchNo = project.BranchNo;
+                        model.ExtractItems = GetProjectExtractItems(connection, project.Id);
+                    }
+                }
+            }
+
+            return model;
+        }
+
+        private static System.Collections.Generic.IList<ProjectExtractItemViewModel> GetProjectExtractItems(SqlConnection connection, int projectId)
+        {
+            var items = new System.Collections.Generic.List<ProjectExtractItemViewModel>();
+            try
+            {
+                using (var command = new SqlCommand(@"
+SELECT 
+    m.ID AS PrMainDesID, 
+    m.Name AS item,
+    m.FullCode,
+    ISNULL(m.Qty, 0) AS ContractQuantity, 
+    ISNULL(m.Price, 0) AS Price,
+    ISNULL(m.QtyExe, 0) AS PreviousQuantity,
+    ISNULL(m.TotalExe, 0) AS PreviousValue
+FROM dbo.ProjectMainDes m
+WHERE m.ProjectID = @pId", connection))
+                {
+                    command.Parameters.AddWithValue("@pId", projectId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        int idx = 1;
+                        while (reader.Read())
+                        {
+                            items.Add(new ProjectExtractItemViewModel
+                            {
+                                Id = idx++,
+                                PrMainDesID = ReadInt(reader, "PrMainDesID").GetValueOrDefault(),
+                                Item = ReadString(reader, "item"),
+                                FullCode = ReadString(reader, "FullCode"),
+                                ContractQuantity = ReadDecimal(reader, "ContractQuantity").GetValueOrDefault(),
+                                Price = ReadDecimal(reader, "Price").GetValueOrDefault(),
+                                PreviousQuantity = ReadDecimal(reader, "PreviousQuantity").GetValueOrDefault(),
+                                PreviousValue = ReadDecimal(reader, "PreviousValue").GetValueOrDefault(),
+                                CurrentQuantity = 0m,
+                                CurrentValue = 0m
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException)
+            {
+                // جدول ProjectMainDes غير متوفر أو أعمدته مختلفة — نعيد قائمة فارغة بأمان
+            }
+            return items;
         }
 
         public int CreateExtract(ProjectExtractCreateViewModel model, int? userId)
@@ -236,12 +305,14 @@ WHERE id = @Id;", connection))
 INSERT INTO dbo.project_billl
 (
     id, bill_date, project_no, project_name, total, FATValue, NetValue,
-    Branch_NO, ManualNO, NoteSerial, Results, UserID, Remarks, StartDateProje
+    Branch_NO, ManualNO, NoteSerial, Results, UserID, Remarks, StartDateProje,
+    advancedPayment, PerformanceBond, PerforValue, discount
 )
 VALUES
 (
     @Id, @BillDate, @ProjectNo, @ProjectName, @Total, @VatValue, @NetValue,
-    @BranchNo, @ManualNo, @NoteSerial, 0, @UserId, @Remarks, @StartDate
+    @BranchNo, @ManualNo, @NoteSerial, 0, @UserId, @Remarks, @StartDate,
+    @AdvancedPayment, @PerformanceBond, @PerforValue, @Discount
 );", connection, transaction))
                 {
                     command.Parameters.AddWithValue("@Id", id);
@@ -257,7 +328,274 @@ VALUES
                     command.Parameters.AddWithValue("@UserId", (object)userId ?? DBNull.Value);
                     command.Parameters.AddWithValue("@Remarks", (object)model.Remarks ?? DBNull.Value);
                     command.Parameters.AddWithValue("@StartDate", (object)project.StartDate ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@AdvancedPayment", model.AdvancedPayment ?? 0m);
+                    command.Parameters.AddWithValue("@PerformanceBond", model.PerforValue ?? 0m);
+                    command.Parameters.AddWithValue("@PerforValue", model.PerforValue ?? 0m);
+                    command.Parameters.AddWithValue("@Discount", model.GeneralDiscount ?? 0m);
                     command.ExecuteNonQuery();
+                }
+
+                // Save detail lines and update executed quantities / values
+                if (model.ExtractItems != null && model.ExtractItems.Count > 0)
+                {
+                    int lineNo = 1;
+                    foreach (var item in model.ExtractItems)
+                    {
+                        if (item.CurrentQuantity <= 0m) continue;
+
+                        var itemCost = item.ContractQuantity * item.Price;
+                        var prevQty = item.PreviousQuantity;
+                        var prevVal = item.PreviousValue;
+                        var currQty = item.CurrentQuantity;
+                        var currVal = item.CurrentValue;
+                        var totQty = prevQty + currQty;
+                        var totVal = prevVal + currVal;
+
+                        var currPercent = item.ContractQuantity > 0m ? (currQty / item.ContractQuantity) * 100m : 0m;
+                        var totPercent = item.ContractQuantity > 0m ? (totQty / item.ContractQuantity) * 100m : 0m;
+
+                        // Calculate proportional share based on line current value
+                        var ratio = total > 0m ? currVal / total : 0m;
+                        var lineDiscount = (model.GeneralDiscount ?? 0m) * ratio;
+                        var lineNetAfterMainDiscountBeforeVat = currVal - lineDiscount;
+                        var lineVat = (model.VatValue ?? 0m) * ratio;
+                        var lineNetAfterMainDiscountWithVat = lineNetAfterMainDiscountBeforeVat + lineVat;
+                        var perforVLineDiscount = (model.PerforValue ?? 0m) * ratio;
+                        var lineFinal = (model.NetValue ?? 0m) * ratio;
+
+                        using (var command = new SqlCommand(@"
+INSERT INTO dbo.project_bill_details
+(
+    bill_id, project_no, project_id, projectName, FullCode, item,
+    Quantity, Price, cost, Pre_Quantity, Pre_Value, Curr_Quantity, Curr_value,
+    tot_quantity, tot_value, curr_Percent, tot_percent, line_no,
+    LineDiscount, linenetaftermainDiscountBeforevat, LineVat, linenetaftermainDiscountWithvat,
+    PerforVLineDiscount, LineFinal, AccountCode
+)
+VALUES
+(
+    @BillId, @ProjectNo, @ProjectId, @ProjectName, @FullCode, @Item,
+    @Quantity, @Price, @Cost, @PreQuantity, @PreValue, @CurrQuantity, @CurrValue,
+    @TotQuantity, @TotValue, @CurrPercent, @TotPercent, @LineNo,
+    @LineDiscount, @LineNetAfterMainDiscountBeforeVat, @LineVat, @LineNetAfterMainDiscountWithVat,
+    @PerforVLineDiscount, @LineFinal, @AccountCode
+);", connection, transaction))
+                        {
+                            command.Parameters.AddWithValue("@BillId", id);
+                            command.Parameters.AddWithValue("@ProjectNo", project.Id.ToString());
+                            command.Parameters.AddWithValue("@ProjectId", project.Id);
+                            command.Parameters.AddWithValue("@ProjectName", (object)project.Name ?? DBNull.Value);
+                            command.Parameters.AddWithValue("@FullCode", (object)item.FullCode ?? DBNull.Value);
+                            command.Parameters.AddWithValue("@Item", (object)item.Item ?? DBNull.Value);
+                            command.Parameters.AddWithValue("@Quantity", item.ContractQuantity);
+                            command.Parameters.AddWithValue("@Price", item.Price);
+                            command.Parameters.AddWithValue("@Cost", itemCost);
+                            command.Parameters.AddWithValue("@PreQuantity", prevQty);
+                            command.Parameters.AddWithValue("@PreValue", prevVal);
+                            command.Parameters.AddWithValue("@CurrQuantity", currQty);
+                            command.Parameters.AddWithValue("@CurrValue", currVal);
+                            command.Parameters.AddWithValue("@TotQuantity", totQty);
+                            command.Parameters.AddWithValue("@TotValue", totVal);
+                            command.Parameters.AddWithValue("@CurrPercent", currPercent);
+                            command.Parameters.AddWithValue("@TotPercent", totPercent);
+                            command.Parameters.AddWithValue("@LineNo", lineNo++);
+                            command.Parameters.AddWithValue("@LineDiscount", lineDiscount);
+                            command.Parameters.AddWithValue("@LineNetAfterMainDiscountBeforeVat", lineNetAfterMainDiscountBeforeVat);
+                            command.Parameters.AddWithValue("@LineVat", lineVat);
+                            command.Parameters.AddWithValue("@LineNetAfterMainDiscountWithVat", lineNetAfterMainDiscountWithVat);
+                            command.Parameters.AddWithValue("@PerforVLineDiscount", perforVLineDiscount);
+                            command.Parameters.AddWithValue("@LineFinal", lineFinal);
+                            command.Parameters.AddWithValue("@AccountCode", (object)project.AccountUnderImp ?? DBNull.Value);
+                            command.ExecuteNonQuery();
+                        }
+
+                        // Update executed quantities / values in dbo.ProjectMainDes
+                        using (var command = new SqlCommand(@"
+UPDATE dbo.ProjectMainDes
+SET QtyExe = ISNULL(QtyExe, 0) + @CurrQuantity,
+    TotalExe = ISNULL(TotalExe, 0) + @CurrValue
+WHERE ID = @PrMainDesID;", connection, transaction))
+                        {
+                            command.Parameters.AddWithValue("@CurrQuantity", currQty);
+                            command.Parameters.AddWithValue("@CurrValue", currVal);
+                            command.Parameters.AddWithValue("@PrMainDesID", item.PrMainDesID);
+                            command.ExecuteNonQuery();
+                        }
+                    }
+                }
+
+                // ------------------ DOUBLE-ENTRY ACCOUNTING POSTING ENGINE ------------------
+                
+                // 1. Query Project & Customer Accounts
+                int? underImp = null;
+                string accountUnderImp = null;
+                string revenueAccount = null;
+                string endUserId = null;
+                string endUserAccount = null;
+
+                using (var command = new SqlCommand(@"
+SELECT TOP 1 UnderImp, AccountUnderImp, REVENUE_account, End_user_id, End_user_Account 
+FROM dbo.projects 
+WHERE id = @ProjectId", connection, transaction))
+                {
+                    command.Parameters.AddWithValue("@ProjectId", project.Id);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            underImp = reader.IsDBNull(0) ? (int?)null : Convert.ToInt32(reader.GetValue(0));
+                            accountUnderImp = reader.IsDBNull(1) ? null : Convert.ToString(reader.GetValue(1));
+                            revenueAccount = reader.IsDBNull(2) ? null : Convert.ToString(reader.GetValue(2));
+                            endUserId = reader.IsDBNull(3) ? null : Convert.ToString(reader.GetValue(3));
+                            endUserAccount = reader.IsDBNull(4) ? null : Convert.ToString(reader.GetValue(4));
+                        }
+                    }
+                }
+
+                string customerAccount = null;
+                string customerAccountHi1 = null;
+                string customerAccountAss2 = null;
+                string customerAccountVat = null;
+
+                if (!string.IsNullOrWhiteSpace(endUserId) && int.TryParse(endUserId, out int cusId))
+                {
+                    using (var command = new SqlCommand(@"
+SELECT TOP 1 Account_Code, Account_CodeHi1, Account_CodeAss2, Account_VAT 
+FROM dbo.TblCustemers 
+WHERE CusID = @CusId", connection, transaction))
+                    {
+                        command.Parameters.AddWithValue("@CusId", cusId);
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                customerAccount = reader.IsDBNull(0) ? null : Convert.ToString(reader.GetValue(0));
+                                customerAccountHi1 = reader.IsDBNull(1) ? null : Convert.ToString(reader.GetValue(1));
+                                customerAccountAss2 = reader.IsDBNull(2) ? null : Convert.ToString(reader.GetValue(2));
+                                customerAccountVat = reader.IsDBNull(3) ? null : Convert.ToString(reader.GetValue(3));
+                            }
+                        }
+                    }
+                }
+
+                // 2. Resolve Accounts & Apply Fallbacks (Validation is handled within ResolveLeafAccount)
+                string debCustomerAccount = underImp == 2 && !string.IsNullOrWhiteSpace(accountUnderImp) ? accountUnderImp : (!string.IsNullOrWhiteSpace(customerAccount) ? customerAccount : endUserAccount);
+                debCustomerAccount = ResolveLeafAccount(connection, transaction, debCustomerAccount, null, null);
+                string debGuaranteeAccount = ResolveLeafAccount(connection, transaction, customerAccountAss2, null, null);
+                string debAdvancedAccount = ResolveLeafAccount(connection, transaction, customerAccountHi1, null, null);
+                string debDiscountAccount = ResolveLeafAccount(connection, transaction, null, "خصم", "Discount");
+
+                string credRevenueAccount = ResolveLeafAccount(connection, transaction, revenueAccount, "إيراد", "Revenue");
+                string credVatAccount = ResolveLeafAccount(connection, transaction, customerAccountVat, "ضريب", "VAT");
+
+                // 3. Clean Deletion of any existing ledger records (to prevent duplicates on re-save/edit)
+                using (var deleteCmd = new SqlCommand(@"
+DELETE FROM dbo.DOUBLE_ENTREY_VOUCHERS WHERE bill_id = @BillId AND project_id = @ProjectId;
+DELETE FROM dbo.Notes WHERE Transaction_ID = @BillId AND NoteType = 5000;", connection, transaction))
+                {
+                    deleteCmd.Parameters.AddWithValue("@BillId", id);
+                    deleteCmd.Parameters.AddWithValue("@ProjectId", project.Id);
+                    deleteCmd.ExecuteNonQuery();
+                }
+
+                // 4. Generate Thread-Safe Manual Serial IDs using AppLock / transaction lock (NextId contains UPDLOCK, HOLDLOCK)
+                var noteId = NextId(connection, transaction, "Notes", "NoteID");
+                var voucherId = NextId(connection, transaction, "DOUBLE_ENTREY_VOUCHERS", "Double_Entry_Vouchers_ID");
+                double noteSerialValue = (double)noteId;
+
+                // 5. Insert Accounting Note Header (NoteType = 5000)
+                using (var command = new SqlCommand(@"
+INSERT INTO dbo.Notes
+(
+    NoteID, NoteDate, NoteType, NoteSerial, NoteSerial1, Note_Value, Transaction_ID, UserID, Remark, NotePosted,
+    PostedBy, PostDate, ORDER_NO, ManualNo, branch_no, Double_Entry_Vouchers_ID,
+    TotalValue, Account_DebitSide, Account_CreditSide, DateRec, project_id
+)
+VALUES
+(
+    @NoteId, @NoteDate, 5000, @NoteSerial, @NoteSerial1, @NoteValue, @TransactionId, @UserId, @Remark, 0,
+    @UserId, GETDATE(), @OrderNo, @ManualNo, @BranchNo, @VoucherId,
+    @TotalValue, @DebitSide, @CreditSide, GETDATE(), @ProjectId
+);", connection, transaction))
+                {
+                    command.Parameters.AddWithValue("@NoteId", noteId);
+                    command.Parameters.AddWithValue("@NoteDate", model.BillDate.HasValue ? (object)model.BillDate.Value : DateTime.Now);
+                    command.Parameters.AddWithValue("@NoteSerial", noteSerialValue);
+                    command.Parameters.AddWithValue("@NoteSerial1", noteSerialValue);
+                    command.Parameters.AddWithValue("@NoteValue", (double)net);
+                    command.Parameters.AddWithValue("@TransactionId", id);
+                    command.Parameters.AddWithValue("@UserId", (object)userId ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@Remark", (object)model.Remarks ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@OrderNo", project.FullCode);
+                    command.Parameters.AddWithValue("@ManualNo", (object)model.ManualNo ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@BranchNo", (object)(model.BranchNo ?? project.BranchNo) ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@VoucherId", voucherId);
+                    command.Parameters.AddWithValue("@TotalValue", (double)net);
+                    command.Parameters.AddWithValue("@DebitSide", (object)debCustomerAccount ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@CreditSide", (object)credRevenueAccount ?? DBNull.Value);
+                    command.Parameters.AddWithValue("@ProjectId", project.Id);
+                    command.ExecuteNonQuery();
+                }
+
+                // 6. Insert Balanced Voucher Details (DEBITS / CREDITS)
+                int devLineNo = 1;
+                Action<string, decimal, int, string> addVoucherLine = (accountCode, val, creditOrDebit, desc) =>
+                {
+                    if (val <= 0m) return;
+                    using (var cmd = new SqlCommand(@"
+INSERT INTO dbo.DOUBLE_ENTREY_VOUCHERS
+(
+    Double_Entry_Vouchers_ID, DEV_ID_Line_No, Account_Code, Value, Credit_Or_Debit, 
+    Double_Entry_Vouchers_Description, RecordDate, Notes_ID, UserID, Posted, 
+    branch_id, project_bill_no, project_id, bill_id
+)
+VALUES
+(
+    @VoucherId, @LineNo, @AccountCode, @Value, @CreditOrDebit, 
+    @Description, @RecordDate, @NoteId, @UserId, 0, 
+    @BranchId, @ProjectBillNo, @ProjectId, @BillId
+);", connection, transaction))
+                    {
+                        cmd.Parameters.AddWithValue("@VoucherId", voucherId);
+                        cmd.Parameters.AddWithValue("@LineNo", devLineNo++);
+                        cmd.Parameters.AddWithValue("@AccountCode", accountCode);
+                        cmd.Parameters.AddWithValue("@Value", (double)val);
+                        cmd.Parameters.AddWithValue("@CreditOrDebit", creditOrDebit);
+                        cmd.Parameters.AddWithValue("@Description", (object)desc ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@RecordDate", model.BillDate.HasValue ? (object)model.BillDate.Value : DateTime.Now);
+                        cmd.Parameters.AddWithValue("@NoteId", noteId);
+                        cmd.Parameters.AddWithValue("@UserId", (object)userId ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@BranchId", (object)(model.BranchNo ?? project.BranchNo) ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@ProjectBillNo", id.ToString());
+                        cmd.Parameters.AddWithValue("@ProjectId", project.Id);
+                        cmd.Parameters.AddWithValue("@BillId", id);
+                        cmd.ExecuteNonQuery();
+                    }
+                };
+
+                // DEBITS (0)
+                addVoucherLine(debCustomerAccount, net, 0, "مستخلص رقم " + id + " للمشروع: " + project.Name);
+                addVoucherLine(debGuaranteeAccount, model.PerforValue.GetValueOrDefault(), 0, "ضمان مستخلص رقم " + id + " للمشروع: " + project.Name);
+                addVoucherLine(debAdvancedAccount, model.AdvancedPayment.GetValueOrDefault(), 0, "دفعة مقدمة مستردة مستخلص رقم " + id + " للمشروع: " + project.Name);
+                addVoucherLine(debDiscountAccount, model.GeneralDiscount.GetValueOrDefault(), 0, "خصم مستخلص رقم " + id + " للمشروع: " + project.Name);
+
+                // CREDITS (1)
+                addVoucherLine(credRevenueAccount, total, 1, "إيراد مستخلص رقم " + id + " للمشروع: " + project.Name);
+                addVoucherLine(credVatAccount, model.VatValue.GetValueOrDefault(), 1, "ضريبة مستخلص رقم " + id + " للمشروع: " + project.Name);
+
+                // 7. Update Bill Header Linkage to Accounting Note
+                using (var updateBillCmd = new SqlCommand(@"
+UPDATE dbo.project_billl
+SET note_id = @NoteId,
+    NoteSerial = @NoteSerial,
+    NoteSerial1 = @NoteSerial1
+WHERE id = @Id;", connection, transaction))
+                {
+                    updateBillCmd.Parameters.AddWithValue("@NoteId", noteId);
+                    updateBillCmd.Parameters.AddWithValue("@NoteSerial", noteSerialValue.ToString());
+                    updateBillCmd.Parameters.AddWithValue("@NoteSerial1", noteSerialValue.ToString());
+                    updateBillCmd.Parameters.AddWithValue("@Id", id);
+                    updateBillCmd.ExecuteNonQuery();
                 }
 
                 transaction.Commit();
@@ -356,7 +694,7 @@ VALUES
 
         private static ProjectHeader GetProjectHeader(SqlConnection connection, SqlTransaction transaction, int id)
         {
-            using (var command = new SqlCommand("SELECT TOP 1 id, Project_name, Fullcode, branch_no, StartDate FROM dbo.projects WHERE id = @Id", connection, transaction))
+            using (var command = new SqlCommand("SELECT TOP 1 id, Project_name, Fullcode, branch_no, StartDate, AccountUnderImp FROM dbo.projects WHERE id = @Id", connection, transaction))
             {
                 command.Parameters.AddWithValue("@Id", id);
                 using (var reader = command.ExecuteReader())
@@ -372,9 +710,98 @@ VALUES
                         Name = ReadString(reader, "Project_name"),
                         FullCode = ReadString(reader, "Fullcode"),
                         BranchNo = ReadInt(reader, "branch_no"),
-                        StartDate = ReadDate(reader, "StartDate")
+                        StartDate = ReadDate(reader, "StartDate"),
+                        AccountUnderImp = ReadString(reader, "AccountUnderImp")
                     };
                 }
+            }
+        }
+
+        private static string GenerateProjectAccount(SqlConnection connection, SqlTransaction transaction, string name, string nameEng)
+        {
+            var accountCode = NextId(connection, transaction, "ACCOUNTS", "Account_Code").ToString();
+            var serial = NextId(connection, transaction, "ACCOUNTS", "Account_Serial").ToString();
+            
+            using (var command = new SqlCommand(@"
+INSERT INTO dbo.ACCOUNTS
+(Account_Code, Account_Name, last_account, cannot_del, Branch, Account_Serial,
+ BasicAccount, DateCreated, Account_NameEng, currenct_code, mowazna, cost_center, Sum_account,
+ cost_center_type, AccountTypes, AccountTab, DepitOrCredit, Differenttype, [Block], [Level])
+VALUES
+(@Code, @Name, 1, 0, '0', @Serial,
+ 0, GETDATE(), @NameEng, N'1', 0, 0, 0,
+ 0, 1, 1, 0, 1, 0, 1);", connection, transaction))
+            {
+                command.Parameters.AddWithValue("@Code", accountCode);
+                command.Parameters.AddWithValue("@Name", string.IsNullOrWhiteSpace(name) ? "مشروع جديد - تحت التنفيذ" : name + " - تحت التنفيذ");
+                command.Parameters.AddWithValue("@NameEng", string.IsNullOrWhiteSpace(nameEng) ? "New Project - Under Implementation" : nameEng + " - Under implementation");
+                command.Parameters.AddWithValue("@Serial", serial);
+                command.ExecuteNonQuery();
+            }
+            return accountCode;
+        }
+
+        private static System.Collections.Generic.IList<ProjectMainDesViewModel> GetProjectItems(SqlConnection connection, int projectId)
+        {
+            var items = new System.Collections.Generic.List<ProjectMainDesViewModel>();
+            try
+            {
+                using (var command = new SqlCommand("SELECT ID, ProjectID, Name, Price, Qty, Total FROM dbo.ProjectMainDes WHERE ProjectID = @pId", connection))
+                {
+                    command.Parameters.AddWithValue("@pId", projectId);
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            items.Add(new ProjectMainDesViewModel
+                            {
+                                Id = ReadInt(reader, "ID").GetValueOrDefault(),
+                                ProjectId = ReadInt(reader, "ProjectID").GetValueOrDefault(),
+                                Item = ReadString(reader, "Name"),
+                                Price = ReadDecimal(reader, "Price").GetValueOrDefault(),
+                                Quantity = ReadDecimal(reader, "Qty").GetValueOrDefault(),
+                                Value = ReadDecimal(reader, "Total").GetValueOrDefault()
+                            });
+                        }
+                    }
+                }
+            }
+            catch (SqlException)
+            {
+                // جدول ProjectMainDes غير متوفر أو أعمدته مختلفة — نعيد قائمة فارغة بأمان
+            }
+            return items;
+        }
+
+        private static void SaveProjectItems(SqlConnection connection, SqlTransaction transaction, int projectId, System.Collections.Generic.IList<ProjectMainDesViewModel> items)
+        {
+            try
+            {
+                using (var command = new SqlCommand("DELETE FROM dbo.ProjectMainDes WHERE ProjectID = @pId", connection, transaction))
+                {
+                    command.Parameters.AddWithValue("@pId", projectId);
+                    command.ExecuteNonQuery();
+                }
+
+                if (items == null) return;
+
+                foreach (var item in items)
+                {
+                    if (string.IsNullOrWhiteSpace(item.Item)) continue;
+                    using (var command = new SqlCommand("INSERT INTO dbo.ProjectMainDes (ProjectID, Name, Price, Qty, Total) VALUES (@pId, @name, @price, @qty, @total)", connection, transaction))
+                    {
+                        command.Parameters.AddWithValue("@pId", projectId);
+                        command.Parameters.AddWithValue("@name", (object)item.Item ?? DBNull.Value);
+                        command.Parameters.AddWithValue("@price", item.Price);
+                        command.Parameters.AddWithValue("@qty", item.Quantity);
+                        command.Parameters.AddWithValue("@total", item.Value);
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                throw new InvalidOperationException("حدث خطأ أثناء حفظ بنود المشروع: " + ex.Message, ex);
             }
         }
 
@@ -412,6 +839,7 @@ VALUES
             command.Parameters.AddWithValue("@ContractNo", (object)model.ContractNo ?? DBNull.Value);
             command.Parameters.AddWithValue("@UnderImp", (object)model.UnderImplementation ?? DBNull.Value);
             command.Parameters.AddWithValue("@Insurance", (object)model.Insurance ?? DBNull.Value);
+            command.Parameters.AddWithValue("@AccountUnderImp", (object)model.AccountUnderImp ?? DBNull.Value);
         }
 
         private const string InsertSql = @"
@@ -421,7 +849,7 @@ INSERT INTO dbo.projects
     Fullcode, prifix, Code, Project_name, Project_nameE, Contract_type, Project_status,
     project_cost, branch_no, End_user_id, sub_contractor_id, general_discount,
     cost_after_discount, net, CurrencyID, StartDate, EndDate, DiscountPercentage,
-    Dept_ID, Remarkss, DpNearEndDate, EmpId, EmpId1, Pstate, ContractNo, UnderImp, Insurance
+    Dept_ID, Remarkss, DpNearEndDate, EmpId, EmpId1, Pstate, ContractNo, UnderImp, Insurance, AccountUnderImp
 )
 VALUES
 (
@@ -429,7 +857,7 @@ VALUES
     @FullCode, @Prefix, @Code, @ProjectName, @ProjectNameEnglish, @ContractType, @ProjectStatus,
     @ProjectCost, @BranchNo, @EndUserId, @SubContractorId, @GeneralDiscount,
     @CostAfterDiscount, @Net, @CurrencyId, @StartDate, @EndDate, @DiscountPercentage,
-    @DeptId, @Remarks, @NearEndDate, @EmpId, @EmpId1, @PState, @ContractNo, @UnderImp, @Insurance
+    @DeptId, @Remarks, @NearEndDate, @EmpId, @EmpId1, @PState, @ContractNo, @UnderImp, @Insurance, @AccountUnderImp
 );";
 
         private const string UpdateSql = @"
@@ -464,7 +892,8 @@ UPDATE dbo.projects SET
     Pstate = @PState,
     ContractNo = @ContractNo,
     UnderImp = @UnderImp,
-    Insurance = @Insurance
+    Insurance = @Insurance,
+    AccountUnderImp = @AccountUnderImp
 WHERE id = @Id;";
 
         private static string ReadString(IDataRecord reader, string column)
@@ -504,6 +933,46 @@ WHERE id = @Id;";
             return reader.IsDBNull(ordinal) ? (double?)null : Convert.ToDouble(reader.GetValue(ordinal));
         }
 
+        private static string ResolveLeafAccount(SqlConnection connection, SqlTransaction transaction, string accountCode, string fallbackSearchTerm, string fallbackSearchTermEng)
+        {
+            if (!string.IsNullOrWhiteSpace(accountCode))
+            {
+                using (var command = new SqlCommand("SELECT COUNT(1) FROM dbo.ACCOUNTS WHERE Account_Code = @Code AND ISNULL(last_account, 0) = 1", connection, transaction))
+                {
+                    command.Parameters.AddWithValue("@Code", accountCode.Trim());
+                    if (Convert.ToInt32(command.ExecuteScalar()) > 0)
+                    {
+                        return accountCode.Trim();
+                    }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(fallbackSearchTerm))
+            {
+                using (var command = new SqlCommand("SELECT TOP 1 Account_Code FROM dbo.ACCOUNTS WHERE ISNULL(last_account, 0) = 1 AND (Account_Name LIKE @Term OR Account_NameEng LIKE @TermEng)", connection, transaction))
+                {
+                    command.Parameters.AddWithValue("@Term", "%" + fallbackSearchTerm + "%");
+                    command.Parameters.AddWithValue("@TermEng", "%" + fallbackSearchTermEng + "%");
+                    var result = command.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        return Convert.ToString(result);
+                    }
+                }
+            }
+
+            using (var command = new SqlCommand("SELECT TOP 1 Account_Code FROM dbo.ACCOUNTS WHERE ISNULL(last_account, 0) = 1 ORDER BY Account_Serial", connection, transaction))
+            {
+                var result = command.ExecuteScalar();
+                if (result != null && result != DBNull.Value)
+                {
+                    return Convert.ToString(result);
+                }
+            }
+
+            return accountCode;
+        }
+
         private class ProjectHeader
         {
             public int Id { get; set; }
@@ -511,6 +980,7 @@ WHERE id = @Id;";
             public string FullCode { get; set; }
             public int? BranchNo { get; set; }
             public DateTime? StartDate { get; set; }
+            public string AccountUnderImp { get; set; }
         }
     }
 }

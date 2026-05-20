@@ -1,0 +1,12 @@
+Changed database context to 'Cash'.
+STEP 1: PRE-CHECK - Compare both index definitions on dbo.Notes
+index_name|type_desc|is_unique|fill_factor|has_filter|filter_definition|data_space_name|data_space_type|data_compression_desc|key_columns|include_columns|used_mb|used_pages|user_seeks|user_scans|user_lookups|user_updates|last_user_seek|last_user_scan|last_user_lookup|last_user_update
+----------|---------|---------|-----------|----------|-----------------|---------------|---------------|---------------------|-----------|---------------|-------|----------|----------|----------|------------|------------|--------------|--------------|----------------|----------------
+IX_Notes_Transaction_ID|NONCLUSTERED|0|0|0|NULL|PRIMARY|ROWS_FILEGROUP|NONE|Transaction_ID|NoteID|22.31|2856|0|0|0|0|NULL|NULL|NULL|NULL
+IX_POS_Notes_Transaction_ID|NONCLUSTERED|0|0|0|NULL|PRIMARY|ROWS_FILEGROUP|NONE|Transaction_ID|NoteID|19.89|2546|0|0|0|0|NULL|NULL|NULL|NULL
+STEP 2: DROP confirmed duplicate index ONLY (IX_POS_Notes_Transaction_ID)
+Dropped: dbo.Notes.IX_POS_Notes_Transaction_ID
+STEP 3: POST-CHECK - verify remaining/removed index status
+index_name|index_id|type_desc
+----------|--------|---------
+IX_Notes_Transaction_ID|408|NONCLUSTERED

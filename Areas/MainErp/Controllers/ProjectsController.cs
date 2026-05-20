@@ -1,8 +1,10 @@
 using System;
+using System.Linq;
 using System.Web.Mvc;
 using MyERP.Areas.MainErp.Infrastructure;
 using MyERP.Areas.MainErp.Repositories.Projects;
 using MyERP.Areas.MainErp.ViewModels.Projects;
+
 
 namespace MyERP.Areas.MainErp.Controllers
 {
@@ -92,6 +94,29 @@ namespace MyERP.Areas.MainErp.Controllers
             }
         }
 
+        [HttpPost]
+        public ActionResult SaveJson(ProjectEditViewModel model)
+        {
+            try
+            {
+                ValidateBusinessRules(model);
+                if (!ModelState.IsValid)
+                {
+                    var errors = string.Join(" | ", ModelState.Values
+                        .SelectMany(v => v.Errors)
+                        .Select(e => e.ErrorMessage));
+                    return Json(new { success = false, message = errors });
+                }
+
+                var id = _repository.Save(model);
+                return Json(new { success = true, id });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         private void ValidateBusinessRules(ProjectEditViewModel model)
         {
             if (model.StartDate.HasValue && model.EndDate.HasValue && model.EndDate.Value.Date < model.StartDate.Value.Date)
@@ -104,5 +129,6 @@ namespace MyERP.Areas.MainErp.Controllers
                 ModelState.AddModelError("GeneralDiscount", "قيمة الخصم لا يمكن أن تتجاوز قيمة المشروع.");
             }
         }
+
     }
 }

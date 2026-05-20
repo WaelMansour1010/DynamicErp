@@ -1,0 +1,1457 @@
+=================================================================
+EXTRACTED METHOD: calcnet (Original Start Line: 11100)
+=================================================================
+Actual found line: 11100
+Function calcnet()
+    
+If SystemOptions.SuppCreat4Acc = False Then calcnetOld: Exit Function
+    
+    TxtNetValue.text = Round(val(Results.text) - val(txtDiscountG) - val(advancedPayment2.text) - val(txtDiscountGMater), Decimal_Places)   ' - val(advancedPayment.text)
+    If val(cboDiscount1.ListIndex) = 1 Then
+        TxtPerforValue.text = Round(val(txtDiscount1.text) * val(TxtNetValue.text) / 100, Decimal_Places)
+        TxtPerforValue.text = Round(val(txtDiscount1.text) * val(Results.text) / 100, Decimal_Places)
+
+    ElseIf val(cboDiscount1.ListIndex) = 2 Then
+        TxtPerforValue.text = Round(val(txtDiscount1.text), Decimal_Places)
+    Else
+        TxtPerforValue.text = 0
+    End If
+    
+    txtTotalBefore = Round(val(Results.text) - val(txtDiscountG) - val(advancedPayment2.text) - val(txtDiscountGMater), Decimal_Places)   ' - val(advancedPayment.text)
+    total.text = txtTotalBefore - val(txtDiscount3)
+    'تعديل
+    total.text = Round(val(TxtNetValue.text), Decimal_Places) - val(txtDiscount3)
+    Calculte
+End Function
+
+
+
+=================================================================
+EXTRACTED METHOD: Calculte (Original Start Line: 11210)
+=================================================================
+Actual found line: 11210
+Sub Calculte()
+If SystemOptions.SuppCreat4Acc = False Then CalculteOld: Exit Sub
+    
+    If Me.TxtModFlg.text <> "R" Then
+
+        If SystemOptions.AllowEditVaTManulay = True Then
+            If val(txtManulaVat) > 0 Or Trim(txtManulaVat) = "0" Then TxtFATYou.text = txtManulaVat
+        End If
+        If val(TxtFATYou.text) > 0 Then
+            TxtFATValue.text = Round(((val(TxtNetValue.text) * val(TxtFATYou.text)) / 100), Decimal_Places)
+        Else
+            TxtFATValue.text = 0
+        End If
+        'TxtTotalValue.text = Round(val(total.text) + val(TxtFATValue.text) + val(TxtPreVAT2) - val(TxtPerforValue), Decimal_Places)
+        'TxtTotalValue.text = Round(val(total.text) + val(TxtFATValue.text) - val(TxtPerforValue) - val(txtDiscount3), Decimal_Places)
+        TxtTotalValue.text = Round(val(total.text) + val(TxtFATValue.text) - val(TxtPerforValue), Decimal_Places) + val(txtPerformanceBond)
+    End If
+
+    CalcFormat
+End Sub
+
+
+
+=================================================================
+EXTRACTED METHOD: Savetemp (Original Start Line: 13046)
+=================================================================
+Actual found line: 13046
+Sub Savetemp()
+    Dim i   As Long
+  Dim LineDiscountPercent               As Double
+    Dim LineDiscount                      As Double
+    Dim linenetaftermainDiscount          As Double
+    Dim linenetaftermainDiscountBeforevat As Double
+    Dim LineVat                           As Double
+    Dim linenetaftermainDiscountWithvat   As Double
+    Dim OLDTotalwithVat                   As Double
+    Dim CurrenttotalWithvat               As Double
+    Dim Totalwitvat                       As Double
+    Dim oldPerforValue                    As Double
+    Dim totalPerforValue                  As Double
+
+    Dim Rs3 As New ADODB.Recordset
+    '   Rs3.Open "project_bill_details", Cn, adOpenStatic, adLockOptimistic, adCmdTable
+    
+    
+       
+     StrSQL = "sELECT * FROM TBLProjectBillHistory Where 1 = -1"
+   
+    saveGrid StrSQL, GrdBondHistory, "Serial", "", "bill_id", val(Me.txtid.text)
+     
+     
+    
+    
+   StrSQL = " delete dbo.project_bill_details where bill_id = " & val(Me.txtid.text)
+   Cn.Execute StrSQL
+    StrSQL = "SELECT     * from dbo.project_bill_details Where (1 = -1)"
+    Rs3.Open StrSQL, Cn, adOpenKeyset, adLockOptimistic, adCmdText
+    With Fg_Journal
+
+        For i = .FixedRows To .rows - 1
+
+            '        Dim IntDEV_Type As Integer
+            '        Dim SngDEV_Value As Single
+            If .TextMatrix(i, .ColIndex("item")) <> "" Then
+
+                Rs3.AddNew
+                Rs3("bill_id").value = Me.txtid.text
+                
+                Rs3("FullCode").value = Trim(.TextMatrix(i, .ColIndex("FullCode")))
+                Rs3("project_id").value = IIf(.TextMatrix(i, .ColIndex("project_id")) = "", Null, val(.TextMatrix(i, .ColIndex("project_id"))))
+                Rs3("projectName").value = .TextMatrix(i, .ColIndex("projectName"))
+                Rs3("AccountCode").value = .TextMatrix(i, .ColIndex("AccountCode"))
+
+                Rs3("ExPercen").value = IIf(.TextMatrix(i, .ColIndex("ExPercen")) = "", Null, val(.TextMatrix(i, .ColIndex("ExPercen"))))
+                Rs3("item").value = IIf(.TextMatrix(i, .ColIndex("item")) = "", Null, .TextMatrix(i, .ColIndex("item")))
+                Rs3("item_id").value = IIf(.TextMatrix(i, .ColIndex("item_id")) = "", Null, .TextMatrix(i, .ColIndex("item_id")))
+                Rs3("cost").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("cost"))), 0, .TextMatrix(i, .ColIndex("cost")))
+                Rs3("exe").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("exe"))), 0, .TextMatrix(i, .ColIndex("exe")))
+                
+                Rs3("qtySubContractor").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("qtySubContractor"))), 0, .TextMatrix(i, .ColIndex("qtySubContractor")))
+                Rs3("costSubContractor").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("costSubContractor"))), 0, .TextMatrix(i, .ColIndex("costSubContractor")))
+                
+                Rs3("OLDTotalwithVat").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("OLDTotalwithVat"))), 0, .TextMatrix(i, .ColIndex("OLDTotalwithVat")))
+                Rs3("CurrenttotalWithvat").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("CurrenttotalWithvat"))), 0, .TextMatrix(i, .ColIndex("CurrenttotalWithvat")))
+                Rs3("Totalwitvat").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("Totalwitvat"))), 0, .TextMatrix(i, .ColIndex("Totalwitvat")))
+                                              
+                Rs3("oldPerforValue").value = val(lbl(9).Caption)
+                Rs3("totalPerforValue").value = val(lbl(11).Caption)
+                
+                Rs3("percentage").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("percentage"))), 0, .TextMatrix(i, .ColIndex("percentage")))
+                Rs3("exedate").value = IIf(Not IsDate(.TextMatrix(i, .ColIndex("exedate"))), Date, .TextMatrix(i, .ColIndex("exedate")))
+                ''////29 07 2015
+                Rs3("PrMainDesID").value = IIf(.TextMatrix(i, .ColIndex("PrMainDesID")) = "", Null, val(.TextMatrix(i, .ColIndex("PrMainDesID"))))
+                Rs3("qty").value = IIf(.TextMatrix(i, .ColIndex("qty")) = "", Null, val(.TextMatrix(i, .ColIndex("qty"))))
+                Rs3("total").value = IIf(.TextMatrix(i, .ColIndex("total")) = "", Null, val(.TextMatrix(i, .ColIndex("total"))))
+                Rs3("discount").value = IIf(.TextMatrix(i, .ColIndex("discount")) = "", Null, val(.TextMatrix(i, .ColIndex("discount"))))
+                Rs3("net").value = IIf(.TextMatrix(i, .ColIndex("net")) = "", Null, val(.TextMatrix(i, .ColIndex("net"))))
+                Rs3("quntExc").value = IIf(.TextMatrix(i, .ColIndex("quntExc")) = "", Null, val(.TextMatrix(i, .ColIndex("quntExc"))))
+                Rs3("totEx").value = IIf(.TextMatrix(i, .ColIndex("totEx")) = "", Null, val(.TextMatrix(i, .ColIndex("totEx"))))
+                LineDiscountPercent = val(.TextMatrix(i, .ColIndex("NetExe"))) / Results.text
+                
+                LineDiscount = (val(txtDiscountG.text)) * LineDiscountPercent
+         
+                PerforVLineDiscount = val(TxtPerforValue.text) * LineDiscountPercent
+               
+                linenetaftermainDiscount = val(.TextMatrix(i, .ColIndex("NetExe"))) - LineDiscount
+                
+                Rs3("LineDiscountPercent").value = LineDiscountPercent
+                Rs3("LineDiscount").value = LineDiscount
+                Rs3("PerforVLineDiscount").value = PerforVLineDiscount
+                linenetaftermainDiscountBeforevat = val(.TextMatrix(i, .ColIndex("NetExe"))) - LineDiscount
+                  
+                Rs3("linenetaftermainDiscountBeforevat").value = linenetaftermainDiscountBeforevat
+                 
+                LineVat = Rs3("linenetaftermainDiscountBeforevat").value * val(TxtFATYou.text) / 100
+                
+                Rs3("LineVat").value = LineVat
+                linenetaftermainDiscountWithvat = linenetaftermainDiscount + LineVat
+                 
+                Rs3("linenetaftermainDiscountWithvat").value = linenetaftermainDiscountWithvat
+                '     Rs3("linenetaftermainDiscountWithvat").value = linenetaftermainDiscountWithvat - PerforVLineDiscount
+                Rs3("LineFinal").value = linenetaftermainDiscountWithvat - PerforVLineDiscount
+                  
+                'newwwwwwwwwwwwwwwwwwwwwwww
+                Rs3("QtyApprov").value = IIf(.TextMatrix(i, .ColIndex("QtyApprov")) = "", Null, val(.TextMatrix(i, .ColIndex("QtyApprov"))))
+                Rs3("TotalApprov").value = IIf(.TextMatrix(i, .ColIndex("TotalApprov")) = "", Null, val(.TextMatrix(i, .ColIndex("TotalApprov"))))
+                Rs3("PriceApprov").value = IIf(.TextMatrix(i, .ColIndex("PriceApprov")) = "", Null, val(.TextMatrix(i, .ColIndex("PriceApprov"))))
+                Rs3("DiscApprov").value = IIf(.TextMatrix(i, .ColIndex("DiscApprov")) = "", Null, val(.TextMatrix(i, .ColIndex("DiscApprov"))))
+                Rs3("NetApprov").value = IIf(.TextMatrix(i, .ColIndex("NetApprov")) = "", Null, val(.TextMatrix(i, .ColIndex("NetApprov"))))
+                '''//////////////
+                Rs3("discountEXE").value = IIf(.TextMatrix(i, .ColIndex("discountEXE")) = "", Null, val(.TextMatrix(i, .ColIndex("discountEXE"))))
+                
+                Rs3("NetExe").value = IIf(.TextMatrix(i, .ColIndex("NetExe")) = "", Null, val(.TextMatrix(i, .ColIndex("NetExe"))))
+
+                Rs3("Percentage1").value = IIf(.TextMatrix(i, .ColIndex("Percentage1")) = "", Null, val(.TextMatrix(i, .ColIndex("Percentage1"))))
+                Rs3("Pre_Percent1").value = IIf(.TextMatrix(i, .ColIndex("Pre_Percent1")) = "", Null, val(.TextMatrix(i, .ColIndex("Pre_Percent1"))))
+                Rs3("tot_percent1").value = IIf(.TextMatrix(i, .ColIndex("tot_percent1")) = "", Null, val(.TextMatrix(i, .ColIndex("tot_percent1"))))
+                
+                'newwwwwwwwwwwwwwwwwwwwwwwwwwwwww
+                
+                Rs3("oprid").value = IIf(.TextMatrix(i, .ColIndex("oprid")) = "", Null, val(.TextMatrix(i, .ColIndex("oprid"))))
+                
+                'Rs3("unit").value = IIf(.TextMatrix(i, .ColIndex("unit")) = "", Null, .TextMatrix(i, .ColIndex("unit")))
+                Rs3("item_unit").value = IIf(.TextMatrix(i, .ColIndex("unit")) = "", Null, .TextMatrix(i, .ColIndex("unit")))
+                Rs3("Unit_id").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("Unit_id"))), 0, val(.TextMatrix(i, .ColIndex("Unit_id"))))
+                Rs3("Quantity").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("Quantity"))), 0, .TextMatrix(i, .ColIndex("Quantity")))
+                Rs3("Price").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("Price"))), 0, .TextMatrix(i, .ColIndex("Price")))
+                Rs3("Pre_Quantity").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("Pre_Quantity"))), 0, .TextMatrix(i, .ColIndex("Pre_Quantity")))
+                Rs3("Pre_Value").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("Pre_Value"))), 0, .TextMatrix(i, .ColIndex("Pre_Value")))
+                Rs3("Pre_Percent").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("Pre_Percent"))), 0, .TextMatrix(i, .ColIndex("Pre_Percent")))
+                Rs3("Curr_Quantity").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("Curr_Quantity"))), 0, .TextMatrix(i, .ColIndex("Curr_Quantity")))
+                Rs3("Curr_value").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("Curr_value"))), 0, .TextMatrix(i, .ColIndex("Curr_value")))
+                Rs3("curr_Percent").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("curr_Percent"))), 0, .TextMatrix(i, .ColIndex("curr_Percent")))
+                Rs3("tot_quantity").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("tot_quantity"))), 0, .TextMatrix(i, .ColIndex("tot_quantity")))
+                Rs3("tot_value").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("tot_value"))), 0, .TextMatrix(i, .ColIndex("tot_value")))
+                Rs3("tot_percent").value = IIf(Not IsNumeric(.TextMatrix(i, .ColIndex("tot_percent"))), 0, .TextMatrix(i, .ColIndex("tot_percent")))
+                 
+                Rs3.update
+            End If
+            If val(TXTOrDer_no2.text) <> 0 And CBoBasedON.ListIndex = 1 Then
+            
+                UpdatePre_QuantityCont i
+            End If
+        Next i
+
+    End With
+
+    updateNotesValueAndNobytext val(note_id.text)
+    saveBillBuy
+                
+    If SystemOptions.SuppCreat4Acc Then
+                
+    SaveQRCode "project_billl", "ID", val(txtid), TxtNoteSerial1.text, (XPDtbTrans.value), _
+       (TxtTotalValue.text), Picture1, 0, (TxtFATValue.text), (TxtTotalValue.text)
+    Else
+        SaveQRCode6 "project_billl", "ID", val(txtid), TxtNoteSerial1.text, (XPDtbTrans.value), _
+       val(Results.text) + val(TxtFATValue) - val(TxtPreVAT.text) - val(advancedPayment), Picture1, 0, val(TxtFATValue.text) - val(TxtPreVAT.text), val(Results.text) + val(TxtFATValue) - val(TxtPreVAT.text) - val(advancedPayment), val(dcBranch.BoundText)
+       
+       
+       
+       ' SaveQRCode6 "tblEInvoice", "ID", val(RsData!ID & ""), Trim(RsData!invoiceID & ""), RsData!IssueDate & "", _
+       ' val(RsData!PayableAmount & ""), Picture1, 0, val(RsData!VATValue & ""), val(RsData!PayableAmount & ""), BranchID
+       
+       '{adox.advancedPayment}-{adox.prevat}
+       'Results.text
+    End If
+    TxtModFlg.text = "R"
+    fillapprovData
+       
+    If SystemOptions.UserInterface = EnglishInterface Then
+        MsgBox "Saved", vbInformation
+    Else
+        MsgBox "تم حفظ البيانات", vbInformation
+  
+    End If
+     Set Rs3 = New ADODB.Recordset
+    '   Rs3.Open "project_bill_details", Cn, adOpenStatic, adLockOptimistic, adCmdTable
+    StrSQL = "SELECT     * from dbo.project_bill_details Where (1 = -1)"
+    Rs3.Open StrSQL, Cn, adOpenKeyset, adLockOptimistic, adCmdText
+    
+End Sub
+
+
+
+=================================================================
+EXTRACTED METHOD: SaveData (Original Start Line: 6821)
+=================================================================
+Actual found line: 6821
+Function SaveData()
+On Error GoTo ErrTrap
+  Dim BeginTrans As Boolean
+                
+    calcnet
+    Dim accountdep As String
+
+        
+  
+        
+    If billto.ListIndex = 0 Then
+        X = val(TXTEnd_user_id.text)
+        'accountdep = txtendaccount.text
+    Else
+
+        If billto.ListIndex = 1 Then
+            X = val(TXTsub_contractor_id.text)
+            '    accountdep = txtsubaccount.text
+        End If
+    End If
+    
+        Dim AdvancedAccount  As String
+    Dim GuranteeAccount  As String
+    Dim mAccountMaterial As String
+    
+    X = val(TXTEnd_user_id.text)
+    '  Dim x As Double
+    '  x = get_Customer_id(accountdep)
+        
+    '  total.text = gettotal(txtid.text)
+    
+    
+        If BeginTrans = False Then
+            Cn.BeginTrans
+            BeginTrans = True
+        End If
+
+    Dim Rs1 As New ADODB.Recordset
+    StrSQL = "select * From Notes where NoteType=5000 and NoteSerial='" & Me.TxtNoteSerial.text & "' order by NoteID"
+    Rs1.Open StrSQL, Cn, adOpenKeyset, adLockPessimistic, adCmdText
+  
+    If TxtModFlg.text = "N" Then
+   
+        If X = 0 Then
+            If SystemOptions.UserInterface = EnglishInterface Then
+                MsgBox "An error in customer Number", vbCritical: Exit Function
+            Else
+                MsgBox "يوجد خطأ في رقم العميل", vbCritical: Exit Function
+            End If
+        End If
+        note_id.text = CStr(new_id("Notes", "NoteID", "", True))
+        txtid.text = CStr(new_id("project_billl", "id", "", True))
+            
+        rs.AddNew
+    
+    Else
+        StrSQL = "Delete From DOUBLE_ENTREY_VOUCHERS Where Notes_ID=" & val(note_id.text)
+        Cn.Execute StrSQL, , adExecuteNoRecords
+        StrSQL = "Delete From notes  Where NoteID=" & val(note_id.text)
+        Cn.Execute StrSQL, , adExecuteNoRecords
+        
+        StrSQL = "Delete From project_bill_details Where bill_id=" & val(Me.txtid.text)
+        Cn.Execute StrSQL, , adExecuteNoRecords
+    End If
+
+    Rs1.AddNew
+    'branch_id
+    If TxtNoteSerial1.text = "" Then
+        If billto.ListIndex = 0 Then
+            TxtNoteSerial1.text = Voucher_coding(val(my_branch), XPDtbTrans.value, 65, 65, , , , , val(billto.ListIndex))
+        Else
+            TxtNoteSerial1.text = Voucher_coding(val(my_branch), XPDtbTrans.value, 84, 84, , , , , val(billto.ListIndex))
+        End If
+    End If
+     
+    Rs1("branch_no").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+
+    Rs1("NoteID").value = val(note_id.text)
+    Rs1("Note_Value").value = IIf(total.text = "", Null, val(total.text))
+    Rs1("CusID").value = X
+    Rs1("NoteType").value = 500
+    Rs1("NoteType").value = 5000
+    Rs1("NoteDate").value = XPDtbTrans.value
+    Rs1("UserID").value = user_id
+    Rs1("NoteSerial1").value = IIf(Me.TxtNoteSerial1 <> "", Trim(TxtNoteSerial1.text), Null)
+
+        
+    rs("Currency_id").value = IIf(Dccurrency.BoundText = "", Null, val(Dccurrency.BoundText))
+    rs("Currency_rate").value = IIf(Not IsNumeric(txt_Currency_rate.text), 1, txt_Currency_rate.text)
+    rs("DateRec").value = txtDateRec.value
+    rs("Doctype").value = IIf(Me.DCDocTypes.BoundText = "", Null, val(DCDocTypes.BoundText))
+    rs("CIBAN").value = TXTIban.text
+    rs("Invoicetype").value = Me.DefaultInvoicetype.ListIndex
+
+    
+    
+    Rs1("RemarkE").value = IIf(Me.txtRemarks <> "", Trim(txtRemarks.text), Null)
+    Rs1("Remark").value = IIf(Me.txtRemarks <> "", Trim(txtRemarks.text), Null)
+   
+    rs("NoteSerial1").value = IIf(Me.TxtNoteSerial1 <> "", Trim(TxtNoteSerial1.text), Null)
+    rs("ExPercen").value = val(TxtExPercen.text)
+    rs("DiscountGMater").value = val(txtDiscountGMater.text)
+    
+    rs("ExPercenID").value = val(DcbExPercen.ListIndex)
+    rs("PreVAT").value = val(TxtPreVAT.text)
+    rs("FATYou").value = val(TxtFATYou.text)
+    rs("FATValue").value = val(TxtFATValue.text)
+    rs("TotalValue").value = val(TxtTotalValue.text)
+    rs("AccountCodeVat").value = Me.AccountVat.BoundText
+    rs("DiscountAccount").value = Me.DcDiscountAccount.BoundText
+    
+
+    
+    rs("NetValue").value = val(TxtNetValue.text)
+    rs("PerforValue").value = val(TxtPerforValue.text)
+    ''/////////
+    rs("StartDateProje").value = StartDateProje.value
+    rs("PreBalaValue").value = val(TxtPreBalaValue.text)
+    rs("PreBalaVAT").value = val(TxtPreBalaVAT.text)
+    rs("PreBalaTotal").value = val(TxtPreBalaTotal.text)
+    rs("PreBalaPayed").value = val(TxtPreBalaPayed.text)
+    rs("PreBalaRemain").value = val(TxtPreBalaRemain.text)
+    rs("PreBalaTransPyed").value = val(TxtPreBalaTransPyed.text)
+    rs("PreBalaNet").value = val(TxtPreBalaNet.text)
+    rs("PreBalaVATYu").value = val(TxtPreBalaVATYu.text)
+    rs("SumVATLine").value = val(Label57.Caption)
+    rs("SumValueLine").value = val(Label56.Caption)
+    ''/////
+    If Option7.value = True Then
+        rs("UnderImp").value = 0
+    ElseIf Option6.value = True Then
+        rs("UnderImp").value = 1
+    ElseIf Option8.value = True Then
+        rs("UnderImp").value = 2
+    End If
+    If TxtManualNO.text = "" Then
+        TxtManualNO.text = TxtNoteSerial1.text
+    End If
+
+
+    Rs1("remark").value = "  Project Invoice No  :  " & TxtManualNO & CHR(13) & "  To Project " & txtprojectname.text
+ 
+    '   Rs1("remark").value = "مستخلص رقم :     " & txtid & "    " & Chr(13) & "  للمشروع  " & txtprojectname.text
+    
+    If TxtNoteSerial = "" Then
+        TxtNoteSerial.text = Notes_coding(val(my_branch), XPDtbTrans.value)
+    End If
+       
+    Rs1("NoteSerial").value = TxtNoteSerial.text
+    
+    Rs1("NoteSerial1").value = Trim$(Me.TxtNoteSerial1.text) 'مسلسل
+    Rs1("numbering_type").value = sand_numbering_type(0) 'نوع ترقيم سند القيد
+    '  rs("numbering_type1").value = sand_numbering_type(1) 'نوع ترقيم سند الصرف
+     
+    Rs1("sanad_year").value = year(XPDtbTrans.value)
+    Rs1("sanad_month").value = Month(XPDtbTrans.value)
+    Rs1("note_value_by_characters").value = WriteNo(Format(Me.Results.text, "0.00"), 0, True, ".")
+    
+    Rs1.update
+    
+    rs("id").value = Me.txtid.text
+    
+    rs("bill_date").value = XPDtbTrans.value
+    'branch_id
+    rs("branch_no").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+    rs("project_no").value = IIf(Not IsNumeric(DataCombo2.BoundText), "", DataCombo2.BoundText)
+    rs("project_name").value = txtprojectname.text
+    rs("Sub_user_name").value = IIf(IsNull(DcAccount1.text), "", DcAccount1.text)
+    rs("End_user_name").value = IIf(IsNull(DcAccount2.text), "", DcAccount2.text)
+    rs("End_user_account").value = IIf(IsNull(txtendaccount.text), "", txtendaccount.text)
+    rs("Sub_user_account").value = IIf(IsNull(txtsubaccount.text), "", txtsubaccount.text)
+    rs("revenue_account").value = IIf(IsNull(txtrevenue_account.text), "", txtrevenue_account.text)
+    rs("UserID").value = IIf(DCboUserName.BoundText <> "", val((DCboUserName.BoundText)), Null)
+    rs("bill_to").value = billto.ListIndex
+    rs("bill_type").value = bill_Type.ListIndex '  IIf(IsNull(bill_Type.text), "", bill_Type.text)
+    rs("note_id").value = IIf(IsNull(note_id.text), "", note_id.text)
+    rs("NoteSerial").value = IIf(IsNull(TxtNoteSerial.text), "", TxtNoteSerial.text)
+    rs("total").value = IIf(Not IsNumeric(total.text), 0, total.text)
+    rs("AccountUnderImp").value = TxtAccountUnderImp.text
+    
+    rs("CBoBasedON").value = CBoBasedON.ListIndex
+    rs.Fields("OrDer_no2").value = val(TXTOrDer_no2.text)
+    rs.Fields("OrDer_no").value = val(TXTOrDer_no.text)
+    
+    '26082015
+    rs("Discount").value = IIf(Not IsNumeric(txtDiscount.text), 0, txtDiscount.text)
+    rs("PerformanceBond").value = IIf(Not IsNumeric(txtPerformanceBond.text), 0, txtPerformanceBond.text)
+    rs("AdvancedPayment").value = IIf(Not IsNumeric(advancedPayment.text), 0, advancedPayment.text)
+    
+    rs("Results").value = IIf(Not IsNumeric(Results.text), 0, Results.text)
+    ''///////23 05 2016
+    rs("BillNo").value = val(TxtBillNo.text)
+    rs("StartDate").value = StartDate.value
+    rs("Period").value = val(txtPeriod.text)
+    rs("PeriodType").value = val(DcbPeriodType.ListIndex)
+    rs("Remarks2").value = TxtRemarks2.text
+ 
+    '26082015
+
+    rs("dueDate").value = dueDate.value
+    rs("dueDate1").value = dueDate1.value
+
+    '*************************************************
+    rs("subContractorId").value = IIf(Not IsNumeric(DcbosubContractor.BoundText), Null, DcbosubContractor.BoundText)
+    rs("discount1ID").value = val(cboDiscount1.ListIndex)
+    rs("discount2ID").value = val(cboDiscount2.ListIndex)
+    rs("discount1value").value = val(txtDiscount1.text)
+    rs("discount2value").value = val(txtDiscount2.text)
+    rs("Remarks").value = Trim(txtRemarks.text)
+    rs("ManualNo").value = Trim(TxtManualNO.text)
+ 
+    '*************************************************
+    
+        SaveBillMonthly
+   
+
+    rs.update
+
+    'SuppCreat4Acc
+    Set RsDev = New ADODB.Recordset
+    '   RsDev.Open "DOUBLE_ENTREY_VOUCHERS", Cn, adOpenStatic, adLockOptimistic, adCmdTable
+    StrSQL = "SELECT     * from dbo.DOUBLE_ENTREY_VOUCHERS Where (1 = -1)"
+    RsDev.Open StrSQL, Cn, adOpenKeyset, adLockOptimistic, adCmdText
+    Dim LngDevID As Long
+    LngDevID = new_id("DOUBLE_ENTREY_VOUCHERS", "Double_Entry_Vouchers_ID", "", True)
+    accountdep = ModAccounts.GetMyAccountCode("TblCustemers", "CusID", X, "Account_code")
+
+    Dim Posted As Integer
+    If CheckAprroveScreen(Me.Name) = True Then
+        Posted = 1
+    Else
+        Posted = 0
+    End If
+
+    If billto.ListIndex = 0 Then
+        Dim lineno As Integer
+        lineno = 1
+        '    If accountdep = "" Then GoTo ll
+        'الطرف المدين
+        RsDev.AddNew
+    
+        RsDev("branch_id").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+
+        RsDev("Double_Entry_Vouchers_ID").value = LngDevID
+        RsDev("DEV_ID_Line_No").value = lineno
+        If Option8.value = True Then
+            RsDev("Account_Code").value = Me.TxtAccountUnderImp.text
+        Else
+            RsDev("Account_Code").value = accountdep 'عميل نهائي او مقاول باطن
+        End If
+        
+        
+        If SystemOptions.CustCreat4Acc Then
+            RsDev("Value").value = val(Me.TxtTotalValue.text)
+        Else
+            RsDev("Value").value = val(Me.total.text) + val(TxtFATValue.text)
+        End If
+        RsDev("Credit_Or_Debit").value = 0
+
+        RsDev("Double_Entry_Vouchers_Description").value = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & CHR(13) & txtRemarks.text
+        RsDev("Double_Entry_Vouchers_Descriptione").value = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & " Manual #   " & TxtManualNO & CHR(13) & txtRemarks.text
+
+        RsDev("Notes_ID").value = val(note_id.text)
+        RsDev("project_bill_no").value = val(txtid.text)
+        RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+        RsDev("RecordDate").value = XPDtbTrans.value ' DateValue(Now)
+        RsDev("UserID").value = user_id
+        RsDev("branch_id").value = my_branch
+        RsDev("Account_Interval_ID").value = SystemOptions.SysCurrentAccountIntervalID
+    
+        RsDev("Posted").value = IIf(Posted = 0, Null, Posted)
+    
+        RsDev.update
+        'll:
+        lineno = lineno + 1
+line_no = line_no + 1
+        'الحسميات
+        'Account_Code_dynamic1
+
+        AdvancedAccount = ModAccounts.GetMyAccountCode("TblCustemers", "CusID", val(val(TXTEnd_user_id.text)), "Account_CodeHi1")
+        GuranteeAccount = ModAccounts.GetMyAccountCode("TblCustemers", "CusID", val(val(TXTEnd_user_id.text)), "Account_CodeAss2")
+        mAccountMaterial = ModAccounts.GetMyAccountCode("TblCustemers", "CusID", val(val(TXTEnd_user_id.text)), "Account_CodeHi2")
+        
+        
+            If val(Me.txtDiscount3.text) > 0 Then
+    
+                If SystemOptions.SuppCreat4Acc Then
+        
+'                        RsDev.AddNew
+'
+'                        RsDev("branch_id").Value = IIf(Trim$(Me.Dcbranch.BoundText) = "", Null, Trim$(Me.Dcbranch.BoundText))
+'
+'                        RsDev("Double_Entry_Vouchers_ID").Value = LngDevID
+'                        RsDev("DEV_ID_Line_No").Value = lineno
+'                        If SystemOptions.SuppCreat4Acc Then
+'                            RsDev("Account_Code").Value = accountdep  'عميل نهائي او مقاول باطن
+'                        Else
+'                            RsDev("Account_Code").Value = Account_Code_dynamic1 'عميل نهائي او مقاول باطن
+'                        End If
+'                        RsDev("Value").Value = val(Me.txtDiscount3.text)
+'                        RsDev("Credit_Or_Debit").Value = 1
+'
+'                        If SystemOptions.UserInterface = ArabicInterface Then
+'                            RsDev("Double_Entry_Vouchers_Description").Value = "مستخلص رقم  :  " & TxtNoteSerial1 & Chr(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & txtManualNo & Chr(13) & TxtRemarks.text
+'                        Else
+'                            RsDev("Double_Entry_Vouchers_Description").Value = "  Project Invoice No  :  " & TxtNoteSerial1 & Chr(13) & "  To Project " & txtprojectname.text & "  Manual# " & txtManualNo & Chr(13) & TxtRemarks.text
+'                        End If
+'
+'                        RsDev("Notes_ID").Value = val(note_id.text)
+'                        RsDev("project_bill_no").Value = val(txtid.text)
+'
+'                        ' RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+'
+'                        RsDev("RecordDate").Value = XPDtbTrans.Value ' DateValue(Now)
+'                        RsDev("UserID").Value = user_id
+'                        RsDev("branch_id").Value = my_branch
+'                        RsDev("Account_Interval_ID").Value = SystemOptions.SysCurrentAccountIntervalID
+'                        RsDev("Posted").Value = IIf(Posted = 0, Null, Posted)
+'                        RsDev.update
+'                        'll:
+'                        lineno = lineno + 1
+            
+                        RsDev.AddNew
+                    line_no = line_no + 1
+                        RsDev("branch_id").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+                
+                        RsDev("Double_Entry_Vouchers_ID").value = LngDevID
+                        RsDev("DEV_ID_Line_No").value = line_no
+                        If SystemOptions.SuppCreat4Acc Then
+                            RsDev("Account_Code").value = DcDiscountAccount.BoundText   'عميل نهائي او مقاول باطن
+                        Else
+                            RsDev("Account_Code").value = Account_Code_dynamic1 'عميل نهائي او مقاول باطن
+                        End If
+                        RsDev("Value").value = val(Me.txtDiscount3.text)
+                        RsDev("Credit_Or_Debit").value = 0
+                
+                        
+                        RsDev("Double_Entry_Vouchers_Description").value = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & CHR(13) & txtRemarks.text
+                        RsDev("Double_Entry_Vouchers_Descriptione").value = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "  Manual# " & TxtManualNO & CHR(13) & txtRemarks.text
+                        RsDev("Notes_ID").value = val(note_id.text)
+                        RsDev("project_bill_no").value = val(txtid.text)
+                    
+                        RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+                   
+                        RsDev("RecordDate").value = XPDtbTrans.value ' DateValue(Now)
+                        RsDev("UserID").value = user_id
+                        RsDev("branch_id").value = my_branch
+                        RsDev("Account_Interval_ID").value = SystemOptions.SysCurrentAccountIntervalID
+                        RsDev("Posted").value = IIf(Posted = 0, Null, Posted)
+                        RsDev.update
+                        'll:
+                        lineno = lineno + 1
+                        line_no = line_no + 1
+                    End If
+                End If
+        
+   
+            line_no = line_no + 1
+        If val(Me.txtDiscount.text) > 0 Then
+    
+            If SystemOptions.SuppCreat4Acc Then
+    
+                RsDev.AddNew
+            
+                RsDev("branch_id").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+        
+                RsDev("Double_Entry_Vouchers_ID").value = LngDevID
+                RsDev("DEV_ID_Line_No").value = line_no
+                If SystemOptions.SuppCreat4Acc Then
+                    RsDev("Account_Code").value = DcDiscountAccount.BoundText  'عميل نهائي او مقاول باطن
+                Else
+                    RsDev("Account_Code").value = Account_Code_dynamic1 'عميل نهائي او مقاول باطن
+                End If
+                RsDev("Value").value = val(Me.txtDiscount.text)
+                RsDev("Credit_Or_Debit").value = 0
+        
+                
+                RsDev("Double_Entry_Vouchers_Description").value = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & CHR(13) & txtRemarks.text
+                RsDev("Double_Entry_Vouchers_Descriptione").value = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "  Manual# " & TxtManualNO & CHR(13) & txtRemarks.text
+        
+                RsDev("Notes_ID").value = val(note_id.text)
+                RsDev("project_bill_no").value = val(txtid.text)
+            
+                 RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+           
+                RsDev("RecordDate").value = XPDtbTrans.value ' DateValue(Now)
+                RsDev("UserID").value = user_id
+                RsDev("branch_id").value = my_branch
+                RsDev("Account_Interval_ID").value = SystemOptions.SysCurrentAccountIntervalID
+                RsDev("Posted").value = IIf(Posted = 0, Null, Posted)
+                RsDev.update
+                'll:
+                lineno = lineno + 1
+                line_no = line_no + 1
+    
+              '  RsDev.AddNew
+            
+'                RsDev("branch_id").Value = IIf(Trim$(Me.Dcbranch.BoundText) = "", Null, Trim$(Me.Dcbranch.BoundText))
+'
+'                RsDev("Double_Entry_Vouchers_ID").Value = LngDevID
+'                RsDev("DEV_ID_Line_No").Value = lineno
+'                If SystemOptions.SuppCreat4Acc Then
+'                    RsDev("Account_Code").Value = DcDiscountAccount.BoundText   'عميل نهائي او مقاول باطن
+'                Else
+'                    RsDev("Account_Code").Value = Account_Code_dynamic1 'عميل نهائي او مقاول باطن
+'                End If
+'                RsDev("Value").Value = val(Me.txtDiscount.text)
+'                RsDev("Credit_Or_Debit").Value = 1
+'
+'                If SystemOptions.UserInterface = ArabicInterface Then
+'                    RsDev("Double_Entry_Vouchers_Description").Value = "مستخلص رقم  :  " & TxtNoteSerial1 & Chr(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & txtManualNo & Chr(13) & TxtRemarks.text
+'                Else
+'                    RsDev("Double_Entry_Vouchers_Description").Value = "  Project Invoice No  :  " & TxtNoteSerial1 & Chr(13) & "  To Project " & txtprojectname.text & "  Manual# " & txtManualNo & Chr(13) & TxtRemarks.text
+'                End If
+'
+'                RsDev("Notes_ID").Value = val(note_id.text)
+'                RsDev("project_bill_no").Value = val(txtid.text)
+'
+'                ' RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+'
+'                RsDev("RecordDate").Value = XPDtbTrans.Value ' DateValue(Now)
+'                RsDev("UserID").Value = user_id
+'                RsDev("branch_id").Value = my_branch
+'                RsDev("Account_Interval_ID").Value = SystemOptions.SysCurrentAccountIntervalID
+'                RsDev("Posted").Value = IIf(Posted = 0, Null, Posted)
+'                RsDev.update
+'                'll:
+'                lineno = lineno + 1
+        
+            Else
+                RsDev.AddNew
+            
+                RsDev("branch_id").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+        line_no = line_no + 1
+                RsDev("Double_Entry_Vouchers_ID").value = LngDevID
+                RsDev("DEV_ID_Line_No").value = line_no
+                If SystemOptions.SuppCreat4Acc Then
+                    RsDev("Account_Code").value = DcDiscountAccount.BoundText   'عميل نهائي او مقاول باطن
+                Else
+                    RsDev("Account_Code").value = Account_Code_dynamic1 'عميل نهائي او مقاول باطن
+                End If
+                RsDev("Value").value = val(Me.txtDiscount.text)
+                RsDev("Credit_Or_Debit").value = 0
+                
+                RsDev("Double_Entry_Vouchers_Description").value = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & CHR(13) & txtRemarks.text
+                RsDev("Double_Entry_Vouchers_Descriptione").value = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "  Manual# " & TxtManualNO & CHR(13) & txtRemarks.text
+                
+                RsDev("Notes_ID").value = val(note_id.text)
+                RsDev("project_bill_no").value = val(txtid.text)
+            
+                 RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+           
+                RsDev("RecordDate").value = XPDtbTrans.value ' DateValue(Now)
+                RsDev("UserID").value = user_id
+                RsDev("branch_id").value = my_branch
+                RsDev("Account_Interval_ID").value = SystemOptions.SysCurrentAccountIntervalID
+                RsDev("Posted").value = IIf(Posted = 0, Null, Posted)
+                RsDev.update
+                'll:
+                lineno = lineno + 1
+                 line_no = line_no + 1
+            End If
+        End If
+
+        If val(Me.TxtPerforValue.text) > 0 Then
+            If Not SystemOptions.SuppCreat4Acc Then
+                RsDev.AddNew
+                RsDev("branch_id").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+                RsDev("Double_Entry_Vouchers_ID").value = LngDevID
+                RsDev("DEV_ID_Line_No").value = line_no
+                If SystemOptions.SuppCreat4Acc Then
+                    RsDev("Account_Code").value = accountdep ' get_account_code_branch(152, my_branch) 'حساب حسن الاداء
+                Else
+                    RsDev("Account_Code").value = AcountGood ' get_account_code_branch(152, my_branch) 'حساب حسن الاداء
+                End If
+                RsDev("Value").value = val(Me.TxtPerforValue.text)
+                RsDev("Credit_Or_Debit").value = 0
+                
+                
+                RsDev("Double_Entry_Vouchers_Description").value = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & CHR(13) & txtRemarks.text
+                RsDev("Double_Entry_Vouchers_Descriptione").value = " Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & " Manual#  " & TxtManualNO & CHR(13) & txtRemarks.text
+                RsDev("Notes_ID").value = val(note_id.text)
+                RsDev("project_bill_no").value = val(txtid.text)
+                 RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+                RsDev("RecordDate").value = XPDtbTrans.value ' DateValue(Now)
+                RsDev("UserID").value = user_id
+                RsDev("branch_id").value = my_branch
+                RsDev("Account_Interval_ID").value = SystemOptions.SysCurrentAccountIntervalID
+                RsDev("Posted").value = IIf(Posted = 0, Null, Posted)
+                RsDev.update
+            End If
+            lineno = lineno + 1
+             line_no = line_no + 1
+            If SystemOptions.SuppCreat4Acc Then
+                RsDev.AddNew
+                RsDev("branch_id").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+                RsDev("Double_Entry_Vouchers_ID").value = LngDevID
+                RsDev("DEV_ID_Line_No").value = line_no
+         
+                RsDev("Account_Code").value = GuranteeAccount ' get_account_code_branch(152, my_branch) 'حساب حسن الاداء
+        
+                RsDev("Value").value = val(Me.TxtPerforValue.text)
+                RsDev("Credit_Or_Debit").value = 0
+
+                    RsDev("Double_Entry_Vouchers_Description").value = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & CHR(13) & txtRemarks.text
+                RsDev("Double_Entry_Vouchers_Descriptione").value = " Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & " Manual#  " & TxtManualNO & CHR(13) & txtRemarks.text
+                RsDev("Notes_ID").value = val(note_id.text)
+                RsDev("project_bill_no").value = val(txtid.text)
+                 RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+                RsDev("RecordDate").value = XPDtbTrans.value ' DateValue(Now)
+                RsDev("UserID").value = user_id
+                RsDev("branch_id").value = my_branch
+                RsDev("Account_Interval_ID").value = SystemOptions.SysCurrentAccountIntervalID
+                RsDev("Posted").value = IIf(Posted = 0, Null, Posted)
+                RsDev.update
+            End If
+    
+            'll:
+            lineno = lineno + 1
+             line_no = line_no + 1
+
+        End If
+      If val(txtPerformanceBond) <> 0 Then
+                des = "استرجاع ضمان اعمال " & "   " & txtRemarks & " رقم السند " & TxtNoteSerial1 & " رقم المستخلص اليدوي   " & TxtManualNO & " للمستخلص رقم " & TxtNoteSerial1.text & CHR(13) & txtRemarks.text
+                desEN = " Performance Bond " & "   " & txtRemarks & "Inv# " & TxtNoteSerial1 & " manual#" & TxtManualNO & CHR(13) & txtRemarks.text
+
+           
+                If GuranteeAccount = "" Then
+                    GuranteeAccount = accountdep
+                End If
+            
+'                If ModAccounts.AddNewDev(LngDevID, line_no, accountdep, val(txtPerformanceBond), 0, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , , , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+'                    GoTo ErrTrap
+'                End If
+                    
+                line_no = line_no + 1
+            
+                If ModAccounts.AddNewDev(LngDevID, line_no, GuranteeAccount, val(txtPerformanceBond), 1, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , , , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                    GoTo ErrTrap
+                End If
+                    
+                line_no = line_no + 1
+        End If
+        LngDevID = new_id("DOUBLE_ENTREY_VOUCHERS", "Double_Entry_Vouchers_ID", "", True)
+
+        If val(Me.txtDiscountGMater.text) > 0 Then
+            lineno = lineno + 1
+            line_no = line_no + 1
+     
+       des = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & "دفعات مقدمة" & CHR(13) & txtRemarks.text
+
+            desEN = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "  manual  " & TxtManualNO & CHR(13) & txtRemarks.text
+     
+       If ModAccounts.AddNewDev(LngDevID, line_no, accountdep, val(txtDiscountGMater), 0, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                    GoTo ErrTrap
+                End If
+                
+                 'll:
+            lineno = lineno + 1
+     line_no = line_no + 1
+     
+            If ModAccounts.AddNewDev(LngDevID, line_no, mAccountMaterial, val(txtDiscountGMater), 1, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                    GoTo ErrTrap
+                End If
+                
+           
+        End If
+
+        'الدفعات المقدمة
+        'Account_Code_dynamic2
+        If val(Me.advancedPayment.text) > 0 Then
+            lineno = lineno + 1
+             line_no = line_no + 1
+            If SystemOptions.SuppCreat4Acc Then
+            
+            
+             line_no = line_no + 1
+                des = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & "دفعات مقدمة" & CHR(13) & txtRemarks.text
+                desEN = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "  Manuall#  " & TxtManualNO & CHR(13) & txtRemarks.text
+     
+            If ModAccounts.AddNewDev(LngDevID, line_no, AdvancedAccount, val(advancedPayment), 0, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted, , , , , val(txtid.text)) = False Then
+                    GoTo ErrTrap
+                End If
+                
+            line_no = line_no + 1
+           
+            
+                lineno = lineno + 1
+        
+'                RsDev.AddNew
+'
+'                RsDev("branch_id").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+'
+'                RsDev("Double_Entry_Vouchers_ID").value = LngDevID
+'                RsDev("DEV_ID_Line_No").value = lineno
+'                RsDev("Account_Code").value = accountdep  '    حساب دفعات مقدمة
+'                RsDev("Value").value = val(Me.advancedPayment.text)
+'                RsDev("Credit_Or_Debit").value = 1
+'
+'                If SystemOptions.UserInterface = ArabicInterface Then
+'                    RsDev("Double_Entry_Vouchers_Description").value = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & txtManualNo & "دفعات مقدمة" & CHR(13) & TxtRemarks.text
+'                Else
+'                    RsDev("Double_Entry_Vouchers_Description").value = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "   Manual   " & txtManualNo & CHR(13) & TxtRemarks.text
+'                End If
+'
+'                RsDev("Notes_ID").value = val(note_id.text)
+'                RsDev("project_bill_no").value = val(txtID.text)
+'                RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+'                RsDev("RecordDate").value = XPDtbTrans.value ' DateValue(Now)
+'                RsDev("UserID").value = user_id
+'                RsDev("branch_id").value = my_branch
+'                RsDev("Account_Interval_ID").value = SystemOptions.SysCurrentAccountIntervalID
+'                RsDev("Posted").value = IIf(Posted = 0, Null, Posted)
+'                RsDev.update
+                'll:
+                lineno = lineno + 1
+                 line_no = line_no + 1
+            Else
+                RsDev.AddNew
+            
+                RsDev("branch_id").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+         line_no = line_no + 1
+                RsDev("Double_Entry_Vouchers_ID").value = LngDevID
+                RsDev("DEV_ID_Line_No").value = line_no
+                RsDev("Account_Code").value = Account_Code_dynamic2 '    حساب دفعات مقدمة
+                RsDev("Value").value = val(Me.advancedPayment.text)
+                RsDev("Credit_Or_Debit").value = 0
+        
+                RsDev("Double_Entry_Vouchers_Description").value = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & "دفعات مقدمة" & CHR(13) & txtRemarks.text
+                RsDev("Double_Entry_Vouchers_Descriptione").value = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "  Manuall#  " & TxtManualNO & CHR(13) & "Advance payments " & txtRemarks.text
+                RsDev("Notes_ID").value = val(note_id.text)
+                RsDev("project_bill_no").value = val(txtid.text)
+                 RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+                RsDev("RecordDate").value = XPDtbTrans.value ' DateValue(Now)
+                RsDev("UserID").value = user_id
+                RsDev("branch_id").value = my_branch
+                RsDev("Account_Interval_ID").value = SystemOptions.SysCurrentAccountIntervalID
+                RsDev("Posted").value = IIf(Posted = 0, Null, Posted)
+                RsDev.update
+                'll:
+                lineno = lineno + 1
+         line_no = line_no + 1
+                RsDev.AddNew
+            
+                RsDev("branch_id").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+        
+                RsDev("Double_Entry_Vouchers_ID").value = LngDevID
+                RsDev("DEV_ID_Line_No").value = line_no
+                RsDev("Account_Code").value = accountdep '    حساب دفعات مقدمة
+                RsDev("Value").value = val(Me.advancedPayment.text)
+                RsDev("Credit_Or_Debit").value = 1
+        
+                
+                RsDev("Double_Entry_Vouchers_Description").value = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & "دفعات مقدمة" & CHR(13) & txtRemarks.text
+                RsDev("Double_Entry_Vouchers_Descriptione").value = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "  Manuall#  " & TxtManualNO & CHR(13) & "Advance payments " & txtRemarks.text
+                RsDev("Notes_ID").value = val(note_id.text)
+                RsDev("project_bill_no").value = val(txtid.text)
+                RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+                RsDev("RecordDate").value = XPDtbTrans.value ' DateValue(Now)
+                RsDev("UserID").value = user_id
+                RsDev("branch_id").value = my_branch
+                RsDev("Account_Interval_ID").value = SystemOptions.SysCurrentAccountIntervalID
+                RsDev("Posted").value = IIf(Posted = 0, Null, Posted)
+                RsDev.update
+                'll:
+                
+                 line_no = line_no + 1
+            End If
+        End If
+
+        'الايردات
+
+        'الطرف الدائن
+        If Option8.value = False Then
+            If Me.txtrevenue_account.text = "" Then Exit Function
+    
+        Else
+            If (accountdep = "") Then Exit Function
+        End If
+        RsDev.AddNew
+        RsDev("branch_id").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+        RsDev("branch_id").value = my_branch
+        RsDev("Double_Entry_Vouchers_ID").value = LngDevID
+        RsDev("DEV_ID_Line_No").value = line_no
+        'If SystemOptions.Revenueowed = True Then
+        If Option8.value = True Then
+            RsDev("Account_Code").value = accountdep
+        Else
+            ''
+            RsDev("Account_Code").value = Me.txtrevenue_account.text ' Account_Code_dynamic1
+ 
+        End If
+        '   Else
+        'RsDev("Account_Code").value = Me.txtrevenue_account .text
+        '   End If
+         If SystemOptions.SuppCreat4Acc Then
+        RsDev("Value").value = val(Me.Results.text)   'الايرادات
+        Else
+            RsDev("Value").value = val(Me.total.text) + val(advancedPayment.text)  ' val(Me.Results.text)  'الايرادات
+        End If
+        RsDev("Credit_Or_Debit").value = 1
+
+
+        RsDev("Double_Entry_Vouchers_Description").value = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & "   " & txtRemarks & " رقم السند " & TxtNoteSerial1 & " رقم المستخلص اليدوي   " & TxtManualNO & CHR(13) & txtRemarks.text
+        RsDev("Double_Entry_Vouchers_Descriptione").value = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & CHR(13) & txtRemarks.text
+        RsDev("Notes_ID").value = val(note_id.text)
+        RsDev("project_bill_no").value = val(txtid.text)
+        If SystemOptions.Revenueowed = True Then 'ايرادات مستحقة
+              RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+        Else
+            RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+        End If
+ 
+        RsDev("RecordDate").value = XPDtbTrans.value
+        RsDev("UserID").value = user_id
+        RsDev("Account_Interval_ID").value = SystemOptions.SysCurrentAccountIntervalID
+        RsDev("Posted").value = IIf(Posted = 0, Null, Posted)
+        RsDev.update
+         line_no = line_no + 1
+        '///////////////////
+        If Me.AccountVat.BoundText <> "" And val(Me.TxtFATValue.text) > 0 Then
+            RsDev.AddNew
+            RsDev("Account_Code").value = Me.AccountVat.BoundText
+            RsDev("branch_id").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+            RsDev("branch_id").value = my_branch
+            RsDev("Double_Entry_Vouchers_ID").value = LngDevID
+            RsDev("DEV_ID_Line_No").value = line_no
+           ' RsDev("Value").value = val(Me.TxtFATValue.text) - val(val(Me.TxtPreVAT.text)) 'الايرادات
+            RsDev("Value").value = val(Me.TxtFATValue.text)  'الايرادات
+            RsDev("Credit_Or_Debit").value = 1
+            RsDev("Double_Entry_Vouchers_Description").value = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & "   " & txtRemarks & " رقم السند " & txtid & " رقم المستخلص اليدوي   " & TxtManualNO & " حساب القيمة المضافة" & CHR(13) & txtRemarks.text
+            RsDev("Double_Entry_Vouchers_Descriptione").value = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "Account VAT" & CHR(13) & " Value Added Tax (VAT) " & txtRemarks.text
+            
+            RsDev("Notes_ID").value = val(note_id.text)
+            RsDev("project_bill_no").value = val(txtid.text)
+            If SystemOptions.Revenueowed = True Then 'ايرادات مستحقة
+                  RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+            Else
+                  RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+            End If
+ 
+            RsDev("RecordDate").value = XPDtbTrans.value
+            RsDev("UserID").value = user_id
+            RsDev("Account_Interval_ID").value = SystemOptions.SysCurrentAccountIntervalID
+            RsDev("Posted").value = IIf(Posted = 0, Null, Posted)
+     
+            RsDev.update
+             line_no = line_no + 1
+            ''///////////////////////فات الدفعات المقدمة
+
+            If SystemOptions.SuppCreat4Acc = False Then
+                If val(TxtPreVAT.text) > 0 Then
+                    RsDev.AddNew
+                    RsDev("Account_Code").value = Me.AccountVat.BoundText
+                    RsDev("branch_id").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+                    RsDev("branch_id").value = my_branch
+                    RsDev("Double_Entry_Vouchers_ID").value = LngDevID
+                    RsDev("DEV_ID_Line_No").value = line_no
+                    RsDev("Value").value = val(Me.TxtPreVAT.text)  'الايرادات
+                    RsDev("Credit_Or_Debit").value = 0
+                    
+    
+                    RsDev("Double_Entry_Vouchers_Description").value = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & "   " & txtRemarks & " رقم السند " & TxtNoteSerial1 & " رقم المستخلص اليدوي   " & TxtManualNO & " حساب القيمة المضافة دفعات مقدمة" & CHR(13) & txtRemarks.text
+                    RsDev("Double_Entry_Vouchers_Descriptione").value = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "Account VAT" & CHR(13) & " Value Added Tax (VAT) advance payments " & CHR(13) & txtRemarks.text
+                    
+                    RsDev("Notes_ID").value = val(note_id.text)
+                    RsDev("project_bill_no").value = val(txtid.text)
+                    If SystemOptions.Revenueowed = True Then 'ايرادات مستحقة
+                          RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+                    Else
+                           RsDev("project_id").value = val(Me.DataCombo2.BoundText) 'xxxxxxxxxxxxxx
+                    End If
+ 
+                    RsDev("RecordDate").value = XPDtbTrans.value
+                    RsDev("UserID").value = user_id
+                    RsDev("Account_Interval_ID").value = SystemOptions.SysCurrentAccountIntervalID
+                    RsDev("Posted").value = IIf(Posted = 0, Null, Posted)
+                    RsDev.update
+                     line_no = line_no + 1
+                    ''//////////////
+                    RsDev.AddNew
+                    If Option8.value = True Then
+                        RsDev("Account_Code").value = Me.TxtAccountUnderImp.text
+                    Else
+                        RsDev("Account_Code").value = accountdep 'عميل نهائي او مقاول باطن
+                    End If
+                    RsDev("branch_id").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+                    RsDev("branch_id").value = my_branch
+                    RsDev("Double_Entry_Vouchers_ID").value = LngDevID
+                    RsDev("DEV_ID_Line_No").value = line_no
+                    RsDev("Value").value = val(Me.TxtPreVAT.text)  'الايرادات
+                    RsDev("Credit_Or_Debit").value = 1
+         
+                    RsDev("Double_Entry_Vouchers_Description").value = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & "   " & txtRemarks & " رقم السند " & TxtNoteSerial1 & " رقم المستخلص اليدوي   " & TxtManualNO & " حساب القيمة المضافة دفعات مقدمة" & CHR(13) & txtRemarks.text
+                    RsDev("Double_Entry_Vouchers_Descriptione").value = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "Account VAT" & CHR(13) & " Value Added Tax (VAT) advance payments " & CHR(13) & txtRemarks.text
+
+
+                    RsDev("Notes_ID").value = val(note_id.text)
+                    RsDev("project_bill_no").value = val(txtid.text)
+                    If SystemOptions.Revenueowed = True Then 'ايرادات مستحقة
+                          RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+                    Else
+                           RsDev("project_id").value = val(Me.DataCombo2.BoundText) 'xxxxxxxxxxxxxx
+                    End If
+                    RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+                    RsDev("RecordDate").value = XPDtbTrans.value
+                    RsDev("UserID").value = user_id
+                    RsDev("Account_Interval_ID").value = SystemOptions.SysCurrentAccountIntervalID
+                    RsDev("Posted").value = IIf(Posted = 0, Null, Posted)
+                    RsDev.update
+                    lineno = lineno + 1
+
+                End If
+            End If
+        End If
+        ''/////////
+    Else
+        '
+        'If SystemOptions.SubContactorHave3Account = True Then
+        Dim Discount1  As Double
+        Dim Discount2  As Double
+        Dim Discount3  As Double
+        Dim netvalue   As Double
+        Dim TotalValue As Double
+  
+        
+        If cboDiscount1.ListIndex = 0 Then
+            Discount1 = 0
+        ElseIf cboDiscount1.ListIndex = 1 Then
+            Discount1 = val(txtDiscount1) * val(Me.TxtNetValue.text) / 100
+        ElseIf cboDiscount1.ListIndex = 2 Then
+            Discount1 = val(txtDiscount1)
+        End If
+        
+        If cboDiscount2.ListIndex = 0 Then
+            Discount2 = 0
+        ElseIf cboDiscount2.ListIndex = 1 Then
+            Discount2 = val(txtDiscount2) * val(TxtNetValue.text) / 100
+        ElseIf cboDiscount2.ListIndex = 2 Then
+            Discount2 = val(txtDiscount2)
+        End If
+                            
+        Discount3 = val(txtDiscountGMater.text)
+               
+        If SystemOptions.SuppCreat4Acc Then
+            AdvancedAccount = ModAccounts.GetMyAccountCode("TblCustemers", "CusID", val(Me.DcbosubContractor.BoundText), "Account_CodeHi1")
+            GuranteeAccount = ModAccounts.GetMyAccountCode("TblCustemers", "CusID", val(Me.DcbosubContractor.BoundText), "Account_CodeAss2")
+            mAccountMaterial = ModAccounts.GetMyAccountCode("TblCustemers", "CusID", val(Me.DcbosubContractor.BoundText), "Account_CodeHi2")
+                    
+        Else
+            AdvancedAccount = ModAccounts.GetMyAccountCode("TblCustemers", "CusID", val(Me.DcbosubContractor.BoundText), "Account_code2")
+            GuranteeAccount = ModAccounts.GetMyAccountCode("TblCustemers", "CusID", val(Me.DcbosubContractor.BoundText), "Account_code1")
+            mAccountMaterial = ModAccounts.GetMyAccountCode("TblCustemers", "CusID", val(Me.DcbosubContractor.BoundText), "Account_code1")
+        End If
+               
+        accountdep = ModAccounts.GetMyAccountCode("TblCustemers", "CusID", val(Me.DcbosubContractor.BoundText), "Account_code")
+               
+        line_no = line_no + 1
+        If SystemOptions.AllowNoRoudProjectInvoices = True Then
+            Discount1 = Round(Discount1, val(cCompanyInfo.NoRoudProjectInvoices))
+            Discount2 = Round(Discount2, val(cCompanyInfo.NoRoudProjectInvoices))
+            netvalue = Round(val(TxtNetValue.text) - Discount1 - Discount2, val(cCompanyInfo.NoRoudProjectInvoices))
+            TotalValue = Round(val(TxtNetValue), val(cCompanyInfo.NoRoudProjectInvoices))
+        Else
+            Discount1 = Round(Discount1, 2)
+            Discount2 = Round(Discount2, 2)
+            netvalue = Round(val(TxtNetValue.text) - Discount1 - Discount2 - Discount3, 2)
+            TotalValue = Round(val(TxtNetValue), Decimal_Places)
+        End If
+        If Option8.value = True Then
+            des = "مصروفات المشاريع " & "   " & txtRemarks & " رقم السند " & TxtNoteSerial1 & " رقم المستخلص اليدوي   " & TxtManualNO & CHR(13) & txtRemarks.text
+            desEN = "Advance payments invoices" & "   " & txtRemarks & " Project Invoice No" & TxtNoteSerial1 & " Manual#  " & TxtManualNO & CHR(13) & txtRemarks.text
+        Else
+            des = "مستخلص المشاريع " & "   " & txtRemarks & " رقم السند " & TxtNoteSerial1 & "Manual#" & TxtManualNO & CHR(13) & txtRemarks.text
+            desEN = "Project Invoice " & "   " & txtRemarks & " Project Invoice No" & TxtNoteSerial1 & " Manual#  " & TxtManualNO & CHR(13) & txtRemarks.text
+        End If
+        
+          
+
+
+
+
+
+
+
+        If TotalValue > 0 Then '
+                
+            If SystemOptions.SuppCreat4Acc Then
+                Dim mmexpanses_account As String
+                mmexpanses_account = expanses_account
+                For i = 1 To Fg_Journal.rows - 1
+                    TotalValue = val(Fg_Journal.TextMatrix(i, Fg_Journal.ColIndex("NetExe")))
+                    '   TotalValue = Round(val(TxtNetValue), Decimal_Places)
+                    If TotalValue <> 0 Then
+                        expanses_account = Trim(Fg_Journal.TextMatrix(i, Fg_Journal.ColIndex("AccountCode")))
+                      
+                        If ModAccounts.AddNewDev(LngDevID, line_no, expanses_account, TotalValue, 0, Msg & des & "  " & "    " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                            GoTo ErrTrap
+                        End If
+                    
+                        line_no = line_no + 1
+                    End If
+                    
+                    If ModAccounts.AddNewDev(LngDevID, line_no, accountdep, TotalValue, 1, Msg & des & "  " & "    " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                        GoTo ErrTrap
+                    End If
+                    
+                    line_no = line_no + 1
+                    
+                Next
+                If expanses_account = "" Then expanses_account = mmexpanses_account
+                    
+            Else
+                If Option8.value = True Then
+                    If ModAccounts.AddNewDev(LngDevID, line_no, TxtAccountUnderImp.text, TotalValue, 0, Msg & des & "  " & "    " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                        GoTo ErrTrap
+                    End If
+                    
+                    line_no = line_no + 1
+                Else
+                    If ModAccounts.AddNewDev(LngDevID, line_no, expanses_account, TotalValue, 0, Msg & des & "  " & "    " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                        GoTo ErrTrap
+                    End If
+                    
+                    line_no = line_no + 1
+                End If
+                   
+            End If
+                   
+                   
+               If SystemOptions.SuppCreat4Acc = False Then
+                    line_no = line_no + 1
+               LngDevID = new_id("DOUBLE_ENTREY_VOUCHERS", "Double_Entry_Vouchers_ID", "", True)
+                If ModAccounts.AddNewDev(LngDevID, line_no, accountdep, val(TotalValue), 1, Msg & des & "  " & "    " & Me.DcbosubContractor.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "    " & Me.DcbosubContractor.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                    GoTo ErrTrap
+                End If
+                    'desEN & "  " & "    " & txtprojectname.text
+                line_no = line_no + 1
+                End If
+            If val(TxtFATValue.text) > 0 Then
+               ' If ModAccounts.AddNewDev(LngDevID, line_no, Me.AccountVat.BoundText, val(TxtFATValue.text) - val(val(Me.TxtPreVAT.text)), 0, Msg & "  " & "    " & txtprojectname.text & "    VAT  " & "   INV# " & TxtNoteSerial1.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , , setfoxy_Line, , , , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                If ModAccounts.AddNewDev(LngDevID, line_no, Me.AccountVat.BoundText, val(TxtFATValue.text), 0, Msg & "  " & "    " & txtprojectname.text & "    VAT  " & "   INV# " & TxtNoteSerial1.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , txtprojectname.text & "    VAT  " & "   INV# " & TxtNoteSerial1.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                    GoTo ErrTrap
+                End If
+                    
+                line_no = line_no + 1
+            End If
+            '  End If
+            '////////////////////////////////////////////////////
+            ' End If
+         
+            If SystemOptions.UserInterface = ArabicInterface Then
+                
+            Else
+                
+       
+            End If
+            des = "خصم ضمان اعمال " & "   " & txtRemarks & " رقم السند " & TxtNoteSerial1 & " رقم المستخلص اليدوي   " & TxtManualNO & " للمستخلص رقم " & TxtNoteSerial1.text & CHR(13) & txtRemarks.text
+            desEN = " Discount " & "   " & txtRemarks & "Inv# " & TxtNoteSerial1 & " manual#" & TxtManualNO & CHR(13) & txtRemarks.text
+            If Discount1 > 0 Then 'ضمان الاعمال
+    
+                If GuranteeAccount = "" Then
+                    GuranteeAccount = accountdep
+                End If
+            
+                If ModAccounts.AddNewDev(LngDevID, line_no, accountdep, Discount1, 0, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                    GoTo ErrTrap
+                End If
+                    
+                line_no = line_no + 1
+            
+                If ModAccounts.AddNewDev(LngDevID, line_no, GuranteeAccount, Discount1, 1, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                    GoTo ErrTrap
+                End If
+                    
+                line_no = line_no + 1
+  
+            End If
+            
+            
+           If val(txtPerformanceBond) <> 0 Then
+                des = "استرجاع ضمان اعمال " & "   " & txtRemarks & " رقم السند " & TxtNoteSerial1 & " رقم المستخلص اليدوي   " & TxtManualNO & " للمستخلص رقم " & TxtNoteSerial1.text & CHR(13) & txtRemarks.text
+                desEN = " Performance Bond " & "   " & txtRemarks & "Inv# " & TxtNoteSerial1 & " manual#" & TxtManualNO & CHR(13) & txtRemarks.text
+
+           
+                If GuranteeAccount = "" Then
+                    GuranteeAccount = accountdep
+                End If
+            
+                If ModAccounts.AddNewDev(LngDevID, line_no, accountdep, val(txtPerformanceBond), 0, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                    GoTo ErrTrap
+                End If
+                    
+                line_no = line_no + 1
+            
+                If ModAccounts.AddNewDev(LngDevID, line_no, GuranteeAccount, val(txtPerformanceBond), 1, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                    GoTo ErrTrap
+                End If
+                    
+                line_no = line_no + 1
+        End If
+            
+            If SystemOptions.UserInterface = ArabicInterface Then
+                
+            Else
+                
+            End If
+            des = "خصم دفعات مقدمة   " & "   " & txtRemarks & " رقم السند " & TxtNoteSerial1 & " رقم المستخلص اليدوي   " & TxtManualNO & CHR(13) & txtRemarks.text
+            desEN = "Advance Discount " & "   " & txtRemarks & "InvE " & TxtNoteSerial1 & "Manuall#   " & TxtManualNO & CHR(13) & txtRemarks.text
+            If Discount2 > 0 Then '
+    
+                If AdvancedAccount = "" Then
+                    AdvancedAccount = accountdep
+                End If
+            
+                '               If ModAccounts.AddNewDev(LngDevID, line_no, AdvancedAccount, Discount2, 1, Msg & des & "  " & "للمشروع   " & txtprojectname.Text, val(note_id.Text), , , , XPDtbTrans.value, user_id, , , , , , , , , setfoxy_Line, , DataCombo2.BoundText, , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                '                                        GoTo ErrTrap
+                '                                    End If
+                '
+                '                                    line_no = line_no + 1
+  
+            End If
+         
+            'الدفعات المقدمة
+            'Account_Code_dynamic2
+            LngDevID = new_id("DOUBLE_ENTREY_VOUCHERS", "Double_Entry_Vouchers_ID", "", True)
+
+            If val(Me.txtDiscountGMater.text) > 0 Then
+                lineno = lineno + 1
+                
+                
+                 des = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & "دفعات مقدمة" & CHR(13) & txtRemarks.text
+                desEN = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "  manual  " & TxtManualNO & CHR(13) & txtRemarks.text
+                 line_no = line_no + 1
+            
+                If ModAccounts.AddNewDev(LngDevID, line_no, accountdep, val(txtDiscountGMater), 0, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                    GoTo ErrTrap
+                End If
+                
+                
+            
+                'll:
+                lineno = lineno + 1
+    
+                 des = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & "دفعات مقدمة" & CHR(13) & txtRemarks.text
+                desEN = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "  manual  " & TxtManualNO & CHR(13) & txtRemarks.text
+    
+                If ModAccounts.AddNewDev(LngDevID, line_no, mAccountMaterial, val(txtDiscountGMater), 1, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                    GoTo ErrTrap
+                End If
+                
+            
+            End If
+            If val(txtDiscountG) > 0 Then
+            
+             line_no = line_no + 1
+    
+                    des = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & "حسميات " & CHR(13) & txtRemarks.text
+                    desEN = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "  manual  " & TxtManualNO & " Deductions " & CHR(13) & txtRemarks.text
+    
+                    If ModAccounts.AddNewDev(LngDevID, line_no, accountdep, val(txtDiscountG), 0, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                    GoTo ErrTrap
+                    End If
+    
+                  
+                    'll:
+    
+                    line_no = line_no + 1
+                    des = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & "حسميات " & CHR(13) & txtRemarks.text
+                    desEN = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "  manual  " & TxtManualNO & " Deductions " & CHR(13) & txtRemarks.text
+    
+                    If ModAccounts.AddNewDev(LngDevID, line_no, DcDiscountAccount.BoundText, val(txtDiscountG), 1, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                    GoTo ErrTrap
+                    End If
+     
+    
+            End If
+            If val(Me.advancedPayment.text) > 0 Then
+
+                If SystemOptions.SuppCreat4Acc Then
+    
+                    line_no = line_no + 1
+    
+    
+    
+                des = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & "دفعات مقدمة" & CHR(13) & txtRemarks.text
+                desEN = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "  manual  " & TxtManualNO & CHR(13) & txtRemarks.text
+    
+                If ModAccounts.AddNewDev(LngDevID, line_no, accountdep, val(advancedPayment), 0, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted, , , , , val(txtid.text)) = False Then
+                    GoTo ErrTrap
+                End If
+                line_no = line_no + 1
+                 
+                 If ModAccounts.AddNewDev(LngDevID, line_no, AdvancedAccount, val(advancedPayment), 1, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted, , , , , val(txtid.text)) = False Then
+                    GoTo ErrTrap
+                End If
+                line_no = line_no + 1
+    
+                   
+                    'll:
+    
+           
+                Else
+                
+                 If ModAccounts.AddNewDev(LngDevID, line_no, accountdep, val(advancedPayment), 0, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted, , , , , val(txtid.text)) = False Then
+                    GoTo ErrTrap
+                End If
+                line_no = line_no + 1
+                
+                  
+    
+                      If ModAccounts.AddNewDev(LngDevID, line_no, AdvancedAccount, val(advancedPayment), 1, Msg & des & "  " & "للمشروع   " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "Project    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted, , , , , val(txtid.text)) = False Then
+                    GoTo ErrTrap
+                End If
+                line_no = line_no + 1
+                   
+                    'll:
+                  
+                    'll:
+                    line_no = line_no + 1
+
+                    RsDev.AddNew
+
+                    RsDev("branch_id").value = IIf(Trim$(Me.dcBranch.BoundText) = "", Null, Trim$(Me.dcBranch.BoundText))
+
+                    RsDev("Double_Entry_Vouchers_ID").value = LngDevID
+                    RsDev("DEV_ID_Line_No").value = lineno
+                    RsDev("Account_Code").value = Me.AccountVat.BoundText   '    حساب دفعات مقدمة
+                    RsDev("Value").value = val(Me.TxtPreVAT.text)
+                    RsDev("Credit_Or_Debit").value = 1
+
+                   
+                                 
+                    RsDev("Double_Entry_Vouchers_Description").value = "مستخلص رقم  :  " & TxtNoteSerial1 & CHR(13) & "  للمشروع " & txtprojectname.text & " رقم المستخلص اليدوي   " & TxtManualNO & "دفعات مقدمة" & CHR(13) & txtRemarks.text
+                    RsDev("Double_Entry_Vouchers_Descriptione").value = "  Project Invoice No  :  " & TxtNoteSerial1 & CHR(13) & "  To Project " & txtprojectname.text & "  manual  " & TxtManualNO & " Advance payments" & CHR(13) & txtRemarks.text
+
+    
+                    
+
+                    RsDev("Notes_ID").value = val(note_id.text)
+                    RsDev("project_bill_no").value = val(txtid.text)
+                       RsDev("project_id").value = val(Me.DataCombo2.BoundText)
+                    RsDev("RecordDate").value = XPDtbTrans.value ' DateValue(Now)
+                    RsDev("UserID").value = user_id
+                    RsDev("branch_id").value = my_branch
+                    RsDev("Account_Interval_ID").value = SystemOptions.SysCurrentAccountIntervalID
+                    RsDev("Posted").value = IIf(Posted = 0, Null, Posted)
+                    RsDev.update
+                End If
+            End If
+ 
+       
+            des = " اعمال" & " للمستخلص رقم " & TxtNoteSerial1.text & CHR(13) & txtRemarks.text
+            desEN = " Works" & "  Inv#" & TxtNoteSerial1.text & CHR(13) & txtRemarks.text
+            'If val(TxtFATValue.text) - val(TxtPreVAT.text) > 0 Then '
+            If val(TxtFATValue.text) > 0 Then  '
+    
+                LngDevID = new_id("DOUBLE_ENTREY_VOUCHERS", "Double_Entry_Vouchers_ID", "", True)
+                'If ModAccounts.AddNewDev(LngDevID, line_no, accountdep, val(TxtFATValue.text) - val(TxtPreVAT.text), 1, Msg & des & "  " & "    " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , , setfoxy_Line, , , , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                If ModAccounts.AddNewDev(LngDevID, line_no, accountdep, val(TxtFATValue.text), 1, Msg & des & "  " & "    " & txtprojectname.text, val(note_id.text), , , , XPDtbTrans.value, user_id, , , , , , , , desEN & "  " & "    " & txtprojectname.text, setfoxy_Line, , val(Me.DataCombo2.BoundText), , , , , , , val(dcBranch.BoundText), , , , , , , , , , , , , , , , , , , , , , , , , Posted) = False Then
+                    GoTo ErrTrap
+                End If
+                    
+                line_no = line_no + 1
+  
+            End If
+
+        End If
+    End If
+
+  
+  
+    Savetemp
+    Cn.CommitTrans
+    If bill_Type.ListIndex = 0 Then
+        If Not chkTaxExempt.value = vbChecked And SystemOptions.ApplyEinvoice Then savenewelectroncic
+    End If
+If SystemOptions.IsBluee = True And bill_Type.ListIndex = 0 Then
+ 
+   
+                MsgBox SENDEINVOICE(Me.XPTxtBillID, True, val(Me.TXTEnd_user_id.text), 1, "project_billl", "ID"), vbInformation + vbOKOnly + vbMsgBoxRight + vbMsgBoxRtlReading, App.Title
+  
+End If
+BeginTrans = False
+    Exit Function
+  
+  
+ErrTrap:
+
+    If Err.Number = -2147217900 Then
+
+         Msg = "You can not save data " & CHR(13)
+        Msg = Msg + "It has been enter  incorrect data " & CHR(13)
+        Msg = Msg + "Make sure of the validity of the data and try again"
+
+        MsgBox Msg, vbOKOnly + vbExclamation + vbMsgBoxRight + vbMsgBoxRtlReading, App.Title
+    End If
+
+    If rs.EditMode <> adEditNone Then
+        rs.CancelUpdate
+    End If
+
+    If BeginTrans = True Then
+        Cn.RollbackTrans
+        BeginTrans = False
+    End If
+If SystemOptions.UserInterface = ArabicInterface Then
+    Msg = "عفوا...حدث خطأ ما أثناء حفظ هذه البيانات " & CHR(13)
+    Else
+    Msg = "Sorry...error during Saving"
+    End If
+    MsgBox Msg, vbOKOnly + vbExclamation + vbMsgBoxRight + vbMsgBoxRtlReading, App.Title
+  
+End Function
+
+
+

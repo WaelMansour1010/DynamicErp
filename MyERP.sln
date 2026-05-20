@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyERP", "MyERP.csproj", "{8
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncBranchAgent", "SyncBranchAgent\SyncBranchAgent.csproj", "{29D686C9-39E0-4B10-9B2E-56C0F6CC84FA}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{07C2787E-EAC7-C090-1BA3-A61EC2A24D84}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicErp.PropertyMigration.Runner", "Tools\DynamicErp.PropertyMigration.Runner\DynamicErp.PropertyMigration.Runner.csproj", "{C52924B7-B78F-4FE2-9DFB-922351565F70}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,11 +25,19 @@ Global
 		{29D686C9-39E0-4B10-9B2E-56C0F6CC84FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{29D686C9-39E0-4B10-9B2E-56C0F6CC84FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{29D686C9-39E0-4B10-9B2E-56C0F6CC84FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C52924B7-B78F-4FE2-9DFB-922351565F70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C52924B7-B78F-4FE2-9DFB-922351565F70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C52924B7-B78F-4FE2-9DFB-922351565F70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C52924B7-B78F-4FE2-9DFB-922351565F70}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C52924B7-B78F-4FE2-9DFB-922351565F70} = {07C2787E-EAC7-C090-1BA3-A61EC2A24D84}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7E499388-3CF6-46B2-8E58-8B67394E2BD9}
 	EndGlobalSection
 EndGlobal
+

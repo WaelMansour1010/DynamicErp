@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Implementation plan for the Double-Entry Accounting Posting Engine inside ProjectRepository.cs, targeting the Eng database schema. Includes debit/credit posting matrix, thread-safe sequence generation, and leaf account fallbacks to guarantee transaction integrity.",
+  "updatedAt": "2026-05-20T07:39:12.108603400Z",
+  "requestFeedback": true
+}

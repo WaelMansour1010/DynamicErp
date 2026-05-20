@@ -389,7 +389,13 @@
                             </li>
                         </ol>-->
                         </li>
-                        @Html.Partial("~/Areas/Sync/Views/Shared/_SyncErpMenuItem.cshtml")
+                        @{
+                            var syncErpMenuItemPath = Server.MapPath("~/Areas/Sync/Views/Shared/_SyncErpMenuItem.cshtml");
+                            if (System.IO.File.Exists(syncErpMenuItemPath))
+                            {
+                                @Html.Partial("~/Areas/Sync/Views/Shared/_SyncErpMenuItem.cshtml")
+                            }
+                        }
                         <!-- الإدارة المالية   -->
                         <li>
                             <!-- OL الإدارة المالية   -->
@@ -5531,6 +5537,7 @@
         window.categories = window.categories || [];
         window.series = window.series || [];
     </script>
+    @RenderSection("Scripts", required: false)
 
 </body>
 </html>

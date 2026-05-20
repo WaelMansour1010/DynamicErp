@@ -76,9 +76,79 @@
             </div>
         </section>
 
+        <section class="erp-card">
+            <div class="erp-card-head"><h2>بنود المشروع</h2></div>
+            <div class="erp-card-body" style="padding: 15px;">
+                @Html.Partial("_ProjectMainDesGrid", Model)
+            </div>
+        </section>
+
         <footer class="main-erp-actions">
-            <button class="erp-btn erp-btn-primary" type="submit"><i class="fas fa-save"></i> حفظ</button>
+            <button class="erp-btn erp-btn-primary" type="button" id="saveProjectBtn" onclick="saveProject()"><i class="fas fa-save"></i> حفظ</button>
             <a class="erp-btn" href="@Url.Action("Index", "Projects", new { area = "MainErp" })"><i class="fas fa-times"></i> إلغاء</a>
         </footer>
     }
 </section>
+
+<script>
+    function saveProject() {
+        var form = document.querySelector('.project-editor-form');
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        var items = typeof getProjectItems === 'function' ? getProjectItems() : [];
+
+        var data = {
+            Id: $('#Id').val(),
+            IsNewProject: $('#IsNewProject').val(),
+            Prefix: $('[name="Prefix"]').val(),
+            Code: $('[name="Code"]').val(),
+            ProjectName: $('[name="ProjectName"]').val(),
+            ProjectNameEnglish: $('[name="ProjectNameEnglish"]').val(),
+            EndUserId: $('[name="EndUserId"]').val(),
+            SubContractorId: $('[name="SubContractorId"]').val(),
+            BranchNo: $('[name="BranchNo"]').val(),
+            StatusId: $('[name="StatusId"]').val(),
+            ContractType: $('[name="ContractType"]').val(),
+            ContractNo: $('[name="ContractNo"]').val(),
+            ProjectCost: $('[name="ProjectCost"]').val(),
+            GeneralDiscount: $('[name="GeneralDiscount"]').val(),
+            DiscountPercentage: $('[name="DiscountPercentage"]').val(),
+            CurrencyId: $('[name="CurrencyId"]').val(),
+            StartDate: $('[name="StartDate"]').val(),
+            EndDate: $('[name="EndDate"]').val(),
+            NearEndDate: $('[name="NearEndDate"]').val(),
+            Insurance: $('[name="Insurance"]').val(),
+            ManagerEmployeeId: $('[name="ManagerEmployeeId"]').val(),
+            SalesEmployeeId: $('[name="SalesEmployeeId"]').val(),
+            PState: $('[name="PState"]').val(),
+            UnderImplementation: $('[name="UnderImplementation"]').val(),
+            Remarks: $('[name="Remarks"]').val(),
+            ProjectItems: items
+        };
+
+        $('#saveProjectBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> جارٍ الحفظ...');
+
+        $.ajax({
+            type: 'POST',
+            url: '@Url.Action("SaveJson", "Projects", new { area = "MainErp" })',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (r) {
+                if (r && r.success) {
+                    window.location.href = '@Url.Action("Index", "Projects", new { area = "MainErp" })';
+                } else {
+                    alert(r && r.message ? r.message : 'حدث خطأ أثناء الحفظ.');
+                    $('#saveProjectBtn').prop('disabled', false).html('<i class="fas fa-save"></i> حفظ');
+                }
+            },
+            error: function () {
+                alert('فشل الاتصال بالخادم، يرجى المحاولة مرة أخرى.');
+                $('#saveProjectBtn').prop('disabled', false).html('<i class="fas fa-save"></i> حفظ');
+            }
+        });
+    }
+</script>
+

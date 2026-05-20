@@ -61,6 +61,7 @@ namespace MyERP.Areas.MainErp.ViewModels.Projects
             Customers = new List<ProjectLookupItem>();
             Accounts = new List<ProjectLookupItem>();
             Employees = new List<ProjectLookupItem>();
+            ProjectItems = new List<ProjectMainDesViewModel>();
         }
 
         public int Id { get; set; }
@@ -126,6 +127,19 @@ namespace MyERP.Areas.MainErp.ViewModels.Projects
         public IList<ProjectLookupItem> Customers { get; private set; }
         public IList<ProjectLookupItem> Accounts { get; private set; }
         public IList<ProjectLookupItem> Employees { get; private set; }
+
+        public string AccountUnderImp { get; set; }
+        public IList<ProjectMainDesViewModel> ProjectItems { get; set; }
+    }
+
+    public class ProjectMainDesViewModel
+    {
+        public int Id { get; set; }
+        public int ProjectId { get; set; }
+        public string Item { get; set; }
+        public decimal Price { get; set; }
+        public decimal Quantity { get; set; }
+        public decimal Value { get; set; }
     }
 
     public class ProjectLookupItem
@@ -142,7 +156,15 @@ namespace MyERP.Areas.MainErp.ViewModels.Projects
             Total = 0m;
             VatValue = 0m;
             NetValue = 0m;
+            PerforValue = 0m;
+            AdvancedPayment = 0m;
+            GeneralDiscount = 0m;
+            Projects = new List<ProjectLookupItem>();
+            ExtractItems = new List<ProjectExtractItemViewModel>();
         }
+
+        public IList<ProjectLookupItem> Projects { get; private set; }
+        public IList<ProjectExtractItemViewModel> ExtractItems { get; set; }
 
         [Required(ErrorMessage = "حدد المشروع.")]
         public int? ProjectId { get; set; }
@@ -165,8 +187,26 @@ namespace MyERP.Areas.MainErp.ViewModels.Projects
         [Range(0, 999999999999, ErrorMessage = "الصافي يجب أن يكون رقمًا موجبًا.")]
         public decimal? NetValue { get; set; }
 
+        public decimal? PerforValue { get; set; }
+        public decimal? AdvancedPayment { get; set; }
+        public decimal? GeneralDiscount { get; set; }
+
         public int? BranchNo { get; set; }
         public string Remarks { get; set; }
         public string Warning { get; set; }
+    }
+
+    public class ProjectExtractItemViewModel
+    {
+        public int Id { get; set; }
+        public int PrMainDesID { get; set; }
+        public string Item { get; set; }
+        public string FullCode { get; set; }
+        public decimal ContractQuantity { get; set; }
+        public decimal Price { get; set; }
+        public decimal PreviousQuantity { get; set; }
+        public decimal PreviousValue { get; set; }
+        public decimal CurrentQuantity { get; set; }
+        public decimal CurrentValue { get; set; }
     }
 }

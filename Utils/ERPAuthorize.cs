@@ -25,10 +25,25 @@ namespace MyERP
                 return;
             }
 
+            if (IsAllowAnonymous(filterContext))
+            {
+                return;
+            }
+
+            if (IsSkipERPAuthorize(filterContext))
+            {
+                return;
+            }
+
             int userId = 0;
             if (HttpContext.Current.Request.IsAuthenticated)
             {
-                userId = int.Parse(((ClaimsIdentity)HttpContext.Current.User.Identity).FindFirst("Id").Value);
+                if (!TryGetClaimInt("Id", out userId))
+                {
+                    HttpContext.Current.Request.GetOwinContext().Authentication.SignOut();
+                    return;
+                }
+
                 using (MySoftERPEntity db = new MySoftERPEntity())
                 {
                     if (!db.ERPUsers.Where(x => x.Id == userId && x.IsDeleted == false && x.IsActive == true && x.IsPasswordReset == false).Any())
@@ -39,11 +54,21 @@ namespace MyERP
                     }
                 }
             }
-            if (filterContext.ActionDescriptor.ControllerDescriptor.IsDefined(typeof(SkipERPAuthorize), true) || filterContext.ActionDescriptor.IsDefined(typeof(SkipERPAuthorize), true) || filterContext.ActionDescriptor.GetCustomAttributes(typeof(SkipERPAuthorize), false).Any())
+
+            bool? acces;
+            try
             {
-                return;
+                acces = Log(filterContext.HttpContext.Request.HttpMethod, filterContext.RouteData, filterContext.ActionParameters, userId);
             }
-            bool? acces = Log(filterContext.HttpContext.Request.HttpMethod, filterContext.RouteData, filterContext.ActionParameters, userId);
+            catch (Exception ex)
+            {
+                Trace.TraceError("ERPAuthorize failed for {0}/{1}: {2}",
+                    filterContext.RouteData.Values["controller"],
+                    filterContext.RouteData.Values["action"],
+                    ex);
+                acces = false;
+            }
+
             if (acces != true)
             {
                 filterContext.Result = new RedirectToRouteResult(new RouteValueDictionary(new { controller = "Home", action = "Unauthorized" }));
@@ -79,7 +104,12 @@ namespace MyERP
 
             using (MySoftERPEntity db = new MySoftERPEntity())
             {
-                int roleId = int.Parse(((ClaimsIdentity)HttpContext.Current.User.Identity).FindFirst("RoleId").Value);
+                int roleId;
+                if (userId <= 0 || !TryGetClaimInt("RoleId", out roleId))
+                {
+                    return false;
+                }
+
                 string controllerName = (string)routeData.Values["controller"];
                 string actionName = (string)routeData.Values["action"];
                 if (controllerName == "PointOfSale" )
@@ -172,6 +202,27 @@ namespace MyERP
         {
             var area = routeData.DataTokens["area"] as string;
             return string.Equals(area, "Pos", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsAllowAnonymous(ActionExecutingContext filterContext)
+        {
+            return filterContext.ActionDescriptor.ControllerDescriptor.IsDefined(typeof(AllowAnonymousAttribute), true) ||
+                   filterContext.ActionDescriptor.IsDefined(typeof(AllowAnonymousAttribute), true);
+        }
+
+        private static bool IsSkipERPAuthorize(ActionExecutingContext filterContext)
+        {
+            return filterContext.ActionDescriptor.ControllerDescriptor.IsDefined(typeof(SkipERPAuthorize), true) ||
+                   filterContext.ActionDescriptor.IsDefined(typeof(SkipERPAuthorize), true) ||
+                   filterContext.ActionDescriptor.GetCustomAttributes(typeof(SkipERPAuthorize), false).Any();
+        }
+
+        private static bool TryGetClaimInt(string claimType, out int value)
+        {
+            value = 0;
+            var identity = HttpContext.Current?.User?.Identity as ClaimsIdentity;
+            var claimValue = identity?.FindFirst(claimType)?.Value;
+            return int.TryParse(claimValue, out value);
         }
 
         private static bool IsCompanyScreenAvailable(MySoftERPEntity db, string controllerName)

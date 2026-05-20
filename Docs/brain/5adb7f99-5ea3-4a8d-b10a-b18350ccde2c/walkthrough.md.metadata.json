@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_WALKTHROUGH",
+  "summary": "Walkthrough of the double-entry posting engine implementation for project extracts in DynamicErp, detailing the database schema details, the balanced posting matrix, fallback account resolving mechanisms, and MSBuild compilation verification results.",
+  "updatedAt": "2026-05-20T07:43:44.257122100Z"
+}

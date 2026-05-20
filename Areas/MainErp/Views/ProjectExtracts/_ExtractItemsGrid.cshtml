@@ -1,0 +1,63 @@
+@model MyERP.Areas.MainErp.ViewModels.Projects.ProjectExtractCreateViewModel
+
+@if (Model.ExtractItems != null && Model.ExtractItems.Count > 0)
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-centered table-sm mb-0" id="ExtractItemsTable">
+            <thead class="thead-light">
+                <tr>
+                    <th style="width:5%">#</th>
+                    <th style="width:8%">الكود</th>
+                    <th style="width:28%">بند الأعمال</th>
+                    <th style="width:9%">الكمية التعاقدية</th>
+                    <th style="width:8%">السعر</th>
+                    <th style="width:9%">منفذ سابقاً (ك)</th>
+                    <th style="width:9%">منفذ سابقاً (ق)</th>
+                    <th style="width:11%">الكمية الحالية</th>
+                    <th style="width:10%">إجمالي الحالي</th>
+                </tr>
+            </thead>
+            <tbody id="ExtractItemsBody">
+                @{ int rowIdx = 0; }
+                @foreach (var item in Model.ExtractItems)
+                {
+                    <tr>
+                        <td class="text-center text-muted">@(++rowIdx)</td>
+                        <td>
+                            <input type="hidden" class="pr-main-des-id" value="@item.PrMainDesID" />
+                            <span class="text-muted small">@item.FullCode</span>
+                        </td>
+                        <td>@item.Item</td>
+                        <td class="text-center">@item.ContractQuantity.ToString("N2")</td>
+                        <td class="text-center">@item.Price.ToString("N2")</td>
+                        <td class="text-center prev-qty">@item.PreviousQuantity.ToString("N2")</td>
+                        <td class="text-center prev-val">@item.PreviousValue.ToString("N2")</td>
+                        <td>
+                            <input type="number" step="any" min="0"
+                                   class="curr-qty form-control form-control-sm text-center"
+                                   value="0"
+                                   data-contract-qty="@item.ContractQuantity"
+                                   data-price="@item.Price"
+                                   data-prev-qty="@item.PreviousQuantity" />
+                        </td>
+                        <td>
+                            <input type="number" step="any"
+                                   class="curr-val form-control form-control-sm text-center"
+                                   value="0" readonly />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot class="table-secondary font-weight-bold">
+                <tr>
+                    <td colspan="7" class="text-right">الإجمالي الكلي للأعمال الحالية:</td>
+                    <td colspan="2" class="text-center" id="ExtractTableTotal">0.00</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+}
+else
+{
+    <p class="text-center text-muted mt-3">لا توجد بنود مشروع مسجلة لهذا المشروع. يرجى إضافة بنود المشروع أولاً.</p>
+}

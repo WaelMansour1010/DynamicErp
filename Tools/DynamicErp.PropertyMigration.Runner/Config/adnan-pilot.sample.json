@@ -1,0 +1,36 @@
+﻿{
+  "CustomerCode": "ADNAN-PILOT",
+  "SourceDatabaseName": "Adnan",
+  "TargetCloneDatabaseName": "Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520",
+  "ConnectionString": "",
+  "ConnectionStringEnvironmentVariable": "PROPERTY_MIGRATION_SQL_CONNECTION",
+  "MigrationMode": "Hybrid",
+  "BatchId": "00000000-0000-0000-0000-000000000001",
+  "CutoffDate": "2026-05-20",
+  "DryRun": true,
+  "IncludeAccounting": false,
+  "IncludeHistoricalReceipts": false,
+  "IncludeIssues": false,
+  "IncludeJournalEntries": false,
+  "IncludeAdvancePayments": true,
+  "IncludeTerminations": false,
+  "ExcludeUnsafePayments": true,
+  "BackupVerified": false,
+  "ExecutionPlanApproved": false,
+  "FinanceSignOff": false,
+  "CommandTimeoutSeconds": 120,
+  "ReportDirectory": "F:\\Source Code\\DynamicErp\\Tools\\DynamicErp.PropertyMigration.Runner\\Reports",
+  "ToolkitSqlPath": "F:\\Source Code\\DynamicErp\\Docs\\PropertyMigrationToolkit\\Sql",
+  "AutoFix": {
+    "AllowUnknownUnits": true,
+    "AllowUnknownProperties": true,
+    "AllowSuspenseAccounts": false,
+    "AllowFallbackPaymentMethods": true,
+    "AllowDefaultCashBox": true,
+    "AllowDefaultBank": true,
+    "AllowTemporaryRenterAccounts": true,
+    "AutoCreateMissingAccounts": false,
+    "AutoCreateMissingLookups": true
+  }
+}
+

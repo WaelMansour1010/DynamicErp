@@ -1,0 +1,41 @@
+﻿{
+    "Database":  "Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520",
+    "LoginStatus":  302,
+    "LoginRedirect":  "/PointOfSale/PosLogin",
+    "PageChecks":  [
+                       {
+                           "Name":  "ContractWithHistoricalReceipt",
+                           "Url":  "http://localhost:63735/PropertyContract?searchWord=ADNAN-C-1893",
+                           "Status":  200,
+                           "ContainsExpected":  true,
+                           "Length":  320532,
+                           "Error":  ""
+                       },
+                       {
+                           "Name":  "ContractEdit",
+                           "Url":  "http://localhost:63735/PropertyContract/AddEdit/1255",
+                           "Status":  200,
+                           "ContainsExpected":  true,
+                           "Length":  585574,
+                           "Error":  ""
+                       },
+                       {
+                           "Name":  "ReceiptHistoryList",
+                           "Url":  "http://localhost:63735/CashReceiptVoucher?searchWord=ADNAN-R-126050057",
+                           "Status":  200,
+                           "ContainsExpected":  true,
+                           "Length":  324900,
+                           "Error":  ""
+                       },
+                       {
+                           "Name":  "ReceiptEdit",
+                           "Url":  "http://localhost:63735/CashReceiptVoucher/AddEdit/794",
+                           "Status":  200,
+                           "ContainsExpected":  true,
+                           "Length":  522267,
+                           "Error":  ""
+                       }
+                   ],
+    "BatchApiStatus":  200,
+    "BatchApiPreview":  "[{\"PropertyContractBatchId\":6257,\"BatchNo\":1,\"BatchTotal\":2267.0000,\"BatchDate\":\"\\/Date(1752094800000)\\/\",\"IsDelivered\":null,\"PropertyArName\":\"عمارة 1- مجمع اليرموك 2 - الاستراحة 1\",\"PropertyUnitArName\":\"15\",\"BatchRentValue\":2267.0000,\"BatchRentValueTaxes\":null,\"BatchElectricityValue\":0.0000,\"BatchElectricityValueTaxes\":null,\"BatchWaterValue\":0.0000,\"BatchWaterValueTaxes\":null,\"BatchCommissionValue\":0.0000,\"BatchCommissionValueTaxes\":null,\"BatchGasValue\":null,\"BatchGasValueTaxes\":null,\"BatchInsuranceValue\":0.0000,\"BatchInsuranceValueTaxes\":null,\"BatchServicesValue\":0.0000,\"BatchServicesValueTaxes\":null,\"Paid\":0,\"Remain\":0.0000,\"TotalPaid\":2267.0000},{\"PropertyContractBatchId\":6258,\"BatchNo\":2,\"BatchTotal\":2267.0000,\"BatchDate\":\"\\/Date(1754773200000)\\/\",\"IsDelivered\":null,\"PropertyArName\":\"عمارة 1- مجمع اليرموك 2 - الاستراحة 1\",\"PropertyUnitArName\":\"15\",\"BatchRentValue\":2267.0000,\"BatchRentValueTaxes\":null,\"BatchElectricityValue\":0.0000,\"BatchElectricityValueTaxes\":null,\"BatchWaterValue"
+}

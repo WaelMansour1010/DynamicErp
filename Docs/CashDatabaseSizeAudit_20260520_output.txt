@@ -1,0 +1,538 @@
+Changed database context to 'Cash'.
+SECTION 0 - DATABASE FILES
+database_name|logical_name|type_desc|physical_name|size_mb|used_mb|free_mb
+-------------|------------|---------|-------------|-------|-------|-------
+Cash|SmallAccount_log|LOG|F:\DataBase\Cash\Byte-20260519070006-(2a695a3b-e277-44fa-9411-64987baca0b8)-Full\Cash_0.ldf|4848.25|12.77|4835.48
+Cash|SmallAccount_dat|ROWS|F:\DataBase\Cash\Byte-20260519070006-(2a695a3b-e277-44fa-9411-64987baca0b8)-Full\Cash.mdf|36957.25|33760.19|3197.06
+SECTION 1 - TABLE SIZE TOP 30
+schema_name|table_name|row_count|data_mb|index_mb|lob_or_other_mb|used_mb|unused_mb|reserved_mb|index_to_data_ratio
+-----------|----------|---------|-------|--------|---------------|-------|---------|-----------|-------------------
+dbo|DOUBLE_ENTREY_VOUCHERS|14505894|4662.00|8954.05|10.50|13626.55|41.22|13667.77|1.92
+dbo|Transactions|3768771|3329.63|3642.48|14.94|6987.04|32.27|7019.31|1.09
+dbo|Transaction_Details|6097242|3745.09|2061.27|26.96|5833.31|10.03|5843.34|.55
+dbo|Notes|4073331|3714.48|560.36|11.16|4285.99|16.13|4302.13|.15
+dbo|LogFile|2022282|365.84|11.58|435.00|812.41|2.82|815.23|.03
+dbo|TblCusCsh|299484|221.04|515.93|.81|737.78|1.04|738.82|2.33
+dbo|CriticalRecoverySnapshotRow|374730|487.38|20.09|221.55|729.02|.30|729.31|.04
+dbo|TransactionValueAdded|1239387|82.62|27.05|.37|110.04|3.04|113.08|.33
+dbo|POS_SaveAttemptLog|183939|58.84|32.16|.21|91.21|1.10|92.31|.55
+dbo|CriticalRecoveryArchive_DOUBLE_ENTREY_VOUCHERS|193684|61.63|.00|.02|61.64|.06|61.70|.00
+dbo|TBLClosePos|53683|16.66|25.97|.48|43.11|.48|43.59|1.56
+dbo|Subject_doc|278726|37.31|.00|.52|37.84|3.55|41.39|.00
+dbo|TblGroupItemProductLineUsersset|277382|32.59|.00|.18|32.77|3.66|36.44|.00
+dbo|CriticalRecoveryArchive_Transactions|40461|35.13|.00|.02|35.15|.12|35.27|.00
+dbo|POS_SystemErrorLog|14358|33.05|.52|.18|33.74|.23|33.98|.02
+dbo|POS_SaveAllocationStageLog|82452|22.03|11.25|.14|33.42|.22|33.64|.51
+dbo|CriticalRecoveryArchive_Transaction_Details|40467|17.57|.00|.02|17.59|.05|17.64|.00
+dbo|ScreenJuncUser|69932|5.14|8.80|.05|13.99|1.58|15.57|1.71
+dbo|ACCOUNTS|19132|4.89|3.23|.13|8.24|1.64|9.88|.66
+dbo|emp_salary|3307|2.27|4.12|.05|6.43|.23|6.66|1.82
+dbo|edictionary|73464|6.01|.00|.05|6.05|.01|6.06|.00
+dbo|Transactions_Restore|5610|4.88|.00|.11|4.98|.11|5.09|.00
+dbo|ExpensesDetails|15539|3.81|.00|.44|4.25|.12|4.37|.00
+dbo|TblSettsReqLimKDet|21842|3.68|.00|.41|4.09|-.19|3.90|.00
+dbo|TblSalesPayment|33826|1.79|.99|.06|2.84|.50|3.34|.55
+dbo|Transaction_Details_Restore|6078|2.67|.00|.11|2.78|.05|2.83|.00
+dbo|POS_ImportBatchRow|6424|1.23|1.30|.03|2.57|.19|2.76|1.06
+dbo|POS_SaveIdempotency|7997|1.80|.89|.03|2.72|.01|2.73|.50
+dbo|sanad_numbering|9396|1.46|.82|.40|2.68|.04|2.72|.56
+dbo|notes_all|4056|1.74|.06|.48|2.28|-.19|2.09|.04
+SECTION 2 - INDEX SIZE AND USAGE TOP 100
+schema_name|table_name|index_name|type_desc|used_mb|used_pages|row_count|user_seeks|user_scans|user_lookups|user_updates|is_unused_read|is_duplicate_signature|key_columns|include_columns
+-----------|----------|----------|---------|-------|----------|---------|----------|----------|------------|------------|--------------|----------------------|-----------|---------------
+dbo|DOUBLE_ENTREY_VOUCHERS|PK_DOUBLE_ENTREY_VOUCHERS|CLUSTERED|4672.50|598080|14505894|0|0|0|0|1|0|Double_Entry_Vouchers_ID,DEV_ID_Line_No|NULL
+dbo|Transaction_Details|IX_Transaction_Details|CLUSTERED|3772.05|482822|6097242|0|0|0|0|1|0|ItemSerial|NULL
+dbo|Notes|PK_Notes|CLUSTERED|3725.63|476881|4073331|0|0|0|0|1|0|NoteID|NULL
+dbo|Transactions|PK_Transactions|CLUSTERED|3344.56|428104|3768771|0|0|0|0|1|0|Transaction_ID|NULL
+dbo|DOUBLE_ENTREY_VOUCHERS|<IndexSearchEntry, sysname,>|NONCLUSTERED|2273.55|291015|14505894|0|0|0|0|1|0|branch_id|Account_Code,Value,Credit_Or_Debit,Double_Entry_Vouchers_Description,RecordDate,Notes_ID,ReceiptID,OperaID,Transaction_ID,UserID,Posted,PostedDate,PostedUserID,Account_Interval_ID,currency,valuee,rate,Double_Entry_Vouchers_Descriptione,DEV_ID_Line_No1,note
+dbo|DOUBLE_ENTREY_VOUCHERS|<ccIndex, sysname,>|NONCLUSTERED|1832.53|234564|14505894|0|0|0|0|1|0|Account_Code,Posted|Double_Entry_Vouchers_ID,DEV_ID_Line_No,Value,Credit_Or_Debit,Double_Entry_Vouchers_Description,RecordDate,Notes_ID,ReceiptID,OperaID,Transaction_ID,UserID,PostedDate,PostedUserID,Account_Interval_ID,currency,valuee,rate,Double_Entry_Vouchers_Descriptione,
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Credit_Or_Debit_notes_all_hideline|NONCLUSTERED|1760.41|225333|14505894|0|0|0|0|1|0|Credit_Or_Debit,notes_all,hideline|Double_Entry_Vouchers_ID,DEV_ID_Line_No,Account_Code,Value,Double_Entry_Vouchers_Description,Notes_ID,Account_Interval_ID,DEV_ID_Line_No1,opr_fullcode,FixedAssetId,branch_id,Carid,Departementid,Billno,projectid,operid,pandid,Vat,Vatyo,FlgVat,CurrRow,Suppli
+dbo|LogFile|PK__LogFile__37DCB2AB|CLUSTERED|800.84|102507|2022282|0|0|0|0|1|0|OprID|NULL
+dbo|CriticalRecoverySnapshotRow|PK_CriticalRecoverySnapshotRow|CLUSTERED|708.93|90743|374730|0|0|0|0|1|0|SnapshotRowId|NULL
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DEV_RecordDate|NONCLUSTERED|612.51|78401|7252947|0|0|0|0|1|0|RecordDate,branch_id,Credit_Or_Debit,Account_Code|Value,Posted
+dbo|DOUBLE_ENTREY_VOUCHERS|<IndexFast, sysname,>|NONCLUSTERED|591.17|75670|7252947|0|0|0|0|1|0|Account_Code,Credit_Or_Debit,Posted,branch_id,RecordDate|Value
+dbo|DOUBLE_ENTREY_VOUCHERS|IDX_DOUBLE_ENTREY_VOUCHERS_Account_Credit_Date|NONCLUSTERED|448.06|57352|7252947|0|0|0|0|1|0|Account_Code,Credit_Or_Debit,RecordDate|NULL
+dbo|Transaction_Details|IX_Transaction_Details_TransactionID_ID|NONCLUSTERED|356.96|45691|2032414|0|0|0|0|1|0|Transaction_ID,ID|Item_ID,ItemCase,ItemSerial,ItemDiscountType,ItemDiscount,guaranteeTime,Remarks,ColorID,ItemSize,UnitId,ShowQty,showPrice,order_no,LineShahn,OrderArrivalDate,ClassId,ExpiryDate,LotNO,NoCount,Vat,Vatyo,TypeVAT,SalesValue,UnitPrice,Sequence,CustId
+dbo|Transaction_Details|<Name of Missing Index, sysname,>|NONCLUSTERED|257.57|32969|2032414|0|0|0|0|1|0|Item_ID|Transaction_ID,Quantity,Price,ID,UnitId,QtyBySmalltUnit,OldQty,OldCost,NewQty,NewCost
+dbo|Transactions|IX_Transactions_BranchId_Transaction_Date_Transaction_Type|NONCLUSTERED|247.92|31734|1256257|0|0|0|0|1|0|BranchId,Transaction_Date,Transaction_Type|Transaction_ID,Transaction_Serial,CusID,StoreID,CashCustomerName,CashCustomerPhone,order_no,NoteSerial1,ManualNO,OldNoteSerial1,Transaction_NetValue,VAT,PurchOrderNo,RechargeValue
+dbo|Transactions|IX_Transactions_StoreID_BranchId_Transaction_Date_Transaction_Type|NONCLUSTERED|247.67|31702|1256257|0|0|0|0|1|0|StoreID,BranchId,Transaction_Date,Transaction_Type|Transaction_ID,Transaction_Serial,CusID,CashCustomerName,CashCustomerPhone,order_no,NoteSerial1,ManualNO,OldNoteSerial1,Transaction_NetValue,VAT,PurchOrderNo,RechargeValue
+dbo|Transactions|IX_Transactions_StoreID_Transaction_Date_Transaction_Type|NONCLUSTERED|247.61|31694|1256257|0|0|0|0|1|0|StoreID,Transaction_Date,Transaction_Type|Transaction_ID,Transaction_Serial,CusID,CashCustomerName,CashCustomerPhone,order_no,NoteSerial1,BranchId,ManualNO,OldNoteSerial1,Transaction_NetValue,VAT,PurchOrderNo,RechargeValue
+dbo|DOUBLE_ENTREY_VOUCHERS|IndexCredit_Or_Debit, sysname,>|NONCLUSTERED|241.63|30928|7252947|0|0|0|0|1|0|Credit_Or_Debit,Notes_ID|Value
+dbo|TblCusCsh|PK__TblCusCsh__39DAD50D|CLUSTERED|221.85|28397|299484|0|0|0|0|1|0|Id|NULL
+dbo|Transactions|IX_POS_TodayInvoices_Read|NONCLUSTERED|216.91|27764|1256257|0|0|0|0|1|0|Transaction_Type,Transaction_Date,BranchId,UserID,Transaction_ID|CashCustomerName,CashCustomerPhone,NoteSerial1,PayedValue,NetValue,ManualNO,VAT,Phone2,VisaNumber,RechargeValue,IsCashOut,IPN,TrafficViolations,IsCancelled
+dbo|DOUBLE_ENTREY_VOUCHERS|<IndexRecordDate, sysname,>|NONCLUSTERED|207.46|26555|7252947|0|0|0|0|1|0|RecordDate|Double_Entry_Vouchers_ID
+dbo|Transactions|IX_Transactions_StoreID_BranchId_Transaction_Type|NONCLUSTERED|203.83|26090|1256257|0|0|0|0|1|0|StoreID,BranchId,Transaction_Type|Transaction_ID,Transaction_Serial,Transaction_Date,CusID,CashCustomerName,CashCustomerPhone,order_no,NoteSerial1,ManualNO,OldNoteSerial1,Transaction_NetValue,VAT,PurchOrderNo,RechargeValue
+dbo|Transactions|IX_Transactions_StoreID_Transaction_Type|NONCLUSTERED|203.55|26055|1256257|0|0|0|0|1|0|StoreID,Transaction_Type|Transaction_ID,Transaction_Serial,Transaction_Date,CusID,CashCustomerName,CashCustomerPhone,order_no,NoteSerial1,BranchId,ManualNO,OldNoteSerial1,Transaction_NetValue,VAT,PurchOrderNo,RechargeValue
+dbo|Transactions|IX_Transactions_BranchId_Transaction_Type_0C998935|NONCLUSTERED|202.90|25971|1256257|0|0|0|0|1|0|BranchId,Transaction_Type|Transaction_ID,Transaction_Serial,Transaction_Date,CusID,StoreID,CashCustomerName,CashCustomerPhone,order_no,NoteSerial1,ManualNO,OldNoteSerial1,Transaction_NetValue,VAT,PurchOrderNo,RechargeValue
+dbo|Transactions|IX_Transactions_StoreID|NONCLUSTERED|198.07|25353|1256257|0|0|0|0|1|0|StoreID|Transaction_ID,Transaction_Serial,Transaction_Date,Transaction_Type,CusID,CashCustomerName,CashCustomerPhone,order_no,NoteSerial1,ManualNO,OldNoteSerial1,Transaction_NetValue,VAT,PurchOrderNo,RechargeValue,IsReturn,IsReturn2
+dbo|Transactions|IX_POS_Transactions_Search_NoteSerial1|NONCLUSTERED|189.52|24258|1093446|0|0|0|0|1|0|NoteSerial1,Transaction_Date,Transaction_ID|UserID,CashCustomerName,CashCustomerPhone,BranchId,PayedValue,NetValue,ManualNO,VAT,Phone2,VisaNumber,RechargeValue,IsCashOut,IPN,TrafficViolations,IsCancelled
+dbo|Transactions|IX_POS_Transactions_Search_ManualNO|NONCLUSTERED|185.23|23710|1091910|0|0|0|0|1|0|ManualNO,Transaction_Date,Transaction_ID|UserID,CashCustomerName,CashCustomerPhone,NoteSerial1,BranchId,PayedValue,NetValue,VAT,Phone2,VisaNumber,RechargeValue,IsCashOut,IPN,TrafficViolations,IsCancelled
+dbo|Transactions|IX_POS_Transactions_OperationalSales_Report|NONCLUSTERED|175.02|22402|1256257|0|0|0|0|1|0|Transaction_Type,IsCancelled,Transaction_Date,Transaction_ID|StoreID,UserID,CashCustomerName,CashCustomerPhone,NoteSerial1,BranchId,PayedValue,NetValue,Transaction_NetValue,VAT,VisaNumber,RechargeValue,IsCashOut,IsPOS,TrafficViolations
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Transaction_ID|NONCLUSTERED|170.49|21823|7252947|0|0|0|0|1|0|Transaction_ID|Double_Entry_Vouchers_ID,DEV_ID_Line_No
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Notes_ID|NONCLUSTERED|166.38|21297|7252947|0|0|0|0|1|0|Notes_ID|Double_Entry_Vouchers_ID,DEV_ID_Line_No
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_Transaction_ID|NONCLUSTERED|164.25|21024|7252947|0|0|0|0|1|0|Transaction_ID|Notes_ID
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_RecordDate|NONCLUSTERED|163.70|20954|7252947|0|0|0|0|1|0|RecordDate,Double_Entry_Vouchers_ID|NULL
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_Notes_ID|NONCLUSTERED|163.63|20945|7252947|0|0|0|0|1|0|Notes_ID|Transaction_ID
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS__ReceiptID|NONCLUSTERED|158.26|20257|7252947|0|0|0|0|1|0|ReceiptID|NULL
+dbo|Transaction_Details|<ColorIDIndex, sysname,>|NONCLUSTERED|149.14|19090|2032414|0|0|0|0|1|0|Item_ID,ColorID,ItemSize,ClassId|Transaction_ID,Quantity
+dbo|Transaction_Details|<IndexColor, sysname,>|NONCLUSTERED|139.12|17807|2032414|0|0|0|0|1|0|Item_ID,ColorID,ClassId|Transaction_ID,Quantity
+dbo|Transaction_Details|IX_Transaction_Details_Item_ID_UnitId|NONCLUSTERED|138.83|17770|2032414|0|0|0|0|1|0|Item_ID,UnitId|Transaction_ID,Price,ID
+dbo|TblCusCsh|IX_TblCusCsh_OrderDate|NONCLUSTERED|128.24|16415|299484|0|0|0|0|1|0|OrderDate|Id,name,namee,tel,card,discount,CartTYpe,RecordDate,Email,EnglishName0,EnglishName1,EnglishName2,EnglishName3,EnglishName4,EnglishName5,EnglishName6,EnglishName7,EnglishName8,EnglishName9,Address,MailAdress,CardId,CardSource,PhoneNo,PhoneNo2,Tet_NumPoket,J
+dbo|TblCusCsh|<cardIndex, sysname,>|NONCLUSTERED|126.87|16239|299484|0|0|0|0|1|0|BranchID|Id,name,namee,tel,card,discount,CartTYpe,RecordDate,Email,EnglishName0,EnglishName1,EnglishName2,EnglishName3,EnglishName4,EnglishName5,EnglishName6,EnglishName7,EnglishName8,EnglishName9,Address,MailAdress,CardId,CardSource,PhoneNo,PhoneNo2,Tet_NumPoket,J
+dbo|Transaction_Details|IX_TransactionDetails_CloseReport|NONCLUSTERED|118.75|15200|2032414|0|0|0|0|1|0|Transaction_ID,Item_ID|Price,Vat
+dbo|Transaction_Details|<IndxTT, sysname,>|NONCLUSTERED|118.74|15199|2032414|0|0|0|0|1|0|Transaction_ID|Item_ID,Price,Vat
+dbo|Transaction_Details|IX_POS_TransactionDetails_ItemSerial_Transaction|NONCLUSTERED|117.84|15084|2032414|0|0|0|0|1|0|POS_ItemSerial_Normalized,Transaction_ID|NULL
+dbo|Transaction_Details|IX_Transaction_Details_Item_ID_Transaction_ID|NONCLUSTERED|113.12|14479|2032414|0|0|0|0|1|0|Item_ID,Transaction_ID|ItemSerial,Quantity
+dbo|Transaction_Details|IX_POS_TransactionDetails_StoreSerials_Report|NONCLUSTERED|109.63|14033|2032414|0|0|0|0|1|0|StoreID2,ItemSerial,Transaction_ID|Item_ID,Quantity
+dbo|Transaction_Details|IDX_Transaction_Details_Transaction_Price_Item|NONCLUSTERED|103.52|13250|2032414|0|0|0|0|1|0|Transaction_ID,Price,Item_ID|NULL
+dbo|Transaction_Details|IX_POS_KycAvailableCards_Details|NONCLUSTERED|98.31|12584|2032414|0|0|0|0|1|0|Transaction_ID,ItemSerial|Item_ID,Quantity
+dbo|Transaction_Details|IX_POS_Transaction_Details_SaveIssue|NONCLUSTERED|89.71|11483|2032414|0|0|0|0|1|0|Transaction_ID,SavedItemType,StoreID2|NULL
+dbo|Transactions|IX_Transactions_Transaction_Date_Transaction_Type_BranchId_C8AA5607|NONCLUSTERED|84.59|10827|1256257|0|0|0|0|1|0|Transaction_Date,Transaction_Type,BranchId|Transaction_ID,VAT,RechargeValue,NoID,ItemDit,Comm1
+dbo|TransactionValueAdded|PK__Transact__3214EC2727CBBB9B|CLUSTERED|82.98|10622|1239387|0|0|0|0|1|0|ID|NULL
+dbo|Transaction_Details|PK_Transaction_Details|NONCLUSTERED|76.65|9811|2032414|0|0|0|0|1|0|ID|NULL
+dbo|Transactions|<IndexReturnID, sysname,>|NONCLUSTERED|74.17|9494|1256257|0|0|0|0|1|0|ReturnID|Transaction_ID,Transaction_Serial,Transaction_Date,Transaction_Type,PaymentType,CusID,StoreID,UserID
+dbo|Transaction_Details|IX_POS_TransactionDetails_Transaction_ItemSerial|NONCLUSTERED|73.38|9392|2032414|0|0|0|0|1|0|Transaction_ID,ItemSerial|NULL
+dbo|Transactions|IX_POS_Transactions_CashIn_ManualNO|NONCLUSTERED|65.20|8346|1256257|0|0|0|0|1|0|Transaction_Type,POS_ManualNO_Normalized,IsCashOut,TrafficViolations,isRecharg,Transaction_ID|RechargeValue
+dbo|TblCusCsh|IX_POS_TblCusCsh_KycFollow_RecordDate|NONCLUSTERED|61.02|7811|149742|0|0|0|0|1|0|EasyCashType,RecordDate,BranchID,Id|name,namee,tel,card,Address,CardId,PhoneNo,PhoneNo2,Tet_NumPoket,CardNo,BirthDate,CustName,OrderDate,SaveDate
+dbo|TblCusCsh|IX_POS_TblCusCsh_KycFollow_SaveDate|NONCLUSTERED|60.66|7765|149742|0|0|0|0|1|0|EasyCashType,SaveDate,BranchID,Id|name,namee,tel,card,RecordDate,Address,CardId,PhoneNo,PhoneNo2,Tet_NumPoket,CardNo,BirthDate,CustName,OrderDate
+dbo|TblCusCsh|IX_POS_TblCusCsh_KycFollow_OrderDate|NONCLUSTERED|60.66|7764|149742|0|0|0|0|1|0|EasyCashType,OrderDate,BranchID,Id|name,namee,tel,card,RecordDate,Address,CardId,PhoneNo,PhoneNo2,Tet_NumPoket,CardNo,BirthDate,CustName,SaveDate
+dbo|Transactions|IX_Transactions_CashCustomerName|NONCLUSTERED|59.57|7625|1256257|0|0|0|0|1|0|CashCustomerName|NULL
+dbo|POS_SaveAttemptLog|PK_POS_SaveAttemptLog|CLUSTERED|59.05|7558|183939|0|0|0|0|1|0|Id|NULL
+dbo|Transactions|IX_Transactions_Transaction_Type_BranchId_EFF18692|NONCLUSTERED|56.50|7232|1256257|0|0|0|0|1|0|Transaction_Type,BranchId|Transaction_NetValue,RechargeValue,NoteID3
+dbo|Transactions|IX_Transactions_CloseReport|NONCLUSTERED|54.03|6916|1256257|0|0|0|0|1|0|Transaction_Type,Transaction_Date,BranchId|Transaction_ID,Transaction_NetValue,RechargeValue,IsReturn,IsWallet,HaveGuarantee,OtherItems,InstallmentService
+dbo|Transactions|<IndexDate, sysname,>|NONCLUSTERED|52.58|6730|1256257|0|0|0|0|1|0|Transaction_Date,BranchId,Transaction_Type|Transaction_NetValue,IsWallet
+dbo|Notes|IX_Notes_NoteType_branch_no_Prefix|NONCLUSTERED|51.43|6583|1357777|0|0|0|0|1|0|NoteType,branch_no,Prefix|NoteDate,NoteSerial1
+dbo|Transactions|<Indextrans, sysname,>|NONCLUSTERED|51.02|6530|1256257|0|0|0|0|1|0|Transaction_Type,NoteSerial1,BranchId,Transaction_ID,Prefix|NULL
+dbo|Transactions|<IndexMaxNote, sysname,>|NONCLUSTERED|50.78|6500|1256257|0|0|0|0|1|0|Transaction_Type,BranchId,Prefix|Transaction_Date,NoteSerial1
+dbo|Transactions|<CashCustomerPhoneIndex, sysname,>|NONCLUSTERED|50.45|6458|1256257|0|0|0|0|1|0|CashCustomerPhone|NULL
+dbo|Transactions|IX_Transactions_TypeDate|NONCLUSTERED|45.64|5842|1256257|0|0|0|0|1|0|Transaction_Type,Transaction_Date|Transaction_ID,StoreID,Emp_ID,NoteId,BranchId
+dbo|Transactions|IX_AI_Transactions_2022228087|NONCLUSTERED|44.68|5719|1256257|0|0|0|0|1|0|Transaction_Date,BranchId|Transaction_ID,MainOperationID
+dbo|Notes|IX_Notes_Header_NoteSerial|NONCLUSTERED|44.03|5636|1339577|0|0|0|0|1|0|NoteSerial|NoteDate,NoteType,branch_no
+dbo|Transactions|IX_Trans_Branch_Type_Date|NONCLUSTERED|42.74|5471|1256257|0|0|0|0|1|0|BranchId,Transaction_Type,Transaction_Date|Transaction_ID,UserID
+dbo|Transactions|IX_Tx_Branch_Type_Date_Desc|NONCLUSTERED|42.41|5428|1256257|0|0|0|0|1|0|BranchId,Transaction_Type,Transaction_Date,Transaction_ID|UserID
+dbo|Transactions|IX_Transactions_Tet_NumPoket_Transaction_Date_9D5672C5|NONCLUSTERED|41.84|5355|1256257|0|0|0|0|1|0|Tet_NumPoket,Transaction_Date|VisaNumber
+dbo|Notes|IX_Notes_NoteDate_NoteType_branch_no|NONCLUSTERED|41.40|5299|1357777|0|0|0|0|1|0|NoteDate,NoteType,branch_no|NoteID
+dbo|Notes|IX_Notes_Close|NONCLUSTERED|41.06|5256|1357777|0|0|0|0|1|0|NoteType,NoteDate,branch_no|NoteID
+dbo|Transactions|IX_Transactions_DoctorsTypeID_Tet_NumPoket_Transaction_Date|NONCLUSTERED|41.04|5253|1256257|0|0|0|0|1|0|DoctorsTypeID,Tet_NumPoket,Transaction_Date|NULL
+dbo|Notes|IX_Notes_NoteType_NoteSerial1_64FBFC4C|NONCLUSTERED|40.53|5188|1357777|0|0|0|0|1|0|NoteType,NoteSerial1|NULL
+dbo|Transactions|<Transaction_SerialIndex, sysname,>|NONCLUSTERED|39.38|5041|1256257|0|0|0|0|1|0|Transaction_Type|Transaction_Serial
+dbo|Transactions|IDX_Transactions_Branch_Date_Visa|NONCLUSTERED|39.16|5012|1256257|0|0|0|0|1|0|BranchId,Transaction_Date,VisaNumber|NULL
+dbo|Notes|IX_Notes_OrderIDD_5EF7041D|NONCLUSTERED|38.51|4929|1357777|0|0|0|0|1|0|OrderIDD|NoteID,Note_Value
+dbo|Notes|<IndexNote, sysname,>|NONCLUSTERED|38.30|4902|1357777|0|0|0|0|1|0|NoteType|NoteDate,NoteSerial
+dbo|Subject_doc|PK__Subject___9DE0A81FA890FB54|CLUSTERED|37.84|4843|278726|0|0|0|0|1|0|operation_no|NULL
+dbo|Transactions|IX_Transactions_Transaction_Date_Tet_NumPoket_C4A7E173|NONCLUSTERED|37.79|4837|1256257|0|0|0|0|1|0|Transaction_Date,Tet_NumPoket|VisaNumber
+dbo|Transactions|IX_Transactions__Transaction_Date_951B1E44|NONCLUSTERED|36.99|4735|1256257|0|0|0|0|1|0|Transaction_Date|VisaNumber,Tet_NumPoket
+dbo|Transactions|IX_POS_Transactions_Search_VisaNumber|NONCLUSTERED|36.86|4718|148515|0|0|0|0|1|0|VisaNumber,Transaction_Date,Transaction_ID|UserID,CashCustomerName,CashCustomerPhone,NoteSerial1,BranchId,PayedValue,NetValue,ManualNO,VAT,Phone2,RechargeValue,IsCashOut,IPN,TrafficViolations,IsCancelled
+dbo|Transactions|IX_Transactions_Transaction_Type_StoreID_Transaction_Date_2EFBB756|NONCLUSTERED|36.65|4691|1256257|0|0|0|0|1|0|Transaction_Type,StoreID,Transaction_Date|Transaction_ID
+dbo|Notes|IX_AI_Notes_1390532379|NONCLUSTERED|34.63|4433|1357777|0|0|0|0|1|0|NoteDate,branch_no|NoteID
+dbo|Transactions|IX_POS_Transactions_Report_ServiceSearch|NONCLUSTERED|34.61|4430|1093449|0|0|0|0|1|0|BranchId,Transaction_Date|ItemIDService,ItemIDService2,ItemIDService3
+dbo|POS_SystemErrorLog|PK_POS_SystemErrorLog|CLUSTERED|33.23|4253|14358|0|0|0|0|1|0|Id|NULL
+dbo|TblGroupItemProductLineUsersset|PK__TblGroup__3214EC2774C86D32|CLUSTERED|32.77|4195|277382|0|0|0|0|1|0|ID|NULL
+dbo|Transactions|<IndexStoreDate, sysname,>|NONCLUSTERED|31.38|4017|1256257|0|0|0|0|1|0|StoreID,Transaction_ID,Transaction_Date|Transaction_Type
+dbo|Transactions|IX_POS_Transactions_KycFollow_VisaNumber|NONCLUSTERED|28.90|3699|1256257|0|0|0|0|1|0|Transaction_Type,VisaNumber|Transaction_ID,Transaction_Date
+dbo|Notes|IX_Notes_NoteDate_NoteType|NONCLUSTERED|28.61|3662|1357777|0|0|0|0|1|0|NoteDate,NoteType|NoteID
+dbo|Transactions|IX_POS_Transactions_Card_VisaNumber|NONCLUSTERED|27.99|3583|1256257|0|0|0|0|1|0|Transaction_Type,POS_VisaNumber_Normalized,IsCancelled,Transaction_ID|NULL
+dbo|TransactionValueAdded|<IndexValueAdded, sysname,>|NONCLUSTERED|27.05|3463|1239387|0|0|0|0|1|0|Transaction_ID,Transaction_Type|NULL
+dbo|Transactions|IndexBillBasedOn, sysname,>|NONCLUSTERED|25.39|3250|1256257|0|0|0|0|1|0|Transaction_Type,BillBasedOn,order_no|Transaction_ID
+dbo|Transactions|IX_POS_KycAvailableCards_Transactions|NONCLUSTERED|24.34|3116|1256257|0|0|0|0|1|0|StoreID,Transaction_ID,Transaction_Type|NULL
+dbo|Notes|IX_Notes__UserID|NONCLUSTERED|23.59|3020|1357777|0|0|0|0|1|0|UserID|NULL
+dbo|Notes|IX_Notes__CusID|NONCLUSTERED|23.16|2964|1357777|0|0|0|0|1|0|CusID|NULL
+dbo|Transactions|IDX_Transactions_VisaNumber|NONCLUSTERED|23.16|2964|1256257|0|0|0|0|1|0|VisaNumber|NULL
+dbo|Notes|IX_Notes__MaintananceID|NONCLUSTERED|23.12|2959|1357777|0|0|0|0|1|0|MaintananceID|NULL
+dbo|Notes|IX_Notes__BankID|NONCLUSTERED|23.10|2957|1357777|0|0|0|0|1|0|BankID|NULL
+SECTION 3 - TARGET TABLES SIZE
+schema_name|table_name|row_count|data_mb|index_mb|reserved_mb
+-----------|----------|---------|-------|--------|-----------
+dbo|DOUBLE_ENTREY_VOUCHERS|14505894|4662.00|8954.05|13667.77
+dbo|Transactions|3768771|3329.63|3642.48|7019.31
+dbo|Transaction_Details|6097242|3745.09|2061.27|5843.34
+dbo|Notes|4073331|3714.48|560.36|4302.13
+dbo|LogFile|2022282|365.84|11.58|815.23
+dbo|POS_SaveAttemptLog|183939|58.84|32.16|92.31
+dbo|TblGroupItemProductLineUsersset|277382|32.59|.00|36.44
+dbo|POS_SystemErrorLog|14358|33.05|.52|33.98
+dbo|POS_SaveAllocationStageLog|82452|22.03|11.25|33.64
+dbo|POS_ImportBatchRow|6424|1.23|1.30|2.76
+dbo|TblErrorLog|414|.23|.15|.58
+dbo|POS_SalesInvoiceEditLog|204|.08|.02|.15
+dbo|marakes_taklefa_temp|356|.07|.00|.14
+dbo|tblBoxesTemp|504|.03|.00|.08
+dbo|POS_ImportBatch|48|.02|.02|.05
+dbo|CriticalRecoveryAudit|18|.01|.02|.03
+dbo|TblNotesTypes|144|.02|.00|.03
+dbo|WebPermissionRoleTemplateItems|17|.01|.02|.03
+dbo|WebPermissionRoleTemplates|4|.01|.02|.03
+dbo|TblTempEmpSalary|277|.02|.00|.03
+dbo|TblTempItemAging|5|.01|.00|.02
+dbo|TblImportShifts|3|.01|.00|.02
+dbo|TblImportShiftsDet|2|.01|.00|.02
+dbo|TblImportShiftsDet2|1|.01|.00|.02
+dbo|tblActivitesType|7|.01|.00|.02
+dbo|NewTempTable|0|.00|.00|.02
+dbo|ConflictTest|6|.01|.00|.02
+dbo|accounts_temp|0|.00|.00|.01
+dbo|TempPrintCustomersDayAccount|0|.00|.00|.01
+dbo|TempPrintStagnantItems|0|.00|.00|.01
+dbo|TempPrintStockMovement|0|.00|.00|.01
+dbo|temp_bill_items|0|.00|.00|.01
+dbo|temp1|0|.00|.00|.01
+dbo|temp2|0|.00|.00|.01
+dbo|TempBoxStockTable|0|.00|.00|.01
+dbo|Template_Details|0|.00|.00|.01
+dbo|Templates|0|.00|.00|.00
+dbo|templates_detailsnew|0|.00|.00|.00
+dbo|templatesnew|0|.00|.00|.00
+dbo|UpdatesoldunitNo|0|.00|.00|.00
+dbo|TblTestCertificate|0|.00|.00|.00
+dbo|TblTestCertificateDet|0|.00|.00|.00
+dbo|MessageTempltes|0|.00|.00|.00
+dbo|subject_templates|0|.00|.00|.00
+dbo|POS_ImportMapping|0|.00|.00|.00
+dbo|POS_ImportValidationResult|0|.00|.00|.00
+dbo|POS_DailyClosingSummary_RebuildLog|0|.00|.00|.00
+dbo|TblContractInstallmentsOld|0|.00|.00|.00
+dbo|TblErrorLog_Archive|0|.00|.00|.00
+dbo|TblGoldDetail|0|.00|.00|.00
+dbo|TblGroupItemProductLine|0|.00|.00|.00
+dbo|TblItemCatalog|0|.00|.00|.00
+dbo|TblItemProductLine|0|.00|.00|.00
+dbo|TblOLDContract|0|.00|.00|.00
+dbo|TblSearchUnitEmpty|0|.00|.00|.00
+dbo|TblTempCustomerAging|0|.00|.00|.00
+dbo|TblTempEmployee|0|.00|.00|.00
+SECTION 4A - TRANSACTIONS YEAR MONTH DISTRIBUTION
+year|month|row_count
+----|-----|---------
+2023|3|1
+2023|6|106
+2023|7|393
+2023|8|448
+2023|9|667
+2023|10|882
+2023|11|1605
+2023|12|2105
+2024|1|4996
+2024|2|10454
+2024|3|10387
+2024|4|9581
+2024|5|15406
+2024|6|17228
+2024|7|26626
+2024|8|37347
+2024|9|41887
+2024|10|42382
+2024|11|38378
+2024|12|39126
+2025|1|33156
+2025|2|42808
+2025|3|39810
+2025|4|40184
+2025|5|50258
+2025|6|39038
+2025|7|51300
+2025|8|69009
+2025|9|78972
+2025|10|74494
+2025|11|81985
+2025|12|84105
+2026|1|71755
+2026|2|57368
+2026|3|53707
+2026|4|50258
+2026|5|38045
+SECTION 4B - TRANSACTION_DETAILS VIA TRANSACTIONS YEAR MONTH DISTRIBUTION
+year|month|detail_row_count
+----|-----|----------------
+2023|3|1
+2023|6|106
+2023|7|393
+2023|8|448
+2023|9|667
+2023|10|886
+2023|11|13265
+2023|12|3519
+2024|1|8987
+2024|2|16452
+2024|3|26822
+2024|4|15045
+2024|5|34790
+2024|6|26568
+2024|7|63312
+2024|8|66594
+2024|9|70098
+2024|10|70920
+2024|11|63966
+2024|12|64246
+2025|1|53362
+2025|2|68280
+2025|3|59876
+2025|4|53502
+2025|5|75521
+2025|6|61244
+2025|7|77788
+2025|8|114241
+2025|9|126773
+2025|10|124294
+2025|11|122255
+2025|12|135749
+2026|1|117455
+2026|2|84500
+2026|3|83848
+2026|4|70244
+2026|5|56397
+SECTION 4C - DOUBLE_ENTREY_VOUCHERS YEAR MONTH DISTRIBUTION
+year|month|row_count
+----|-----|---------
+2003|1|2
+2023|1|4
+2023|2|15
+2023|3|19
+2023|4|201
+2023|5|615
+2023|6|1993
+2023|7|4161
+2023|8|4942
+2023|9|6315
+2023|10|8090
+2023|11|11624
+2023|12|15027
+2024|1|34017
+2024|2|67181
+2024|3|67839
+2024|4|62187
+2024|5|99896
+2024|6|111973
+2024|7|170998
+2024|8|214113
+2024|9|237360
+2024|10|237619
+2024|11|216053
+2024|12|221346
+2025|1|197886
+2025|2|250796
+2025|3|234032
+2025|4|232453
+2025|5|297272
+2025|6|227430
+2025|7|294592
+2025|8|397311
+2025|9|448342
+2025|10|421594
+2025|11|456975
+2025|12|473611
+2026|1|410236
+2026|2|334792
+2026|3|303960
+2026|4|269196
+2026|5|208878
+2026|9|1
+SECTION 5 - LOG DIAGNOSTICS
+database_name|recovery_model_desc|log_reuse_wait_desc|total_log_size_mb|used_log_space_mb|used_log_space_in_percent
+-------------|-------------------|-------------------|-----------------|-----------------|-------------------------
+Cash|SIMPLE|NOTHING|4848.24|12.77|.26
+SECTION 6 - SPACE RESERVED USED UNUSED PER TABLE TOP 100
+schema_name|table_name|reserved_mb|used_mb|unused_mb|data_mb|non_data_used_mb
+-----------|----------|-----------|-------|---------|-------|----------------
+dbo|DOUBLE_ENTREY_VOUCHERS|13667.77|13626.55|41.22|13551.11|75.44
+dbo|Transactions|7019.31|6987.04|32.27|6944.16|42.88
+dbo|Transaction_Details|5843.34|5833.31|10.03|5785.89|47.42
+dbo|Notes|4302.13|4285.99|16.13|4269.84|16.16
+dbo|LogFile|815.23|812.41|2.82|377.32|435.09
+dbo|TblCusCsh|738.82|737.78|1.04|732.97|4.81
+dbo|CriticalRecoverySnapshotRow|729.31|729.02|.30|507.20|221.81
+dbo|TransactionValueAdded|113.08|110.04|3.04|109.56|.48
+dbo|POS_SaveAttemptLog|92.31|91.21|1.10|90.36|.85
+dbo|CriticalRecoveryArchive_DOUBLE_ENTREY_VOUCHERS|61.70|61.64|.06|61.63|.02
+dbo|TBLClosePos|43.59|43.11|.48|42.38|.73
+dbo|Subject_doc|41.39|37.84|3.55|37.31|.52
+dbo|TblGroupItemProductLineUsersset|36.44|32.77|3.66|32.59|.18
+dbo|CriticalRecoveryArchive_Transactions|35.27|35.15|.12|35.13|.02
+dbo|POS_SystemErrorLog|33.98|33.74|.23|33.50|.24
+dbo|POS_SaveAllocationStageLog|33.64|33.42|.22|33.06|.36
+dbo|CriticalRecoveryArchive_Transaction_Details|17.64|17.59|.05|17.57|.02
+dbo|ScreenJuncUser|15.57|13.99|1.58|13.13|.87
+dbo|ACCOUNTS|9.88|8.24|1.64|7.81|.43
+dbo|emp_salary|6.66|6.43|.23|6.27|.16
+dbo|edictionary|6.06|6.05|.01|6.01|.05
+dbo|Transactions_Restore|5.09|4.98|.11|4.88|.11
+dbo|ExpensesDetails|4.37|4.25|.12|3.81|.44
+dbo|TblSettsReqLimKDet|3.90|4.09|-.19|3.68|.41
+dbo|TblSalesPayment|3.34|2.84|.50|2.73|.11
+dbo|Transaction_Details_Restore|2.83|2.78|.05|2.67|.11
+dbo|POS_ImportBatchRow|2.76|2.57|.19|2.48|.09
+dbo|POS_SaveIdempotency|2.73|2.72|.01|2.66|.05
+dbo|sanad_numbering|2.72|2.68|.04|2.25|.43
+dbo|notes_all|2.09|2.28|-.19|1.79|.49
+dbo|TblChangedComponentRegister|1.99|.77|1.23|.50|.27
+dbo|TblPaytAmortizationDet|1.84|1.06|.78|.65|.41
+dbo|SerialCounters|1.71|1.63|.09|1.59|.04
+dbo|TblPripaidExpChiled|1.62|1.57|.05|1.06|.51
+dbo|CriticalRecoveryArchive_Notes|1.52|1.46|.05|1.45|.02
+dbo|SerialCounters_V2|1.38|.88|.50|.72|.16
+dbo|TblEmployee|1.32|.99|.33|.80|.20
+dbo|TblUsersBoxes|1.27|.58|.69|.48|.10
+dbo|TblBanksDepositeDetails|1.12|.76|.36|.68|.08
+dbo|FixedAssetInstallmentsDetails|.96|.90|.06|.87|.03
+dbo|TblPripaidExpensesDet|.93|.92|.01|.55|.37
+dbo|TblBanksDeposite|.91|.86|.05|.82|.04
+dbo|TblEmpMofrd|.72|.52|.20|.48|.04
+dbo|TblChangedComponentRegisterDetails|.67|.48|.20|.41|.07
+dbo|ExpensesSearial|.66|.52|.14|.48|.05
+dbo|ready_to_print|.59|.59|.01|.01|.58
+dbo|TblOptions|.59|.52|.07|.01|.51
+dbo|TblErrorLog|.58|.44|.14|.28|.16
+dbo|TblUsersBranches|.55|.30|.25|.23|.06
+dbo|WebScreenPermissions|.46|.30|.16|.26|.05
+dbo|FixedAssets|.43|.42|.01|.39|.03
+dbo|TblSalaryNotesPayment|.35|.23|.13|.18|.05
+dbo|TblUsersStores|.34|.23|.12|.19|.04
+dbo|POS_SaveTransactionPhase1Rollback|.27|.27|.00|.01|.27
+dbo|TblUserAccount|.27|.16|.12|.13|.03
+dbo|Screens|.26|.20|.05|.16|.04
+dbo|ReciveDetails|.23|.19|.04|.17|.02
+dbo|ToolTip|.22|.17|.05|.01|.16
+dbo|TblProofExpensesDet|.21|.13|.08|.10|.03
+dbo|TblBoxesData|.20|.13|.08|.10|.02
+dbo|TblEmbarkation|.20|.14|.06|.12|.02
+dbo|CriticalRecoveryArchive_TBLClosePos|.20|.20|.00|.19|.01
+dbo|TblItemShowDitailses|.20|.10|.09|.08|.02
+dbo|DOUBLE_ENTREY_VOUCHERS1|.16|.05|.11|.03|.02
+dbo|sysdiagrams|.16|.16|.00|.02|.15
+dbo|POS_SalesInvoiceEditLog|.15|.11|.04|.09|.02
+dbo|marakes_taklefa_temp|.14|.09|.05|.07|.02
+dbo|POS_UserPermissions|.14|.09|.05|.06|.02
+dbo|TblAssestes|.14|.13|.02|.11|.02
+dbo|TblTypeActivity|.14|.10|.04|.09|.02
+dbo|ItemSerialList|.13|.08|.05|.07|.01
+dbo|EmpSalaryComponent|.13|.09|.03|.08|.02
+dbo|TblUsers|.12|.12|.00|.05|.06
+dbo|TblItems|.11|.11|.00|.05|.06
+dbo|TblEmpAdvanceDetails|.10|.05|.05|.03|.02
+dbo|TblStore|.10|.10|.00|.05|.05
+dbo|TblInforVacatiom|.09|.08|.02|.06|.02
+dbo|TblBranchesData|.09|.09|.00|.04|.05
+dbo|TblMyMenue|.09|.05|.04|.03|.02
+dbo|TblSalesPrices|.09|.09|.00|.06|.02
+dbo|WebScreens|.09|.09|.00|.05|.04
+dbo|CriticalRecoveryArchive_TransactionsValues|.08|.02|.05|.01|.02
+dbo|CriticalRecoveryArchive_TransactionsCreteria|.08|.02|.05|.01|.02
+dbo|POS_SqlUpdateHistory|.08|.08|.00|.05|.03
+dbo|tblBoxesTemp|.08|.05|.03|.03|.02
+dbo|TransactionValueAdded_Restore|.08|.02|.05|.02|.01
+dbo|CriticalRecoveryArchive_TblTransctionIDES|.07|.02|.05|.01|.01
+dbo|CriticalRecoveryArchive_TblProductOrderWorker|.07|.02|.05|.01|.01
+dbo|CriticalRecoveryArchive_TblProductOrderLines|.07|.02|.05|.01|.01
+dbo|CriticalRecoveryArchive_TblProductOrderFactoryExpenses|.07|.02|.05|.01|.01
+dbo|CriticalRecoveryArchive_MaintenanceJuncTransaction|.07|.02|.05|.01|.01
+dbo|CriticalRecoveryArchive_POS_DailyClosingSummary|.07|.02|.05|.01|.01
+dbo|TblTransferAssetsDet|.07|.02|.05|.01|.01
+dbo|TblItemsUnits|.06|.06|.00|.05|.02
+dbo|TblCustemers|.05|.05|.00|.02|.03
+dbo|POS_ImportBatch|.05|.05|.00|.02|.02
+dbo|WebModules|.05|.05|.00|.02|.02
+dbo|TblCountriesData|.04|.04|.00|.02|.02
+dbo|TblEmpAdvance|.04|.04|.00|.02|.02
+dbo|BanksData|.03|.03|.00|.01|.02
+SECTION 7 - TOP FRAGMENTED INDEXES (LARGE ONLY)
+schema_name|table_name|index_name|index_type_desc|page_count|avg_fragmentation_in_percent|recommendation
+-----------|----------|----------|---------------|----------|----------------------------|--------------
+dbo|POS_SaveAllocationStageLog|IX_POS_SaveAllocationStageLog_Stage_CreatedAt|NONCLUSTERED INDEX|1000|99.70|REBUILD (recommended in maintenance window)
+dbo|TblCusCsh|PK__TblCusCsh__39DAD50D|CLUSTERED INDEX|28293|85.23|REBUILD (recommended in maintenance window)
+dbo|TblCusCsh|IX_POS_TblCusCsh_KycSearch_PhoneNo2|NONCLUSTERED INDEX|1387|82.84|REBUILD (recommended in maintenance window)
+dbo|TblCusCsh|IX_POS_TblCusCsh_KycSearch_National|NONCLUSTERED INDEX|1549|80.18|REBUILD (recommended in maintenance window)
+dbo|POS_SaveAttemptLog|PK_POS_SaveAttemptLog|CLUSTERED INDEX|7531|60.14|REBUILD (recommended in maintenance window)
+dbo|Transaction_Details|IX_Transaction_Details|CLUSTERED INDEX|479371|54.09|REBUILD (recommended in maintenance window)
+dbo|TblCusCsh|IX_POS_TblCusCsh_CardNo_EasyCashType|NONCLUSTERED INDEX|1337|53.48|REBUILD (recommended in maintenance window)
+dbo|POS_SaveAttemptLog|IX_POS_SaveAttemptLog_DeadlockDiagnostics|NONCLUSTERED INDEX|1717|52.71|REBUILD (recommended in maintenance window)
+dbo|TblCusCsh|IX_POS_TblCusCsh_KycSearch_CardNo|NONCLUSTERED INDEX|1375|46.47|REBUILD (recommended in maintenance window)
+dbo|TblCusCsh|IX_POS_TblCusCsh_KycSearch_CardId|NONCLUSTERED INDEX|1375|46.47|REBUILD (recommended in maintenance window)
+dbo|CriticalRecoverySnapshotRow|IX_CriticalRecoverySnapshotRow_Transaction|NONCLUSTERED INDEX|1269|32.15|REBUILD (recommended in maintenance window)
+dbo|Transactions|IX_POS_Transactions_Card_VisaNumber|NONCLUSTERED INDEX|3556|26.74|REORGANIZE (recommended)
+dbo|TBLClosePos|IX_POS_TBLClosePos_Report_Branch_Order_User|NONCLUSTERED INDEX|1136|24.21|REORGANIZE (recommended)
+dbo|Transactions|IX_POS_Transactions_Search_VisaNumber|NONCLUSTERED INDEX|4640|23.49|REORGANIZE (recommended)
+dbo|Transactions|IX_POS_KycAvailableCards_Transactions|NONCLUSTERED INDEX|3096|16.21|REORGANIZE (recommended)
+dbo|Transaction_Details|IX_POS_TransactionDetails_ItemSerial_Transaction|NONCLUSTERED INDEX|14809|15.96|REORGANIZE (recommended)
+dbo|Transactions|IX_POS_Transactions_Report_ServiceSearch|NONCLUSTERED INDEX|4394|13.06|REORGANIZE (recommended)
+dbo|Notes|IX_POS_Notes_Transaction_ID|NONCLUSTERED INDEX|2531|11.30|REORGANIZE (recommended)
+dbo|Transaction_Details|IX_POS_TransactionDetails_StoreSerials_Report|NONCLUSTERED INDEX|13883|11.14|REORGANIZE (recommended)
+dbo|Notes|IX_Notes_Header_NoteSerial|NONCLUSTERED INDEX|5583|10.64|REORGANIZE (recommended)
+dbo|Transactions|IX_Transactions__UserID|NONCLUSTERED INDEX|2802|10.42|REORGANIZE (recommended)
+dbo|Transactions|<IndexStoreDate, sysname,>|NONCLUSTERED INDEX|3957|9.65|NO ACTION
+dbo|TBLClosePos|IX_POS_TBLClosePos_Report_Order_Branch_User|NONCLUSTERED INDEX|1492|9.25|NO ACTION
+dbo|Transactions|<IndexMaxNote, sysname,>|NONCLUSTERED INDEX|6460|8.65|NO ACTION
+dbo|Transactions|IX_Transactions_Transaction_Date_Tet_NumPoket_C4A7E173|NONCLUSTERED INDEX|4758|8.32|NO ACTION
+dbo|Notes|IX_Notes_NoteType_NoteSerial1_64FBFC4C|NONCLUSTERED INDEX|5152|8.15|NO ACTION
+dbo|Notes|IX_Notes_BoxID|NONCLUSTERED INDEX|2872|8.08|NO ACTION
+dbo|Transactions|IDX_Transactions_Branch_Date_Visa|NONCLUSTERED INDEX|4944|7.95|NO ACTION
+dbo|Transactions|IX_POS_Transactions_CashIn_ManualNO|NONCLUSTERED INDEX|8272|7.89|NO ACTION
+dbo|Transactions|IX_Transactions_Transaction_Type_BranchId_EFF18692|NONCLUSTERED INDEX|7190|7.87|NO ACTION
+dbo|Transactions|IX_Trans_Branch_Type_Date|NONCLUSTERED INDEX|5412|7.78|NO ACTION
+dbo|Notes|IX_AI_Notes_1390532379|NONCLUSTERED INDEX|4366|7.70|NO ACTION
+dbo|Transactions|IX_Transactions_CloseReport|NONCLUSTERED INDEX|6867|7.60|NO ACTION
+dbo|Notes|IX_Notes__UserID|NONCLUSTERED INDEX|2999|7.50|NO ACTION
+dbo|Transactions|IX_Transactions_Transaction_Type_StoreID_Transaction_Date_2EFBB756|NONCLUSTERED INDEX|4659|7.38|NO ACTION
+dbo|Transactions|IX_Tx_Branch_Type_Date_Desc|NONCLUSTERED INDEX|5369|7.30|NO ACTION
+dbo|Notes|IX_Notes_NoteDate_NoteType_branch_no|NONCLUSTERED INDEX|5223|7.26|NO ACTION
+dbo|Notes|IX_Notes_Close|NONCLUSTERED INDEX|5220|7.07|NO ACTION
+dbo|Notes|IX_Notes_NoteDate_NoteType|NONCLUSTERED INDEX|3591|6.93|NO ACTION
+dbo|Notes|IX_Notes_Transaction_ID|NONCLUSTERED INDEX|2833|6.88|NO ACTION
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_Transaction_ID|NONCLUSTERED INDEX|20932|6.77|NO ACTION
+dbo|Transactions|IX_POS_Transactions_Search_NoteSerial1|NONCLUSTERED INDEX|24082|6.66|NO ACTION
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_RecordDate|NONCLUSTERED INDEX|20852|6.53|NO ACTION
+dbo|Transactions|IX_POS_Transactions_KycFollow_VisaNumber|NONCLUSTERED INDEX|3673|6.29|NO ACTION
+dbo|Transactions|<Indextrans, sysname,>|NONCLUSTERED INDEX|6474|6.16|NO ACTION
+dbo|Transactions|IX_Transactions_DoctorsTypeID_Tet_NumPoket_Transaction_Date|NONCLUSTERED INDEX|5224|6.13|NO ACTION
+dbo|Transaction_Details|IX_POS_KycAvailableCards_Details|NONCLUSTERED INDEX|12487|5.98|NO ACTION
+dbo|Transactions|IX_AI_Transactions_2022228087|NONCLUSTERED INDEX|5649|5.84|NO ACTION
+dbo|Transactions|IX_Transactions_Transaction_Date_Transaction_Type_BranchId_C8AA5607|NONCLUSTERED INDEX|10698|5.79|NO ACTION
+dbo|DOUBLE_ENTREY_VOUCHERS|<IndexFast, sysname,>|NONCLUSTERED INDEX|74751|5.77|NO ACTION
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_Notes_ID|NONCLUSTERED INDEX|20855|5.65|NO ACTION
+dbo|Transactions|IX_Transactions_Tet_NumPoket_Transaction_Date_9D5672C5|NONCLUSTERED INDEX|5327|5.59|NO ACTION
+dbo|DOUBLE_ENTREY_VOUCHERS|<IndexRecordDate, sysname,>|NONCLUSTERED INDEX|26365|5.56|NO ACTION
+dbo|Transactions|IX_POS_TodayInvoices_Read|NONCLUSTERED INDEX|27636|5.49|NO ACTION
+dbo|Transactions|<IndexDate, sysname,>|NONCLUSTERED INDEX|6655|5.48|NO ACTION
+dbo|Transaction_Details|IDX_Transaction_Details_Transaction_Price_Item|NONCLUSTERED INDEX|12992|5.46|NO ACTION
+dbo|Notes|IX_Notes_NoteType_branch_no_Prefix|NONCLUSTERED INDEX|6542|5.24|NO ACTION
+dbo|Transactions|IX_Transactions__CusID|NONCLUSTERED INDEX|2725|5.21|NO ACTION
+dbo|Notes|IX_Notes__CusID|NONCLUSTERED INDEX|2943|4.99|NO ACTION
+dbo|Transaction_Details|IX_POS_TransactionDetails_Transaction_ItemSerial|NONCLUSTERED INDEX|9314|4.99|NO ACTION
+dbo|Transactions|IX_Transactions_TypeDate|NONCLUSTERED INDEX|5806|4.98|NO ACTION
+dbo|DOUBLE_ENTREY_VOUCHERS|IDX_DOUBLE_ENTREY_VOUCHERS_Account_Credit_Date|NONCLUSTERED INDEX|56751|4.89|NO ACTION
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS__ReceiptID|NONCLUSTERED INDEX|20152|4.73|NO ACTION
+dbo|Transaction_Details|IX_POS_Transaction_Details_SaveIssue|NONCLUSTERED INDEX|11378|4.58|NO ACTION
+dbo|Transactions|IX_POS_Transactions_OperationalSales_Report|NONCLUSTERED INDEX|22321|4.57|NO ACTION
+dbo|Transaction_Details|IX_TransactionDetails_CloseReport|NONCLUSTERED INDEX|15017|4.49|NO ACTION
+dbo|CriticalRecoverySnapshotRow|IX_CriticalRecoverySnapshotRow_BatchTable|NONCLUSTERED INDEX|1269|4.41|NO ACTION
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DEV_RecordDate|NONCLUSTERED INDEX|77590|4.41|NO ACTION
+dbo|Transactions|IX_Transactions_StoreID_BranchId_Transaction_Type|NONCLUSTERED INDEX|25896|4.37|NO ACTION
+dbo|Transactions|IX_Transactions_StoreID_Transaction_Type|NONCLUSTERED INDEX|25879|4.32|NO ACTION
+dbo|Transactions|IDX_Transactions_VisaNumber|NONCLUSTERED INDEX|2944|4.28|NO ACTION
+dbo|DOUBLE_ENTREY_VOUCHERS|<ccIndex, sysname,>|NONCLUSTERED INDEX|232219|4.27|NO ACTION
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Credit_Or_Debit_notes_all_hideline|NONCLUSTERED INDEX|223999|4.23|NO ACTION
+dbo|Transaction_Details|PK_Transaction_Details|NONCLUSTERED INDEX|9735|4.22|NO ACTION
+dbo|Transactions|IX_Transactions__Transaction_Date_951B1E44|NONCLUSTERED INDEX|4665|4.20|NO ACTION
+dbo|Transactions|IX_Transactions_BranchId_Transaction_Type_0C998935|NONCLUSTERED INDEX|25794|4.11|NO ACTION
+dbo|Transaction_Details|IX_Transaction_Details_Item_ID_Transaction_ID|NONCLUSTERED INDEX|14308|4.11|NO ACTION
+dbo|Transactions|IX_Transactions_StoreID_BranchId_Transaction_Date_Transaction_Type|NONCLUSTERED INDEX|31463|4.03|NO ACTION
+dbo|TblGroupItemProductLineUsersset|PK__TblGroup__3214EC2774C86D32|CLUSTERED INDEX|4172|3.95|NO ACTION
+dbo|Transactions|IX_POS_Transactions_Search_ManualNO|NONCLUSTERED INDEX|23506|3.95|NO ACTION
+dbo|Transactions|IX_Transactions_StoreID_Transaction_Date_Transaction_Type|NONCLUSTERED INDEX|31481|3.95|NO ACTION
+dbo|Transactions|IX_Transactions_BranchId_Transaction_Date_Transaction_Type|NONCLUSTERED INDEX|31522|3.92|NO ACTION
+dbo|DOUBLE_ENTREY_VOUCHERS|IndexCredit_Or_Debit, sysname,>|NONCLUSTERED INDEX|30756|3.69|NO ACTION
+dbo|Transaction_Details|<IndexColor, sysname,>|NONCLUSTERED INDEX|17663|3.66|NO ACTION
+dbo|Transactions|IX_Transactions_CashCustomerName|NONCLUSTERED INDEX|7531|3.65|NO ACTION
+dbo|Transaction_Details|<IndxTT, sysname,>|NONCLUSTERED INDEX|14959|3.62|NO ACTION
+dbo|Transactions|<CashCustomerPhoneIndex, sysname,>|NONCLUSTERED INDEX|6389|3.62|NO ACTION
+dbo|Notes|IX_Notes__MaintananceID|NONCLUSTERED INDEX|2938|3.61|NO ACTION
+dbo|Transaction_Details|IX_Transaction_Details_TransactionID_ID|NONCLUSTERED INDEX|45352|3.59|NO ACTION
+dbo|Transactions|IX_Transactions_StoreID|NONCLUSTERED INDEX|25200|3.54|NO ACTION
+dbo|Transaction_Details|IX_Transaction_Details_Item_ID_UnitId|NONCLUSTERED INDEX|17636|3.51|NO ACTION
+dbo|Transaction_Details|<ColorIDIndex, sysname,>|NONCLUSTERED INDEX|18927|3.50|NO ACTION
+dbo|Notes|IX_Notes_OrderIDD_5EF7041D|NONCLUSTERED INDEX|4893|3.43|NO ACTION
+dbo|DOUBLE_ENTREY_VOUCHERS|<IndexSearchEntry, sysname,>|NONCLUSTERED INDEX|289803|3.32|NO ACTION
+dbo|Transactions|<IndexReturnID, sysname,>|NONCLUSTERED INDEX|9444|3.22|NO ACTION
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Notes_ID|NONCLUSTERED INDEX|21145|3.15|NO ACTION
+dbo|Subject_doc|PK__Subject___9DE0A81FA890FB54|CLUSTERED INDEX|4776|3.10|NO ACTION
+dbo|TblCusCsh|<cardIndex, sysname,>|NONCLUSTERED INDEX|16135|2.88|NO ACTION
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Transaction_ID|NONCLUSTERED INDEX|21636|2.66|NO ACTION
+dbo|POS_SystemErrorLog|PK_POS_SystemErrorLog|CLUSTERED INDEX|4230|2.39|NO ACTION

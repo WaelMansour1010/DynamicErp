@@ -1,0 +1,20 @@
+object_name|snippet
+-----------|-------
+usp_CriticalRecovery_AnalyzeInvoices|     OR (@OperationKind = N''CashInOnly'' AND (' + @isCashOutExpr + N') = 0 AND (' + @isCardExpr + N') = 0 AND (' + @isViolationExpr + N') = 0)
+      )
+  AND (@SelectedTransactionIds = N'''' OR CHARINDEX(N'','' + CONVERT(nvarchar(30),T.Transaction_ID) + 
+usp_CriticalRecovery_ApproveAndExecute| N') = 1)
+        OR (@OperationKind = N''CashInOnly'' AND (' + @isCashOutExpr + N') = 0 AND (' + @isCardExpr + N') = 0 AND (' + @isViolationExpr + N') = 0)
+      )
+  AND (@Selected = N'''' OR CHARINDEX(N'','' + CONVERT(nvarchar(30),T.Transaction_ID) + 
+usp_POS_Accounting_Report|edit
+            FROM dbo.DOUBLE_ENTREY_VOUCHERS d WITH (NOLOCK)
+            WHERE (@branchId = 0 OR d.branch_id = @branchId)
+              AND (@accountCodes IS NULL OR @accountCodes = N'' OR CHARINDEX(N',' + d.Account_Code + N',', N',' + @accountCodes
+usp_POS_Journal_Search|R d.Double_Entry_Vouchers_Description LIKE N'%' + @description + N'%')
+      AND (@accountCode = N'' OR d.Account_Code = @accountCode)
+      AND (@accountCodes IS NULL OR @accountCodes = N'' OR CHARINDEX(N',' + d.Account_Code + N',', N',' + @accountCodes
+usp_POS_SalesInvoices_Search|    FROM dbo.POS_ImportBatchRow wr WITH (NOLOCK)
+                      WHERE wr.TransactionId = t.Transaction_ID
+                        AND wr.Status = N'Imported'
+                        AND CHARINDEX(N'[ExcelImportWarning]', ISNULL(wr.Message, N'')) 

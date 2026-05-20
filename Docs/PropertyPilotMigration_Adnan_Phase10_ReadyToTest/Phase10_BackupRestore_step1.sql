@@ -1,0 +1,4 @@
+﻿BACKUP DATABASE [Alromaizan_PropertyPilot_Adnan_PilotClone_20260520]
+TO DISK = N'F:\Source Code\DynamicErp\Docs\PropertyPilotMigration_Adnan_Phase10_ReadyToTest\Alromaizan_PropertyPilot_Adnan_PilotClone_20260520_to_Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520.bak'
+WITH INIT, COPY_ONLY, COMPRESSION, STATS = 10;
+RESTORE FILELISTONLY FROM DISK = N'F:\Source Code\DynamicErp\Docs\PropertyPilotMigration_Adnan_Phase10_ReadyToTest\Alromaizan_PropertyPilot_Adnan_PilotClone_20260520_to_Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520.bak';

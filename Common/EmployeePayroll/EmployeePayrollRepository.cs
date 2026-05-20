@@ -466,7 +466,7 @@ SELECT TOP (300)
         0
     ) AS Emp_Salary,
     e.Account_code, e.Account_code1,
-    e.Emp_Phone, e.Emp_mobile, e.Emp_Mail, e.EmployeePhotoDataUrl, e.EmpNotes
+    e.Emp_Phone, e.Emp_mobile, e.Emp_Mail, " + EmployeePhotoSelectExpression(connection) + @", e.EmpNotes
 FROM dbo.TblEmployee e WITH (NOLOCK)
 LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = e.BranchId
 LEFT JOIN dbo.TblEmpDepartments d WITH (NOLOCK) ON d.DeparmentID = e.DepartmentID
@@ -520,7 +520,7 @@ SELECT TOP (1)
         0
     ) AS Emp_Salary,
     e.Account_code, e.Account_code1,
-    e.Emp_Phone, e.Emp_mobile, e.Emp_Mail, e.EmployeePhotoDataUrl, e.EmpNotes
+    e.Emp_Phone, e.Emp_mobile, e.Emp_Mail, " + EmployeePhotoSelectExpression(connection) + @", e.EmpNotes
 FROM dbo.TblEmployee e WITH (NOLOCK)
 LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = e.BranchId
 LEFT JOIN dbo.TblEmpDepartments d WITH (NOLOCK) ON d.DeparmentID = e.DepartmentID
@@ -569,25 +569,33 @@ WHERE e.Emp_ID = @Id;";
             using (var connection = OpenConnection())
             using (var transaction = connection.BeginTransaction())
             {
+                var hasPhotoColumn = ColumnExists(connection, transaction, "TblEmployee", "EmployeePhotoDataUrl");
                 var employeeId = request.EmployeeId.GetValueOrDefault();
                 if (employeeId <= 0)
                 {
                     employeeId = NextId(connection, transaction, "TblEmployee", "Emp_ID");
                     var employeeAccounts = EnsureEmployeeAccounts(connection, transaction, request, employeeId);
-                    using (var command = CreateCommand(connection, transaction, @"
+                    var insertSql = hasPhotoColumn
+                        ? @"
 INSERT INTO dbo.TblEmployee
 (Emp_ID, Emp_Code, Emp_Name, BranchId, DepartmentID, JobTypeID, BignDateWork, chkStop, workstate, Emp_Salary, Account_code, Account_code1, Account_Code2, Account_Code3, Account_Code4, Account_Code5, Emp_Phone, Emp_mobile, Emp_Mail, EmployeePhotoDataUrl, EmpNotes)
 VALUES
-(@Id, @Code, @Name, @BranchId, @DepartmentId, @JobTypeId, @HiringDate, @Stopped, @WorkState, @Salary, @AccountCode, @AccruedAccountCode, @VacationProvisionAccountCode, @AdvancePaymentAccountCode, @EndOfServiceAccountCode, @TicketProvisionAccountCode, @Phone, @Mobile, @Email, @PhotoDataUrl, @Notes);"))
+(@Id, @Code, @Name, @BranchId, @DepartmentId, @JobTypeId, @HiringDate, @Stopped, @WorkState, @Salary, @AccountCode, @AccruedAccountCode, @VacationProvisionAccountCode, @AdvancePaymentAccountCode, @EndOfServiceAccountCode, @TicketProvisionAccountCode, @Phone, @Mobile, @Email, @PhotoDataUrl, @Notes);"
+                        : @"
+INSERT INTO dbo.TblEmployee
+(Emp_ID, Emp_Code, Emp_Name, BranchId, DepartmentID, JobTypeID, BignDateWork, chkStop, workstate, Emp_Salary, Account_code, Account_code1, Account_Code2, Account_Code3, Account_Code4, Account_Code5, Emp_Phone, Emp_mobile, Emp_Mail, EmpNotes)
+VALUES
+(@Id, @Code, @Name, @BranchId, @DepartmentId, @JobTypeId, @HiringDate, @Stopped, @WorkState, @Salary, @AccountCode, @AccruedAccountCode, @VacationProvisionAccountCode, @AdvancePaymentAccountCode, @EndOfServiceAccountCode, @TicketProvisionAccountCode, @Phone, @Mobile, @Email, @Notes);";
+                    using (var command = CreateCommand(connection, transaction, insertSql))
                     {
-                        AddEmployeeParameters(command, request, employeeId, employeeAccounts);
+                        AddEmployeeParameters(command, request, employeeId, employeeAccounts, hasPhotoColumn);
                         command.ExecuteNonQuery();
                     }
                 }
                 else
                 {
                     var employeeAccounts = EnsureEmployeeAccounts(connection, transaction, request, employeeId);
-                    using (var command = CreateCommand(connection, transaction, @"
+                    var updateSql = @"
 UPDATE dbo.TblEmployee
 SET Emp_Code = @Code,
     Emp_Name = @Name,
@@ -607,11 +615,12 @@ SET Emp_Code = @Code,
     Emp_Phone = @Phone,
     Emp_mobile = @Mobile,
     Emp_Mail = @Email,
-    EmployeePhotoDataUrl = @PhotoDataUrl,
+    " + (hasPhotoColumn ? "EmployeePhotoDataUrl = @PhotoDataUrl," : string.Empty) + @"
     EmpNotes = @Notes
-WHERE Emp_ID = @Id;"))
+WHERE Emp_ID = @Id;";
+                    using (var command = CreateCommand(connection, transaction, updateSql))
                     {
-                        AddEmployeeParameters(command, request, employeeId, employeeAccounts);
+                        AddEmployeeParameters(command, request, employeeId, employeeAccounts, hasPhotoColumn);
                         if (command.ExecuteNonQuery() == 0)
                         {
                             throw new InvalidOperationException("الموظف المحدد غير موجود ولا يمكن تحديث بيانات التأمين الطبي له.");
@@ -6519,7 +6528,7 @@ SELECT TOP (200)
        mi.MonthlyCost,
        mi.EmployeeMonthlyDeduction,
        mi.CompanyMonthlyCost,
-       e.EmployeePhotoDataUrl
+       " + EmployeePhotoSelectExpression(connection) + @"
 FROM dbo.EmployeeMedicalInsurance mi WITH (NOLOCK)
 INNER JOIN dbo.TblEmployee e WITH (NOLOCK) ON e.Emp_ID = mi.EmpId
 LEFT JOIN dbo.TblBranchesData b WITH (NOLOCK) ON b.branch_id = e.BranchId
@@ -7808,7 +7817,14 @@ ORDER BY Account_Serial;"))
             command.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
         }
 
-        private static void AddEmployeeParameters(SqlCommand command, EmployeeSaveRequest request, int employeeId, EmployeeAccountCodes employeeAccounts)
+        private static string EmployeePhotoSelectExpression(SqlConnection connection)
+        {
+            return ColumnExists(connection, "TblEmployee", "EmployeePhotoDataUrl")
+                ? "e.EmployeePhotoDataUrl"
+                : "CAST(NULL AS NVARCHAR(MAX)) AS EmployeePhotoDataUrl";
+        }
+
+        private static void AddEmployeeParameters(SqlCommand command, EmployeeSaveRequest request, int employeeId, EmployeeAccountCodes employeeAccounts, bool includePhotoColumn)
         {
             command.Parameters.Add("@Id", SqlDbType.Int).Value = employeeId;
             command.Parameters.Add("@Code", SqlDbType.NVarChar, 50).Value = (object)(request.EmployeeCode ?? string.Empty) ?? DBNull.Value;
@@ -7829,8 +7845,11 @@ ORDER BY Account_Serial;"))
             AddNullable(command, "@Phone", SqlDbType.NVarChar, request.Phone);
             AddNullable(command, "@Mobile", SqlDbType.NVarChar, request.Mobile);
             AddNullable(command, "@Email", SqlDbType.NVarChar, request.Email);
-            var photo = NormalizeEmployeePhotoDataUrl(request.PhotoDataUrl);
-            command.Parameters.Add("@PhotoDataUrl", SqlDbType.NVarChar, -1).Value = string.IsNullOrWhiteSpace(photo) ? (object)DBNull.Value : photo;
+            if (includePhotoColumn)
+            {
+                var photo = NormalizeEmployeePhotoDataUrl(request.PhotoDataUrl);
+                command.Parameters.Add("@PhotoDataUrl", SqlDbType.NVarChar, -1).Value = string.IsNullOrWhiteSpace(photo) ? (object)DBNull.Value : photo;
+            }
             AddNullable(command, "@Notes", SqlDbType.NVarChar, request.Notes);
         }
 

@@ -1,0 +1,91 @@
+﻿{
+    "Database":  "Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520",
+    "LoginStatus":  302,
+    "LoginRedirect":  "/PointOfSale/PosLogin",
+    "PageChecks":  [
+                       {
+                           "Name":  "Properties",
+                           "Url":  "http://localhost:63735/Property?searchWord=ADNAN-P-",
+                           "Status":  200,
+                           "ContainsExpected":  true,
+                           "Length":  326670,
+                           "Error":  ""
+                       },
+                       {
+                           "Name":  "Units",
+                           "Url":  "http://localhost:63735/PropertyUnit?searchWord=ADNAN",
+                           "Status":  200,
+                           "ContainsExpected":  true,
+                           "Length":  312123,
+                           "Error":  ""
+                       },
+                       {
+                           "Name":  "ContractsList",
+                           "Url":  "http://localhost:63735/PropertyContract?searchWord=ADNAN-C-1096",
+                           "Status":  200,
+                           "ContainsExpected":  true,
+                           "Length":  320545,
+                           "Error":  ""
+                       },
+                       {
+                           "Name":  "Contract1096",
+                           "Url":  "http://localhost:63735/PropertyContract/AddEdit/1227",
+                           "Status":  200,
+                           "ContainsExpected":  true,
+                           "Length":  541863,
+                           "Error":  ""
+                       },
+                       {
+                           "Name":  "ContractAdvance2131",
+                           "Url":  "http://localhost:63735/PropertyContract/AddEdit/1478",
+                           "Status":  200,
+                           "ContainsExpected":  true,
+                           "Length":  474397,
+                           "Error":  ""
+                       },
+                       {
+                           "Name":  "ContractLarge1748",
+                           "Url":  "http://localhost:63735/PropertyContract/AddEdit/1229",
+                           "Status":  200,
+                           "ContainsExpected":  true,
+                           "Length":  583781,
+                           "Error":  ""
+                       },
+                       {
+                           "Name":  "ReceiptScreenReadOnly",
+                           "Url":  "http://localhost:63735/CashReceiptVoucher/AddEdit?cid=1227",
+                           "Status":  200,
+                           "ContainsExpected":  true,
+                           "Length":  484440,
+                           "Error":  ""
+                       }
+                   ],
+    "ContractBatchesApiStatus":  200,
+    "ContractBatchesReturned":  10,
+    "FirstBatch":  {
+                       "PropertyContractBatchId":  6119,
+                       "BatchNo":  1,
+                       "BatchTotal":  41400.0000,
+                       "BatchDate":  "\/Date(1656626400000)\/",
+                       "IsDelivered":  false,
+                       "PropertyArName":  "عمارة النخيل",
+                       "PropertyUnitArName":  "2",
+                       "BatchRentValue":  36000.0000,
+                       "BatchRentValueTaxes":  null,
+                       "BatchElectricityValue":  0.0000,
+                       "BatchElectricityValueTaxes":  null,
+                       "BatchWaterValue":  0.0000,
+                       "BatchWaterValueTaxes":  null,
+                       "BatchCommissionValue":  0.0000,
+                       "BatchCommissionValueTaxes":  null,
+                       "BatchGasValue":  null,
+                       "BatchGasValueTaxes":  null,
+                       "BatchInsuranceValue":  0.0000,
+                       "BatchInsuranceValueTaxes":  null,
+                       "BatchServicesValue":  0.0000,
+                       "BatchServicesValueTaxes":  null,
+                       "Paid":  0,
+                       "Remain":  41400.0000,
+                       "TotalPaid":  0
+                   }
+}

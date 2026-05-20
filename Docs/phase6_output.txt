@@ -1,0 +1,145 @@
+Changed database context to 'Cash'.
+schema_name|table_name|row_count|data_mb|index_mb|total_used_mb|create_date|modify_date|fk_as_child_count|fk_as_parent_count|dependent_procedure_count|dependent_view_count|dependent_function_count|dependent_trigger_count
+-----------|----------|---------|-------|--------|-------------|-----------|-----------|-----------------|------------------|-------------------------|--------------------|------------------------|-----------------------
+dbo|LogFile|2022282|365.84|11.58|812.41|2012-10-13 14:30:07.380|2026-05-04 13:44:02.390|1|0|0|0|0|0
+dbo|POS_SaveAttemptLog|183957|58.84|32.16|91.21|2026-05-08 07:49:29.343|2026-05-14 14:13:39.513|0|0|1|0|0|0
+dbo|POS_SystemErrorLog|14358|33.05|.52|33.74|2026-05-04 21:56:47.077|2026-05-04 21:56:47.093|0|0|0|0|0|0
+dbo|POS_SaveAllocationStageLog|82470|22.04|11.27|33.45|2026-05-15 23:46:40.550|2026-05-15 23:46:40.567|0|0|1|0|0|0
+dbo|TblGroupItemProductLineUsersset|277382|32.59|.00|32.77|2019-11-09 00:16:47.973|2025-09-02 11:16:38.153|0|0|0|0|0|0
+dbo|POS_ImportBatchRow|6424|1.23|1.30|2.57|2026-05-10 16:57:58.413|2026-05-13 13:11:34.970|1|1|3|0|0|0
+dbo|TblErrorLog|414|.23|.15|.44|2026-02-03 19:33:55.563|2026-02-03 19:34:03.683|0|0|3|2|0|0
+dbo|POS_SalesInvoiceEditLog|204|.08|.02|.11|2026-05-13 13:33:11.700|2026-05-13 13:33:11.710|0|0|0|0|0|0
+dbo|marakes_taklefa_temp|356|.07|.00|.09|2011-09-20 11:14:19.197|2025-12-14 16:48:50.050|0|0|0|2|0|0
+dbo|POS_ImportBatch|48|.02|.02|.05|2026-05-10 16:57:58.410|2026-05-13 15:46:54.760|0|2|0|0|0|0
+dbo|tblBoxesTemp|504|.03|.00|.05|2021-05-30 05:13:16.593|2025-07-17 21:48:59.870|0|0|0|0|0|0
+dbo|CriticalRecoveryAudit|18|.01|.02|.03|2026-05-18 12:48:18.583|2026-05-18 12:48:18.590|0|0|3|0|0|0
+dbo|TblNotesTypes|144|.02|.00|.03|2006-11-30 02:59:48.187|2025-07-17 21:49:28.863|0|0|0|8|5|0
+dbo|TblTempEmpSalary|277|.02|.00|.03|2016-07-31 16:29:16.427|2025-07-17 21:49:00.183|0|0|0|0|0|0
+dbo|WebPermissionRoleTemplateItems|17|.01|.02|.03|2026-05-18 12:44:19.167|2026-05-18 12:44:19.180|0|0|1|0|0|0
+dbo|WebPermissionRoleTemplates|4|.01|.02|.03|2026-05-18 12:44:19.163|2026-05-18 12:44:19.180|0|0|1|0|0|0
+dbo|ConflictTest|6|.01|.00|.02|2009-02-17 15:47:01.810|2025-07-17 21:49:28.010|0|0|0|0|0|0
+dbo|NewTempTable|0|.00|.00|.02|2007-01-28 19:50:42.607|2007-01-28 19:50:42.607|0|0|0|0|0|0
+dbo|tblActivitesType|7|.01|.00|.02|2011-12-07 15:49:40.933|2025-07-17 21:50:35.857|0|0|2|0|0|0
+dbo|TblImportShifts|3|.01|.00|.02|2019-07-11 11:10:09.760|2025-07-17 21:49:28.363|0|0|0|0|0|0
+dbo|TblImportShiftsDet|2|.01|.00|.02|2019-07-11 11:10:09.897|2025-07-17 21:49:28.563|0|0|0|0|0|0
+dbo|TblImportShiftsDet2|1|.01|.00|.02|2019-07-11 11:10:48.337|2025-07-17 21:48:59.770|0|0|0|0|0|0
+dbo|TblTempItemAging|5|.01|.00|.02|2013-12-08 12:36:35.297|2025-07-17 21:49:28.600|0|0|0|0|0|0
+dbo|accounts_temp|0|.00|.00|.01|2011-01-30 07:20:05.783|2011-01-30 07:20:05.783|0|0|0|0|0|0
+dbo|temp_bill_items|0|.00|.00|.01|2011-06-12 13:07:56.667|2011-06-12 13:07:56.667|0|0|0|1|0|0
+dbo|temp1|0|.00|.00|.01|2011-03-01 10:05:14.603|2011-03-01 10:05:14.603|0|0|0|1|0|0
+dbo|temp2|0|.00|.00|.01|2011-03-17 12:36:19.097|2011-03-17 12:36:19.097|0|0|0|0|0|0
+dbo|TempBoxStockTable|0|.00|.00|.01|2007-02-08 06:00:29.497|2025-07-17 21:49:44.893|0|0|0|1|0|0
+dbo|Template_Details|0|.00|.00|.01|2006-11-28 16:09:44.903|2025-09-02 11:26:37.997|2|0|0|1|1|0
+dbo|TempPrintCustomersDayAccount|0|.00|.00|.01|2008-06-29 21:27:19.810|2008-06-29 21:27:19.810|0|0|0|0|0|0
+dbo|TempPrintStagnantItems|0|.00|.00|.01|2007-05-21 22:30:31.737|2007-05-21 22:30:31.737|0|0|0|0|0|0
+dbo|TempPrintStockMovement|0|.00|.00|.01|2007-05-25 01:40:53.873|2007-05-25 01:40:53.873|0|0|0|1|0|0
+dbo|MessageTempltes|0|.00|.00|.00|2013-12-08 12:36:40.107|2025-07-17 21:50:57.913|0|0|0|0|0|0
+dbo|POS_DailyClosingSummary_RebuildLog|0|.00|.00|.00|2026-05-15 23:44:07.210|2026-05-15 23:44:07.210|0|0|1|0|0|0
+dbo|POS_ImportMapping|0|.00|.00|.00|2026-05-10 16:57:58.427|2026-05-10 16:57:58.447|0|0|0|0|0|0
+dbo|POS_ImportValidationResult|0|.00|.00|.00|2026-05-10 16:57:58.420|2026-05-10 16:57:58.420|2|0|0|0|0|0
+dbo|subject_templates|0|.00|.00|.00|2011-01-25 15:21:54.547|2025-07-17 21:49:02.990|0|0|0|0|0|0
+dbo|TBLClosePosTmp|0|.00|.00|.00|2024-05-04 19:21:38.850|2025-07-17 21:48:59.783|0|0|0|0|0|0
+dbo|TblContractInstallmentsOld|0|.00|.00|.00|2019-07-11 11:15:19.093|2025-07-17 21:49:27.227|0|0|0|0|0|0
+dbo|TblErrorLog_Archive|0|.00|.00|.00|2026-02-03 19:33:55.623|2026-02-03 19:33:55.630|0|0|1|0|0|0
+dbo|TblFixedAssestTmpValue|0|.00|.00|.00|2023-02-22 13:44:36.193|2025-07-17 21:49:00.013|0|0|0|0|0|0
+dbo|TblGoldDetail|0|.00|.00|.00|2014-11-16 14:02:53.307|2025-07-17 21:49:26.953|0|0|0|0|0|0
+dbo|TblGroupItemProductLine|0|.00|.00|.00|2019-07-11 11:17:14.223|2025-07-17 21:49:00.323|0|0|0|0|0|0
+dbo|TblItemCatalog|0|.00|.00|.00|2015-12-30 01:11:59.130|2025-07-17 21:50:57.977|0|0|0|0|0|0
+dbo|TblItemProductLine|0|.00|.00|.00|2019-07-11 11:16:32.110|2025-07-17 21:48:59.440|0|0|0|0|0|0
+dbo|TblOLDContract|0|.00|.00|.00|2014-02-06 12:01:31.940|2025-07-17 21:49:44.803|0|0|0|0|0|0
+dbo|TblSearchUnitEmpty|0|.00|.00|.00|2015-12-30 01:12:55.940|2025-07-17 21:49:03.063|0|0|0|0|0|0
+dbo|TblTempCustomerAging|0|.00|.00|.00|2012-06-12 00:13:48.213|2025-07-17 21:49:28.883|0|0|0|0|0|0
+dbo|TblTempEmployee|0|.00|.00|.00|2019-07-11 11:13:33.767|2025-07-17 21:49:02.953|0|0|0|0|0|0
+dbo|TblTestCertificate|0|.00|.00|.00|2019-07-11 11:12:50.537|2025-07-17 21:50:35.513|0|0|0|0|0|0
+dbo|TblTestCertificateDet|0|.00|.00|.00|2019-07-11 11:12:51.190|2025-07-17 21:50:35.553|0|0|0|0|0|0
+dbo|Templates|0|.00|.00|.00|2011-01-25 14:49:13.217|2025-07-17 21:49:02.870|0|1|0|1|1|0
+dbo|templates_detailsnew|0|.00|.00|.00|2011-01-25 14:41:15.547|2025-07-17 21:49:00.720|0|0|0|0|0|0
+dbo|templatesnew|0|.00|.00|.00|2011-01-25 14:54:29.630|2025-07-17 21:49:02.913|0|0|0|0|0|0
+dbo|tmpAccount|0|.00|.00|.00|2020-09-29 15:33:45.013|2025-07-17 21:49:03.073|0|0|0|0|0|0
+dbo|TmpItemsQty|0|.00|.00|.00|2019-07-11 11:17:12.310|2025-07-17 21:49:00.180|0|0|0|0|0|0
+dbo|UpdatesoldunitNo|0|.00|.00|.00|2019-07-11 11:16:00.443|2025-07-17 21:49:45.387|0|0|0|0|0|0
+table_schema|table_name|referencing_object_type|referencing_schema|referencing_object_name
+------------|----------|-----------------------|------------------|-----------------------
+dbo|accounts_temp|NULL|NULL|NULL
+dbo|ConflictTest|NULL|NULL|NULL
+dbo|CriticalRecoveryAudit|SQL_STORED_PROCEDURE|dbo|usp_CriticalRecovery_ApproveAndExecute
+dbo|CriticalRecoveryAudit|SQL_STORED_PROCEDURE|dbo|usp_CriticalRecovery_InitiateRequest
+dbo|CriticalRecoveryAudit|SQL_STORED_PROCEDURE|dbo|usp_CriticalRecovery_Restore
+dbo|LogFile|NULL|NULL|NULL
+dbo|marakes_taklefa_temp|VIEW|dbo|Cost_center_reports
+dbo|marakes_taklefa_temp|VIEW|dbo|GL_CC
+dbo|MessageTempltes|NULL|NULL|NULL
+dbo|NewTempTable|NULL|NULL|NULL
+dbo|POS_DailyClosingSummary_RebuildLog|SQL_STORED_PROCEDURE|dbo|usp_POS_RebuildDailyClosingSummary
+dbo|POS_ImportBatch|NULL|NULL|NULL
+dbo|POS_ImportBatchRow|SQL_STORED_PROCEDURE|dbo|usp_CriticalRecovery_AnalyzeInvoices
+dbo|POS_ImportBatchRow|SQL_STORED_PROCEDURE|dbo|usp_CriticalRecovery_ApproveAndExecute
+dbo|POS_ImportBatchRow|SQL_STORED_PROCEDURE|dbo|usp_POS_SalesInvoices_Search
+dbo|POS_ImportBatchRow|USER_TABLE|dbo|POS_ImportBatchRow
+dbo|POS_ImportMapping|NULL|NULL|NULL
+dbo|POS_ImportValidationResult|NULL|NULL|NULL
+dbo|POS_SalesInvoiceEditLog|NULL|NULL|NULL
+dbo|POS_SaveAllocationStageLog|SQL_STORED_PROCEDURE|dbo|usp_POS_SaveTransaction
+dbo|POS_SaveAttemptLog|SQL_STORED_PROCEDURE|dbo|usp_POS_SaveAttemptDeadlockDiagnostics
+dbo|POS_SystemErrorLog|NULL|NULL|NULL
+dbo|subject_templates|NULL|NULL|NULL
+dbo|tblActivitesType|SQL_STORED_PROCEDURE|dbo|RPT_CloseReportSubDetails
+dbo|tblActivitesType|SQL_STORED_PROCEDURE|dbo|RPT_SalesSummary_Main
+dbo|tblBoxesTemp|NULL|NULL|NULL
+dbo|TBLClosePosTmp|NULL|NULL|NULL
+dbo|TblContractInstallmentsOld|NULL|NULL|NULL
+dbo|TblErrorLog|SQL_STORED_PROCEDURE|dbo|sp_ErrorLog_Archive
+dbo|TblErrorLog|SQL_STORED_PROCEDURE|dbo|sp_ErrorLog_DailySummary
+dbo|TblErrorLog|SQL_STORED_PROCEDURE|dbo|sp_ErrorLog_TopErrors
+dbo|TblErrorLog|VIEW|dbo|vw_ErrorLog_ByUser
+dbo|TblErrorLog|VIEW|dbo|vw_ErrorLog_Recent
+dbo|TblErrorLog_Archive|SQL_STORED_PROCEDURE|dbo|sp_ErrorLog_Archive
+dbo|TblFixedAssestTmpValue|NULL|NULL|NULL
+dbo|TblGoldDetail|NULL|NULL|NULL
+dbo|TblGroupItemProductLine|NULL|NULL|NULL
+dbo|TblGroupItemProductLineUsersset|NULL|NULL|NULL
+dbo|TblImportShifts|NULL|NULL|NULL
+dbo|TblImportShiftsDet|NULL|NULL|NULL
+dbo|TblImportShiftsDet2|NULL|NULL|NULL
+dbo|TblItemCatalog|NULL|NULL|NULL
+dbo|TblItemProductLine|NULL|NULL|NULL
+dbo|TblNotesTypes|SQL_TABLE_VALUED_FUNCTION|dbo|CompanyCreditValues
+dbo|TblNotesTypes|SQL_TABLE_VALUED_FUNCTION|dbo|CompanyCreditValues
+dbo|TblNotesTypes|SQL_TABLE_VALUED_FUNCTION|dbo|CompanyDebitValues
+dbo|TblNotesTypes|SQL_TABLE_VALUED_FUNCTION|dbo|QryBoxBalance
+dbo|TblNotesTypes|SQL_TABLE_VALUED_FUNCTION|dbo|QryBoxBalance11
+dbo|TblNotesTypes|SQL_TABLE_VALUED_FUNCTION|dbo|QryCustomerBalance
+dbo|TblNotesTypes|VIEW|dbo|GL_CC
+dbo|TblNotesTypes|VIEW|dbo|PaymentTime
+dbo|TblNotesTypes|VIEW|dbo|QryAllowsDiscounts
+dbo|TblNotesTypes|VIEW|dbo|QryBoxReports
+dbo|TblNotesTypes|VIEW|dbo|QryCheckRelease
+dbo|TblNotesTypes|VIEW|dbo|QryDevReport
+dbo|TblNotesTypes|VIEW|dbo|RptLedger_Sub
+dbo|TblNotesTypes|VIEW|dbo|RptLedger_Sub2
+dbo|TblOLDContract|NULL|NULL|NULL
+dbo|TblSearchUnitEmpty|NULL|NULL|NULL
+dbo|TblTempCustomerAging|NULL|NULL|NULL
+dbo|TblTempEmployee|NULL|NULL|NULL
+dbo|TblTempEmpSalary|NULL|NULL|NULL
+dbo|TblTempItemAging|NULL|NULL|NULL
+dbo|TblTestCertificate|NULL|NULL|NULL
+dbo|TblTestCertificateDet|NULL|NULL|NULL
+dbo|temp_bill_items|VIEW|dbo|QRY_temp_bill_items
+dbo|temp1|VIEW|dbo|TEMP1 QRY
+dbo|temp2|NULL|NULL|NULL
+dbo|TempBoxStockTable|VIEW|dbo|QryBoxBalanceNew
+dbo|Template_Details|SQL_TABLE_VALUED_FUNCTION|dbo|TemplateSearch
+dbo|Template_Details|VIEW|dbo|QryTemplate
+dbo|Templates|SQL_TABLE_VALUED_FUNCTION|dbo|TemplateSearch
+dbo|Templates|VIEW|dbo|QryTemplate
+dbo|templates_detailsnew|NULL|NULL|NULL
+dbo|templatesnew|NULL|NULL|NULL
+dbo|TempPrintCustomersDayAccount|NULL|NULL|NULL
+dbo|TempPrintStagnantItems|NULL|NULL|NULL
+dbo|TempPrintStockMovement|VIEW|dbo|RptTempPrintStockMovementTree
+dbo|tmpAccount|NULL|NULL|NULL
+dbo|TmpItemsQty|NULL|NULL|NULL
+dbo|UpdatesoldunitNo|NULL|NULL|NULL
+dbo|WebPermissionRoleTemplateItems|SQL_STORED_PROCEDURE|dbo|usp_WebScreenPermissions_SeedCatalog
+dbo|WebPermissionRoleTemplates|SQL_STORED_PROCEDURE|dbo|usp_WebScreenPermissions_SeedCatalog

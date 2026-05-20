@@ -71,7 +71,7 @@ namespace MyERP.Areas.MainErp.Controllers
             return View(_repository.GetDetails(id));
         }
 
-        public ActionResult Create(int projectId)
+        public ActionResult Create(int? projectId = null)
         {
             ViewBag.ActiveScreen = "project-extracts";
             SetPermissions();
@@ -81,13 +81,14 @@ namespace MyERP.Areas.MainErp.Controllers
             }
 
             var model = _projectRepository.BuildExtractCreateModel(projectId);
-            if (model == null)
-            {
-                TempData["Projects.Success"] = "المشروع المطلوب غير موجود.";
-                return RedirectToAction("Index", "Projects", new { area = "MainErp" });
-            }
-
             return View(model);
+        }
+
+        [ValidateInput(false)]
+        public ActionResult ExtractItemsGridPartial(int projectId)
+        {
+            var model = _projectRepository.BuildExtractCreateModel(projectId);
+            return PartialView("_ExtractItemsGrid", model);
         }
 
         [HttpPost]
@@ -196,6 +197,34 @@ namespace MyERP.Areas.MainErp.Controllers
             }
 
             return false;
+        }
+        [HttpPost]
+        public ActionResult CreateJson(ProjectExtractCreateViewModel model)
+        {
+            try
+            {
+                if (!CanAddProjectExtracts())
+                {
+                    return Json(new { success = false, message = "ليست لديك صلاحية إضافة مستخلصات المشاريع." });
+                }
+
+                if (!model.ProjectId.HasValue || model.ProjectId.Value <= 0)
+                {
+                    return Json(new { success = false, message = "يرجى اختيار المشروع." });
+                }
+
+                if (!model.BillDate.HasValue)
+                {
+                    return Json(new { success = false, message = "يرجى إدخال تاريخ المستخلص." });
+                }
+
+                var id = _projectRepository.CreateExtract(model, MainErpUserContext.UserId);
+                return Json(new { success = true, id });
+            }
+            catch (System.Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
     }
 }

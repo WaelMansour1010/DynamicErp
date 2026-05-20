@@ -1,0 +1,124 @@
+﻿## Adnan ResultSet 0
+
+DbName TableName                        RowsCount
+------ ---------                        ---------
+Adnan  AqarRquestAndQutaion                     0
+Adnan  ClassCustomers                           0
+Adnan  CustomersFollow                          0
+Adnan  CustomersFollowDetails                   0
+Adnan  GroupsCustomers                          0
+Adnan  TblAqar                                 28
+Adnan  TblAqarCommissions                    9869
+Adnan  TblAqarDetai                           367
+Adnan  TblAqarDetai2                            0
+Adnan  TblAqarDetai3                            0
+Adnan  TblAqrCompenet                          10
+Adnan  TblAqrCompenetDet                       14
+Adnan  TblAqrEarnest                            0
+Adnan  TblAqrOwin                               0
+Adnan  TblCustemers                           817
+Adnan  TblCustomerAlarm                         2
+Adnan  TblCustomerComplaint                     0
+Adnan  TblCustomerContract                      0
+Adnan  TblCustomerContractDetails               0
+Adnan  TblCustomerContractDetailsGroups         0
+Adnan  tblCustomerFingers                       0
+Adnan  TblCustomerPoints                        0
+Adnan  TblCustomerSizes                         0
+Adnan  TblCustomersLocations                    0
+Adnan  TblCustomerType                          2
+Adnan  TblNotesOwnerPayment                     0
+Adnan  TblNotesOwnerPayment202                  0
+Adnan  TblOtheExpensAqar                        0
+Adnan  TblOtheExpensAqarDet                     0
+Adnan  TblOwnerPayment                          0
+Adnan  TblOwnerPayment202                       0
+Adnan  TblOwnersFarm                            0
+Adnan  TblTempCustomerAging                     0
+Adnan  TempPrintCustomersDayAccount             0
+
+
+
+## RSMDB ResultSet 0
+
+DbName TableName                        RowsCount
+------ ---------                        ---------
+RSMDB  AqarRquestAndQutaion                     0
+RSMDB  ClassCustomers                           0
+RSMDB  CustomersFollow                          0
+RSMDB  CustomersFollowDetails                   0
+RSMDB  GroupsCustomers                          0
+RSMDB  TblAqar                                 16
+RSMDB  TblAqarCommissions                   10530
+RSMDB  TblAqarDetai                           629
+RSMDB  TblAqarDetai2                            0
+RSMDB  TblAqarDetai3                            0
+RSMDB  TblAqrCompenet                           1
+RSMDB  TblAqrCompenetDet                        1
+RSMDB  TblAqrEarnest                           84
+RSMDB  TblAqrOwin                               4
+RSMDB  TblCustemers                           969
+RSMDB  TblCustomerAlarm                         0
+RSMDB  TblCustomerComplaint                     0
+RSMDB  TblCustomerContract                      0
+RSMDB  TblCustomerContractDetails               0
+RSMDB  TblCustomerContractDetailsGroups         0
+RSMDB  tblCustomerFingers                       0
+RSMDB  TblCustomerPoints                        0
+RSMDB  TblCustomerSizes                         0
+RSMDB  TblCustomersLocations                    0
+RSMDB  TblCustomerType                          2
+RSMDB  TblNotesOwnerPayment                     0
+RSMDB  TblNotesOwnerPayment202                  0
+RSMDB  TblOtheExpensAqar                        0
+RSMDB  TblOtheExpensAqarDet                     0
+RSMDB  TblOwnerPayment                          0
+RSMDB  TblOwnerPayment202                       0
+RSMDB  TblOwnersFarm                            0
+RSMDB  TblTempCustomerAging                     0
+RSMDB  TempPrintCustomersDayAccount             0
+
+
+
+## Alromaizan ResultSet 0
+
+DbName     TableName                     RowsCount
+------     ---------                     ---------
+Alromaizan CRM_CustomerEvaluation                1
+Alromaizan Customer                              2
+Alromaizan CustomerAddress                       0
+Alromaizan CustomerCoupon                        0
+Alromaizan CustomerMessage                       0
+Alromaizan CustomerNotification                  0
+Alromaizan CustomerOpenningBalance               0
+Alromaizan CustomerRep                           1
+Alromaizan CustomersGroup                        1
+Alromaizan CustomerSourceType                    2
+Alromaizan CustomerType                          4
+Alromaizan PosCustomer                           1
+Alromaizan PosReceiptVoucherCustomerType         0
+Alromaizan PropertyOwner                         1
+
+
+
+## MyErp ResultSet 0
+
+DbName TableName                     RowsCount
+------ ---------                     ---------
+MyErp  CRM_CustomerEvaluation                6
+MyErp  Customer                              1
+MyErp  CustomerAddress                       0
+MyErp  CustomerCoupon                        0
+MyErp  CustomerMessage                       0
+MyErp  CustomerNotification                  0
+MyErp  CustomerOpenningBalance               0
+MyErp  CustomerRep                           0
+MyErp  CustomersGroup                        1
+MyErp  CustomerSourceType                    2
+MyErp  CustomerType                          4
+MyErp  PosCustomer                           0
+MyErp  PosReceiptVoucherCustomerType         0
+MyErp  PropertyOwner                        41
+
+
+

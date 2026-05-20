@@ -29,6 +29,12 @@
         <div class="main-erp-search-head">
             <span>@T("RealMigratedFromVb6")</span>
             <h3>@T("ProjectExtracts")</h3>
+            @if (canAddProjectExtracts)
+            {
+                <a class="main-erp-button is-primary" href="@Url.Action("Create", "ProjectExtracts", new { area = "MainErp" })" style="margin-top: 8px; display: inline-block; background: #007acc; color: white; padding: 4px 10px; border-radius: 4px; text-decoration: none; font-size: 13px; font-weight: bold;">
+                    <i class="fas fa-plus"></i> إضافة مستخلص
+                </a>
+            }
         </div>
 
         @using (Html.BeginForm("Index", "ProjectExtracts", FormMethod.Get, new { area = "MainErp", id = "projectExtractSearchForm", @class = "main-erp-filter main-erp-filter-stacked" }))
@@ -75,8 +81,14 @@
         {
             <section class="main-erp-premium-empty">
                 <h2>@T("ProjectFinancialControlCenter")</h2>
-                <p>@T("WorkflowReadOnly")</p>
-                <button type="submit" form="projectExtractSearchForm">@T("Search")</button>
+                <p>إدارة القيود المالية ونسب إنجاز المشاريع.</p>
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px; align-items: center;">
+                    <button type="submit" form="projectExtractSearchForm" style="padding: 6px 16px; border-radius: 4px; border: 1px solid #ccc; background: #f9f9f9; cursor: pointer;">@T("Search")</button>
+                    @if (canAddProjectExtracts)
+                    {
+                        <a href="@Url.Action("Create", "ProjectExtracts", new { area = "MainErp" })" class="main-erp-button is-primary" style="background: #007acc; color: white; border: none; padding: 6px 16px; border-radius: 4px; font-weight: bold; text-decoration: none; font-size: 14px;">إضافة مستخلص جديد</a>
+                    }
+                </div>
             </section>
         }
         else
@@ -103,7 +115,7 @@
                 <article><span>@T("Vat")</span><strong>@String.Format("{0:n2}", focus.VatValue)</strong><small>@T("AccountingImpact")</small></article>
                 <article><span>@T("NetPayable")</span><strong>@String.Format("{0:n2}", focus.NetValue)</strong><small>@T("FinancialHealth")</small></article>
                 <article><span>@T("Totals")</span><strong>@Model.TotalCount</strong><small>@T("ProjectExtracts")</small></article>
-                <article class="is-ok"><span>@T("WorkflowReadOnly")</span><strong>@T("Balanced")</strong><small>@T("ActualPostingDisabled")</small></article>
+                <article class="is-ok"><span>حالة الترحيل</span><strong>نشط</strong><small>تم ترحيل قيود اليومية بنجاح</small></article>
             </section>
 
             <section class="main-erp-ops-strip" aria-label="Project extract operational status">

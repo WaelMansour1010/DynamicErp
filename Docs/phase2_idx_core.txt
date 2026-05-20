@@ -1,0 +1,97 @@
+schema_name|table_name|index_name|type_desc|used_mb|reserved_mb|is_primary_key|is_unique|is_unique_constraint|has_filter|filter_definition|user_seeks|user_scans|user_lookups|user_updates|last_read|last_user_update|key_cols|inc_cols
+-----------|----------|----------|---------|-------|-----------|--------------|---------|--------------------|----------|-----------------|----------|----------|------------|------------|---------|----------------|--------|--------
+dbo|DOUBLE_ENTREY_VOUCHERS|PK_DOUBLE_ENTREY_VOUCHERS|CLUSTERED|4672.50|4685.67|1|1|0|0|NULL|0|0|0|0|NULL|NULL|Double_Entry_Vouchers_ID,DEV_ID_Line_No|NULL
+dbo|DOUBLE_ENTREY_VOUCHERS|<IndexSearchEntry, sysname,>|NONCLUSTERED|2273.55|2284.27|0|0|0|0|NULL|0|0|0|0|NULL|NULL|branch_id|Account_Code,Value,Credit_Or_Debit,Double_Entry_Vouchers_Description,RecordDate,Notes_ID,ReceiptID,OperaID,Transaction_ID,UserID,Posted,PostedDate,PostedUserID,Account_Interval_ID,currency,valuee,rate,Double_Entry_Vouchers_Descriptione,DEV_ID_Line_No1,note
+dbo|DOUBLE_ENTREY_VOUCHERS|<ccIndex, sysname,>|NONCLUSTERED|1832.53|1836.51|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Account_Code,Posted|Double_Entry_Vouchers_ID,DEV_ID_Line_No,Value,Credit_Or_Debit,Double_Entry_Vouchers_Description,RecordDate,Notes_ID,ReceiptID,OperaID,Transaction_ID,UserID,PostedDate,PostedUserID,Account_Interval_ID,currency,valuee,rate,Double_Entry_Vouchers_Descriptione,
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Credit_Or_Debit_notes_all_hideline|NONCLUSTERED|1760.41|1761.07|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Credit_Or_Debit,notes_all,hideline|Double_Entry_Vouchers_ID,DEV_ID_Line_No,Account_Code,Value,Double_Entry_Vouchers_Description,Notes_ID,Account_Interval_ID,DEV_ID_Line_No1,opr_fullcode,FixedAssetId,branch_id,Carid,Departementid,Billno,projectid,operid,pandid,Vat,Vatyo,FlgVat,CurrRow,Suppli
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DEV_RecordDate|NONCLUSTERED|612.51|614.19|0|0|0|0|NULL|0|0|0|0|NULL|NULL|RecordDate,branch_id,Credit_Or_Debit,Account_Code|Value,Posted
+dbo|DOUBLE_ENTREY_VOUCHERS|<IndexFast, sysname,>|NONCLUSTERED|591.17|594.37|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Account_Code,Credit_Or_Debit,Posted,branch_id,RecordDate|Value
+dbo|DOUBLE_ENTREY_VOUCHERS|IDX_DOUBLE_ENTREY_VOUCHERS_Account_Credit_Date|NONCLUSTERED|448.06|450.61|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Account_Code,Credit_Or_Debit,RecordDate|NULL
+dbo|DOUBLE_ENTREY_VOUCHERS|IndexCredit_Or_Debit, sysname,>|NONCLUSTERED|241.63|241.94|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Credit_Or_Debit,Notes_ID|Value
+dbo|DOUBLE_ENTREY_VOUCHERS|<IndexRecordDate, sysname,>|NONCLUSTERED|207.46|208.69|0|0|0|0|NULL|0|0|0|0|NULL|NULL|RecordDate|Double_Entry_Vouchers_ID
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Transaction_ID|NONCLUSTERED|170.49|170.88|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_ID|Double_Entry_Vouchers_ID,DEV_ID_Line_No
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Notes_ID|NONCLUSTERED|166.38|167.56|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Notes_ID|Double_Entry_Vouchers_ID,DEV_ID_Line_No
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_Transaction_ID|NONCLUSTERED|164.25|164.38|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_ID|Notes_ID
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_RecordDate|NONCLUSTERED|163.70|163.82|0|0|0|0|NULL|2|1|0|0|2026-05-20 07:37:24.963|NULL|RecordDate,Double_Entry_Vouchers_ID|NULL
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_Notes_ID|NONCLUSTERED|163.63|163.70|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Notes_ID|Transaction_ID
+dbo|DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS__ReceiptID|NONCLUSTERED|158.26|160.13|0|0|0|0|NULL|0|0|0|0|NULL|NULL|ReceiptID|NULL
+dbo|Notes|PK_Notes|CLUSTERED|3725.63|3726.34|1|1|0|0|NULL|0|0|0|0|NULL|NULL|NoteID|NULL
+dbo|Notes|IX_Notes_NoteType_branch_no_Prefix|NONCLUSTERED|51.43|51.69|0|0|0|0|NULL|0|0|0|0|NULL|NULL|NoteType,branch_no,Prefix|NoteDate,NoteSerial1
+dbo|Notes|IX_Notes_Header_NoteSerial|NONCLUSTERED|44.03|44.31|0|0|0|1|([NoteSerial] IS NOT NULL AND [NoteType]<>(3) AND [NoteType]<>(80) AND [NoteType]<>(85) AND [NoteType]<>(350) AND [NoteType]<>(8028) AND [NoteType]<>(370))|0|0|0|0|NULL|NULL|NoteSerial|NoteDate,NoteType,branch_no
+dbo|Notes|IX_Notes_NoteDate_NoteType_branch_no|NONCLUSTERED|41.40|41.69|0|0|0|0|NULL|0|0|0|0|NULL|NULL|NoteDate,NoteType,branch_no|NoteID
+dbo|Notes|IX_Notes_Close|NONCLUSTERED|41.06|41.38|0|0|0|0|NULL|0|0|0|0|NULL|NULL|NoteType,NoteDate,branch_no|NoteID
+dbo|Notes|IX_Notes_NoteType_NoteSerial1_64FBFC4C|NONCLUSTERED|40.53|40.88|0|0|0|0|NULL|0|0|0|0|NULL|NULL|NoteType,NoteSerial1|NULL
+dbo|Notes|IX_Notes_OrderIDD_5EF7041D|NONCLUSTERED|38.51|41.63|0|0|0|0|NULL|0|0|0|0|NULL|NULL|OrderIDD|NoteID,Note_Value
+dbo|Notes|<IndexNote, sysname,>|NONCLUSTERED|38.30|38.69|0|0|0|0|NULL|0|0|0|0|NULL|NULL|NoteType|NoteDate,NoteSerial
+dbo|Notes|IX_AI_Notes_1390532379|NONCLUSTERED|34.63|34.81|0|0|0|0|NULL|0|0|0|0|NULL|NULL|NoteDate,branch_no|NoteID
+dbo|Notes|IX_Notes_NoteDate_NoteType|NONCLUSTERED|28.61|29.00|0|0|0|0|NULL|0|0|0|0|NULL|NULL|NoteDate,NoteType|NoteID
+dbo|Notes|IX_Notes__UserID|NONCLUSTERED|23.59|23.88|0|0|0|0|NULL|0|0|0|0|NULL|NULL|UserID|NULL
+dbo|Notes|IX_Notes__CusID|NONCLUSTERED|23.16|25.81|0|0|0|0|NULL|0|0|0|0|NULL|NULL|CusID|NULL
+dbo|Notes|IX_Notes__MaintananceID|NONCLUSTERED|23.12|25.50|0|0|0|0|NULL|0|0|0|0|NULL|NULL|MaintananceID|NULL
+dbo|Notes|IX_Notes__BankID|NONCLUSTERED|23.10|23.44|0|0|0|0|NULL|0|0|0|0|NULL|NULL|BankID|NULL
+dbo|Notes|IX_Notes_BoxID|NONCLUSTERED|22.63|23.00|0|0|0|0|NULL|0|0|0|0|NULL|NULL|BoxID|NoteID
+dbo|Notes|IX_Notes_Transaction_ID|NONCLUSTERED|22.31|25.38|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_ID|NoteID
+dbo|Notes|IX_Notes_salary|NONCLUSTERED|22.03|22.31|0|0|0|0|NULL|0|0|0|0|NULL|NULL|salary|NoteID
+dbo|Notes|IX_Notes_notes_all|NONCLUSTERED|22.03|22.31|0|0|0|0|NULL|0|0|0|0|NULL|NULL|notes_all|NoteID
+dbo|Notes|IX_POS_Notes_Transaction_ID|NONCLUSTERED|19.89|20.10|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_ID|NoteID
+dbo|Transaction_Details|IX_Transaction_Details|CLUSTERED|3772.05|3775.49|0|0|0|0|NULL|0|0|0|0|NULL|NULL|ItemSerial|NULL
+dbo|Transaction_Details|IX_Transaction_Details_TransactionID_ID|NONCLUSTERED|356.96|357.24|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_ID,ID|Item_ID,ItemCase,ItemSerial,ItemDiscountType,ItemDiscount,guaranteeTime,Remarks,ColorID,ItemSize,UnitId,ShowQty,showPrice,order_no,LineShahn,OrderArrivalDate,ClassId,ExpiryDate,LotNO,NoCount,Vat,Vatyo,TypeVAT,SalesValue,UnitPrice,Sequence,CustId
+dbo|Transaction_Details|<Name of Missing Index, sysname,>|NONCLUSTERED|257.57|258.02|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Item_ID|Transaction_ID,Quantity,Price,ID,UnitId,QtyBySmalltUnit,OldQty,OldCost,NewQty,NewCost
+dbo|Transaction_Details|<ColorIDIndex, sysname,>|NONCLUSTERED|149.14|149.46|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Item_ID,ColorID,ItemSize,ClassId|Transaction_ID,Quantity
+dbo|Transaction_Details|<IndexColor, sysname,>|NONCLUSTERED|139.12|139.41|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Item_ID,ColorID,ClassId|Transaction_ID,Quantity
+dbo|Transaction_Details|IX_Transaction_Details_Item_ID_UnitId|NONCLUSTERED|138.83|139.16|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Item_ID,UnitId|Transaction_ID,Price,ID
+dbo|Transaction_Details|IX_TransactionDetails_CloseReport|NONCLUSTERED|118.75|119.06|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_ID,Item_ID|Price,Vat
+dbo|Transaction_Details|<IndxTT, sysname,>|NONCLUSTERED|118.74|118.94|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_ID|Item_ID,Price,Vat
+dbo|Transaction_Details|IX_POS_TransactionDetails_ItemSerial_Transaction|NONCLUSTERED|117.84|117.88|0|0|0|0|NULL|0|0|0|0|NULL|NULL|POS_ItemSerial_Normalized,Transaction_ID|NULL
+dbo|Transaction_Details|IX_Transaction_Details_Item_ID_Transaction_ID|NONCLUSTERED|113.12|113.81|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Item_ID,Transaction_ID|ItemSerial,Quantity
+dbo|Transaction_Details|IX_POS_TransactionDetails_StoreSerials_Report|NONCLUSTERED|109.63|109.69|0|0|0|0|NULL|0|0|0|0|NULL|NULL|StoreID2,ItemSerial,Transaction_ID|Item_ID,Quantity
+dbo|Transaction_Details|IDX_Transaction_Details_Transaction_Price_Item|NONCLUSTERED|103.52|103.75|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_ID,Price,Item_ID|NULL
+dbo|Transaction_Details|IX_POS_KycAvailableCards_Details|NONCLUSTERED|98.31|98.38|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_ID,ItemSerial|Item_ID,Quantity
+dbo|Transaction_Details|IX_POS_Transaction_Details_SaveIssue|NONCLUSTERED|89.71|89.88|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_ID,SavedItemType,StoreID2|NULL
+dbo|Transaction_Details|PK_Transaction_Details|NONCLUSTERED|76.65|79.75|1|1|0|0|NULL|0|0|0|0|NULL|NULL|ID|NULL
+dbo|Transaction_Details|IX_POS_TransactionDetails_Transaction_ItemSerial|NONCLUSTERED|73.38|73.43|0|0|0|0|NULL|0|3|0|0|2026-05-20 07:37:36.483|NULL|Transaction_ID,ItemSerial|NULL
+dbo|Transactions|PK_Transactions|CLUSTERED|3344.56|3358.16|1|1|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_ID|NULL
+dbo|Transactions|IX_Transactions_BranchId_Transaction_Date_Transaction_Type|NONCLUSTERED|247.92|248.75|0|0|0|0|NULL|0|0|0|0|NULL|NULL|BranchId,Transaction_Date,Transaction_Type|Transaction_ID,Transaction_Serial,CusID,StoreID,CashCustomerName,CashCustomerPhone,order_no,NoteSerial1,ManualNO,OldNoteSerial1,Transaction_NetValue,VAT,PurchOrderNo,RechargeValue
+dbo|Transactions|IX_Transactions_StoreID_BranchId_Transaction_Date_Transaction_Type|NONCLUSTERED|247.67|248.13|0|0|0|0|NULL|0|0|0|0|NULL|NULL|StoreID,BranchId,Transaction_Date,Transaction_Type|Transaction_ID,Transaction_Serial,CusID,CashCustomerName,CashCustomerPhone,order_no,NoteSerial1,ManualNO,OldNoteSerial1,Transaction_NetValue,VAT,PurchOrderNo,RechargeValue
+dbo|Transactions|IX_Transactions_StoreID_Transaction_Date_Transaction_Type|NONCLUSTERED|247.61|247.88|0|0|0|0|NULL|0|0|0|0|NULL|NULL|StoreID,Transaction_Date,Transaction_Type|Transaction_ID,Transaction_Serial,CusID,CashCustomerName,CashCustomerPhone,order_no,NoteSerial1,BranchId,ManualNO,OldNoteSerial1,Transaction_NetValue,VAT,PurchOrderNo,RechargeValue
+dbo|Transactions|IX_POS_TodayInvoices_Read|NONCLUSTERED|216.91|217.34|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Type,Transaction_Date,BranchId,UserID,Transaction_ID|CashCustomerName,CashCustomerPhone,NoteSerial1,PayedValue,NetValue,ManualNO,VAT,Phone2,VisaNumber,RechargeValue,IsCashOut,IPN,TrafficViolations,IsCancelled
+dbo|Transactions|IX_Transactions_StoreID_BranchId_Transaction_Type|NONCLUSTERED|203.83|204.19|0|0|0|0|NULL|0|0|0|0|NULL|NULL|StoreID,BranchId,Transaction_Type|Transaction_ID,Transaction_Serial,Transaction_Date,CusID,CashCustomerName,CashCustomerPhone,order_no,NoteSerial1,ManualNO,OldNoteSerial1,Transaction_NetValue,VAT,PurchOrderNo,RechargeValue
+dbo|Transactions|IX_Transactions_StoreID_Transaction_Type|NONCLUSTERED|203.55|203.94|0|0|0|0|NULL|0|0|0|0|NULL|NULL|StoreID,Transaction_Type|Transaction_ID,Transaction_Serial,Transaction_Date,CusID,CashCustomerName,CashCustomerPhone,order_no,NoteSerial1,BranchId,ManualNO,OldNoteSerial1,Transaction_NetValue,VAT,PurchOrderNo,RechargeValue
+dbo|Transactions|IX_Transactions_BranchId_Transaction_Type_0C998935|NONCLUSTERED|202.90|203.19|0|0|0|0|NULL|0|0|0|0|NULL|NULL|BranchId,Transaction_Type|Transaction_ID,Transaction_Serial,Transaction_Date,CusID,StoreID,CashCustomerName,CashCustomerPhone,order_no,NoteSerial1,ManualNO,OldNoteSerial1,Transaction_NetValue,VAT,PurchOrderNo,RechargeValue
+dbo|Transactions|IX_Transactions_StoreID|NONCLUSTERED|198.07|198.44|0|0|0|0|NULL|0|0|0|0|NULL|NULL|StoreID|Transaction_ID,Transaction_Serial,Transaction_Date,Transaction_Type,CusID,CashCustomerName,CashCustomerPhone,order_no,NoteSerial1,ManualNO,OldNoteSerial1,Transaction_NetValue,VAT,PurchOrderNo,RechargeValue,IsReturn,IsReturn2
+dbo|Transactions|IX_POS_Transactions_Search_NoteSerial1|NONCLUSTERED|189.52|189.77|0|0|0|1|([Transaction_Type]=(21) AND [NoteSerial1] IS NOT NULL)|0|0|0|0|NULL|NULL|NoteSerial1,Transaction_Date,Transaction_ID|UserID,CashCustomerName,CashCustomerPhone,BranchId,PayedValue,NetValue,ManualNO,VAT,Phone2,VisaNumber,RechargeValue,IsCashOut,IPN,TrafficViolations,IsCancelled
+dbo|Transactions|IX_POS_Transactions_Search_ManualNO|NONCLUSTERED|185.23|187.07|0|0|0|1|([Transaction_Type]=(21) AND [ManualNO] IS NOT NULL)|0|0|0|0|NULL|NULL|ManualNO,Transaction_Date,Transaction_ID|UserID,CashCustomerName,CashCustomerPhone,NoteSerial1,BranchId,PayedValue,NetValue,VAT,Phone2,VisaNumber,RechargeValue,IsCashOut,IPN,TrafficViolations,IsCancelled
+dbo|Transactions|IX_POS_Transactions_OperationalSales_Report|NONCLUSTERED|175.02|175.09|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Type,IsCancelled,Transaction_Date,Transaction_ID|StoreID,UserID,CashCustomerName,CashCustomerPhone,NoteSerial1,BranchId,PayedValue,NetValue,Transaction_NetValue,VAT,VisaNumber,RechargeValue,IsCashOut,IsPOS,TrafficViolations
+dbo|Transactions|IX_Transactions_Transaction_Date_Transaction_Type_BranchId_C8AA5607|NONCLUSTERED|84.59|84.75|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Date,Transaction_Type,BranchId|Transaction_ID,VAT,RechargeValue,NoID,ItemDit,Comm1
+dbo|Transactions|<IndexReturnID, sysname,>|NONCLUSTERED|74.17|77.00|0|0|0|0|NULL|0|0|0|0|NULL|NULL|ReturnID|Transaction_ID,Transaction_Serial,Transaction_Date,Transaction_Type,PaymentType,CusID,StoreID,UserID
+dbo|Transactions|IX_POS_Transactions_CashIn_ManualNO|NONCLUSTERED|65.20|65.84|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Type,POS_ManualNO_Normalized,IsCashOut,TrafficViolations,isRecharg,Transaction_ID|RechargeValue
+dbo|Transactions|IX_Transactions_CashCustomerName|NONCLUSTERED|59.57|59.86|0|0|0|0|NULL|0|0|0|0|NULL|NULL|CashCustomerName|NULL
+dbo|Transactions|IX_Transactions_Transaction_Type_BranchId_EFF18692|NONCLUSTERED|56.50|56.81|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Type,BranchId|Transaction_NetValue,RechargeValue,NoteID3
+dbo|Transactions|IX_Transactions_CloseReport|NONCLUSTERED|54.03|54.31|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Type,Transaction_Date,BranchId|Transaction_ID,Transaction_NetValue,RechargeValue,IsReturn,IsWallet,HaveGuarantee,OtherItems,InstallmentService
+dbo|Transactions|<IndexDate, sysname,>|NONCLUSTERED|52.58|52.88|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Date,BranchId,Transaction_Type|Transaction_NetValue,IsWallet
+dbo|Transactions|<Indextrans, sysname,>|NONCLUSTERED|51.02|51.25|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Type,NoteSerial1,BranchId,Transaction_ID,Prefix|NULL
+dbo|Transactions|<IndexMaxNote, sysname,>|NONCLUSTERED|50.78|51.06|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Type,BranchId,Prefix|Transaction_Date,NoteSerial1
+dbo|Transactions|<CashCustomerPhoneIndex, sysname,>|NONCLUSTERED|50.45|50.67|0|0|0|0|NULL|0|0|0|0|NULL|NULL|CashCustomerPhone|NULL
+dbo|Transactions|IX_Transactions_TypeDate|NONCLUSTERED|45.64|45.80|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Type,Transaction_Date|Transaction_ID,StoreID,Emp_ID,NoteId,BranchId
+dbo|Transactions|IX_AI_Transactions_2022228087|NONCLUSTERED|44.68|44.94|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Date,BranchId|Transaction_ID,MainOperationID
+dbo|Transactions|IX_Trans_Branch_Type_Date|NONCLUSTERED|42.74|42.94|0|0|0|0|NULL|0|0|0|0|NULL|NULL|BranchId,Transaction_Type,Transaction_Date|Transaction_ID,UserID
+dbo|Transactions|IX_Tx_Branch_Type_Date_Desc|NONCLUSTERED|42.41|42.63|0|0|0|0|NULL|0|0|0|0|NULL|NULL|BranchId,Transaction_Type,Transaction_Date,Transaction_ID|UserID
+dbo|Transactions|IX_Transactions_Tet_NumPoket_Transaction_Date_9D5672C5|NONCLUSTERED|41.84|42.37|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Tet_NumPoket,Transaction_Date|VisaNumber
+dbo|Transactions|IX_Transactions_DoctorsTypeID_Tet_NumPoket_Transaction_Date|NONCLUSTERED|41.04|41.42|0|0|0|0|NULL|0|0|0|0|NULL|NULL|DoctorsTypeID,Tet_NumPoket,Transaction_Date|NULL
+dbo|Transactions|<Transaction_SerialIndex, sysname,>|NONCLUSTERED|39.38|39.63|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Type|Transaction_Serial
+dbo|Transactions|IDX_Transactions_Branch_Date_Visa|NONCLUSTERED|39.16|39.69|0|0|0|0|NULL|0|0|0|0|NULL|NULL|BranchId,Transaction_Date,VisaNumber|NULL
+dbo|Transactions|IX_Transactions_Transaction_Date_Tet_NumPoket_C4A7E173|NONCLUSTERED|37.79|38.38|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Date,Tet_NumPoket|VisaNumber
+dbo|Transactions|IX_Transactions__Transaction_Date_951B1E44|NONCLUSTERED|36.99|37.31|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Date|VisaNumber,Tet_NumPoket
+dbo|Transactions|IX_POS_Transactions_Search_VisaNumber|NONCLUSTERED|36.86|36.94|0|0|0|1|([Transaction_Type]=(21) AND [VisaNumber] IS NOT NULL)|0|0|0|0|NULL|NULL|VisaNumber,Transaction_Date,Transaction_ID|UserID,CashCustomerName,CashCustomerPhone,NoteSerial1,BranchId,PayedValue,NetValue,ManualNO,VAT,Phone2,RechargeValue,IsCashOut,IPN,TrafficViolations,IsCancelled
+dbo|Transactions|IX_Transactions_Transaction_Type_StoreID_Transaction_Date_2EFBB756|NONCLUSTERED|36.65|36.88|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Type,StoreID,Transaction_Date|Transaction_ID
+dbo|Transactions|IX_POS_Transactions_Report_ServiceSearch|NONCLUSTERED|34.61|34.76|0|0|0|1|([Transaction_Type]=(21))|0|0|0|0|NULL|NULL|BranchId,Transaction_Date|ItemIDService,ItemIDService2,ItemIDService3
+dbo|Transactions|<IndexStoreDate, sysname,>|NONCLUSTERED|31.38|31.56|0|0|0|0|NULL|0|0|0|0|NULL|NULL|StoreID,Transaction_ID,Transaction_Date|Transaction_Type
+dbo|Transactions|IX_POS_Transactions_KycFollow_VisaNumber|NONCLUSTERED|28.90|28.96|0|0|0|0|NULL|0|6|0|0|2026-05-20 07:37:36.483|NULL|Transaction_Type,VisaNumber|Transaction_ID,Transaction_Date
+dbo|Transactions|IX_POS_Transactions_Card_VisaNumber|NONCLUSTERED|27.99|28.09|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Type,POS_VisaNumber_Normalized,IsCancelled,Transaction_ID|NULL
+dbo|Transactions|IndexBillBasedOn, sysname,>|NONCLUSTERED|25.39|25.69|0|0|0|0|NULL|0|0|0|0|NULL|NULL|Transaction_Type,BillBasedOn,order_no|Transaction_ID
+dbo|Transactions|IX_POS_KycAvailableCards_Transactions|NONCLUSTERED|24.34|24.39|0|0|0|0|NULL|0|0|0|0|NULL|NULL|StoreID,Transaction_ID,Transaction_Type|NULL
+dbo|Transactions|IDX_Transactions_VisaNumber|NONCLUSTERED|23.16|23.42|0|0|0|0|NULL|0|0|0|0|NULL|NULL|VisaNumber|NULL
+dbo|Transactions|IX_Transactions__UserID|NONCLUSTERED|22.35|22.56|0|0|0|0|NULL|0|0|0|0|NULL|NULL|UserID|NULL
+dbo|Transactions|IX_Transactions__CusID|NONCLUSTERED|21.45|23.88|0|0|0|0|NULL|0|0|0|0|NULL|NULL|CusID|NULL
+dbo|Transactions|IX_POS_Transactions_Report_Returns_Branch|NONCLUSTERED|.34|.39|0|0|0|1|([Transaction_Type]=(9))|0|0|0|0|NULL|NULL|BranchId,Transaction_Date,UserID|Transaction_NetValue,RechargeValue
+dbo|Transactions|IX_POS_Transactions_Report_Returns|NONCLUSTERED|.28|.34|0|0|0|1|([Transaction_Type]=(9))|0|0|0|0|NULL|NULL|Transaction_Type,Transaction_Date,BranchId,UserID|Transaction_NetValue,RechargeValue

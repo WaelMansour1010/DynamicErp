@@ -1,0 +1,96 @@
+table_name|index_name|index_id|index_used_mb|used_pages
+----------|----------|--------|-------------|----------
+DOUBLE_ENTREY_VOUCHERS|PK_DOUBLE_ENTREY_VOUCHERS|1|4672.50|598080
+Transaction_Details|IX_Transaction_Details|1|3772.05|482822
+Notes|PK_Notes|1|3725.63|476881
+Transactions|PK_Transactions|1|3344.56|428104
+DOUBLE_ENTREY_VOUCHERS|<IndexSearchEntry, sysname,>|57|2273.55|291015
+DOUBLE_ENTREY_VOUCHERS|<ccIndex, sysname,>|62|1832.53|234564
+DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Credit_Or_Debit_notes_all_hideline|65|1760.41|225333
+DOUBLE_ENTREY_VOUCHERS|IX_DEV_RecordDate|68|612.51|78401
+DOUBLE_ENTREY_VOUCHERS|<IndexFast, sysname,>|56|591.17|75670
+DOUBLE_ENTREY_VOUCHERS|IDX_DOUBLE_ENTREY_VOUCHERS_Account_Credit_Date|58|448.06|57352
+Transaction_Details|IX_Transaction_Details_TransactionID_ID|248|356.96|45691
+Transaction_Details|<Name of Missing Index, sysname,>|239|257.57|32969
+Transactions|IX_Transactions_BranchId_Transaction_Date_Transaction_Type|191|247.92|31734
+Transactions|IX_Transactions_StoreID_BranchId_Transaction_Date_Transaction_Type|192|247.67|31702
+Transactions|IX_Transactions_StoreID_Transaction_Date_Transaction_Type|193|247.61|31694
+DOUBLE_ENTREY_VOUCHERS|IndexCredit_Or_Debit, sysname,>|61|241.63|30928
+Transactions|IX_POS_TodayInvoices_Read|209|216.91|27764
+DOUBLE_ENTREY_VOUCHERS|<IndexRecordDate, sysname,>|59|207.46|26555
+Transactions|IX_Transactions_StoreID_BranchId_Transaction_Type|190|203.83|26090
+Transactions|IX_Transactions_StoreID_Transaction_Type|189|203.55|26055
+Transactions|IX_Transactions_BranchId_Transaction_Type_0C998935|203|202.90|25971
+Transactions|IX_Transactions_StoreID|183|198.07|25353
+Transactions|IX_POS_Transactions_Search_NoteSerial1|213|189.52|24258
+Transactions|IX_POS_Transactions_Search_ManualNO|215|185.23|23710
+Transactions|IX_POS_Transactions_OperationalSales_Report|216|175.02|22402
+DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Transaction_ID|64|170.49|21823
+DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS_Notes_ID|63|166.38|21297
+DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_Transaction_ID|60|164.25|21024
+DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_RecordDate|70|163.70|20954
+DOUBLE_ENTREY_VOUCHERS|IX_POS_DEV_Notes_ID|69|163.63|20945
+DOUBLE_ENTREY_VOUCHERS|IX_DOUBLE_ENTREY_VOUCHERS__ReceiptID|66|158.26|20257
+Transaction_Details|<ColorIDIndex, sysname,>|242|149.14|19090
+Transaction_Details|<IndexColor, sysname,>|243|139.12|17807
+Transaction_Details|IX_Transaction_Details_Item_ID_UnitId|244|138.83|17770
+Transaction_Details|IX_TransactionDetails_CloseReport|246|118.75|15200
+Transaction_Details|<IndxTT, sysname,>|240|118.74|15199
+Transaction_Details|IX_POS_TransactionDetails_ItemSerial_Transaction|249|117.84|15084
+Transaction_Details|IX_Transaction_Details_Item_ID_Transaction_ID|245|113.12|14479
+Transaction_Details|IX_POS_TransactionDetails_StoreSerials_Report|257|109.63|14033
+Transaction_Details|IDX_Transaction_Details_Transaction_Price_Item|241|103.52|13250
+Transaction_Details|IX_POS_KycAvailableCards_Details|258|98.31|12584
+Transaction_Details|IX_POS_Transaction_Details_SaveIssue|247|89.71|11483
+Transactions|IX_Transactions_Transaction_Date_Transaction_Type_BranchId_C8AA5607|204|84.59|10827
+Transaction_Details|PK_Transaction_Details|2|76.65|9811
+Transactions|<IndexReturnID, sysname,>|165|74.17|9494
+Transaction_Details|IX_POS_TransactionDetails_Transaction_ItemSerial|256|73.38|9392
+Transactions|IX_POS_Transactions_CashIn_ManualNO|207|65.20|8346
+Transactions|IX_Transactions_CashCustomerName|188|59.57|7625
+Transactions|IX_Transactions_Transaction_Type_BranchId_EFF18692|197|56.50|7232
+Transactions|IX_Transactions_CloseReport|161|54.03|6916
+Transactions|<IndexDate, sysname,>|160|52.58|6730
+Notes|IX_Notes_NoteType_branch_no_Prefix|412|51.43|6583
+Transactions|<Indextrans, sysname,>|159|51.02|6530
+Transactions|<IndexMaxNote, sysname,>|158|50.78|6500
+Transactions|<CashCustomerPhoneIndex, sysname,>|169|50.45|6458
+Transactions|IX_Transactions_TypeDate|196|45.64|5842
+Transactions|IX_AI_Transactions_2022228087|218|44.68|5719
+Notes|IX_Notes_Header_NoteSerial|406|44.03|5636
+Transactions|IX_Trans_Branch_Type_Date|224|42.74|5471
+Transactions|IX_Tx_Branch_Type_Date_Desc|227|42.41|5428
+Transactions|IX_Transactions_Tet_NumPoket_Transaction_Date_9D5672C5|200|41.84|5355
+Notes|IX_Notes_NoteDate_NoteType_branch_no|415|41.40|5299
+Notes|IX_Notes_Close|433|41.06|5256
+Transactions|IX_Transactions_DoctorsTypeID_Tet_NumPoket_Transaction_Date|187|41.04|5253
+Notes|IX_Notes_NoteType_NoteSerial1_64FBFC4C|420|40.53|5188
+Transactions|<Transaction_SerialIndex, sysname,>|167|39.38|5041
+Transactions|IDX_Transactions_Branch_Date_Visa|163|39.16|5012
+Notes|IX_Notes_OrderIDD_5EF7041D|419|38.51|4929
+Notes|<IndexNote, sysname,>|405|38.30|4902
+Transactions|IX_Transactions_Transaction_Date_Tet_NumPoket_C4A7E173|206|37.79|4837
+Transactions|IX_Transactions__Transaction_Date_951B1E44|202|36.99|4735
+Transactions|IX_POS_Transactions_Search_VisaNumber|214|36.86|4718
+Transactions|IX_Transactions_Transaction_Type_StoreID_Transaction_Date_2EFBB756|201|36.65|4691
+Notes|IX_AI_Notes_1390532379|421|34.63|4433
+Transactions|IX_POS_Transactions_Report_ServiceSearch|211|34.61|4430
+Transactions|<IndexStoreDate, sysname,>|164|31.38|4017
+Transactions|IX_POS_Transactions_KycFollow_VisaNumber|220|28.90|3699
+Notes|IX_Notes_NoteDate_NoteType|409|28.61|3662
+Transactions|IX_POS_Transactions_Card_VisaNumber|208|27.99|3583
+Transactions|IndexBillBasedOn, sysname,>|166|25.39|3250
+Transactions|IX_POS_KycAvailableCards_Transactions|217|24.34|3116
+Notes|IX_Notes__UserID|425|23.59|3020
+Notes|IX_Notes__CusID|423|23.16|2964
+Transactions|IDX_Transactions_VisaNumber|162|23.16|2964
+Notes|IX_Notes__MaintananceID|424|23.12|2959
+Notes|IX_Notes__BankID|422|23.10|2957
+Notes|IX_Notes_BoxID|413|22.63|2896
+Transactions|IX_Transactions__UserID|222|22.35|2861
+Notes|IX_Notes_Transaction_ID|408|22.31|2856
+Notes|IX_Notes_notes_all|411|22.03|2820
+Notes|IX_Notes_salary|414|22.03|2820
+Transactions|IX_Transactions__CusID|221|21.45|2745
+Transactions|IX_POS_Transactions_Report_Returns_Branch|212|.34|43
+Transactions|IX_POS_Transactions_Report_Returns|210|.28|36

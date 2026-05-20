@@ -1,0 +1,3 @@
+﻿"Bucket","RowsCount","ContractsCount","InstallmentTotal","TruePaid","TrueRemain","NegativeRemainRows","OverPaidRows"
+"Future_ContractBatchCandidate","453","199","19234398.7085","55592.89","19178805.8185","0","0"
+"DueOrPast_OpeningBalanceCandidate","646","259","13820676.228","12664131.568","1156544.66","0","0"
