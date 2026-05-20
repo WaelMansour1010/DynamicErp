@@ -210,3 +210,30 @@ BEGIN
 END;
 GO
 
+IF OBJECT_ID(N'dbo.Transactions', N'U') IS NOT NULL
+   AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Transactions') AND name = N'IX_POS_ProjectStatus_Tx_Date_Branch_User')
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_POS_ProjectStatus_Tx_Date_Branch_User
+    ON dbo.Transactions (Transaction_Type, Transaction_Date, BranchId, UserID)
+    INCLUDE (StoreID, RechargeValue, Transaction_NetValue, PayedValue, NetValue, Vat, IsWallet, HaveGuarantee, OtherItems, InstallmentService, IsReturn, IsCashOut, IsPOS, TrafficViolations, VisaNumber, Cost, CashBack, ItemIDService, ItemIDService2, ItemIDService3, NoteID3);
+END;
+GO
+
+IF OBJECT_ID(N'dbo.Transaction_Details', N'U') IS NOT NULL
+   AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Transaction_Details') AND name = N'IX_POS_ProjectStatus_Details_Tx')
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_POS_ProjectStatus_Details_Tx
+    ON dbo.Transaction_Details (Transaction_ID, Item_ID)
+    INCLUDE (Price, Vat);
+END;
+GO
+
+IF OBJECT_ID(N'dbo.Notes', N'U') IS NOT NULL
+   AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Notes') AND name = N'IX_POS_ProjectStatus_Notes_Type_Date_Branch')
+BEGIN
+    CREATE NONCLUSTERED INDEX IX_POS_ProjectStatus_Notes_Type_Date_Branch
+    ON dbo.Notes (NoteType, NoteDate, branch_no)
+    INCLUDE (NoteID);
+END;
+GO
+
