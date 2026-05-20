@@ -8,5 +8,6 @@ namespace MyERP.Areas.MainErp.ViewModels.Security
         public string ErrorMessage { get; set; }
         public string CurrentDatabaseName { get; set; }
         public bool IsDebugDatabaseOverrideEnabled { get; set; }
+        public MyERP.Models.Branding.LoginBrandingContext Branding { get; set; }
     }
 }

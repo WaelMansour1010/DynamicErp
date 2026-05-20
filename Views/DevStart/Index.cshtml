@@ -4,6 +4,14 @@
     var selected = Convert.ToString(ViewBag.MainErpSelectedDatabase);
     var originalSelected = Convert.ToString(ViewBag.OriginalWebDebugDatabase);
     var selectedConnection = Convert.ToString(ViewBag.MainErpSelectedConnection);
+    var propertyMigrationSources = ViewBag.PropertyMigrationSources as IEnumerable<string> ?? new[] { "Adnan", "RSMDB" };
+    var propertyMigrationTargets = ViewBag.PropertyMigrationTargets as IEnumerable<string> ?? new[] { "Alromaizan_PropertyPilot_Adnan_ReadyToTest_20260520", "Alromaizan_PropertyPilot_RSMDB_StagingClone_20260520" };
+    var propertyMigrationStatus = Convert.ToString(TempData["PropertyMigrationStatus"]);
+    var propertyMigrationMessage = Convert.ToString(TempData["PropertyMigrationMessage"]);
+    var propertyMigrationReportPath = Convert.ToString(TempData["PropertyMigrationReportPath"]);
+    var propertyMigrationBatchId = Convert.ToString(TempData["PropertyMigrationBatchId"]);
+    var propertyMigrationOutput = Convert.ToString(TempData["PropertyMigrationOutput"]);
+    var propertyMigrationError = Convert.ToString(TempData["PropertyMigrationError"]);
     var connectionOptions = ViewBag.MainErpConnectionOptions as IEnumerable<SelectListItem>
         ?? new[]
         {
@@ -114,6 +122,115 @@
                 @Html.AntiForgeryToken()
                 <button type="submit" class="main-erp-secondary-button">إلغاء override والعودة إلى Web.config</button>
             }
+        </section>
+
+        <section class="main-erp-panel main-erp-devstart-panel" id="property-migration-toolkit">
+            <div class="main-erp-title-row">
+                <div>
+                    <h3>Property Migration Toolkit</h3>
+                    <p>Local DEBUG runner for property migration stages. The web screen only creates a temporary JSON config and calls the console runner; migration logic stays inside the runner.</p>
+                </div>
+                <span class="main-erp-badge">DEBUG / LOCAL ONLY</span>
+            </div>
+
+            <div class="main-erp-devstart-warning" style="margin-bottom:16px;padding:12px;border-radius:12px;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;">
+                Execute is blocked unless the target database name is a clone/sandbox, BackupVerified and ExecutionPlanApproved are checked, BatchId exists, and confirmation text is exactly <strong>EXECUTE CLONE</strong>.
+                Passwords are never entered here; the runner reads <strong>PROPERTY_MIGRATION_SQL_CONNECTION</strong> from the machine environment.
+            </div>
+
+            @if (!String.IsNullOrWhiteSpace(propertyMigrationStatus))
+            {
+                <div class="main-erp-devstart-result" style="margin-bottom:16px;padding:12px;border-radius:12px;background:#ecfeff;color:#155e75;border:1px solid #a5f3fc;">
+                    <strong>Status:</strong> @propertyMigrationStatus
+                    <br />
+                    <strong>Message:</strong> @propertyMigrationMessage
+                    <br />
+                    <strong>BatchId:</strong> @propertyMigrationBatchId
+                    <br />
+                    <strong>Report:</strong> @propertyMigrationReportPath
+                    @if (!String.IsNullOrWhiteSpace(propertyMigrationError))
+                    {
+                        <pre style="white-space:pre-wrap;direction:ltr;text-align:left;margin-top:8px;">@propertyMigrationError</pre>
+                    }
+                    else if (!String.IsNullOrWhiteSpace(propertyMigrationOutput))
+                    {
+                        <pre style="white-space:pre-wrap;direction:ltr;text-align:left;margin-top:8px;">@propertyMigrationOutput</pre>
+                    }
+                </div>
+            }
+
+            @using (Html.BeginForm("PropertyMigrationDryRun", "DevStart", FormMethod.Post, new { @class = "main-erp-filter", id = "propertyMigrationForm" }))
+            {
+                @Html.AntiForgeryToken()
+                <select name="SourceDatabaseName" aria-label="Source database">
+                    @foreach (var source in propertyMigrationSources)
+                    {
+                        <option value="@source">@source</option>
+                    }
+                </select>
+
+                <input name="TargetCloneDatabaseName" list="propertyMigrationTargets" value="Alromaizan_PropertyPilot_RSMDB_StagingClone_20260520" placeholder="Target Clone DB" style="min-width:320px;" />
+                <datalist id="propertyMigrationTargets">
+                    @foreach (var target in propertyMigrationTargets)
+                    {
+                        <option value="@target"></option>
+                    }
+                </datalist>
+
+                <select name="MigrationMode" aria-label="Migration mode">
+                    <option value="Hybrid" selected>Hybrid</option>
+                    <option value="Strict">Strict</option>
+                    <option value="Tolerant">Tolerant</option>
+                </select>
+
+                <select name="Stage" aria-label="Runner stage">
+                    <option value="DryRunPreflight">DryRun / Preflight</option>
+                    <option value="Discovery">Discovery</option>
+                    <option value="Staging">Staging</option>
+                    <option value="Intelligence">Intelligence</option>
+                    <option value="AccountIntelligence">Account Intelligence</option>
+                    <option value="FinanceApprovalSimulation">Finance Approval Simulation</option>
+                    <option value="ReadyToTestDelivery">ReadyToTest Delivery</option>
+                    <option value="MiniAccountingPilot">Mini Accounting Pilot</option>
+                    <option value="Rollback">Rollback</option>
+                </select>
+
+                <input name="CustomerCode" value="LOCAL-DEBUG" placeholder="CustomerCode" />
+                <input name="BatchId" value="@Guid.NewGuid()" placeholder="BatchId" style="min-width:290px;" />
+                <input name="CutoffDate" type="date" value="2026-05-20" />
+
+                <label><input type="checkbox" name="IncludeOperationalMigration" value="true" checked /> Operational</label>
+                <label><input type="checkbox" name="IncludeAccounting" value="true" /> Accounting</label>
+                <label><input type="checkbox" name="IncludeHistoricalReceipts" value="true" /> Historical Receipts</label>
+                <label><input type="checkbox" name="IncludeIssues" value="true" /> Issues</label>
+                <label><input type="checkbox" name="IncludeOwnerPayments" value="true" /> Owner Payments</label>
+                <label><input type="checkbox" name="IncludeTerminations" value="true" /> Terminations</label>
+                <label><input type="checkbox" name="Include9088" value="true" /> Include 9088</label>
+                <label><input type="checkbox" name="IncludeAdvancePayments" value="true" checked /> Advance Payments</label>
+                <label><input type="checkbox" name="BackupVerified" value="true" /> BackupVerified</label>
+                <label><input type="checkbox" name="ExecutionPlanApproved" value="true" /> ExecutionPlanApproved</label>
+                <label><input type="checkbox" name="ExecuteMode" value="true" /> Execute Mode</label>
+                <input name="ExecuteConfirmation" placeholder="Type EXECUTE CLONE to enable Execute" style="min-width:260px;" />
+
+                <button type="submit">Run DryRun</button>
+                <button type="submit" formaction="@Url.Action("PropertyMigrationRunStage", "DevStart")" class="main-erp-secondary-button">Run selected stage</button>
+                <a class="main-erp-secondary-button" href="@Url.Action("PropertyMigrationLatestReport", "DevStart")" target="_blank">View last report</a>
+            }
+
+            <div class="main-erp-filter" style="margin-top:12px;">
+                @using (Html.BeginForm("OpenPropertyMigrationReportsFolder", "DevStart", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="main-erp-secondary-button">Open reports folder</button>
+                }
+                @using (Html.BeginForm("OpenPropertyMigrationDocsFolder", "DevStart", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="main-erp-secondary-button">Open Toolkit docs</button>
+                }
+                <small style="direction:ltr;text-align:left;display:block;">Reports: @ViewBag.PropertyMigrationReportsDirectory</small>
+                <small style="direction:ltr;text-align:left;display:block;">Docs: @ViewBag.PropertyMigrationDocsDirectory</small>
+            </div>
         </section>
     </div>
 </body>

@@ -1,15 +1,11 @@
-@model MyERP.Areas.MainErp.ViewModels.Security.MainErpLoginViewModel
+﻿@model MyERP.Areas.MainErp.ViewModels.Security.MainErpLoginViewModel
 @{
     Layout = null;
-    ViewBag.Title = "النظام الرئيسي - تسجيل الدخول";
-    var primaryLogoPath = "~/Areas/Pos/assets/images/company-logo.png";
-    var alternateLogoPath = "~/Areas/Pos/assets/images/company-logo-1.png";
-    var legacyLogoPath = "~/assets/images/logo-dark.png";
-    var companyLogoPath = System.IO.File.Exists(Server.MapPath(primaryLogoPath))
-        ? primaryLogoPath
-        : (System.IO.File.Exists(Server.MapPath(alternateLogoPath))
-            ? alternateLogoPath
-            : (System.IO.File.Exists(Server.MapPath(legacyLogoPath)) ? legacyLogoPath : null));
+    var branding = Model != null && Model.Branding != null
+        ? Model.Branding
+        : MyERP.Services.Branding.LoginBrandingResolver.ResolveMainErp(Server);
+    ViewBag.Title = branding.Title;
+    var companyLogoPath = branding.LogoPath;
 }
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -17,34 +13,34 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewBag.Title</title>
-    <link href="@Url.Content("~/Content/premium-login.css?v=20260519-main-premium")" rel="stylesheet" />
+    <link href="@Url.Content("~/Content/premium-login.css?v=" + branding.ThemeCssVersion)" rel="stylesheet" />
 </head>
 <body class="premium-login-body">
     <main class="premium-login-page" dir="rtl">
-        <section class="premium-login-shell" aria-label="تسجيل الدخول">
+        <section class="premium-login-shell" aria-label="طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„">
             <aside class="premium-login-brand">
                 <div>
                     <div class="premium-login-logo-wrap">
                         @if (!string.IsNullOrWhiteSpace(companyLogoPath))
                         {
-                            <img src="@Url.Content(companyLogoPath)" alt="شعار النظام" class="premium-login-logo" />
+                            <img src="@Url.Content(companyLogoPath)" alt="ط´ط¹ط§ط± ط§ظ„ظ†ط¸ط§ظ…" class="premium-login-logo" />
                         }
                         else
                         {
-                            <span class="premium-login-logo-fallback">Dynamic ERP</span>
+                            <span class="premium-login-logo-fallback">@branding.DisplayName</span>
                         }
                     </div>
                     <div class="premium-login-brand-copy">
-                        <h1>منصة أعمال موحدة</h1>
-                        <p>إدارة الموارد البشرية، الحسابات، التقارير، ونقاط البيع من تجربة ويب مريحة وواضحة.</p>
+                        <h1>ظ…ظ†طµط© ط£ط¹ظ…ط§ظ„ ظ…ظˆط­ط¯ط©</h1>
+                        <p>ط¥ط¯ط§ط±ط© ط§ظ„ظ…ظˆط§ط±ط¯ ط§ظ„ط¨ط´ط±ظٹط©طŒ ط§ظ„ط­ط³ط§ط¨ط§طھطŒ ط§ظ„طھظ‚ط§ط±ظٹط±طŒ ظˆظ†ظ‚ط§ط· ط§ظ„ط¨ظٹط¹ ظ…ظ† طھط¬ط±ط¨ط© ظˆظٹط¨ ظ…ط±ظٹط­ط© ظˆظˆط§ط¶ط­ط©.</p>
                     </div>
                 </div>
 
-                <div class="premium-login-feature-grid" aria-label="مزايا النظام">
-                    <article class="premium-login-feature"><i>✓</i><strong>صلاحيات دقيقة</strong><span>كل مستخدم يرى ما يخصه فقط</span></article>
-                    <article class="premium-login-feature"><i>↗</i><strong>متابعة مالية</strong><span>تقارير وقوائم مراجعة واضحة</span></article>
-                    <article class="premium-login-feature"><i>◎</i><strong>موارد بشرية</strong><span>مسارات اعتماد وحركات موظفين</span></article>
-                    <article class="premium-login-feature"><i>☁</i><strong>تجربة موحدة</strong><span>POS و MainERP بنفس الجودة</span></article>
+                <div class="premium-login-feature-grid" aria-label="ظ…ط²ط§ظٹط§ ط§ظ„ظ†ط¸ط§ظ…">
+                    <article class="premium-login-feature"><i>âœ“</i><strong>طµظ„ط§ط­ظٹط§طھ ط¯ظ‚ظٹظ‚ط©</strong><span>ظƒظ„ ظ…ط³طھط®ط¯ظ… ظٹط±ظ‰ ظ…ط§ ظٹط®طµظ‡ ظپظ‚ط·</span></article>
+                    <article class="premium-login-feature"><i>â†—</i><strong>ظ…طھط§ط¨ط¹ط© ظ…ط§ظ„ظٹط©</strong><span>طھظ‚ط§ط±ظٹط± ظˆظ‚ظˆط§ط¦ظ… ظ…ط±ط§ط¬ط¹ط© ظˆط§ط¶ط­ط©</span></article>
+                    <article class="premium-login-feature"><i>â—ژ</i><strong>ظ…ظˆط§ط±ط¯ ط¨ط´ط±ظٹط©</strong><span>ظ…ط³ط§ط±ط§طھ ط§ط¹طھظ…ط§ط¯ ظˆط­ط±ظƒط§طھ ظ…ظˆط¸ظپظٹظ†</span></article>
+                    <article class="premium-login-feature"><i>âکپ</i><strong>طھط¬ط±ط¨ط© ظ…ظˆط­ط¯ط©</strong><span>POS ظˆ MainERP ط¨ظ†ظپط³ ط§ظ„ط¬ظˆط¯ط©</span></article>
                 </div>
 
                 <div class="premium-login-visual" aria-hidden="true">
@@ -60,12 +56,12 @@
                 <div class="premium-login-card">
                     <div class="premium-login-topbar">
                         <span class="premium-login-chip">Light</span>
-                        <span class="premium-login-chip">العربية</span>
+                        <span class="premium-login-chip">ط§ظ„ط¹ط±ط¨ظٹط©</span>
                     </div>
 
                     <header>
-                        <h2><span class="premium-login-security-icon" aria-hidden="true">✓</span>تسجيل الدخول</h2>
-                        <p>أدخل بيانات مستخدم النظام الرئيسي للمتابعة.</p>
+                        <h2><span class="premium-login-security-icon" aria-hidden="true">âœ“</span>طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„</h2>
+                        <p>ط£ط¯ط®ظ„ ط¨ظٹط§ظ†ط§طھ ظ…ط³طھط®ط¯ظ… ط§ظ„ظ†ط¸ط§ظ… ط§ظ„ط±ط¦ظٹط³ظٹ ظ„ظ„ظ…طھط§ط¨ط¹ط©.</p>
                     </header>
 
                     @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
@@ -79,7 +75,7 @@
                         <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
 
                         <label class="premium-login-field">
-                            <span>اسم المستخدم</span>
+                            <span>ط§ط³ظ… ط§ظ„ظ…ط³طھط®ط¯ظ…</span>
                             <span class="premium-login-input-wrap">
                                 <b class="premium-field-icon">&#64;</b>
                                 <input type="text" name="UserName" value="@Model.UserName" autocomplete="username" autofocus required />
@@ -87,31 +83,31 @@
                         </label>
 
                         <label class="premium-login-field">
-                            <span>كلمة المرور</span>
+                            <span>ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±</span>
                             <span class="premium-login-input-wrap">
-                                <b class="premium-field-icon">••</b>
+                                <b class="premium-field-icon">â€¢â€¢</b>
                                 <input type="password" name="Password" autocomplete="current-password" required data-premium-password />
-                                <button type="button" class="premium-password-toggle" data-toggle-password aria-label="إظهار كلمة المرور">عرض</button>
+                                <button type="button" class="premium-password-toggle" data-toggle-password aria-label="ط¥ط¸ظ‡ط§ط± ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±">ط¹ط±ط¶</button>
                             </span>
                         </label>
 
                         if (Model.IsDebugDatabaseOverrideEnabled)
                         {
                             <div class="premium-login-db">
-                                <span>قاعدة النظام الحالية</span>
+                                <span>ظ‚ط§ط¹ط¯ط© ط§ظ„ظ†ط¸ط§ظ… ط§ظ„ط­ط§ظ„ظٹط©</span>
                                 <strong>@Model.CurrentDatabaseName</strong>
                             </div>
                         }
 
                         <button type="submit" class="premium-login-submit" data-login-submit>
-                            <span>دخول</span>
-                            <b aria-hidden="true">←</b>
+                            <span>ط¯ط®ظˆظ„</span>
+                            <b aria-hidden="true">â†گ</b>
                         </button>
                     }
 
-                    <div class="premium-login-divider"><span>أو</span></div>
-                    <a class="premium-login-link" href="@Url.Action("Index", "DevStart", new { area = "" })">اختيار وضع التشغيل</a>
-                    <div class="premium-login-footer"><i>آمن</i><span>جميع البيانات محمية ومشفرة أثناء الجلسة</span></div>
+                    <div class="premium-login-divider"><span>ط£ظˆ</span></div>
+                    <a class="premium-login-link" href="@Url.Action("Index", "DevStart", new { area = "" })">ط§ط®طھظٹط§ط± ظˆط¶ط¹ ط§ظ„طھط´ط؛ظٹظ„</a>
+                    <div class="premium-login-footer"><i>ط¢ظ…ظ†</i><span>ط¬ظ…ظٹط¹ ط§ظ„ط¨ظٹط§ظ†ط§طھ ظ…ط­ظ…ظٹط© ظˆظ…ط´ظپط±ط© ط£ط«ظ†ط§ط، ط§ظ„ط¬ظ„ط³ط©</span></div>
                 </div>
             </section>
         </section>
@@ -126,7 +122,7 @@
                 toggle.addEventListener("click", function () {
                     var show = password.type === "password";
                     password.type = show ? "text" : "password";
-                    toggle.setAttribute("aria-label", show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور");
+                    toggle.setAttribute("aria-label", show ? "ط¥ط®ظپط§ط، ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±" : "ط¥ط¸ظ‡ط§ط± ظƒظ„ظ…ط© ط§ظ„ظ…ط±ظˆط±");
                 });
             }
             if (form) {
@@ -135,10 +131,11 @@
                     if (!submit) { return; }
                     submit.classList.add("is-loading");
                     submit.disabled = true;
-                    submit.querySelector("span").textContent = "جار تسجيل الدخول...";
+                    submit.querySelector("span").textContent = "ط¬ط§ط± طھط³ط¬ظٹظ„ ط§ظ„ط¯ط®ظˆظ„...";
                 });
             }
         })();
     </script>
 </body>
 </html>
+

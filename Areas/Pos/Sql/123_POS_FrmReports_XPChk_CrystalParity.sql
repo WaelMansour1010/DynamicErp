@@ -246,7 +246,7 @@ BEGIN
         RETURN;
     END;
 
-    IF @key IN (N'sales-complete', N'sales-complete-2', N'sales-sectors')
+    IF @key IN (N'sales-complete', N'sales-complete-2', N'sales-governorates', N'sales-departments', N'sales-sectors')
     BEGIN
         EXEC dbo.RPT_SalesSummary_Main
             @FromDate = @fromDate,

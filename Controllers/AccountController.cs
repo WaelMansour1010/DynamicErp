@@ -9,6 +9,7 @@ using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using MyERP.Models;
+using MyERP.Services.Branding;
 
 namespace MyERP.Controllers
 {
@@ -58,6 +59,7 @@ namespace MyERP.Controllers
         public ActionResult Login(string returnUrl)
         {
             ViewBag.ReturnUrl = returnUrl;
+            ViewBag.LoginBranding = LoginBrandingResolver.ResolveForRequest(ControllerContext, returnUrl);
             return View();
         }
 
@@ -70,6 +72,8 @@ namespace MyERP.Controllers
         {
             if (!ModelState.IsValid)
             {
+                ViewBag.ReturnUrl = returnUrl;
+                ViewBag.LoginBranding = LoginBrandingResolver.ResolveForRequest(ControllerContext, returnUrl);
                 return View(model);
             }
 

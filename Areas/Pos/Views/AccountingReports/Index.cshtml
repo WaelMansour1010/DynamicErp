@@ -4,14 +4,16 @@
     Layout = string.Equals(areaName, "MainErp", StringComparison.OrdinalIgnoreCase) ? "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml" : null;
     ViewBag.Title = "تقارير الحسابات";
     var accountTreeUrl = Url.Action("AccountTree", "AccountingReports", new { area = areaName });
+    var fromDateText = Model.Filter.FromDate.HasValue ? Model.Filter.FromDate.Value.ToString("yyyy-MM-dd") : "";
+    var toDateText = Model.Filter.ToDate.HasValue ? Model.Filter.ToDate.Value.ToString("yyyy-MM-dd") : "";
 }
-<link href="@Url.Content("~/Areas/Pos/Content/html-reports.css?v=20260520-accounting-shared")" rel="stylesheet" />
+<link href="@Url.Content("~/Areas/Pos/Content/html-reports.css?v=20260520-accounting-clean-ui")" rel="stylesheet" />
 
 <main class="html-report-page erp-ui-page accounting-reports-page" data-account-tree-url="@accountTreeUrl">
     <header class="erp-hero-card">
         <div>
             <h1>تقارير الحسابات</h1>
-            <p>شاشة مشتركة بين MainErp و POS مبنية على اختيارات FrmAccountReport في VB6 وملفات Crystal الأصلية.</p>
+            <p>شاشة موحدة لعرض تقارير الحسابات من MainErp و POS بنفس الفلاتر والصلاحيات.</p>
         </div>
         <strong>@areaName</strong>
     </header>
@@ -20,6 +22,15 @@
     {
         <section class="erp-alert erp-alert-danger no-print">@Model.Message</section>
     }
+    <section id="accountingReportClientMessage" class="erp-alert erp-alert-danger no-print" style="display:none"></section>
+    <section id="accountingReportProgress" class="accounting-report-progress no-print" hidden aria-live="polite" aria-busy="true">
+        <div class="accounting-progress-head">
+            <strong id="accountingProgressTitle">جاري تشغيل التقرير</strong>
+            <span id="accountingProgressElapsed">00:00</span>
+        </div>
+        <div class="accounting-progress-bar"><span></span></div>
+        <p id="accountingProgressDetails">يتم تطبيق الفلاتر داخل قاعدة البيانات وتجهيز النتائج...</p>
+    </section>
 
     @using (Html.BeginForm("Search", "AccountingReports", new { area = areaName }, FormMethod.Post, new { id = "accountingReportForm", @class = "erp-report-form no-print" }))
     {
@@ -32,18 +43,17 @@
             <div class="erp-card-head">
                 <div>
                     <h2>اختر التقرير</h2>
-                    <p>كل اختيار هنا مربوط برقم OptAccount وملف Crystal الأصلي، وليس مجرد قالب عام.</p>
+                    <p>اختر التقرير المطلوب، ثم اضبط الفلاتر من الأسفل قبل العرض أو الطباعة أو التصدير.</p>
                 </div>
             </div>
             <div class="erp-report-grid">
                 @foreach (var report in Model.Reports)
                 {
                     var active = string.Equals(report.Key, Model.Filter.ReportKey, StringComparison.OrdinalIgnoreCase);
-                    <button type="button" class="erp-report-tile @(active ? "is-active" : "")" data-report-key="@report.Key" aria-pressed="@(active ? "true" : "false")">
+                    <button type="button" class="erp-report-tile @(active ? "is-active" : "")" data-report-key="@report.Key" aria-pressed="@(active ? "true" : "false")" title="اختيار @report.Title">
                         <span class="erp-report-dot"></span>
                         <strong>@report.Title</strong>
                         <small>@report.Description</small>
-                        <small>@report.SourceName</small>
                     </button>
                 }
             </div>
@@ -53,17 +63,17 @@
             <div class="erp-card-head">
                 <div>
                     <h2>فلاتر التقرير</h2>
-                    <p>الفلاتر تطبق داخل Stored Procedure، والحسابات تعتمد على Account_Serial/Account_Code من شجرة الحسابات.</p>
+                    <p>الفلاتر تطبق داخل قاعدة البيانات، والحسابات يتم اختيارها من شجرة الحسابات.</p>
                 </div>
             </div>
             <div class="erp-filter-grid">
                 <label class="erp-field">
                     <span>من تاريخ</span>
-                    @Html.TextBoxFor(m => m.Filter.FromDate, "{0:yyyy-MM-dd}", new { type = "date" })
+                    @Html.TextBoxFor(m => m.Filter.FromDate, new { type = "text", value = fromDateText, @class = "gregorian-date-input", inputmode = "numeric", autocomplete = "off", placeholder = "yyyy-MM-dd", pattern = "\\d{4}-\\d{2}-\\d{2}" })
                 </label>
                 <label class="erp-field">
                     <span>إلى تاريخ</span>
-                    @Html.TextBoxFor(m => m.Filter.ToDate, "{0:yyyy-MM-dd}", new { type = "date" })
+                    @Html.TextBoxFor(m => m.Filter.ToDate, new { type = "text", value = toDateText, @class = "gregorian-date-input", inputmode = "numeric", autocomplete = "off", placeholder = "yyyy-MM-dd", pattern = "\\d{4}-\\d{2}-\\d{2}" })
                 </label>
                 <label class="erp-field">
                     <span>الفرع</span>
@@ -116,9 +126,9 @@
                 </div>
             </div>
             <div class="erp-actions">
-                <button type="submit" class="erp-btn erp-btn-primary">عرض التقرير</button>
+                <button type="submit" class="erp-btn erp-btn-primary" data-progress-label="جاري تشغيل التقرير">عرض التقرير</button>
                 <button type="button" class="erp-btn erp-btn-secondary" id="htmlReportPrintBtn">طباعة</button>
-                <button type="submit" class="erp-btn erp-btn-secondary" formaction="@Url.Action("Export", "AccountingReports", new { area = areaName })">تصدير Excel</button>
+                <button type="submit" class="erp-btn erp-btn-secondary" formaction="@Url.Action("Export", "AccountingReports", new { area = areaName })" data-progress-label="جاري تجهيز ملف Excel" data-export-button="true">تصدير Excel</button>
             </div>
         </section>
     }
@@ -129,9 +139,9 @@
             <div class="erp-card-head">
                 <div>
                     <h2>@Model.ActiveReport.Title</h2>
-                    <p>@Model.ActiveReport.SourceName</p>
+                    <p>@Model.ActiveReport.Description</p>
                 </div>
-                <span class="erp-badge">@Model.ActiveReport.Description</span>
+                <span class="erp-badge">تقرير حسابات</span>
             </div>
             <div class="filter-summary erp-filter-summary">
                 <span>من تاريخ: @(Model.Filter.FromDate.HasValue ? Model.Filter.FromDate.Value.ToString("dd/MM/yyyy") : "-")</span>
@@ -202,19 +212,93 @@
 <script src="@Url.Content("~/Areas/Pos/Scripts/account-selector.js")"></script>
 <script>
 (function () {
+    var progressTimer = null;
+    var progressStartedAt = null;
+    var lastSubmitButton = null;
+    function byId(id) { return document.getElementById(id); }
+    function showClientMessage(message) {
+        var box = byId("accountingReportClientMessage");
+        if (!box) { return; }
+        box.textContent = message || "";
+        box.style.display = message ? "block" : "none";
+        if (message) { box.scrollIntoView({ behavior: "smooth", block: "center" }); }
+    }
+    function formatElapsed(ms) {
+        var total = Math.max(0, Math.floor(ms / 1000));
+        var minutes = Math.floor(total / 60);
+        var seconds = total % 60;
+        return (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+    }
+    function setBusy(isBusy) {
+        var buttons = document.querySelectorAll(".accounting-reports-page button");
+        for (var i = 0; i < buttons.length; i++) {
+            if (buttons[i].id === "htmlReportPrintBtn") { continue; }
+            buttons[i].disabled = isBusy;
+        }
+    }
+    function showProgress(title, details) {
+        var progress = byId("accountingReportProgress");
+        if (!progress) { return; }
+        byId("accountingProgressTitle").textContent = title || "جاري تشغيل التقرير";
+        byId("accountingProgressDetails").textContent = details || "يتم تطبيق الفلاتر داخل قاعدة البيانات وتجهيز النتائج...";
+        progress.hidden = false;
+        progressStartedAt = new Date().getTime();
+        byId("accountingProgressElapsed").textContent = "00:00";
+        clearInterval(progressTimer);
+        progressTimer = setInterval(function () {
+            byId("accountingProgressElapsed").textContent = formatElapsed(new Date().getTime() - progressStartedAt);
+        }, 500);
+        progress.scrollIntoView({ behavior: "smooth", block: "center" });
+        setBusy(true);
+    }
+    function hideProgress() {
+        var progress = byId("accountingReportProgress");
+        clearInterval(progressTimer);
+        progressTimer = null;
+        if (progress) { progress.hidden = true; }
+        setBusy(false);
+    }
     document.addEventListener("click", function (event) {
-        if (event.target && event.target.id === "htmlReportPrintBtn") { window.print(); }
+        var submitButton = event.target && event.target.closest ? event.target.closest('button[type="submit"]') : null;
+        if (submitButton) { lastSubmitButton = submitButton; }
+        if (event.target && event.target.id === "htmlReportPrintBtn") {
+            if (!document.getElementById("htmlReportResultCard")) {
+                showClientMessage("شغل التقرير أولا قبل الطباعة.");
+                return;
+            }
+            window.print();
+        }
         var option = event.target && event.target.closest ? event.target.closest(".erp-report-tile") : null;
         if (!option) { return; }
         var key = option.getAttribute("data-report-key") || "";
         var input = document.getElementById("ReportKey");
         if (input) { input.value = key; }
+        showClientMessage("");
         var options = document.querySelectorAll(".erp-report-tile");
         for (var i = 0; i < options.length; i++) {
             options[i].classList.toggle("is-active", options[i] === option);
             options[i].setAttribute("aria-pressed", options[i] === option ? "true" : "false");
         }
     });
+    var form = byId("accountingReportForm");
+    if (form) {
+        form.addEventListener("submit", function (event) {
+            var reportKey = (byId("ReportKey") && byId("ReportKey").value || "").trim();
+            if (!reportKey) {
+                event.preventDefault();
+                showClientMessage("اختر التقرير أولا من الكروت، ثم اضغط عرض التقرير أو تصدير Excel.");
+                return false;
+            }
+            showClientMessage("");
+            var submitter = event.submitter || lastSubmitButton;
+            var isExport = submitter && submitter.getAttribute("data-export-button") === "true";
+            showProgress(submitter && submitter.getAttribute("data-progress-label"), isExport ? "يتم تجهيز ملف Excel بنفس الفلاتر المختارة..." : "يتم تشغيل Stored Procedure وتطبيق الفلاتر وتجهيز التقرير...");
+            if (isExport) {
+                window.setTimeout(hideProgress, 5000);
+            }
+            return true;
+        });
+    }
 })();
 </script>
 

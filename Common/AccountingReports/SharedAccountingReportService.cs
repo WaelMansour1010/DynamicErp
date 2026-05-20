@@ -168,7 +168,7 @@ namespace MyERP.Common.AccountingReports
                     worksheetPart.Worksheet.Append(sheetData);
                     sheetData.Append(RowFromValues(model.ActiveReport.Title));
                     sheetData.Append(RowFromValues("من تاريخ", DateText(model.Filter.FromDate), "إلى تاريخ", DateText(model.Filter.ToDate)));
-                    sheetData.Append(RowFromValues("مصدر VB6/Crystal", model.ActiveReport.SourceName ?? string.Empty));
+                    sheetData.Append(RowFromValues("نوع التقرير", model.ActiveReport.Description ?? string.Empty));
                     sheetData.Append(new Row());
                     sheetData.Append(RowFromValues(model.Result.Columns.Select(x => x.Title).ToArray()));
                     foreach (var row in model.Result.Rows)

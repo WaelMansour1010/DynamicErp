@@ -3,6 +3,7 @@ using MyERP.Areas.MainErp.Infrastructure;
 using MyERP.Areas.MainErp.Security;
 using MyERP.Areas.MainErp.Services.Security;
 using MyERP.Areas.MainErp.ViewModels.Security;
+using MyERP.Services.Branding;
 using System.Web.Mvc;
 
 namespace MyERP.Areas.MainErp.Controllers
@@ -80,7 +81,8 @@ namespace MyERP.Areas.MainErp.Controllers
                 ReturnUrl = returnUrl,
                 ErrorMessage = errorMessage,
                 CurrentDatabaseName = MainErpDebugDatabaseOverride.GetDisplayDatabaseName(),
-                IsDebugDatabaseOverrideEnabled = MainErpDebugDatabaseOverride.IsEnabled()
+                IsDebugDatabaseOverrideEnabled = MainErpDebugDatabaseOverride.IsEnabled(),
+                Branding = LoginBrandingResolver.ResolveMainErp(Server)
             };
         }
 

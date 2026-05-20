@@ -31,7 +31,7 @@ namespace MyERP.Areas.MainErp.Controllers
         }
 
         [HttpPost]
-        public ActionResult Search(HtmlReportFilterModel filter)
+        public ActionResult Search([Bind(Prefix = "Filter")] HtmlReportFilterModel filter)
         {
             ViewBag.ActiveScreen = "accounting-reports";
             ViewBag.AccountingReportsArea = "MainErp";
@@ -47,7 +47,7 @@ namespace MyERP.Areas.MainErp.Controllers
         }
 
         [HttpPost]
-        public ActionResult Export(HtmlReportFilterModel filter)
+        public ActionResult Export([Bind(Prefix = "Filter")] HtmlReportFilterModel filter)
         {
             var model = _service.BuildPage(filter, null);
             if (model.ActiveReport == null)

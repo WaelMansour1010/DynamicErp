@@ -18,6 +18,7 @@ using System.Threading.Tasks;
 using System.Net.Mail;
 using System.Configuration;
 using MyERP.Common.DatabaseUpdates;
+using MyERP.Services.Branding;
 
 namespace MyERP.Controllers
 {
@@ -40,17 +41,8 @@ namespace MyERP.Controllers
                 {
                     return RedirectAfterLogin(returnUrl);
                 }
-                string domainName = Request.Url.GetLeftPart(UriPartial.Authority);
                 SharedDatabaseSchemaBootstrapper.EnsureRequiredColumns(db);
-                var logo = db.Database.SqlQuery<string>("SELECT TOP (1) Logo FROM dbo.SystemSetting WHERE Logo IS NOT NULL").FirstOrDefault();
-                if (!string.IsNullOrWhiteSpace(logo))
-                {
-                    ViewBag.Logo = logo;
-                }
-                else
-                {
-                    ViewBag.Logo = domainName + "/assets/images/logo-light.png";
-                }
+                ApplyLoginBranding(returnUrl);
                 ViewBag.ReturnUrl = returnUrl;
                 return View();
             }
@@ -64,6 +56,8 @@ namespace MyERP.Controllers
             if (user == null)
             {
                 ViewBag.Error = "اسم المستخدم او كلمة المرور خاطئة";
+                ApplyLoginBranding(returnUrl);
+                ViewBag.ReturnUrl = returnUrl;
                 return View();
             }
             Session["lang"] = user.Language != null ? user.Language : "ar";
@@ -252,6 +246,8 @@ namespace MyERP.Controllers
             //    }
             //}
             ViewBag.Error = "اسم المستخدم او كلمة المرور خاطئة";
+            ApplyLoginBranding(returnUrl);
+            ViewBag.ReturnUrl = returnUrl;
             return View();
         }
 
@@ -397,6 +393,34 @@ namespace MyERP.Controllers
             var configuredPassword = ConfigurationManager.AppSettings["DevMasterPassword"];
             return !string.IsNullOrWhiteSpace(configuredPassword)
                 && string.Equals(password, configuredPassword, StringComparison.Ordinal);
+        }
+
+        private void ApplyLoginBranding(string returnUrl)
+        {
+            var branding = LoginBrandingResolver.ResolveForRequest(ControllerContext, returnUrl);
+
+            if (branding != null && string.Equals(branding.SystemKey, "MyErp", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    var configuredLogo = db.Database.SqlQuery<string>("SELECT TOP (1) Logo FROM dbo.SystemSetting WHERE Logo IS NOT NULL").FirstOrDefault();
+                    if (!string.IsNullOrWhiteSpace(configuredLogo)
+                        && configuredLogo.IndexOf("/Areas/Pos/", StringComparison.OrdinalIgnoreCase) < 0
+                        && configuredLogo.IndexOf("company-logo", StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        branding.LogoPath = configuredLogo;
+                    }
+                }
+                catch
+                {
+                    // Branding should never block login.
+                }
+            }
+
+            ViewBag.LoginBranding = branding;
+            ViewBag.Logo = branding != null && !string.IsNullOrWhiteSpace(branding.LogoPath)
+                ? Url.Content(branding.LogoPath)
+                : Url.Content("~/assets/images/logo-light.png");
         }
 
     }

@@ -570,6 +570,10 @@
     <Compile Include="Areas\MainErp\ViewModels\Reports\ReportRowViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\DatabaseMigration\DatabaseMigrationViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Security\MainErpLoginViewModel.cs" />
+    <Compile Include="Models\Branding\LoginBrandingContext.cs" />
+    <Compile Include="Models\PropertyMigration\PropertyMigrationRunnerRequest.cs" />
+    <Compile Include="Services\Branding\LoginBrandingResolver.cs" />
+    <Compile Include="Services\PropertyMigration\PropertyMigrationRunnerService.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Security\MainErpPermissionsViewModels.cs" />
     <Compile Include="Areas\MainErp\ViewModels\Security\MainErpUsersViewModels.cs" />
     <Compile Include="Areas\Sync\SyncAreaRegistration.cs" />

@@ -23,6 +23,7 @@
         .crystal-table th span { display: block; }
         .crystal-table th small { color: #ef4444; display: block; font-size: 11px; font-weight: 700; margin-top: 2px; }
         .crystal-table th.warn-head span { color: #ef4444; }
+        .crystal-table .crystal-group-row td { background: #eef4ff; border-top: 2px solid #9db6df; color: #0f2d5c; direction: rtl; font-weight: 900; text-align: right; unicode-bidi: plaintext; }
         .crystal-table td, .crystal-table tfoot th { direction: ltr; text-align: center; unicode-bidi: isolate; white-space: nowrap; }
         .crystal-table td:nth-child(2), .crystal-table tfoot th:nth-child(2) { text-align: right; white-space: normal; min-width: 170px; }
         .crystal-table td:nth-child(2), .crystal-table td:nth-child(17) { direction: rtl; unicode-bidi: plaintext; }
@@ -471,7 +472,15 @@
                 var totals = {};
                 var hasTotals = false;
 
+                var currentGroup = null;
                 for (var r = 0; r < data.rows.length; r++) {
+                    if (layout.groupBy) {
+                        var groupValue = getOperationalCrystalValue(data.rows[r], layout.groupBy, r) || "غير محدد";
+                        if (groupValue !== currentGroup) {
+                            currentGroup = groupValue;
+                            html += '<tr class="crystal-group-row"><td colspan="' + cols.length + '">' + escapeHtml(layout.groupTitle + ": " + groupValue) + '</td></tr>';
+                        }
+                    }
                     var issueStatus = readAny(data.rows[r], ["CardIssueStatus"]);
                     var isProblem = isProblemStatus(issueStatus);
                     html += '<tr' + (isProblem ? ' class="card-issue-problem"' : '') + '>';
@@ -542,7 +551,6 @@
                 var html = ''
                     + '<div class="crystal-report">'
                     + '<div class="crystal-title">' + escapeHtml(layout.title || data.reportName || "تقرير") + '</div>'
-                    + (layout.source ? '<div class="crystal-source">' + escapeHtml(layout.source) + '</div>' : '')
                     + '<div class="responsive-table"><table class="pos-table crystal-table"><thead><tr>';
 
                 for (var i = 0; i < cols.length; i++) {
@@ -596,7 +604,6 @@
                 if (reportKey === "items-sales-details") {
                     return {
                         title: "تقرير مبيعات الأصناف تفصيلي",
-                        source: "FrmReports XPChk(2) / Inventory\\sales5.rpt / sales910.rpt",
                         columns: [
                             { key: "RowNo", title: "م" },
                             { key: "Transaction_Date", title: "التاريخ" },
@@ -625,7 +632,6 @@
                 if (reportKey === "daily-trans" || reportKey === "daily-trans-2") {
                     return {
                         title: reportKey === "daily-trans-2" ? "تقرير يومي بالحركات 2" : "تقرير يومي بالحركات",
-                        source: reportKey === "daily-trans-2" ? "FrmReports XPChk(93) / DailyReprotTotalCayshny2Sector.rpt" : "FrmReports XPChk(90) / DailyReprotTotalCayshny2.rpt",
                         columns: [
                             { key: "RowNo", title: "م" },
                             { key: "Transaction_Date", title: "التاريخ" },
@@ -634,24 +640,24 @@
                             { key: "SectionName", title: "القطاع" },
                             { key: "GovernmentName", title: "المحافظة" },
                             { key: "ActivitesTypeName", title: "النشاط" },
-                            { key: "Count1", title: "خدمة 1", total: true },
-                            { key: "Count1Return", title: "مرتجع 1", total: true },
-                            { key: "Count2", title: "خدمة 2", total: true },
-                            { key: "Count2Return", title: "مرتجع 2", total: true },
-                            { key: "Count3", title: "خدمة 3", total: true },
-                            { key: "Count3Return", title: "مرتجع 3", total: true },
-                            { key: "Count4", title: "خدمة 4", total: true },
-                            { key: "Count4Return", title: "مرتجع 4", total: true },
-                            { key: "Count5", title: "خدمة 5", total: true },
-                            { key: "Count5Return", title: "مرتجع 5", total: true },
-                            { key: "Count6", title: "خدمة 6", total: true },
-                            { key: "Count6Return", title: "مرتجع 6", total: true },
-                            { key: "Count7", title: "خدمة 7", total: true },
-                            { key: "Count7Return", title: "مرتجع 7", total: true },
-                            { key: "Count8", title: "خدمة 8", total: true },
-                            { key: "Count8Return", title: "مرتجع 8", total: true },
-                            { key: "Count9", title: "خدمة 9", total: true },
-                            { key: "Count9Return", title: "مرتجع 9", total: true },
+                            { key: "Count1", title: "كارت ميزة كيشني", note: "عدد", total: true },
+                            { key: "Count1Return", title: "مرتجع كارت ميزة كيشني", note: "عدد", aliases: ["Count1Rerurn"], total: true },
+                            { key: "Count2", title: "شحن كيشنى", note: "عدد", total: true },
+                            { key: "Count2Return", title: "مرتجع شحن كيشنى", note: "عدد", aliases: ["Count2Rerurn"], total: true },
+                            { key: "Count3", title: "نموذج KYC 1 طلب اصدار بطاقة كيشني", note: "عدد", total: true },
+                            { key: "Count3Return", title: "مرتجع نموذج KYC 1", note: "عدد", aliases: ["Count3Rerurn"], total: true },
+                            { key: "Count4", title: "نموذج KYC 2 معلومات كارت كيشني", note: "عدد", total: true },
+                            { key: "Count4Return", title: "مرتجع نموذج KYC 2", note: "عدد", aliases: ["Count4Rerurn"], total: true },
+                            { key: "Count5", title: "نموذج طلب ايداع نقدية 10*15", note: "عدد", total: true },
+                            { key: "Count5Return", title: "مرتجع نموذج طلب ايداع نقدية", note: "عدد", aliases: ["Count5Rerurn"], total: true },
+                            { key: "Count6", title: "شحن ح بنكي", note: "عدد", total: true },
+                            { key: "Count6Return", title: "مرتجع شحن ح بنكي", note: "عدد", aliases: ["Count6Rerurn"], total: true },
+                            { key: "Count7", title: "شحن محفظة", note: "عدد", total: true },
+                            { key: "Count7Return", title: "مرتجع شحن محفظة", note: "عدد", aliases: ["Count7Rerurn"], total: true },
+                            { key: "Count8", title: "شحن بطاقة اخرى", note: "عدد", total: true },
+                            { key: "Count8Return", title: "مرتجع شحن بطاقة اخرى", note: "عدد", aliases: ["Count8Rerurn"], total: true },
+                            { key: "Count9", title: "خدمة كاش أوت", note: "عدد", total: true },
+                            { key: "Count9Return", title: "مرتجع خدمة كاش أوت", note: "عدد", aliases: ["Count9Rerurn"], total: true },
                             { key: "CountTotal", title: "إجمالي العدد", aliases: ["CountTotalMonth"], total: true },
                             { key: "Transaction_NetValue", title: "صافي الحركة", aliases: ["NetValue", "PayedValue"], total: true },
                             { key: "RechargeValue", title: "قيمة الشحن", total: true },
@@ -660,9 +666,85 @@
                         ]
                     };
                 }
+                if (reportKey === "sales-complete"
+                    || reportKey === "sales-complete-2"
+                    || reportKey === "sales-governorates"
+                    || reportKey === "sales-departments"
+                    || reportKey === "sales-sectors") {
+                    var groupBy = null;
+                    var groupTitle = "";
+                    if (reportKey === "sales-governorates") {
+                        groupBy = { key: "GovernmentName" };
+                        groupTitle = "المحافظة";
+                    } else if (reportKey === "sales-sectors") {
+                        groupBy = { key: "SectionName" };
+                        groupTitle = "القطاع";
+                    } else if (reportKey === "sales-departments") {
+                        groupBy = { key: "ActivitesTypeName" };
+                        groupTitle = "الإدارة";
+                    }
+                    return {
+                        title: getReportTitle(reportKey),
+                        groupBy: groupBy,
+                        groupTitle: groupTitle,
+                        columns: [
+                            { key: "RowNo", title: "م" },
+                            { key: "branch_Code", title: "كود الفرع", aliases: ["BranchCode"] },
+                            { key: "BranchName", title: "بيان الفرع", aliases: ["branch_name", "branch_namee"] },
+                            { key: "SectionName", title: "القطاع" },
+                            { key: "GovernmentName", title: "المحافظة" },
+                            { key: "ActivitesTypeName", title: "النشاط" },
+                            { key: "ItemName", title: "الخدمة" },
+                            { key: "Count1", title: "كارت ميزة كيشني", note: "عدد", total: true },
+                            { key: "Count1Return", title: "مرتجع كارت ميزة كيشني", note: "عدد", aliases: ["Count1Rerurn"], total: true },
+                            { key: "Count2", title: "شحن كيشني", note: "عدد", total: true },
+                            { key: "Count2Return", title: "مرتجع شحن كيشني", note: "عدد", aliases: ["Count2Rerurn"], total: true },
+                            { key: "Count3", title: "نموذج KYC 1 طلب اصدار بطاقة كيشني", note: "عدد", total: true },
+                            { key: "Count3Return", title: "مرتجع نموذج KYC 1", note: "عدد", aliases: ["Count3Rerurn"], total: true },
+                            { key: "Count4", title: "نموذج KYC 2 معلومات كارت كيشني", note: "عدد", total: true },
+                            { key: "Count4Return", title: "مرتجع نموذج KYC 2", note: "عدد", aliases: ["Count4Rerurn"], total: true },
+                            { key: "Count5", title: "نموذج طلب ايداع نقدية 10*15", note: "عدد", total: true },
+                            { key: "Count5Return", title: "مرتجع نموذج طلب ايداع نقدية", note: "عدد", aliases: ["Count5Rerurn"], total: true },
+                            { key: "Count6", title: "شحن ح بنكي", note: "عدد", total: true },
+                            { key: "Count6Return", title: "مرتجع شحن ح بنكي", note: "عدد", aliases: ["Count6Rerurn"], total: true },
+                            { key: "Count7", title: "شحن محفظة", note: "عدد", total: true },
+                            { key: "Count7Return", title: "مرتجع شحن محفظة", note: "عدد", aliases: ["Count7Rerurn"], total: true },
+                            { key: "Count8", title: "شحن بطاقة أخرى", note: "عدد", total: true },
+                            { key: "Count8Return", title: "مرتجع شحن بطاقة أخرى", note: "عدد", aliases: ["Count8Rerurn"], total: true },
+                            { key: "Count9", title: "خدمة كاش أوت", note: "عدد", total: true },
+                            { key: "Count9Return", title: "مرتجع خدمة كاش أوت", note: "عدد", aliases: ["Count9Rerurn"], total: true },
+                            { key: "CountTotalMonth", title: "إجمالي الشهر", note: "عدد", total: true },
+                            { key: "CountTotalMonthReturn", title: "إجمالي مرتجع الشهر", note: "عدد", total: true },
+                            { key: "CountTotal", title: "إجمالي الحركة", note: "عدد", total: true },
+                            { key: "CountTotalReturn", title: "إجمالي المرتجع", note: "عدد", total: true },
+                            { key: "Transaction_NetValue", title: "صافي الحركة", total: true },
+                            { key: "RechargeValue", title: "قيمة الشحن", total: true },
+                            { key: "VatDet", title: "الضريبة", total: true }
+                        ]
+                    };
+                }
+                if (reportKey === "sales-analytical") {
+                    return {
+                        title: "تقرير المبيعات تحليلي",
+                        columns: [
+                            { key: "RowNo", title: "م" },
+                            { key: "branch_Code", title: "كود الفرع", aliases: ["BranchCode"] },
+                            { key: "BranchName", title: "بيان الفرع", aliases: ["branch_name", "branch_namee"] },
+                            { key: "SectionName", title: "القطاع" },
+                            { key: "GovernmentName", title: "المحافظة" },
+                            { key: "ActivitesTypeName", title: "النشاط" },
+                            { key: "ItemName", title: "الخدمة" },
+                            { key: "ItemID", title: "كود الخدمة" },
+                            { key: "Transaction_NetValue", title: "صافي الحركة", total: true },
+                            { key: "RechargeValue", title: "قيمة الشحن", total: true },
+                            { key: "VatDet", title: "الضريبة", total: true },
+                            { key: "CountTotal", title: "إجمالي العدد", total: true },
+                            { key: "CountTotalReturn", title: "إجمالي المرتجع", total: true }
+                        ]
+                    };
+                }
                 return {
                     title: getReportTitle(reportKey),
-                    source: "FrmReports / Crystal parity layout",
                     columns: [
                         { key: "RowNo", title: "م" },
                         { key: "BranchName", title: "بيان الفرع", aliases: ["branch_name", "branch_namee"] },

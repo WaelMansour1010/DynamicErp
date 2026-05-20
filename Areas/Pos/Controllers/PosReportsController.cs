@@ -211,7 +211,7 @@ namespace MyERP.Areas.Pos.Controllers
                 new PosReportDefinition("sales-departments", "تقرير المبيعات الشامل بالإدارات", "sales", admin || context.CanReportSalesCompleteDepartments, true, "تقرير مبيعات حسب الإدارات"),
                 new PosReportDefinition("sales-sectors", "تقرير المبيعات الشامل بالقطاعات", "sales", admin || context.CanReportDailyTransactionsSectors, true, "تقرير مبيعات حسب القطاعات"),
                 new PosReportDefinition("sales-analytical", "تقرير المبيعات تحليلي", "sales", admin || context.CanReportSalesCompleteAnalytical, true, "تقرير تحليلي"),
-                new PosReportDefinition("items-sales-details", "تقرير مبيعات الأصناف تفصيلي", "sales", admin || context.CanReportSalesComplete, true, "FrmReports XPChk(2) / Inventory\\sales5.rpt / sales910.rpt"),
+                new PosReportDefinition("items-sales-details", "تقرير مبيعات الأصناف تفصيلي", "sales", admin || context.CanReportSalesComplete, true, "تقرير تفصيلي حسب الأصناف"),
                 new PosReportDefinition("general-sales", "تقرير المبيعات العام", "closings", admin || context.CanReportAllSales, true, "Command8 / CloseReprotTotal.rpt"),
                 new PosReportDefinition("revenues", "تقرير الإيرادات", "closings", admin || context.CanViewReports, true, "Command10 / CloseReprotTotal2FastMini2.rpt"),
                 new PosReportDefinition("web-invoices", "تقرير فواتير الويب", "sales", admin || context.CanViewReports, true, "عدد فواتير الويب حسب المستخدم"),

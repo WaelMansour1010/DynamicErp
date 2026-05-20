@@ -39,7 +39,7 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpPost]
-        public ActionResult Search(HtmlReportFilterModel filter)
+        public ActionResult Search([Bind(Prefix = "Filter")] HtmlReportFilterModel filter)
         {
             var context = GetPosContext();
             if (context == null)
@@ -65,7 +65,7 @@ namespace MyERP.Areas.Pos.Controllers
         }
 
         [HttpPost]
-        public ActionResult Export(HtmlReportFilterModel filter)
+        public ActionResult Export([Bind(Prefix = "Filter")] HtmlReportFilterModel filter)
         {
             var context = GetPosContext();
             if (context == null)

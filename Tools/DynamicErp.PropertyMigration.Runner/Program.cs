@@ -9,6 +9,7 @@ namespace DynamicErp.PropertyMigration.Runner;
 internal static class Program
 {
     private static readonly string[] SafeTargetMarkers = ["Clone", "Sandbox", "PropertyPilot", "ReadyToTest", "PilotClone", "Migration"];
+    private static readonly string[] UnsafeTargetMarkers = ["Production", "GoLive", "_Live", "Live_"];
     private static readonly HashSet<string> BlockedDatabaseNames = new(StringComparer.OrdinalIgnoreCase)
     {
         "Alromaizan", "MyErp", "Adnan", "RSMDB"
@@ -129,9 +130,21 @@ internal static class Program
             {
                 await RunStepAsync("CashingType8FinanceApproval", CashingType8FinanceApprovalAsync);
             }
+            if (_config.IncludeApplyFinanceApprovals)
+            {
+                await RunStepAsync("ApplyFinanceApprovals", ApplyFinanceApprovalsAsync);
+            }
+            if (_config.IncludeMiniAccountingPilotExecute)
+            {
+                await RunStepAsync("MiniAccountingPilotExecute", MiniAccountingPilotExecuteAsync);
+            }
             if (_config.IncludeAccountingPilotExecute)
             {
                 await RunStepAsync("AccountingPilotExecute", AccountingPilotExecuteAsync);
+            }
+            if (_config.IncludeMiniAccountingPilotRollback)
+            {
+                await RunStepAsync("MiniAccountingPilotRollback", MiniAccountingPilotRollbackAsync);
             }
             if (_config.IncludeAccountingRollback)
             {
@@ -184,6 +197,16 @@ internal static class Program
                 throw new InvalidOperationException($"Blocked target database name: {_config.TargetCloneDatabaseName}.");
             }
 
+            if (_config.SourceDatabaseName.Equals(_config.TargetCloneDatabaseName, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Source and target clone databases must be different.");
+            }
+
+            if (UnsafeTargetMarkers.Any(m => _config.TargetCloneDatabaseName.Contains(m, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new InvalidOperationException("Target database name contains a production/live marker. Use an isolated clone/sandbox database.");
+            }
+
             if (!SafeTargetMarkers.Any(m => _config.TargetCloneDatabaseName.Contains(m, StringComparison.OrdinalIgnoreCase)))
             {
                 throw new InvalidOperationException("Target database name must contain Clone, Sandbox, PropertyPilot, ReadyToTest, PilotClone, or Migration.");
@@ -197,6 +220,11 @@ internal static class Program
         if (!Enum.TryParse<MigrationMode>(_config.MigrationMode, ignoreCase: true, out _))
             {
                 throw new InvalidOperationException("MigrationMode must be Strict, Tolerant, or Hybrid.");
+            }
+
+            if (_config.BatchId == Guid.Empty && _options.Execute)
+            {
+                throw new InvalidOperationException("Execute mode requires an explicit non-empty BatchId in config.");
             }
 
             if (_config.BatchId == Guid.Empty)
@@ -403,6 +431,43 @@ SELECT
             AddInfo("CashingType8FinanceApproval", $"No customer-specific CashingType=8 finance approval template is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
         }
 
+        private async Task ApplyFinanceApprovalsAsync()
+        {
+            if (_config.SourceDatabaseName.Equals("RSMDB", StringComparison.OrdinalIgnoreCase))
+            {
+                await RunSqlTemplateAsync("RSMDB_CashingType8_ApplyFinanceApprovals_20260520.sql", readOnly: false);
+                await RunSqlTemplateAsync("RSMDB_CashingType8_ReceiptCandidateBuild_20260520.sql", readOnly: false);
+                AddInfo("ApplyFinanceApprovals", "Applied RSMDB CashingType=8 Score>=60 finance approvals on clone and rebuilt the ReadySet. No accounting posting was created.");
+                return;
+            }
+
+            AddInfo("ApplyFinanceApprovals", $"No customer-specific approval apply template is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
+        }
+
+        private async Task MiniAccountingPilotExecuteAsync()
+        {
+            if (_config.SourceDatabaseName.Equals("RSMDB", StringComparison.OrdinalIgnoreCase))
+            {
+                await RunSqlTemplateAsync("RSMDB_CashingType8_MiniAccountingPilot_20260520.sql", readOnly: false);
+                AddInfo("MiniAccountingPilotExecute", "Executed RSMDB CashingType=8 mini accounting pilot on clone only.");
+                return;
+            }
+
+            AddInfo("MiniAccountingPilotExecute", $"No customer-specific mini accounting pilot execute template is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
+        }
+
+        private async Task MiniAccountingPilotRollbackAsync()
+        {
+            if (_config.SourceDatabaseName.Equals("RSMDB", StringComparison.OrdinalIgnoreCase))
+            {
+                await RunSqlTemplateAsync("RSMDB_CashingType8_MiniAccountingPilotRollback_20260520.sql", readOnly: false);
+                AddInfo("MiniAccountingPilotRollback", "Rolled back RSMDB CashingType=8 mini accounting pilot batch on clone only.");
+                return;
+            }
+
+            AddInfo("MiniAccountingPilotRollback", $"No customer-specific mini accounting pilot rollback template is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
+        }
+
         private async Task ReadOnlySafetyValidationAsync()
         {
             await using var target = new SqlConnection(BuildConnectionString(_config.TargetCloneDatabaseName));
@@ -526,6 +591,18 @@ SELECT Contracts = CASE WHEN OBJECT_ID(N'dbo.PropertyContract') IS NULL THEN 0 E
             if (_config.IncludeCashingType8FinanceApproval)
             {
                 AddInfo("ExecutionPlan", "CashingType8FinanceApproval stage enabled: creates scoped finance review pack and approval impact simulation only; no accounting migration.");
+            }
+            if (_config.IncludeApplyFinanceApprovals)
+            {
+                AddInfo("ExecutionPlan", "ApplyFinanceApprovals stage enabled: applies scoped finance approvals and rebuilds CashingType=8 ReadySet on clone only.");
+            }
+            if (_config.IncludeMiniAccountingPilotExecute)
+            {
+                AddInfo("ExecutionPlan", "MiniAccountingPilotExecute stage enabled: executes the approved CashingType=8 mini accounting pilot on clone only.");
+            }
+            if (_config.IncludeMiniAccountingPilotRollback)
+            {
+                AddInfo("ExecutionPlan", "MiniAccountingPilotRollback stage enabled: rolls back only the mini pilot batch.");
             }
             AddInfo("ExecutionPlan", $"Selected modules: Accounting={_config.IncludeAccounting}, Receipts={_config.IncludeHistoricalReceipts}, Issues={_config.IncludeIssues}, Journals={_config.IncludeJournalEntries}, AdvancePayments={_config.IncludeAdvancePayments}, Terminations={_config.IncludeTerminations}.");
             AddInfo("ExecutionPlan", $"ControlledPipelineOnly={_config.SkipCustomerSpecificMigrationTemplates}.");
@@ -714,6 +791,7 @@ SELECT CriticalCount =
                 .Replace("$(CustomerCode)", EscapeSqlLiteral(_config.CustomerCode), StringComparison.OrdinalIgnoreCase)
                 .Replace("$(SourceDatabaseName)", EscapeSqlLiteral(_config.SourceDatabaseName), StringComparison.OrdinalIgnoreCase)
                 .Replace("$(TargetCloneDatabaseName)", EscapeSqlLiteral(_config.TargetCloneDatabaseName), StringComparison.OrdinalIgnoreCase)
+                .Replace("$(OperationalBatchId)", (_config.OperationalBatchId == Guid.Empty ? _config.BatchId : _config.OperationalBatchId).ToString(), StringComparison.OrdinalIgnoreCase)
                 .Replace("$(CutoffDate)", _config.CutoffDate.ToString("yyyy-MM-dd"), StringComparison.OrdinalIgnoreCase)
                 .Replace("$(MigrationMode)", EscapeSqlLiteral(_config.MigrationMode), StringComparison.OrdinalIgnoreCase);
         }
@@ -834,6 +912,7 @@ internal sealed class MigrationRunnerConfig
     public string? ConnectionStringEnvironmentVariable { get; set; }
     public string MigrationMode { get; set; } = "Hybrid";
     public Guid BatchId { get; set; } = Guid.NewGuid();
+    public Guid OperationalBatchId { get; set; }
     public DateTime CutoffDate { get; set; } = DateTime.Today;
     public bool DryRun { get; set; } = true;
     public bool IncludeAccounting { get; set; }
@@ -855,6 +934,9 @@ internal sealed class MigrationRunnerConfig
     public bool IncludeReceiptAllocationDiscovery { get; set; }
     public bool IncludeCashingType8ReceiptCandidateBuild { get; set; }
     public bool IncludeCashingType8FinanceApproval { get; set; }
+    public bool IncludeApplyFinanceApprovals { get; set; }
+    public bool IncludeMiniAccountingPilotExecute { get; set; }
+    public bool IncludeMiniAccountingPilotRollback { get; set; }
     public bool ExcludeUnsafePayments { get; set; } = true;
     public bool BackupVerified { get; set; }
     public bool ExecutionPlanApproved { get; set; }

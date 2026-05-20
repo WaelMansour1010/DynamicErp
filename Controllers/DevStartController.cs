@@ -1,9 +1,13 @@
-using MyERP.Areas.MainErp.Infrastructure;
+﻿using MyERP.Areas.MainErp.Infrastructure;
 using MyERP.Infrastructure;
+using MyERP.Models.PropertyMigration;
+using MyERP.Services.PropertyMigration;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
+using System.Diagnostics;
+using System.IO;
 using System.Web.Mvc;
 
 namespace MyERP.Controllers
@@ -81,6 +85,77 @@ namespace MyERP.Controllers
             return RedirectToAction("Index");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult PropertyMigrationDryRun(PropertyMigrationRunnerRequest request)
+        {
+            if (!IsEnabled())
+            {
+                return HttpNotFound();
+            }
+
+            var result = new PropertyMigrationRunnerService().Run(request, true);
+            StorePropertyMigrationResult(result);
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult PropertyMigrationRunStage(PropertyMigrationRunnerRequest request)
+        {
+            if (!IsEnabled())
+            {
+                return HttpNotFound();
+            }
+
+            var result = new PropertyMigrationRunnerService().Run(request, false);
+            StorePropertyMigrationResult(result);
+            return RedirectToAction("Index");
+        }
+
+        [HttpGet]
+        public ActionResult PropertyMigrationLatestReport()
+        {
+            if (!IsEnabled())
+            {
+                return HttpNotFound();
+            }
+
+            var path = new PropertyMigrationRunnerService().GetLatestReportPath();
+            if (string.IsNullOrWhiteSpace(path) || !System.IO.File.Exists(path))
+            {
+                return Content("No Property Migration Runner report was found.", "text/plain");
+            }
+
+            return Content(System.IO.File.ReadAllText(path), "text/plain");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult OpenPropertyMigrationReportsFolder()
+        {
+            if (!IsEnabled())
+            {
+                return HttpNotFound();
+            }
+
+            OpenFolderSafe(new PropertyMigrationRunnerService().GetReportsDirectory());
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult OpenPropertyMigrationDocsFolder()
+        {
+            if (!IsEnabled())
+            {
+                return HttpNotFound();
+            }
+
+            OpenFolderSafe(new PropertyMigrationRunnerService().GetToolkitDocsDirectory());
+            return RedirectToAction("Index");
+        }
+
         private void PopulateViewBag()
         {
             ViewBag.KishnyCashConnection = DescribeConnection("KishnyCashConnection");
@@ -91,6 +166,11 @@ namespace MyERP.Controllers
             ViewBag.MainErpSelectedDatabase = MainErpDebugDatabaseOverride.GetSelectedDatabaseName();
             ViewBag.MainErpDisplayDatabase = MainErpDebugDatabaseOverride.GetDisplayDatabaseName();
             ViewBag.OriginalWebDebugDatabase = DebugConnectionStringOverride.GetOriginalWebDatabase();
+            var propertyMigrationService = new PropertyMigrationRunnerService();
+            ViewBag.PropertyMigrationSources = propertyMigrationService.GetDefaultSourceDatabases();
+            ViewBag.PropertyMigrationTargets = propertyMigrationService.GetDefaultTargetDatabases();
+            ViewBag.PropertyMigrationReportsDirectory = propertyMigrationService.GetReportsDirectory();
+            ViewBag.PropertyMigrationDocsDirectory = propertyMigrationService.GetToolkitDocsDirectory();
         }
 
         private static IEnumerable<SelectListItem> GetMainErpConnectionOptions()
@@ -131,6 +211,37 @@ namespace MyERP.Controllers
             }
         }
 
+        private void StorePropertyMigrationResult(PropertyMigrationRunnerResult result)
+        {
+            TempData["PropertyMigrationStatus"] = result.Status;
+            TempData["PropertyMigrationMessage"] = result.Message;
+            TempData["PropertyMigrationReportPath"] = result.ReportPath;
+            TempData["PropertyMigrationBatchId"] = result.BatchId;
+            TempData["PropertyMigrationOutput"] = Truncate(result.StandardOutput, 3000);
+            TempData["PropertyMigrationError"] = Truncate(result.StandardError, 3000);
+        }
+
+        private static void OpenFolderSafe(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return;
+            }
+
+            Directory.CreateDirectory(path);
+            Process.Start(new ProcessStartInfo("explorer.exe", "\"" + path + "\"") { UseShellExecute = false });
+        }
+
+        private static string Truncate(string value, int maxLength)
+        {
+            if (string.IsNullOrEmpty(value) || value.Length <= maxLength)
+            {
+                return value;
+            }
+
+            return value.Substring(0, maxLength) + "...";
+        }
+
         private bool IsEnabled()
         {
 #if DEBUG
@@ -141,3 +252,6 @@ namespace MyERP.Controllers
         }
     }
 }
+
+
+

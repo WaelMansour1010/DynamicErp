@@ -1,34 +1,43 @@
-﻿# Property Migration Toolkit - Final Decision
-Date: 2026-05-20
+﻿# PropertyMigrationToolkit Final Decision - 2026-05-20
 
-## Decision
-The toolkit has been upgraded from safe migration templates into an Enterprise Property Migration Engine design. It now supports Strict/Tolerant/Hybrid modes, fallback handling, AutoFix logging, Review Queue, Suspense strategy, reconciliation gates, and a Runner/UI path.
+## Final Decision
 
-## Ready Now
-- Enterprise architecture docs.
-- Mode model.
-- AutoFix/Fallback framework.
-- Exception and Review Queue framework.
-- Accounting safety and suspense strategy.
-- Runner architecture and workflow.
-- Updated SQL core framework.
-- Generic SQL templates with mode/config gates.
+PropertyMigrationToolkit is approved as a production-grade internal migration platform for clone-based property migration preparation, pilots, ReadyToTest delivery, and controlled finance-approved accounting pilots.
 
-## Still Requires Implementation Later
-- Actual Console Runner executable.
-- Admin UI page.
-- Customer-specific generated SELECTs for each VB6 schema.
-- Production approval workflow.
-- Automated report renderer.
+It is not approved as an unattended full production GoLive engine.
 
-## Recommended Next Engineering Step
-Build a small Console Runner that:
-1. Reads JSON/config table.
-2. Validates Source/Target/Backup.
-3. Runs SQL templates by stage.
-4. Writes progress to RunLog.
-5. Exports ReviewQueue and Reconciliation report.
+## What Is Ready
 
-## Go / No-Go
-Go for using the toolkit as the standard migration framework for future VB6 property customers.
-No-Go for fully automated production migration until the runner and at least one more customer case, ideally RSMDB, validate the approach.
+- Console Runner with safety gates.
+- Config-driven execution.
+- Strict/Tolerant/Hybrid modes.
+- Generic templates for core property migration.
+- Intelligence layer and review queue pattern.
+- Finance-assisted account mapping workflow.
+- RSMDB CashingType=8 mini accounting pilot pattern.
+- Rollback validation pattern.
+- Final safety, regression, runner, and packaging docs.
+
+## What Still Requires Approval
+
+- Any production migration.
+- Any broad accounting migration.
+- Owner payments.
+- Suspense usage.
+- Weak/Manual/Blocked records.
+- NoteType 9088/termination migration.
+
+## Final Recommendation
+
+Use the toolkit for new clients in this order:
+
+1. Clone source/reference target.
+2. Run DryRun/Discovery/Diagnostics.
+3. Build staging and mappings.
+4. Run Intelligence.
+5. Resolve finance approvals.
+6. Execute a small clone pilot.
+7. Validate web and accounting.
+8. Roll back and repeat with wider scope.
+9. Deliver ReadyToTest.
+10. Prepare separate GoLive plan only after sign-off.
