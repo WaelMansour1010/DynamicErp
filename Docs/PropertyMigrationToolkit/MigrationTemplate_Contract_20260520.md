@@ -32,6 +32,30 @@ Generic templates must not query old VB6 tables directly. Customer-specific mapp
 - `PropertyMigrationSourceJournal`
 - `PropertyMigrationSourceJournalLine`
 - `PropertyMigrationSourceTermination`
+- `PropertyMigrationSourceOwner`
+- `PropertyMigrationSourcePropertyOwner`
+- `PropertyMigrationSourceOwnerBalance`
+- `PropertyMigrationSourceOwnerPayment`
+
+
+## Owner/Landlord Contract
+
+Owners are first-class property entities, not renters and not generic suppliers. Customer-specific staging scripts must populate owner data separately when the source system contains owner or landlord relationships.
+
+Required owner semantics:
+
+- `PropertyMigrationSourceOwner` stores owner master data and optional owner account code.
+- `PropertyMigrationSourcePropertyOwner` stores the property-to-owner relationship and ownership percentage when available.
+- `PropertyMigrationSourceOwnerBalance` stores owner payable/receivable balances as staging/review data only until finance sign-off.
+- `PropertyMigrationSourceOwnerPayment` stores owner payment vouchers as manual-review by default.
+
+Owner safety rules:
+
+- Do not infer owner = renter.
+- Do not migrate owner payments unless owner, property/contract link, payment source, and account mapping are all proven.
+- If multiple owners or ownership percentages exist but the target schema supports only a single `PropertyOwnerId`, create Review Queue items before updating target ownership.
+- Owner payment journals must follow the same accounting safety gates as all other journals: no `AccountId=NULL`, balanced debit/credit, and no unsafe same-account debit/credit.
+- SourceType-based owner payments, including `SourceTypeId=13`, remain Manual Review until validated against source code and data for that customer.
 
 ## Outputs
 

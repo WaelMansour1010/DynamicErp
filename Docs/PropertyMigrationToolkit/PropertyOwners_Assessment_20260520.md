@@ -1,107 +1,58 @@
-﻿# Property Owners / Landlords Assessment - 2026-05-20
+# Property Owners / Landlords Assessment - 2026-05-20
 
-## Executive Finding
+## Executive Summary
 
-Yes, Property Owners / Landlords were under-documented in the earlier toolkit design. They are a first-class property entity in VB6 and DynamicErp.
+Property owners were under-documented in the earlier PropertyMigrationToolkit design. The migration model previously treated properties, units, renters, contracts, installments, receipts, and journals as first-class entities, but owner/landlord data was not explicitly modeled. This is now corrected in the staging contract and generic templates.
 
-## DynamicErp Target Model
+## Findings By Database
 
-Reference databases `Alromaizan` and `MyErp` contain:
-
-- `PropertyOwner`
-- `Property.PropertyOwnerId`
-
-`PropertyOwner` columns include:
-
-- `Id`
-- `Code`
-- `ArName`
-- `EnName`
-- `DepartmentId`
-- `Agent`
-- `AgencyNo`
-- `ContactPerson`
-- `AccountId`
-- `VATNo`
-- `Phone`
-- `Mobile`
-- `Fax`
-- `Email`
-- `Address`
-
-`Property.PropertyOwnerId` links property to its primary owner.
-
-## Adnan Findings
-
-Old owner source:
-
-- Owner master data is not a separate owner-only table.
-- Owners are rows in `TblCustemers`.
-- Property-owner link is `TblAqar.ownerid -> TblCustemers.CusID`.
-- `TblCustemers.Owner` exists as a flag.
-- Owner account candidates: `TblCustemers.Account_Code`, `Account_Code_As_Supplier`, `Account_Code2`, and property-specific `AccountAccountAqar`.
-
-Counts:
-
-- `TblAqar`: `28`
-- Properties with ownerid: `28`
-- Distinct owners from properties: `3`
-- `TblAqrOwin`: `0`
-- `TblOwnerPayment`: `0`
-- `TblNotesOwnerPayment`: `0`
-
-## RSMDB Findings
-
-Old owner source follows the same model:
-
-- Owner master data: `TblCustemers`
-- Property-owner link: `TblAqar.ownerid -> TblCustemers.CusID`
-- Owner payable/schedule candidate: `TblAqrOwin`
-- Owner payment tables exist but are empty in current discovery: `TblOwnerPayment`, `TblNotesOwnerPayment`
-
-Counts:
-
-- `TblAqar`: `16`
-- Properties with ownerid: `16`
-- Distinct owners from properties: `4`
-- `TblAqrOwin`: `4`
-- `TblOwnerPayment`: `0`
-- `TblNotesOwnerPayment`: `0`
+| Database | Owner Master Source | Property Link | Owner Payables / Payments | Notes |
+|---|---|---|---|---|
+| Adnan | `TblCustemers` via `TblAqar.ownerid = TblCustemers.CusID` | `TblAqar.ownerid` | `TblAqrOwin`, `TblOwnerPayment`, `TblNotesOwnerPayment` exist but current row counts are zero | 28 properties, all have owner id, 3 distinct owners |
+| RSMDB | `TblCustemers` via `TblAqar.ownerid = TblCustemers.CusID` | `TblAqar.ownerid` | `TblAqrOwin` has 4 owner payable candidate rows; `TblOwnerPayment` and `TblNotesOwnerPayment` are zero | 16 properties, all have owner id, 4 distinct owners |
+| Alromaizan | `PropertyOwner` | `Property.PropertyOwnerId` | No observed `CashIssueVoucher` owner rows in current sample | Existing production/reference clone has minimal owner data |
+| MyErp | `PropertyOwner` | `Property.PropertyOwnerId` | `CashIssueVoucher.SourceTypeId = 13` has 260 rows | Strong reference signal that SourceTypeId=13 is owner-related, but not enough alone to migrate owner payments |
 
 ## VB6 Evidence
 
-VB6 forms confirm owner usage:
+Reviewed VB6 property module under `F:\Source Code\SatriahMain\Frm\New frm\RealEstateMnag`.
 
-- `RSOwner.frm`
-- `FrmOwnerAqarReport.frm`
-- `FrmAqarListOfOwner.frm`
-- `FrmAqarInstallAlert.frm`
-- `RSTradingCenter.frm`
+Important evidence:
 
-Important code patterns found:
+- `TblAqar.ownerid` is used as owner reference.
+- Owner is joined to `TblCustemers.CusID` in owner/property reports.
+- `TblAqrOwin` appears in owner payable/owner installment reports.
+- VB6 code references `GetOwnerPayment(dbo.TblAqrOwin.ID)`.
+- VB6 payment code references owner account resolution through `GetMyAccountCode("TblCustemers", "CusID", ...)`.
+- Owner payment posting references `payGlPaymentOwner`, `OwnerAccount`, and `CREATE_VOUCHER_GE`.
 
-- `TblAqar.ownerid` joins to `TblCustemers.CusID`.
-- Reports show owner name via `TblCustemers` alias.
-- `GetOwnerPayment(dbo.TblAqrOwin.ID)` is used for owner payable/payment review.
-- `payGlPaymentOwner` creates owner-related GL lines in VB6.
+## Business Meaning
 
-## Owner Payment / SourceTypeId=13
+- The old VB6 model appears to store owners in the same customer master table (`TblCustemers`) used for other parties, while the role is determined by links such as `TblAqar.ownerid`.
+- DynamicErp has a separate `PropertyOwner` entity, so owner migration must not reuse renter migration blindly.
+- Property ownership is currently a direct property-level relationship, not a unit-level or contract-level relationship in the discovered RSMDB/Adnan samples.
 
-In `MyErp`, `CashIssueVoucher` rows with `SourceTypeId=13` exist and are likely linked to property owner payments or property source payments. This was not present in the Adnan ReadyToTest clone count, but it confirms the scenario exists in DynamicErp and must not be ignored.
+## Key Answers
 
-## Answers To Key Questions
-
-| Question | Finding |
+| Question | Answer |
 |---|---|
-| Old owner table in Adnan | `TblCustemers`, linked by `TblAqar.ownerid` |
-| Old owner table in RSMDB | `TblCustemers`, linked by `TblAqar.ownerid` |
-| DynamicErp table | `PropertyOwner` |
-| Link level | Property-level via `Property.PropertyOwnerId` |
-| More than one owner | Not proven in current RSMDB/Adnan property schema; toolkit now supports review for percentage/multi-owner |
-| Ownership percentage | Not found in property link; default `100%` with manual review if other evidence appears |
-| Owner account | Old account candidates in `TblCustemers`; DynamicErp uses `PropertyOwner.AccountId` |
-| Owner payables | `TblAqrOwin` candidate, especially in RSMDB |
-| Owner payments | `TblOwnerPayment` / `TblNotesOwnerPayment`; empty in Adnan/RSMDB current counts |
-| SourceTypeId=13 | Requires separate owner-payment validation; not approved by default |
-| Termination impact | Not proven; must remain review-only until settlement logic is confirmed |
-| Reports | Yes, property reports use owner data |
+| Is there an owner table in the old system? | Yes, owner master data is represented by `TblCustemers` when referenced from `TblAqar.ownerid`. |
+| Real owner source in Adnan | `TblCustemers` via `TblAqar.ownerid`. |
+| Real owner source in RSMDB | `TblCustemers` via `TblAqar.ownerid`. |
+| DynamicErp equivalent | `PropertyOwner`, linked from `Property.PropertyOwnerId`. |
+| Is owner linked to property/unit/contract? | Discovered link is property-level: `TblAqar.ownerid`. |
+| Multiple owners/ownership percentage? | Not proven in current samples. The new toolkit design supports review/staging if discovered. |
+| Owner account? | VB6 resolves owner accounts from `TblCustemers`; account mapping must be validated per owner. |
+| Are deferred payment vouchers owner-related? | `SourceTypeId=13` in MyErp and VB6 owner payment code strongly suggest owner-payment semantics, but owner payments remain Manual Review until source/customer mapping is proven. |
+| Does termination affect owner? | Not proven safely. Any owner impact from terminations must be reviewed before posting. |
+| Do reports need owner data? | Yes. VB6 has owner/property reports and DynamicErp property screens/reports may require `PropertyOwnerId`. |
+
+## Risk Assessment
+
+| Risk | Level | Mitigation |
+|---|---:|---|
+| Migrating properties without owners | High | Add owner staging and property-owner link templates. |
+| Treating owner as renter | High | Separate `PropertyMigrationSourceOwner` from `PropertyMigrationSourceRenter`. |
+| Posting owner payments incorrectly | Critical | Owner payments are Manual Review by default. |
+| SourceTypeId=13 assumptions | High | Use only as candidate until code/data prove meaning. |
+| Missing owner accounts | High | Stage owner account mapping; no journal with null account. |

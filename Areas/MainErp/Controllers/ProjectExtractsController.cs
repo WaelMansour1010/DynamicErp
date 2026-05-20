@@ -41,7 +41,7 @@ namespace MyERP.Areas.MainErp.Controllers
             {
                 Title = "Project Extracts",
                 ArabicTitle = "Project Extracts",
-                AnalysisStatus = "Read-only migration validation. No edit, save, or posting actions are enabled.",
+                AnalysisStatus = "Operational mode is active. Create/save/posting are enabled.",
                 SearchText = searchText,
                 ProjectId = projectId,
                 BranchId = branchId,
@@ -82,6 +82,25 @@ namespace MyERP.Areas.MainErp.Controllers
 
             var model = _projectRepository.BuildExtractCreateModel(projectId);
             return View(model);
+        }
+
+        public ActionResult Edit(int id)
+        {
+            ViewBag.ActiveScreen = "project-extracts";
+            SetPermissions();
+            if (!CanAddProjectExtracts())
+            {
+                return new HttpStatusCodeResult(403, "ليست لديك صلاحية تعديل مستخلص مشروع.");
+            }
+
+            var model = _projectRepository.BuildExtractEditModel(id);
+            if (model == null)
+            {
+                TempData["ProjectExtracts.Error"] = "المستخلص المطلوب غير موجود.";
+                return RedirectToAction("Index");
+            }
+
+            return View("Create", model);
         }
 
         [ValidateInput(false)]
@@ -216,6 +235,11 @@ namespace MyERP.Areas.MainErp.Controllers
                 if (!model.BillDate.HasValue)
                 {
                     return Json(new { success = false, message = "يرجى إدخال تاريخ المستخلص." });
+                }
+
+                if (model.ExtractItems == null || model.ExtractItems.Count == 0)
+                {
+                    return Json(new { success = false, message = "لا يمكن حفظ مستخلص بدون بنود تنفيذ." });
                 }
 
                 var id = _projectRepository.CreateExtract(model, MainErpUserContext.UserId);

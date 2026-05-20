@@ -204,6 +204,7 @@ WHERE id = @Id;", connection))
         {
             var model = new ProjectExtractCreateViewModel
             {
+                Id = 0,
                 Total = 0m,
                 VatValue = 0m,
                 NetValue = 0m,
@@ -231,6 +232,50 @@ WHERE id = @Id;", connection))
             }
 
             return model;
+        }
+
+        public ProjectExtractCreateViewModel BuildExtractEditModel(int extractId)
+        {
+            using (var connection = _connectionFactory.CreateOpenConnection())
+            using (var command = new SqlCommand(@"
+SELECT TOP 1 id, project_no, bill_date, ManualNO, total, FATValue, NetValue,
+       ISNULL(advancedPayment, 0) AS advancedPayment,
+       ISNULL(PerforValue, ISNULL(PerformanceBond, 0)) AS PerforValue,
+       ISNULL(discount, 0) AS discount,
+       Branch_NO, Remarks
+FROM dbo.project_billl
+WHERE id = @Id;", connection))
+            {
+                command.Parameters.AddWithValue("@Id", extractId);
+                using (var reader = command.ExecuteReader())
+                {
+                    if (!reader.Read())
+                    {
+                        return null;
+                    }
+
+                    int projectId;
+                    if (!int.TryParse(ReadString(reader, "project_no"), out projectId))
+                    {
+                        return null;
+                    }
+
+                    var model = BuildExtractCreateModel(projectId);
+                    model.Id = extractId;
+                    model.BillDate = ReadDate(reader, "bill_date");
+                    model.ManualNo = ReadString(reader, "ManualNO");
+                    model.Total = ReadDecimal(reader, "total");
+                    model.VatValue = ReadDecimal(reader, "FATValue");
+                    model.NetValue = ReadDecimal(reader, "NetValue");
+                    model.AdvancedPayment = ReadDecimal(reader, "advancedPayment");
+                    model.PerforValue = ReadDecimal(reader, "PerforValue");
+                    model.GeneralDiscount = ReadDecimal(reader, "discount");
+                    model.BranchNo = ReadInt(reader, "Branch_NO");
+                    model.Remarks = ReadString(reader, "Remarks");
+                    model.ExtractItems = GetProjectExtractItemsForEdit(connection, extractId, projectId);
+                    return model;
+                }
+            }
         }
 
         private static System.Collections.Generic.IList<ProjectExtractItemViewModel> GetProjectExtractItems(SqlConnection connection, int projectId)
@@ -280,6 +325,40 @@ WHERE m.ProjectID = @pId", connection))
             return items;
         }
 
+        private static System.Collections.Generic.IList<ProjectExtractItemViewModel> GetProjectExtractItemsForEdit(SqlConnection connection, int billId, int projectId)
+        {
+            var items = GetProjectExtractItems(connection, projectId);
+            using (var command = new SqlCommand(@"
+SELECT PrMainDesID, Curr_Quantity, Curr_value
+FROM dbo.project_bill_details
+WHERE bill_id = @BillId;", connection))
+            {
+                command.Parameters.AddWithValue("@BillId", billId);
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var prMainDesId = ReadInt(reader, "PrMainDesID").GetValueOrDefault();
+                        var currQty = ReadDecimal(reader, "Curr_Quantity").GetValueOrDefault();
+                        var currVal = ReadDecimal(reader, "Curr_value").GetValueOrDefault();
+                        foreach (var item in items)
+                        {
+                            if (item.PrMainDesID == prMainDesId)
+                            {
+                                item.CurrentQuantity = currQty;
+                                item.CurrentValue = currVal;
+                                item.PreviousQuantity = Math.Max(0m, item.PreviousQuantity - currQty);
+                                item.PreviousValue = Math.Max(0m, item.PreviousValue - currVal);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return items;
+        }
+
         public int CreateExtract(ProjectExtractCreateViewModel model, int? userId)
         {
             using (var connection = _connectionFactory.CreateOpenConnection())
@@ -291,8 +370,11 @@ WHERE m.ProjectID = @pId", connection))
                     throw new InvalidOperationException("المشروع المحدد غير موجود.");
                 }
 
-                var id = NextId(connection, transaction, "project_billl", "id");
-                var noteSerial = NextId(connection, transaction, "project_billl", "NoteSerial").ToString();
+                var isEdit = model.Id > 0;
+                var id = isEdit ? model.Id : NextId(connection, transaction, "project_billl", "id");
+                var noteSerial = isEdit
+                    ? (model.ManualNo ?? string.Empty)
+                    : NextId(connection, transaction, "project_billl", "NoteSerial").ToString();
                 var total = model.Total.GetValueOrDefault();
                 var vat = model.VatValue.GetValueOrDefault();
                 var net = model.NetValue.GetValueOrDefault();
@@ -301,7 +383,52 @@ WHERE m.ProjectID = @pId", connection))
                     net = total + vat;
                 }
 
-                using (var command = new SqlCommand(@"
+                if (model.ExtractItems == null || model.ExtractItems.Count == 0)
+                {
+                    throw new InvalidOperationException("لا يمكن حفظ مستخلص بدون بنود.");
+                }
+
+                if (isEdit)
+                {
+                    // Revert previous executed quantities to avoid duplication on re-save.
+                    using (var revert = new SqlCommand(@"
+UPDATE m
+SET m.QtyExe = ISNULL(m.QtyExe, 0) - ISNULL(d.Curr_Quantity, 0),
+    m.TotalExe = ISNULL(m.TotalExe, 0) - ISNULL(d.Curr_value, 0)
+FROM dbo.ProjectMainDes m
+INNER JOIN dbo.project_bill_details d ON d.PrMainDesID = m.ID
+WHERE d.bill_id = @BillId;", connection, transaction))
+                    {
+                        revert.Parameters.AddWithValue("@BillId", id);
+                        revert.ExecuteNonQuery();
+                    }
+
+                    using (var cleanDetails = new SqlCommand("DELETE FROM dbo.project_bill_details WHERE bill_id = @BillId;", connection, transaction))
+                    {
+                        cleanDetails.Parameters.AddWithValue("@BillId", id);
+                        cleanDetails.ExecuteNonQuery();
+                    }
+                }
+
+                using (var command = new SqlCommand((isEdit ? @"
+UPDATE dbo.project_billl SET
+    bill_date = @BillDate,
+    project_no = @ProjectNo,
+    project_name = @ProjectName,
+    total = @Total,
+    FATValue = @VatValue,
+    NetValue = @NetValue,
+    Branch_NO = @BranchNo,
+    ManualNO = @ManualNo,
+    Results = @Results,
+    UserID = @UserId,
+    Remarks = @Remarks,
+    StartDateProje = @StartDate,
+    advancedPayment = @AdvancedPayment,
+    PerformanceBond = @PerformanceBond,
+    PerforValue = @PerforValue,
+    discount = @Discount
+WHERE id = @Id;" : @"
 INSERT INTO dbo.project_billl
 (
     id, bill_date, project_no, project_name, total, FATValue, NetValue,
@@ -311,9 +438,9 @@ INSERT INTO dbo.project_billl
 VALUES
 (
     @Id, @BillDate, @ProjectNo, @ProjectName, @Total, @VatValue, @NetValue,
-    @BranchNo, @ManualNo, @NoteSerial, 0, @UserId, @Remarks, @StartDate,
+    @BranchNo, @ManualNo, @NoteSerial, @Results, @UserId, @Remarks, @StartDate,
     @AdvancedPayment, @PerformanceBond, @PerforValue, @Discount
-);", connection, transaction))
+);"), connection, transaction))
                 {
                     command.Parameters.AddWithValue("@Id", id);
                     command.Parameters.AddWithValue("@BillDate", (object)model.BillDate ?? DBNull.Value);
@@ -324,7 +451,11 @@ VALUES
                     command.Parameters.AddWithValue("@NetValue", net);
                     command.Parameters.AddWithValue("@BranchNo", (object)(model.BranchNo ?? project.BranchNo) ?? DBNull.Value);
                     command.Parameters.AddWithValue("@ManualNo", (object)model.ManualNo ?? DBNull.Value);
-                    command.Parameters.AddWithValue("@NoteSerial", noteSerial);
+                    if (!isEdit)
+                    {
+                        command.Parameters.AddWithValue("@NoteSerial", noteSerial);
+                    }
+                    command.Parameters.AddWithValue("@Results", total);
                     command.Parameters.AddWithValue("@UserId", (object)userId ?? DBNull.Value);
                     command.Parameters.AddWithValue("@Remarks", (object)model.Remarks ?? DBNull.Value);
                     command.Parameters.AddWithValue("@StartDate", (object)project.StartDate ?? DBNull.Value);
@@ -361,12 +492,12 @@ VALUES
                         var lineVat = (model.VatValue ?? 0m) * ratio;
                         var lineNetAfterMainDiscountWithVat = lineNetAfterMainDiscountBeforeVat + lineVat;
                         var perforVLineDiscount = (model.PerforValue ?? 0m) * ratio;
-                        var lineFinal = (model.NetValue ?? 0m) * ratio;
+                        var lineFinal = lineNetAfterMainDiscountWithVat - perforVLineDiscount;
 
                         using (var command = new SqlCommand(@"
 INSERT INTO dbo.project_bill_details
 (
-    bill_id, project_no, project_id, projectName, FullCode, item,
+    bill_id, project_no, project_id, PrMainDesID, projectName, FullCode, item,
     Quantity, Price, cost, Pre_Quantity, Pre_Value, Curr_Quantity, Curr_value,
     tot_quantity, tot_value, curr_Percent, tot_percent, line_no,
     LineDiscount, linenetaftermainDiscountBeforevat, LineVat, linenetaftermainDiscountWithvat,
@@ -374,7 +505,7 @@ INSERT INTO dbo.project_bill_details
 )
 VALUES
 (
-    @BillId, @ProjectNo, @ProjectId, @ProjectName, @FullCode, @Item,
+    @BillId, @ProjectNo, @ProjectId, @PrMainDesID, @ProjectName, @FullCode, @Item,
     @Quantity, @Price, @Cost, @PreQuantity, @PreValue, @CurrQuantity, @CurrValue,
     @TotQuantity, @TotValue, @CurrPercent, @TotPercent, @LineNo,
     @LineDiscount, @LineNetAfterMainDiscountBeforeVat, @LineVat, @LineNetAfterMainDiscountWithVat,
@@ -384,6 +515,7 @@ VALUES
                             command.Parameters.AddWithValue("@BillId", id);
                             command.Parameters.AddWithValue("@ProjectNo", project.Id.ToString());
                             command.Parameters.AddWithValue("@ProjectId", project.Id);
+                            command.Parameters.AddWithValue("@PrMainDesID", item.PrMainDesID);
                             command.Parameters.AddWithValue("@ProjectName", (object)project.Name ?? DBNull.Value);
                             command.Parameters.AddWithValue("@FullCode", (object)item.FullCode ?? DBNull.Value);
                             command.Parameters.AddWithValue("@Item", (object)item.Item ?? DBNull.Value);

@@ -1,40 +1,50 @@
-﻿# Property Owners Accounting Strategy - 2026-05-20
+# Property Owners Accounting Strategy - 2026-05-20
 
-## Owner Accounting Default
+## Principle
 
-Owner accounting is not part of the default safe migration. It is review-gated.
+Owner accounting is financially sensitive and must remain strict even when the rest of property master data uses Hybrid or Tolerant mode.
 
 ## What Can Be Migrated Safely
 
-- Owner master data.
-- Property-to-owner primary link.
-- Owner balance staging for review.
+| Item | Default Decision |
+|---|---|
+| Owner master data | Allowed after mapping validation. |
+| Property-owner relationship | Allowed when property and owner are both mapped. |
+| Owner balances | Stage/review first; migrate only with finance sign-off. |
+| Owner payment vouchers | Manual Review by default. |
+| Owner journals | Migrate only when linked to approved owner payments and fully balanced. |
 
-## What Is Manual Review By Default
+## When To Migrate Owner Payables
 
-- Owner payable balances from `TblAqrOwin`.
-- Owner payment vouchers from `TblOwnerPayment` / `TblNotesOwnerPayment`.
-- Any `CashIssueVoucher` scenario that appears to pay an owner.
-- Any journal entry linked to owner payments.
+Owner payable balances may be migrated only when:
 
-## Required Conditions Before Owner Payments
+- Source table is confirmed as owner payable/receivable.
+- Owner maps to `PropertyOwner`.
+- Related property/contract maps to target data or finance approves owner-level balance.
+- Balance does not duplicate tenant opening balance or historical journal migration.
 
-Owner payment migration requires all of:
+## When To Migrate Owner Payments
 
-- Owner linked to `PropertyOwner`.
-- Property linked to owner.
-- Owner `AccountId` mapped.
-- CashBox/BankAccount mapped.
-- Payment method mapped through resolver.
-- Journal direction verified.
-- No `AccountId=NULL`.
-- Debit/Credit balanced.
-- No duplicate accounting effect from old journals and new vouchers.
+Owner payments may be migrated only when:
 
-## Owner Payables
+- Voucher is explicitly linked to owner.
+- Voucher source type is proven for that customer.
+- Debit account and cash/bank credit account are known.
+- Journal is balanced and has no null accounts.
+- Same-account debit/credit is blocked unless specifically approved.
 
-Owner payable balances can be staged and reconciled, but should not be posted automatically until finance confirms:
+## SourceTypeId=13
 
-- Whether the payable already exists in opening balances.
-- Whether paid amounts in `TblAqrOwin.TotalPayed` are already reflected in journals.
-- Whether owner payable should be delivered as opening balance, historical archive, or payment schedule.
+`CashIssueVoucher.SourceTypeId = 13` appears in MyErp and likely represents property owner payment behavior, but the toolkit must not rely on this value alone. It is a candidate mapping requiring code/data validation per customer.
+
+## Suspense Use
+
+Suspense/holding accounts for owners are allowed only with explicit finance approval and must remain visible in Review Queue and final reconciliation. They must not be silently cleared or hidden.
+
+## Go Live Blockers
+
+- Open owner payment review items without finance sign-off.
+- Owner payment journals with null accounts.
+- Owner payment journals that do not balance.
+- Owner payable balances not reconciled to owner reports.
+- Any use of owner suspense not signed off.

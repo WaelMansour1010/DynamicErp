@@ -186,3 +186,4 @@ SELECT 'RSMDBStagingDraft' Stage,
        (SELECT COUNT(*) FROM dbo.PropertyMigrationSourceIssue WHERE MigrationBatchId=@MigrationBatchId) IssuesReviewOnly,
        (SELECT COUNT(*) FROM dbo.PropertyMigrationSourceOwnerBalance WHERE MigrationBatchId=@MigrationBatchId) OwnerBalances,
        (SELECT COUNT(*) FROM dbo.PropertyMigrationSourceTermination WHERE MigrationBatchId=@MigrationBatchId) TerminationsReviewOnly;
+

@@ -1,35 +1,39 @@
-﻿# RSMDB Final Decision Before Migration - 2026-05-20
+# RSMDB Final Decision Before Migration - 2026-05-20
 
 ## Decision
 
-RSMDB is not yet approved for migration execute.
+RSMDB is not approved for migration execution yet. It is approved only for clone-based staging population and diagnostics.
 
 ## What Is Ready
 
-- Discovery complete enough for mapping design.
-- VB6 property/owner/contract/installment relationships identified.
-- RSMDB staging mapping draft created.
-- Owners are now included in the toolkit staging contract and templates.
-- Runner DryRun completed successfully.
+- RSMDB source tables have been identified for property staging.
+- Owner/landlord staging has been added to the toolkit.
+- RSMDB staging mapping draft has been created.
+- Runner DryRun config has been created and validated at preflight level.
+- Diagnostics show the main relationship and accounting risks.
 
-## What Blocks Migration Execute
+## What Is Not Ready
 
-- Active contract rule needs final VB6 confirmation.
-- Account mapping to DynamicErp `ChartOfAccount` is not approved.
-- Owner payable rows in `TblAqrOwin` need finance review.
-- Owner payment scenario is not enabled by default.
-- `NoteType=9088` is unclassified.
-- Journal grouping/direction needs deeper validation due high potential unbalanced group count.
-- Receipts need stronger installment/contract linking for the `1587` weakly linked rows.
+- Final active contract rule.
+- Final NoteType interpretation for `60`, `9088`, and `-1`.
+- Safe issue/payment migration.
+- Owner payable/payment posting.
+- Journal direction and grouping validation.
+- Account mapping validation against an RSMDB target clone.
 
-## Next Step
+## Go / No-Go
 
-Create an RSMDB clone and run only:
+| Area | Decision |
+|---|---|
+| Master data staging | Go on clone only |
+| Contract staging | Go on clone only |
+| Installment staging | Go on clone only |
+| Receipt staging | Go on clone only, linked receipts only |
+| Issues/payments | No-Go for migration; Review Queue only |
+| Journals | No-Go until balancing semantics are confirmed |
+| Owners | Go for owner master/link staging; owner payments review only |
+| Full migration | No-Go |
 
-1. Core setup.
-2. Source staging table creation.
-3. `RSMDB_StagingMapping_SELECT_TO_STAGING_DRAFT_20260520.sql` on the clone.
-4. Staging diagnostics.
-5. Mapping review with finance/implementation.
+## Required Next Step
 
-No final migration templates should run until this review is complete.
+Create a dedicated RSMDB target clone, run toolkit core/staging setup, execute the RSMDB staging mapping script on the clone, then review diagnostics and Review Queue before any migration template is allowed.

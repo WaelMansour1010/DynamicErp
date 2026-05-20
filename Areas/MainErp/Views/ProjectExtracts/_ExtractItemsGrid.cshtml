@@ -25,9 +25,9 @@
                         <td class="text-center text-muted">@(++rowIdx)</td>
                         <td>
                             <input type="hidden" class="pr-main-des-id" value="@item.PrMainDesID" />
-                            <span class="text-muted small">@item.FullCode</span>
+                            <span class="text-muted small item-code">@item.FullCode</span>
                         </td>
-                        <td>@item.Item</td>
+                        <td class="item-title">@item.Item</td>
                         <td class="text-center">@item.ContractQuantity.ToString("N2")</td>
                         <td class="text-center">@item.Price.ToString("N2")</td>
                         <td class="text-center prev-qty">@item.PreviousQuantity.ToString("N2")</td>
@@ -35,15 +35,16 @@
                         <td>
                             <input type="number" step="any" min="0"
                                    class="curr-qty form-control form-control-sm text-center"
-                                   value="0"
+                                   value="@item.CurrentQuantity"
                                    data-contract-qty="@item.ContractQuantity"
                                    data-price="@item.Price"
-                                   data-prev-qty="@item.PreviousQuantity" />
+                                   data-prev-qty="@item.PreviousQuantity"
+                                   data-prev-val="@item.PreviousValue" />
                         </td>
                         <td>
                             <input type="number" step="any"
                                    class="curr-val form-control form-control-sm text-center"
-                                   value="0" readonly />
+                                   value="@item.CurrentValue" readonly />
                         </td>
                     </tr>
                 }

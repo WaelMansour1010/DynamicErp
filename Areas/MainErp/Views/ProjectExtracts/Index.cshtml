@@ -100,8 +100,12 @@
                     <p>@focus.CustomerName · @focus.ProjectFullCode · @String.Format("{0:yyyy-MM-dd}", focus.BillDate)</p>
                 </div>
                 <div class="main-erp-header-actions">
-                    <span class="main-erp-status-pill is-active">@T("ReadOnly")</span>
+                    <span class="main-erp-status-pill is-active">تشغيلي</span>
                     <a href="@Url.Action("Details", "ProjectExtracts", new { area = "MainErp", id = focus.Id })">@T("Details")</a>
+                    @if (canAddProjectExtracts)
+                    {
+                        <a href="@Url.Action("Edit", "ProjectExtracts", new { area = "MainErp", id = focus.Id })">تعديل</a>
+                    }
                     @if (canPrintProjectExtracts)
                     {
                         <a href="@Url.Action("Report", "ProjectExtracts", new { area = "MainErp", id = focus.Id })">@T("Reports")</a>

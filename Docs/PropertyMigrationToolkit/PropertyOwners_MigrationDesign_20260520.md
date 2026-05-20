@@ -1,90 +1,57 @@
-﻿# Property Owners Migration Design - 2026-05-20
+# Property Owners Migration Design - 2026-05-20
 
 ## Design Decision
 
-Property owners are now first-class entities in the staging contract and migration templates.
+Property owners are now first-class migration entities in the PropertyMigrationToolkit. They are not renters, suppliers, or generic accounts.
 
 ## New Staging Tables
 
-Added to `01_SourceStagingTables_Generic.sql`:
-
-- `PropertyMigrationSourceOwner`
-- `PropertyMigrationSourcePropertyOwner`
-- `PropertyMigrationSourceOwnerBalance`
-- `PropertyMigrationSourceOwnerPayment`
+| Staging Table | Purpose |
+|---|---|
+| `PropertyMigrationSourceOwner` | Owner master data from old VB6 source. |
+| `PropertyMigrationSourcePropertyOwner` | Property-to-owner relationship and optional ownership percentage. |
+| `PropertyMigrationSourceOwnerBalance` | Owner payable/receivable balances for review or approved migration. |
+| `PropertyMigrationSourceOwnerPayment` | Owner payment vouchers, manual-review by default. |
 
 ## Generic Templates Added
 
-- `Migration_Owners_Generic.sql`
-- `Migration_PropertyOwnerLinks_Generic.sql`
-- `Migration_OwnerPayments_Generic.sql`
+| Template | Default Behavior |
+|---|---|
+| `Migration_Owners_Generic.sql` | Migrates owner master data into `PropertyOwner` and logs missing account warnings. |
+| `Migration_PropertyOwnerLinks_Generic.sql` | Links migrated properties to primary owner using `Property.PropertyOwnerId`; multi-owner/percentage cases are sent to Review Queue. |
+| `Migration_OwnerPayments_Generic.sql` | Does not post owner payments by default; creates Review Queue items unless explicitly approved in config. |
 
-## Mapping Model
+## Migration Flow
 
-### Owner Master
+1. Customer-specific staging script reads old source data.
+2. Owners are loaded into `PropertyMigrationSourceOwner`.
+3. Property owner links are loaded into `PropertyMigrationSourcePropertyOwner`.
+4. Owner balances/payments are staged separately.
+5. Generic owner templates migrate safe owner master/link data.
+6. Owner payments remain review-only unless finance approves a customer-specific mapping.
 
-Old VB6:
+## Required Validation
 
-- `TblCustemers`
-- property owners identified by `TblAqar.ownerid`
+- Owner exists.
+- Property exists.
+- Owner account code maps to target `ChartOfAccount` when accounting is involved.
+- Owner payment source type is proven.
+- Owner payment journal is balanced.
+- No owner payment journal line has `AccountId=NULL`.
+- No owner payment uses same debit and credit account unless explicitly approved.
 
-DynamicErp:
+## RSMDB Current Design
 
-- `PropertyOwner`
+RSMDB staging draft maps:
 
-### Property Owner Link
+- `TblAqar.ownerid -> TblCustemers.CusID` into owners.
+- `TblAqar.AqarID -> ownerid` into property-owner links.
+- `TblAqrOwin` into owner balance staging/review.
+- `Notes Type 5` and owner payment candidates into review-only staging until payment source is proven.
 
-Old VB6:
+## Deferred Items
 
-- `TblAqar.ownerid`
-
-DynamicErp:
-
-- `Property.PropertyOwnerId`
-
-### Owner Accounts
-
-Old VB6 candidates:
-
-- `TblCustemers.Account_Code`
-- `TblCustemers.Account_Code_As_Supplier`
-- `TblCustemers.Account_Code2`
-- `TblCustemers.AccountAccountAqar`
-
-DynamicErp:
-
-- `PropertyOwner.AccountId`
-
-### Owner Balances / Payables
-
-Old VB6 candidate:
-
-- `TblAqrOwin`
-
-DynamicErp strategy:
-
-- Stage as `PropertyMigrationSourceOwnerBalance`.
-- Do not post accounting automatically.
-- Review before migration or GoLive.
-
-### Owner Payments
-
-Old VB6 candidates:
-
-- `TblOwnerPayment`
-- `TblNotesOwnerPayment`
-- Notes payment rows if proven linked to owner.
-
-DynamicErp strategy:
-
-- Stage as `PropertyMigrationSourceOwnerPayment`.
-- Route to Review Queue by default.
-- Do not insert payment vouchers until owner/property/account linkage and accounting direction are approved.
-
-## Safety Rules
-
-- Owner is never assumed to be the renter.
-- Owner payment is never assumed from generic cash issue without proof.
-- Owner payment journal cannot be created with `AccountId=NULL`.
-- Suspense account for owner is allowed only with explicit config and review queue.
-- Multi-owner / percentage cases must be manual review until DynamicErp support is confirmed.
+- Multi-owner percentage migration if a customer has an ownership split table.
+- Owner payment posting.
+- Owner payable opening balances.
+- SourceTypeId=13 production approval.

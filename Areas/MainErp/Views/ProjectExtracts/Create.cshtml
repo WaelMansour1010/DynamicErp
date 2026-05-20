@@ -8,6 +8,7 @@
 }
 
 <section class="erp-page main-erp-project-extract-create" dir="rtl">
+    <input type="hidden" id="ExtractId" value="@Model.Id" />
     <header class="erp-page-header">
         <div>
             <h1>مستخلص مشروع جديد</h1>
@@ -168,10 +169,14 @@
                 if (currQty > 0) {
                     items.push({
                         PrMainDesID: parseInt($(this).find('.pr-main-des-id').val()) || 0,
+                        Item: $(this).find('.item-title').text(),
                         CurrentQuantity: currQty,
                         Price: parseFloat(currQtyInput.data('price')) || 0,
                         CurrentValue: parseFloat($(this).find('.curr-val').val()) || 0,
-                        PreviousQuantity: parseFloat(currQtyInput.data('prev-qty')) || 0
+                        PreviousQuantity: parseFloat(currQtyInput.data('prev-qty')) || 0,
+                        PreviousValue: parseFloat(currQtyInput.data('prev-val')) || 0,
+                        ContractQuantity: parseFloat(currQtyInput.data('contract-qty')) || 0,
+                        FullCode: $(this).find('.item-code').text()
                     });
                 }
             }
@@ -179,6 +184,7 @@
 
         var data = {
             ProjectId: projectId,
+            Id: parseInt($('#ExtractId').val()) || 0,
             BillDate: billDate,
             ManualNo: $('#ManualNo').val(),
             Remarks: $('#Remarks').val(),
@@ -200,7 +206,7 @@
             data: JSON.stringify(data),
             success: function (r) {
                 if (r && r.success) {
-                    window.location.href = '@Url.Action("Index", "ProjectExtracts", new { area = "MainErp" })';
+                    window.location.href = '@Url.Action("Details", "ProjectExtracts", new { area = "MainErp" })' + '/' + r.id;
                 } else {
                     alert(r && r.message ? r.message : 'حدث خطأ أثناء الحفظ.');
                     $('#saveExtractBtn').prop('disabled', false).html('<i class="fas fa-save"></i> حفظ المستخلص');

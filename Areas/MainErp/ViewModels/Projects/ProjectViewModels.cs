@@ -166,6 +166,8 @@ namespace MyERP.Areas.MainErp.ViewModels.Projects
         public IList<ProjectLookupItem> Projects { get; private set; }
         public IList<ProjectExtractItemViewModel> ExtractItems { get; set; }
 
+        public int Id { get; set; }
+
         [Required(ErrorMessage = "حدد المشروع.")]
         public int? ProjectId { get; set; }
 

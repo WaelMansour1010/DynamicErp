@@ -1,54 +1,56 @@
-﻿# RSMDB Diagnostics Summary - 2026-05-20
+# RSMDB Diagnostics Summary - 2026-05-20
 
-## Scope
+## Execution Scope
 
-Diagnostics were run as SELECT-only discovery against `RSMDB`. No migration was executed.
+Diagnostics were read-only. No migration was executed on RSMDB.
 
-Runner DryRun was also executed using:
+## Core Discovery Counts
 
-- `F:\Source Code\DynamicErp\Tools\DynamicErp.PropertyMigration.Runner\Config\rsmdb-discovery.dryrun.json`
-
-Runner report:
-
-- `F:\Source Code\DynamicErp\Tools\DynamicErp.PropertyMigration.Runner\Reports\PropertyMigrationRunnerReport_RSMDB-DISCOVERY_20260520_105456.md`
-
-## Counts
-
-| Metric | Count |
+| Area | Count |
 |---|---:|
-| Properties `TblAqar` | 16 |
-| Properties without owner | 0 |
+| Properties | 16 |
 | Distinct owners | 4 |
-| Actual units `TblAqarDetai` | 629 |
-| Unit lookup/auxiliary `TblUnites` | 102 |
-| Units without property | 105 |
-| Contracts `TblContract` | 2813 |
+| Unit rows | 629 |
+| Unit type/lookup candidates | 102 |
+| Contracts | 2,813 |
 | Active contract candidates | 262 |
-| Contracts without unit | 4 |
-| Contracts without renter | 4 |
-| Contracts without property | 4 |
-| Installments | 7478 |
-| Installments without contract | 0 |
-| Receipts `NoteType=4` | 10365 |
-| Receipts Type 4 without contract link | 1587 |
-| Issues `NoteType=5` | 7632 |
-| Termination candidates `NoteType=-1` | 754 |
-| Unclassified `NoteType=9088` | 64 |
-| Journal lines | 139769 |
-| Journal lines without account code | 0 |
-| Potential unbalanced DEV groups by initial assumption | 51968 |
-| Owner payable rows `TblAqrOwin` | 4 |
-| Owner payment rows | 0 |
-| Owner payment note rows | 0 |
+| Installments | 7,478 |
+| Receipts Type 4 | 10,365 |
+| Issues Type 5 | 7,632 |
+| Terminations Type -1 | 754 |
+| Unclassified Type 9088 | 64 |
+| Journal lines | 139,769 |
 
-## Critical Diagnostics
+## Relationship Diagnostics
 
-- `105` units in `TblAqarDetai` do not link to `TblAqar` by current `Aqarid` relationship.
-- `4` contracts have missing unit/property/renter link candidates.
-- `1587` receipt notes do not have a proven contract link by current simple rule.
-- `51968` potential unbalanced journal groups indicate the journal grouping/direction rule is not ready.
-- `NoteType=9088` remains unclassified.
+| Check | Count | Severity |
+|---|---:|---|
+| Properties without owner | 0 | Pass |
+| Units without property | 105 | Warning |
+| Contracts without unit | 4 | Warning / AutoFix candidate |
+| Contracts without renter | 4 | Warning / AutoFix candidate |
+| Contracts without property | 4 | Warning / AutoFix candidate |
+| Installments without contract | 0 | Pass |
+| Receipts Type 4 without safe contract link | 1,587 | High / Review |
+| Owner payable candidates | 4 | Review |
+
+## Accounting Diagnostics
+
+| Check | Count | Severity |
+|---|---:|---|
+| Journal lines missing account code | 0 | Pass |
+| Potential unbalanced voucher groups using provisional logic | 51,968 | Critical until grouping/direction is confirmed |
+| Issue/payment notes requiring manual classification | 7,632 | High |
+| Unclassified 9088 notes | 64 | High |
+
+## Interpretation
+
+The journal imbalance count is provisional because `DOUBLE_ENTREY_VOUCHERS` grouping and debit/credit direction semantics must be confirmed before final accounting diagnostics. It is still a blocker for accounting migration until resolved.
+
+## DryRun Runner Result
+
+Runner DryRun was executed for configuration validation only. It did not run migration templates and did not modify RSMDB. The detailed Runner report is under the Runner `Reports` folder.
 
 ## Decision
 
-RSMDB requires additional mapping review before any clone migration execute.
+RSMDB needs additional mapping review before Clone Migration. The safest next step is staging population on a clone only, then diagnostics and mapping review.

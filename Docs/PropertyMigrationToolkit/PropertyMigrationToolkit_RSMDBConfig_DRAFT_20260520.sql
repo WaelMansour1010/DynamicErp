@@ -22,6 +22,6 @@ VALUES(
     1,1,1,0,1,1,1,1,1,0,1,
     N'PilotSingleBranch',N'PilotCashBox',N'PilotBankAccount',N'ManualThenSeed',
     NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
-    N'HybridResolver',N'ManualReview',N'ComputedAsOfCutoff',N'ArchiveUnsafeHistory',0,
-    N'DISCOVERY ONLY: likely property tables TblAqar/TblAqarDetai/TblUnites; contracts TblContract/TblContractInstallments; receipts/payments Notes NoteType 4/5; contract journals NoteType 60; VAT/installments NoteType 9088; terminations NoteType -1; GL DOUBLE_ENTREY_VOUCHERS. Requires mapping review before execute.'
+    N'HybridResolver',N'ManualReview_OwnerPaymentsRequireProof',N'ComputedAsOfCutoff',N'ArchiveUnsafeHistory',0,
+    N'DISCOVERY ONLY: likely property tables TblAqar/TblAqarDetai/TblUnites; contracts TblContract/TblContractInstallments; receipts/payments Notes NoteType 4/5; contract journals NoteType 60; VAT/installments NoteType 9088; terminations NoteType -1; GL DOUBLE_ENTREY_VOUCHERS. Owners discovered via TblAqar.ownerid -> TblCustemers.CusID; TblAqrOwin has owner payable candidates; owner payments remain ManualReview. Requires mapping review before execute.'
 );
