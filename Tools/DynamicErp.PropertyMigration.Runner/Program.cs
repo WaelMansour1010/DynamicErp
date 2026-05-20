@@ -109,6 +109,30 @@ internal static class Program
             {
                 await RunStepAsync("AccountDiscovery", AccountIntelligenceAsync);
             }
+            if (_config.IncludeFinanceApproval)
+            {
+                await RunStepAsync("FinanceApproval", FinanceApprovalAsync);
+            }
+            if (_config.IncludeAccountingPilotExecute)
+            {
+                await RunStepAsync("AccountingPilotExecute", AccountingPilotExecuteAsync);
+            }
+            if (_config.IncludeAccountingRollback)
+            {
+                await RunStepAsync("AccountingRollback", AccountingRollbackAsync);
+            }
+            if (_config.IncludeOperationalLinkResolution)
+            {
+                await RunStepAsync("OperationalLinkResolution", OperationalLinkResolutionAsync);
+            }
+            if (_config.IncludeReceiptAllocationDiscovery)
+            {
+                await RunStepAsync("ReceiptAllocationDiscovery", ReceiptAllocationDiscoveryAsync);
+            }
+            if (_config.IncludeCashingType8ReceiptCandidateBuild)
+            {
+                await RunStepAsync("CashingType8ReceiptCandidateBuild", CashingType8ReceiptCandidateBuildAsync);
+            }
             await RunStepAsync("Migration", MigrationAsync);
             await RunStepAsync("Reconciliation", () => RunSqlTemplateAsync("Reconciliation_Generic.sql", readOnly: true));
             await RunStepAsync("ReadyToTestDelivery", ReadyToTestDeliveryAsync);
@@ -291,6 +315,78 @@ SELECT
             AddInfo("AccountDiscovery", $"No customer-specific account intelligence template is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
         }
 
+        private async Task FinanceApprovalAsync()
+        {
+            if (_config.SourceDatabaseName.Equals("RSMDB", StringComparison.OrdinalIgnoreCase))
+            {
+                await RunSqlTemplateAsync("RSMDB_ApplyFinanceApprovedAccountMapping_DRAFT_20260520.sql", readOnly: false);
+                AddInfo("FinanceApproval", "Applied finance-approved account mappings from PropertyMigrationAccountFinanceApproval on the clone only.");
+                return;
+            }
+
+            AddInfo("FinanceApproval", $"No customer-specific finance approval template is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
+        }
+
+        private async Task AccountingPilotExecuteAsync()
+        {
+            if (_config.SourceDatabaseName.Equals("RSMDB", StringComparison.OrdinalIgnoreCase))
+            {
+                await RunSqlTemplateAsync("RSMDB_FirstAccountingPilot_PreValidation_20260520.sql", readOnly: false);
+                AddInfo("AccountingPilotExecute", "RSMDB accounting pilot prevalidation passed. Execute body is intentionally kept draft until receipt contract links are approved.");
+                return;
+            }
+
+            AddInfo("AccountingPilotExecute", $"No customer-specific accounting pilot template is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
+        }
+
+        private async Task AccountingRollbackAsync()
+        {
+            if (_config.SourceDatabaseName.Equals("RSMDB", StringComparison.OrdinalIgnoreCase))
+            {
+                await RunSqlTemplateAsync("RSMDB_AccountingPilotRollback_DRAFT_20260520.sql", readOnly: false);
+                AddInfo("AccountingRollback", "Executed RSMDB accounting pilot rollback template on clone.");
+                return;
+            }
+
+            AddInfo("AccountingRollback", $"No customer-specific accounting rollback template is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
+        }
+
+        private async Task OperationalLinkResolutionAsync()
+        {
+            if (_config.SourceDatabaseName.Equals("RSMDB", StringComparison.OrdinalIgnoreCase))
+            {
+                await RunSqlTemplateAsync("RSMDB_OperationalLinkResolution_20260520.sql", readOnly: false);
+                AddInfo("OperationalLinkResolution", "Executed RSMDB operational link resolution, minimal operational migration, and pilot readiness validation on clone.");
+                return;
+            }
+
+            AddInfo("OperationalLinkResolution", $"No customer-specific operational link resolution template is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
+        }
+
+        private async Task ReceiptAllocationDiscoveryAsync()
+        {
+            if (_config.SourceDatabaseName.Equals("RSMDB", StringComparison.OrdinalIgnoreCase))
+            {
+                await RunSqlTemplateAsync("RSMDB_ReceiptAllocationDiscovery_20260520.sql", readOnly: false);
+                AddInfo("ReceiptAllocationDiscovery", "Executed RSMDB receipt allocation evidence discovery on clone only. No receipts, journals, or posting were created.");
+                return;
+            }
+
+            AddInfo("ReceiptAllocationDiscovery", $"No customer-specific receipt allocation discovery template is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
+        }
+
+        private async Task CashingType8ReceiptCandidateBuildAsync()
+        {
+            if (_config.SourceDatabaseName.Equals("RSMDB", StringComparison.OrdinalIgnoreCase))
+            {
+                await RunSqlTemplateAsync("RSMDB_CashingType8_ReceiptCandidateBuild_20260520.sql", readOnly: false);
+                AddInfo("CashingType8ReceiptCandidateBuild", "Built RSMDB CashingType=8 receipt pilot candidates and finance review pack on clone only. No receipts, journals, or posting were created.");
+                return;
+            }
+
+            AddInfo("CashingType8ReceiptCandidateBuild", $"No customer-specific CashingType=8 candidate builder is registered for SourceDatabase={_config.SourceDatabaseName}; skipped.");
+        }
+
         private async Task ReadOnlySafetyValidationAsync()
         {
             await using var target = new SqlConnection(BuildConnectionString(_config.TargetCloneDatabaseName));
@@ -386,6 +482,30 @@ SELECT Contracts = CASE WHEN OBJECT_ID(N'dbo.PropertyContract') IS NULL THEN 0 E
             if (_config.IncludeAccountIntelligence)
             {
                 AddInfo("ExecutionPlan", "Account intelligence stages enabled: AccountDiscovery, AccountMatching, AccountConfidenceScoring, AccountFamilyDetection, AccountReviewQueue.");
+            }
+            if (_config.IncludeFinanceApproval)
+            {
+                AddInfo("ExecutionPlan", "Finance approval stage enabled: FinanceApproval, ApplyApprovedMappings, AccountConfidence recalculation.");
+            }
+            if (_config.IncludeAccountingPilotExecute)
+            {
+                AddInfo("ExecutionPlan", "Accounting pilot stage enabled: AccountingPilotExecute with FinanceApprovedOnly pilot scope filtering.");
+            }
+            if (_config.IncludeAccountingRollback)
+            {
+                AddInfo("ExecutionPlan", "Accounting rollback stage enabled: AccountingRollback for the pilot batch only.");
+            }
+            if (_config.IncludeOperationalLinkResolution)
+            {
+                AddInfo("ExecutionPlan", "Operational link stages enabled: OperationalLinkResolution, MinimalOperationalMigration, PilotReadinessValidation.");
+            }
+            if (_config.IncludeReceiptAllocationDiscovery)
+            {
+                AddInfo("ExecutionPlan", "Receipt allocation discovery stage enabled: VB6/schema/data evidence enrichment only; no receipt or journal migration.");
+            }
+            if (_config.IncludeCashingType8ReceiptCandidateBuild)
+            {
+                AddInfo("ExecutionPlan", "CashingType8ReceiptCandidateBuild stage enabled: builds property receipt pilot candidates and finance review pack only.");
             }
             AddInfo("ExecutionPlan", $"Selected modules: Accounting={_config.IncludeAccounting}, Receipts={_config.IncludeHistoricalReceipts}, Issues={_config.IncludeIssues}, Journals={_config.IncludeJournalEntries}, AdvancePayments={_config.IncludeAdvancePayments}, Terminations={_config.IncludeTerminations}.");
             AddInfo("ExecutionPlan", $"ControlledPipelineOnly={_config.SkipCustomerSpecificMigrationTemplates}.");
@@ -708,6 +828,12 @@ internal sealed class MigrationRunnerConfig
     public bool IncludeTerminations { get; set; }
     public bool IncludeIntelligence { get; set; }
     public bool IncludeAccountIntelligence { get; set; }
+    public bool IncludeFinanceApproval { get; set; }
+    public bool IncludeAccountingPilotExecute { get; set; }
+    public bool IncludeAccountingRollback { get; set; }
+    public bool IncludeOperationalLinkResolution { get; set; }
+    public bool IncludeReceiptAllocationDiscovery { get; set; }
+    public bool IncludeCashingType8ReceiptCandidateBuild { get; set; }
     public bool ExcludeUnsafePayments { get; set; } = true;
     public bool BackupVerified { get; set; }
     public bool ExecutionPlanApproved { get; set; }

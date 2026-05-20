@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace MyERP.Models.Reports
@@ -14,8 +14,14 @@ namespace MyERP.Models.Reports
         public string AccountFrom { get; set; }
         public string AccountTo { get; set; }
         public string AccountCodes { get; set; }
-        public int? CostCenterId { get; set; }
-    }
+                public int? CostCenterId { get; set; }
+        public int? ProjectId { get; set; }
+        public int? ActivityId { get; set; }
+        public int? RegionId { get; set; }
+        public int? NoteType { get; set; }
+        public int? AccountLevel { get; set; }
+        public bool? HideZeroBalance { get; set; }
+        public bool? Detailed { get; set; }}
 
     public class HtmlReportPageViewModel
     {
@@ -75,3 +81,4 @@ namespace MyERP.Models.Reports
         public bool ShowTotal { get; set; }
     }
 }
+

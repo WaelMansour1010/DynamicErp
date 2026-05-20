@@ -214,6 +214,7 @@ namespace MyERP.Areas.Pos.Controllers
                 || string.Equals(reportKey, "sales-departments", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(reportKey, "sales-sectors", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(reportKey, "sales-analytical", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(reportKey, "items-sales-details", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(reportKey, "general-sales", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(reportKey, "revenues", StringComparison.OrdinalIgnoreCase);
         }

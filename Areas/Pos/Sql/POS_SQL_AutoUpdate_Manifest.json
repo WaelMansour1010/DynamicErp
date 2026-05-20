@@ -69,7 +69,8 @@
     { "order": 119, "file": "119_POS_VoucherCoding_StaleCounterSelfHeal.sql", "autoApply": true, "purpose": "POS voucher coding stale counter self-heal and safe reseed for Transactions NoteSerial1 counters." },
     { "order": 120, "file": "120_POS_VoucherCoding_AutoExpandTailDigits.sql", "autoApply": true, "purpose": "POS voucher coding treats no_of_digit as minimum padding and auto-expands invoice tail after 999 without changing old serials." },
     { "order": 121, "file": "121_POS_ProjectStatus_Command8_9_10_Reports.sql", "autoApply": true, "purpose": "Project_status Command8/Command9/Command10 Crystal-parity closing reports with optimized stored procedure." },
-    { "order": 122, "file": "122_POS_ProjectStatus_Command8_9_10_CrystalParityWrapper.sql", "autoApply": true, "purpose": "Crystal-parity wrapper for project_status Command8/Command9/Command10 using legacy-approved stored procedures." }
+    { "order": 122, "file": "122_POS_ProjectStatus_Command8_9_10_CrystalParityWrapper.sql", "autoApply": true, "purpose": "Crystal-parity wrapper for project_status Command8/Command9/Command10 using legacy-approved stored procedures." },
+    { "order": 123, "file": "123_POS_FrmReports_XPChk_CrystalParity.sql", "autoApply": true, "purpose": "FrmReports XPChk(2/90/91/93/96/97) Crystal-parity operational sales report routing." }
   ],
   "manualScripts": [
     { "file": "35_POS_SystemHealthPermissions.sql", "reason": "Requires sysadmin/master login and replacing the app SQL login placeholder." },

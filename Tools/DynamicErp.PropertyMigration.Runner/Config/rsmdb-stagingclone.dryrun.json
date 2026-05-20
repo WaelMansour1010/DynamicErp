@@ -20,6 +20,8 @@
   "IncludeTerminations": false,
   "IncludeIntelligence": true,
   "IncludeAccountIntelligence": true,
+  "IncludeReceiptAllocationDiscovery": true,
+  "IncludeCashingType8ReceiptCandidateBuild": true,
   "ExcludeUnsafePayments": true,
   "BackupVerified": false,
   "ExecutionPlanApproved": false,
@@ -41,3 +43,6 @@
     "AutoCreateMissingLookups": true
   }
 }
+
+
+

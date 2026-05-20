@@ -1,0 +1,753 @@
+﻿ 30000:      If XPChk(91).value = Checked Or XPChk(92).value = Checked Or XPChk(94).value = Checked Or XPChk(95).value = Checked Or XPChk(96).value = Checked Or XPChk(97).value = Checked Then
+ 30001:         StrSQL = "SELECT"
+ 30002:         StrSQL = StrSQL & "               dbo.TblBranchesData.branch_Code"
+ 30003:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30004:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30005:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30006:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30007:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30008:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 21)"
+ 30009:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30010:         If Not IsNull(XPDtbFrom.value) Then
+ 30011:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30012:         End If
+ 30013:         
+ 30014:         
+ 30015:         If Not IsNull(XPDtbFrom.value) Then
+ 30016:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30017:         End If
+ 30018:         'StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30019:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 1))"
+ 30020:         StrSQL = StrSQL & "                       AS Count1"
+ 30021:         
+ 30022:         
+ 30023:         
+ 30024:        StrSQL = StrSQL & "                      ,(SELECT"
+ 30025:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30026:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30027:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30028:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30029:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 9)"
+ 30030:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30031:         If Not IsNull(XPDtbFrom.value) Then
+ 30032:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30033:         End If
+ 30034:         
+ 30035:         
+ 30036:         If Not IsNull(XPDtbFrom.value) Then
+ 30037:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30038:         End If
+ 30039:     '    StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30040:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 1))"
+ 30041:         StrSQL = StrSQL & "                       AS Count1Rerurn"
+ 30042:          
+ 30043:          
+ 30044:         
+ 30045:         
+ 30046:         StrSQL = StrSQL & "                        ,(SELECT"
+ 30047:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30048:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30049:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30050:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30051:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 21)"
+ 30052:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30053:         StrSQL = StrSQL & "                           and IsNull(tt.Price, 0) <> 0"
+ 30054:         If Not IsNull(XPDtbFrom.value) Then
+ 30055:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30056:         End If
+ 30057:         
+ 30058:         
+ 30059:         If Not IsNull(XPDtbFrom.value) Then
+ 30060:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30061:         End If
+ 30062:         'StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date)) "
+ 30063:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 2))"
+ 30064:         StrSQL = StrSQL & "                       AS Count2"
+ 30065:         
+ 30066:         
+ 30067:          StrSQL = StrSQL & "                        ,(SELECT"
+ 30068:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30069:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30070:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30071:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30072:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 9)"
+ 30073:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30074:         StrSQL = StrSQL & "                           and IsNull(tt.Price, 0) <> 0"
+ 30075:         If Not IsNull(XPDtbFrom.value) Then
+ 30076:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30077:         End If
+ 30078:         
+ 30079:         
+ 30080:         If Not IsNull(XPDtbFrom.value) Then
+ 30081:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30082:         End If
+ 30083:       '  StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date)) "
+ 30084:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 2))"
+ 30085:         StrSQL = StrSQL & "                       AS Count2Return"
+ 30086:         
+ 30087:         
+ 30088:         
+ 30089:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30090:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30091:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30092:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30093:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30094:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 21)"
+ 30095:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30096:         If Not IsNull(XPDtbFrom.value) Then
+ 30097:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30098:         End If
+ 30099:         
+ 30100:         
+ 30101:         If Not IsNull(XPDtbFrom.value) Then
+ 30102:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30103:         End If
+ 30104:         'StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30105:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 3))"
+ 30106:         StrSQL = StrSQL & "                       AS Count3"
+ 30107:         
+ 30108:         
+ 30109:         
+ 30110:        
+ 30111:         
+ 30112:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30113:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30114:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30115:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30116:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30117:         StrSQL = StrSQL & "                           Where (t.Transaction_Type =9)"
+ 30118:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30119:         If Not IsNull(XPDtbFrom.value) Then
+ 30120:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30121:         End If
+ 30122:         
+ 30123:         
+ 30124:         If Not IsNull(XPDtbFrom.value) Then
+ 30125:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30126:         End If
+ 30127:         'StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30128:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 3))"
+ 30129:         StrSQL = StrSQL & "                       AS Count3Return"
+ 30130:         
+ 30131:          
+ 30132:         
+ 30133:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30134:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30135:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30136:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30137:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30138:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 21)"
+ 30139:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30140:         If Not IsNull(XPDtbFrom.value) Then
+ 30141:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30142:         End If
+ 30143:         
+ 30144:         
+ 30145:         If Not IsNull(XPDtbFrom.value) Then
+ 30146:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30147:         End If
+ 30148:         'StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30149:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 4))"
+ 30150:         StrSQL = StrSQL & "                       AS Count4"
+ 30151:         
+ 30152:         
+ 30153:                StrSQL = StrSQL & "                      ,(SELECT"
+ 30154:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30155:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30156:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30157:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30158:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 9)"
+ 30159:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30160:         If Not IsNull(XPDtbFrom.value) Then
+ 30161:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30162:         End If
+ 30163:         
+ 30164:         
+ 30165:         If Not IsNull(XPDtbFrom.value) Then
+ 30166:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30167:         End If
+ 30168:         'StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30169:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 4))"
+ 30170:         StrSQL = StrSQL & "                       AS Count4Return"
+ 30171:  
+ 30172:         
+ 30173:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30174:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30175:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30176:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30177:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30178:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 21)"
+ 30179:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30180:         If Not IsNull(XPDtbFrom.value) Then
+ 30181:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30182:         End If
+ 30183:         
+ 30184:         
+ 30185:         If Not IsNull(XPDtbFrom.value) Then
+ 30186:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30187:         End If
+ 30188:         'StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30189:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 5))"
+ 30190:         StrSQL = StrSQL & "                       AS Count5"
+ 30191:         
+ 30192:         
+ 30193:         
+ 30194:        
+ 30195:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30196:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30197:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30198:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30199:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30200:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 9)"
+ 30201:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30202:         If Not IsNull(XPDtbFrom.value) Then
+ 30203:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30204:         End If
+ 30205:         
+ 30206:         
+ 30207:         If Not IsNull(XPDtbFrom.value) Then
+ 30208:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30209:         End If
+ 30210:      '   StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30211:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 5))"
+ 30212:         StrSQL = StrSQL & "                       AS Count5Return"
+ 30213:         
+ 30214:           
+ 30215:         
+ 30216:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30217:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30218:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30219:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30220:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30221:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 21)"
+ 30222:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30223:         If Not IsNull(XPDtbFrom.value) Then
+ 30224:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30225:         End If
+ 30226:         
+ 30227:         
+ 30228:         If Not IsNull(XPDtbFrom.value) Then
+ 30229:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30230:         End If
+ 30231:         'StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30232:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 6))"
+ 30233:         StrSQL = StrSQL & "                       AS Count6"
+ 30234:         
+ 30235:         
+ 30236:         
+ 30237:         
+ 30238:                
+ 30239:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30240:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30241:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30242:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30243:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30244:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 9)"
+ 30245:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30246:         If Not IsNull(XPDtbFrom.value) Then
+ 30247:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30248:         End If
+ 30249:         
+ 30250:         
+ 30251:         If Not IsNull(XPDtbFrom.value) Then
+ 30252:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30253:         End If
+ 30254:        ' StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30255:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 6))"
+ 30256:         StrSQL = StrSQL & "                       AS Count6Return"
+ 30257:  
+ 30258:         
+ 30259:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30260:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30261:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30262:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30263:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30264:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 21)"
+ 30265:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30266:         If Not IsNull(XPDtbFrom.value) Then
+ 30267:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30268:         End If
+ 30269:         
+ 30270:         
+ 30271:         If Not IsNull(XPDtbFrom.value) Then
+ 30272:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30273:         End If
+ 30274:        ' StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30275:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 7))"
+ 30276:         
+ 30277:         
+ 30278:         StrSQL = StrSQL & "                       AS Count7"
+ 30279:         
+ 30280:         
+ 30281:         
+ 30282:       
+ 30283:         
+ 30284:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30285:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30286:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30287:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30288:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30289:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 9)"
+ 30290:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30291:         If Not IsNull(XPDtbFrom.value) Then
+ 30292:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30293:         End If
+ 30294:         
+ 30295:         
+ 30296:         If Not IsNull(XPDtbFrom.value) Then
+ 30297:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30298:         End If
+ 30299:       '  StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30300:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 7))"
+ 30301:         
+ 30302:         
+ 30303:         StrSQL = StrSQL & "                       AS Count7Return"
+ 30304:         
+ 30305:          
+ 30306:         
+ 30307:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30308:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30309:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30310:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30311:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30312:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 21)"
+ 30313:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30314:         If Not IsNull(XPDtbFrom.value) Then
+ 30315:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30316:         End If
+ 30317:         
+ 30318:         
+ 30319:         If Not IsNull(XPDtbFrom.value) Then
+ 30320:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30321:         End If
+ 30322:       '  StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30323:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 8))"
+ 30324:         StrSQL = StrSQL & "                       AS Count8"
+ 30325:         
+ 30326:            
+ 30327:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30328:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30329:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30330:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30331:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30332:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 9)"
+ 30333:         StrSQL = StrSQL & "                           and isnull(tt.price,0) <> 0"
+ 30334:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30335:         If Not IsNull(XPDtbFrom.value) Then
+ 30336:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30337:         End If
+ 30338:         
+ 30339:         
+ 30340:         If Not IsNull(XPDtbFrom.value) Then
+ 30341:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30342:         End If
+ 30343:       '  StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30344:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 8))"
+ 30345:         StrSQL = StrSQL & "                       AS Count8Return"
+ 30346:         
+ 30347:         
+ 30348:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30349:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30350:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30351:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30352:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30353:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 21)"
+ 30354:         StrSQL = StrSQL & "                           and isnull(tt.price,0) <> 0"
+ 30355:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30356:         If Not IsNull(XPDtbFrom.value) Then
+ 30357:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30358:         End If
+ 30359:         
+ 30360:         
+ 30361:         If Not IsNull(XPDtbFrom.value) Then
+ 30362:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30363:         End If
+ 30364:         'StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30365:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 10))"
+ 30366:         StrSQL = StrSQL & "                       AS Count9"
+ 30367:         
+ 30368:         
+ 30369:         
+ 30370:         
+ 30371:        
+ 30372:         
+ 30373:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30374:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30375:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30376:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30377:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30378:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 9)"
+ 30379:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30380:         If Not IsNull(XPDtbFrom.value) Then
+ 30381:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30382:         End If
+ 30383:         
+ 30384:         
+ 30385:         If Not IsNull(XPDtbFrom.value) Then
+ 30386:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30387:         End If
+ 30388:        ' StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date))"
+ 30389:         StrSQL = StrSQL & "                           AND (tt.Item_ID = 10))"
+ 30390:         StrSQL = StrSQL & "                       AS Count9Return"
+ 30391:         
+ 30392:         
+ 30393:           
+ 30394:         
+ 30395:         
+ 30396:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30397:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30398:         
+ 30399:          StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30400:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30401:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30402:         
+ 30403:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 21)  AND (tt.Item_ID = dbo.TblItems.ItemID)"
+ 30404:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30405:         StrSQL = StrSQL & "                           and isnull(tt.price,0) <> 0"
+ 30406:         If Not IsNull(XPDtbFrom.value) Then
+ 30407:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30408:         End If
+ 30409:         
+ 30410:         
+ 30411:         If Not IsNull(XPDtbFrom.value) Then
+ 30412:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30413:         End If
+ 30414:         StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date)))"
+ 30415:         StrSQL = StrSQL & "                       AS CountTotal"
+ 30416:         
+ 30417:         
+ 30418:         
+ 30419:          
+ 30420:         
+ 30421:         
+ 30422:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30423:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30424:         
+ 30425:          StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30426:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30427:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30428:         
+ 30429:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 9)  AND (tt.Item_ID = dbo.TblItems.ItemID)"
+ 30430:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30431:         StrSQL = StrSQL & "                           and isnull(tt.price,0) <> 0"
+ 30432:         If Not IsNull(XPDtbFrom.value) Then
+ 30433:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30434:         End If
+ 30435:         
+ 30436:         
+ 30437:         If Not IsNull(XPDtbFrom.value) Then
+ 30438:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30439:         End If
+ 30440:         StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(dbo.Transactions.Transaction_Date)))"
+ 30441:         StrSQL = StrSQL & "                       AS CountTotalReturn"
+ 30442:         
+ 30443:         
+ 30444:           
+ 30445:         
+ 30446:         
+ 30447:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30448:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30449:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30450:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30451:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30452:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 21)"
+ 30453:         StrSQL = StrSQL & "                           and IsNull(tt.Price, 0) <> 0"
+ 30454:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30455:         StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(Transactions.Transaction_Date))"
+ 30456:         StrSQL = StrSQL & "                           AND (YEAR(t.Transaction_Date) = YEAR(Transactions.Transaction_Date)))"
+ 30457:         
+ 30458:         StrSQL = StrSQL & "                       AS CountTotalMonth"
+ 30459:             
+ 30460:             
+ 30461:        
+ 30462:         StrSQL = StrSQL & "                      ,(SELECT"
+ 30463:         StrSQL = StrSQL & "                               COUNT(*) AS Expr1"
+ 30464:         StrSQL = StrSQL & "                           FROM Transaction_Details AS tt"
+ 30465:         StrSQL = StrSQL & "                           INNER JOIN Transactions AS t"
+ 30466:         StrSQL = StrSQL & "                               ON tt.Transaction_ID = t.Transaction_ID"
+ 30467:         StrSQL = StrSQL & "                           Where (t.Transaction_Type = 9)"
+ 30468:         StrSQL = StrSQL & "                           and IsNull(tt.Price, 0) <> 0"
+ 30469:         StrSQL = StrSQL & "                           AND t.BranchId = TblBranchesData.branch_id"
+ 30470:         StrSQL = StrSQL & "                           AND (MONTH(t.Transaction_Date) = MONTH(Transactions.Transaction_Date))"
+ 30471:         StrSQL = StrSQL & "                           AND (YEAR(t.Transaction_Date) = YEAR(Transactions.Transaction_Date)))"
+ 30472:         StrSQL = StrSQL & "                       AS CountTotalMonthReturn"
+ 30473:                         
+ 30474: 
+ 30475:      StrSQL = StrSQL & "        ,(SELECT"
+ 30476:       StrSQL = StrSQL & "               sum(Price) As Expr1"
+ 30477:          StrSQL = StrSQL & "        FROM Transaction_Details AS tt"
+ 30478:  StrSQL = StrSQL & "                INNER JOIN Transactions AS t"
+ 30479:  StrSQL = StrSQL & "                    ON tt.Transaction_ID = t.Transaction_ID"
+ 30480:  StrSQL = StrSQL & "                Where (t.Transaction_Type = 21)"
+ 30481:  StrSQL = StrSQL & "                AND t.BranchId = TblBranchesData.branch_id"
+ 30482: 
+ 30483:         If Not IsNull(XPDtbFrom.value) Then
+ 30484:             StrSQL = StrSQL + " and t.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30485:         End If
+ 30486:         
+ 30487:         
+ 30488:         If Not IsNull(XPDtbFrom.value) Then
+ 30489:             StrSQL = StrSQL + " and t.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30490:         End If
+ 30491:  StrSQL = StrSQL & "                and tt.Item_ID = TblItems.ItemID"
+ 30492:  
+ 30493:  'StrSQL = StrSQL & "                AND (MONTH(t.Transaction_Date) = MONTH(Transactions.Transaction_Date))"
+ 30494:  'StrSQL = StrSQL & "                AND (YEAR(t.Transaction_Date) = YEAR(Transactions.Transaction_Date))"
+ 30495:         
+ 30496:  StrSQL = StrSQL & "           ) AS Transaction_NetValue"
+ 30497: 
+ 30498:  '--  ,SUM(Transactions.Transaction_NetValue) AS Transaction_NetValue
+ 30499: 
+ 30500:   StrSQL = StrSQL & "          ,"
+ 30501:  StrSQL = StrSQL & "           RechargeValue = (case TblItems.ItemID when 1 then"
+ 30502:  StrSQL = StrSQL & "        0"
+ 30503:  StrSQL = StrSQL & "           else SUM(Transactions.RechargeValue)  end)"
+ 30504:    
+ 30505:             
+ 30506:             
+ 30507: '
+ 30508: '        StrSQL = StrSQL & "                      ,SUM(Transactions.Transaction_NetValue) AS Transaction_NetValue"
+ 30509: '        StrSQL = StrSQL & "                      ,SUM(Transactions.RechargeValue) AS RechargeValue"
+ 30510:         StrSQL = StrSQL & "                      ,SUM(Transaction_Details.Vat) AS VatDet"
+ 30511: '                StrSQL = StrSQL & "                       ,(SELECT"
+ 30512: '        StrSQL = StrSQL & "                                  sum(tt.Vat) As Expr1"
+ 30513: '        StrSQL = StrSQL & "                              FROM Transaction_Details AS tt"
+ 30514: '        StrSQL = StrSQL & "                              INNER JOIN Transactions AS t"
+ 30515: '        StrSQL = StrSQL & "                                  ON tt.Transaction_ID = t.Transaction_ID"
+ 30516: '        StrSQL = StrSQL & "                              Where (t.Transaction_Type = 21)"
+ 30517: '        StrSQL = StrSQL & "                              AND t.BranchId = TblBranchesData.branch_id"
+ 30518: '        StrSQL = StrSQL & "                              AND (t.Transaction_Date = Transactions.Transaction_Date))"
+ 30519: '        StrSQL = StrSQL & "                              AS VatDet"
+ 30520:         
+ 30521:         StrSQL = StrSQL & "                      ,TblSection.name SectionName"
+ 30522:         StrSQL = StrSQL & "                      ,TblCountriesGovernments.GovernmentName"
+ 30523:         StrSQL = StrSQL & "                      ,TblBranchesData.branch_name BranchName"
+ 30524:         StrSQL = StrSQL & "                      ,tblActivitesType.name AS ActivitesTypeName ,dbo.TblBranchesData.branch_Code, dbo.TblItems.ItemName, dbo.TblBranchesData.branch_id, dbo.TblBranchesData.branch_Code AS Expr2, YEAR(dbo.Transactions.Transaction_Date) AS mYear"
+ 30525:         
+ 30526:        StrSQL = StrSQL & "                   FROM            dbo.TblBranchesData INNER JOIN"
+ 30527:         StrSQL = StrSQL & "                                            dbo.tblActivitesType ON dbo.TblBranchesData.ActivityTypeId = dbo.tblActivitesType.id INNER JOIN"
+ 30528:         StrSQL = StrSQL & "                                            dbo.Transactions INNER JOIN"
+ 30529:         StrSQL = StrSQL & "                                            dbo.Transaction_Details ON dbo.Transactions.Transaction_ID = dbo.Transaction_Details.Transaction_ID "
+ 30530:         StrSQL = StrSQL & "                                            ON dbo.TblBranchesData.branch_id = dbo.Transactions.BranchId LEFT OUTER JOIN"
+ 30531:         StrSQL = StrSQL & "                                            dbo.TblItems ON dbo.Transaction_Details.Item_ID = dbo.TblItems.ItemID LEFT OUTER JOIN"
+ 30532:         StrSQL = StrSQL & "                                            dbo.TblSection ON dbo.TblBranchesData.RegionID = dbo.TblSection.Id LEFT OUTER JOIN"
+ 30533:         StrSQL = StrSQL & "                                            dbo.TblCountriesGovernments ON dbo.TblBranchesData.GovernmentID = dbo.TblCountriesGovernments.GovernmentID"
+ 30534:                          
+ 30535:                          
+ 30536: 
+ 30537: 
+ 30538: '
+ 30539: '        StrSQL = StrSQL & "                   From TblBranchesData"
+ 30540: '        StrSQL = StrSQL & "                   INNER JOIN tblActivitesType"
+ 30541: '        StrSQL = StrSQL & "                       ON TblBranchesData.ActivityTypeId = tblActivitesType.Id"
+ 30542: '        StrSQL = StrSQL & "                   INNER JOIN Transactions"
+ 30543: '        StrSQL = StrSQL & "                   INNER JOIN Transaction_Details"
+ 30544: '        StrSQL = StrSQL & "                       ON Transactions.Transaction_ID = Transaction_Details.Transaction_ID"
+ 30545: '        StrSQL = StrSQL & "                       ON TblBranchesData.branch_id = Transactions.BranchId"
+ 30546: '        StrSQL = StrSQL & "                   LEFT OUTER JOIN TblSection"
+ 30547: '        StrSQL = StrSQL & "                       ON TblBranchesData.RegionID = TblSection.Id"
+ 30548: '        StrSQL = StrSQL & "                   LEFT OUTER JOIN TblCountriesGovernments"
+ 30549: '        StrSQL = StrSQL & "                       ON TblBranchesData.GovernmentID = TblCountriesGovernments.GovernmentID"
+ 30550:         
+ 30551:         
+ 30552:         StrSQL = StrSQL & "                   WHERE (Transactions.Transaction_Type = 21)"
+ 30553:         'StrSQL = StrSQL & "                   OR Transactions.Transaction_Type = 9)"
+ 30554: '        StrSQL = StrSQL & "                   AND (Transactions.Transaction_Date >= '01-Jan-2023')"
+ 30555: '        StrSQL = StrSQL & "                   AND (Transactions.Transaction_Date <= '2023-12-31')"
+ 30556: '
+ 30557: '
+ 30558: 
+ 30559: Dim Current_branchSql2 As String
+ 30560:     
+ 30561:     
+ 30562:    
+ 30563:     
+ 30564:    
+ 30565:    Current_branchSql2 = "SELECT BranchID FROM dbo.TblUsersBranches " & _
+ 30566:                     "WHERE (UserID = " & val(user_id) & ") " & _
+ 30567:                     "AND BranchID IN (" & _
+ 30568:                     "    SELECT branch_id " & _
+ 30569:                     "    FROM TblBranchesData " & _
+ 30570:                     "    WHERE (IsNull(isStoped, 0) = 0 OR IsNull(IsStopedDate, '9999-12-31') > " & SQLDate(XPDtbFrom.value, True) & ")" & _
+ 30571:                     ")"
+ 30572: 
+ 30573: 
+ 30574:             StrSQL = StrSQL & "        and TblBranchesData.branch_id in(" & Current_branchSql2 & ")"
+ 30575:             If Not IsNull(XPDtbFrom.value) Then
+ 30576:                      StrSQL = StrSQL + " and Transactions.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30577:              End If
+ 30578:  
+ 30579:  
+ 30580:             If Not IsNull(XPDtbFrom.value) Then
+ 30581:                StrSQL = StrSQL + " and Transactions.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30582:             End If
+ 30583: '
+ 30584: '        If XPChk(36).value = Checked Then
+ 30585: '            StrSQL = StrSQL + GetCountrySql
+ 30586: '        End If
+ 30587:         
+ 30588:         
+ 30589:         If BrnchIDes <> "-1" And BrnchIDes <> "" Then
+ 30590:             StrSQL = StrSQL & "   and dbo.Transactions.BranchId in(" & BrnchIDes & ")"
+ 30591:         End If
+ 30592:         If BranshesActiv <> "-1" And BranshesActiv <> "" Then
+ 30593:             StrSQL = StrSQL & "   and dbo.Transactions.BranchId in(" & BranshesActiv & ")"
+ 30594:         End If
+ 30595:         
+ 30596:         If BranchGovernment <> "-1" And BranchGovernment <> "" Then
+ 30597:             StrSQL = StrSQL & "   and dbo.Transactions.BranchId in (" & BranchGovernment & ")"
+ 30598:         End If
+ 30599:         
+ 30600:         
+ 30601:         If Trim(DcBranches(0).Text) <> "" Then
+ 30602:             StrSQL = StrSQL & "   and dbo.Transactions.BranchId= " & val(DcBranches(0).BoundText)
+ 30603:             If SystemOptions.UserInterface = ArabicInterface Then
+ 30604:                 branchtext = "الفرع  : " & DcBranches(0).Text
+ 30605:             Else
+ 30606:                 branchtext = "Branch  : " & DcBranches(0).Text
+ 30607:             End If
+ 30608:         End If
+ 30609:         
+ 30610:         
+ 30611:          StrSQL = StrSQL & " Group by dbo.TblSection.Name"
+ 30612:         StrSQL = StrSQL & "  ,dbo.TblCountriesGovernments.GovernmentName"
+ 30613:         StrSQL = StrSQL & "  ,dbo.TblBranchesData.branch_name"
+ 30614:         StrSQL = StrSQL & "  ,dbo.tblActivitesType.Name"
+ 30615:         StrSQL = StrSQL & "  ,dbo.TblBranchesData.branch_Code"
+ 30616:         StrSQL = StrSQL & "  ,dbo.TblBranchesData.branch_id"
+ 30617:         StrSQL = StrSQL & "  ,MONTH(dbo.transactions.Transaction_Date)"
+ 30618:         StrSQL = StrSQL & "  ,YEAR(dbo.transactions.Transaction_Date)"
+ 30619:         StrSQL = StrSQL & "  ,dbo.TblItems.ItemName"
+ 30620:         StrSQL = StrSQL & "  ,dbo.TblBranchesData.branch_id,dbo.TblItems.ItemID"
+ 30621: 
+ 30622: 
+ 30623:         
+ 30624:         mSqlSub = ""
+ 30625:         
+ 30626:         
+ 30627:         
+ 30628:            mSqlSub = " SELECT"
+ 30629:            mSqlSub = mSqlSub & "      TblBranchesData.branch_id,"
+ 30630:            mSqlSub = mSqlSub & "           dbo.TblBranchesData.branch_Code"
+ 30631:             mSqlSub = mSqlSub & "                     ,dbo.Transactions.Transaction_Date"
+ 30632: mSqlSub = mSqlSub & "                     ,dbo.Transactions.Transaction_NetValue AS Transaction_NetValue"
+ 30633: 'mSqlSub = mSqlSub & "                     ,dbo.Transactions.RechargeValue AS RechargeValue"
+ 30634: mSqlSub = mSqlSub & "                     ,dbo.Transaction_Details.price "
+ 30635: 
+ 30636: 
+ 30637: 
+ 30638:   
+ 30639: 
+ 30640:  '--  ,SUM(Transactions.Transaction_NetValue) AS Transaction_NetValue
+ 30641: 
+ 30642:   mSqlSub = mSqlSub & "          ,"
+ 30643:  mSqlSub = mSqlSub & "           RechargeValue = (case Transaction_Details.Item_ID when 1 then"
+ 30644:  mSqlSub = mSqlSub & "        0"
+ 30645:  mSqlSub = mSqlSub & "           else (Transactions.RechargeValue)  end)"
+ 30646:    
+ 30647:        
+ 30648:        
+ 30649:        
+ 30650: mSqlSub = mSqlSub & "                     ,dbo.Transaction_Details.Vat AS VatDet"
+ 30651: mSqlSub = mSqlSub & "                     ,dbo.TblSection.name AS SectionName"
+ 30652: mSqlSub = mSqlSub & "                     ,dbo.TblCountriesGovernments.GovernmentName"
+ 30653: mSqlSub = mSqlSub & "                     ,dbo.TblBranchesData.branch_name AS BranchName"
+ 30654: mSqlSub = mSqlSub & "                     ,dbo.tblActivitesType.Name AS ActivitesTypeName"
+ 30655: mSqlSub = mSqlSub & "                     ,dbo.TblBranchesData.branch_Code AS Expr2"
+ 30656: mSqlSub = mSqlSub & "                     ,YEAR(dbo.Transactions.Transaction_Date) AS mYear"
+ 30657: mSqlSub = mSqlSub & "                     ,dbo.TblItems.ItemName"
+ 30658: mSqlSub = mSqlSub & "                     ,dbo.Transactions.Transaction_ID"
+ 30659: mSqlSub = mSqlSub & "                     ,dbo.Transactions.NoteSerial1"
+ 30660: mSqlSub = mSqlSub & "                     ,dbo.Transactions.DiscountV"
+ 30661: mSqlSub = mSqlSub & "                     ,dbo.Transactions.ItemDit"
+ 30662: mSqlSub = mSqlSub & "                     ,dbo.Transactions.AccountTypeName,dbo.Transactions.AccountTypeName1"
+ 30663: mSqlSub = mSqlSub & "                     ,dbo.Transactions.ItemIDService"
+ 30664: mSqlSub = mSqlSub & "                     ,dbo.Transactions.CashCustomerName"
+ 30665: mSqlSub = mSqlSub & "                     ,dbo.Transactions.CashCustomerPhone"
+ 30666: mSqlSub = mSqlSub & "                     ,dbo.Transactions.CashCustomerMobile,dbo.Transactions.IPN"
+ 30667: mSqlSub = mSqlSub & "                     ,dbo.Transactions.ManualNO"
+ 30668: mSqlSub = mSqlSub & "                  From dbo.TblBranchesData"
+ 30669: mSqlSub = mSqlSub & "                  INNER JOIN dbo.tblActivitesType"
+ 30670: mSqlSub = mSqlSub & "                      ON dbo.TblBranchesData.ActivityTypeId = dbo.tblActivitesType.id"
+ 30671: mSqlSub = mSqlSub & "                  INNER JOIN dbo.Transactions"
+ 30672: mSqlSub = mSqlSub & "                  INNER JOIN dbo.Transaction_Details"
+ 30673: mSqlSub = mSqlSub & "                      ON dbo.Transactions.Transaction_ID = dbo.Transaction_Details.Transaction_ID"
+ 30674: mSqlSub = mSqlSub & "                      ON dbo.TblBranchesData.branch_id = dbo.Transactions.BranchId"
+ 30675: mSqlSub = mSqlSub & "                  LEFT OUTER JOIN dbo.TblItems"
+ 30676: mSqlSub = mSqlSub & "                      ON dbo.Transaction_Details.Item_ID = dbo.TblItems.ItemID"
+ 30677: mSqlSub = mSqlSub & "                  LEFT OUTER JOIN dbo.TblSection"
+ 30678: mSqlSub = mSqlSub & "                      ON dbo.TblBranchesData.RegionID = dbo.TblSection.Id"
+ 30679: mSqlSub = mSqlSub & "                  LEFT OUTER JOIN dbo.TblCountriesGovernments"
+ 30680: mSqlSub = mSqlSub & "                      ON dbo.TblBranchesData.GovernmentID = dbo.TblCountriesGovernments.GovernmentID"
+ 30681: mSqlSub = mSqlSub & "                  Where (dbo.transactions.Transaction_Type = 21)"
+ 30682: 
+ 30683:             If Not IsNull(XPDtbFrom.value) Then
+ 30684:                      mSqlSub = mSqlSub + " and Transactions.Transaction_Date >=" & SQLDate(XPDtbFrom.value, True) & ""
+ 30685:              End If
+ 30686:  
+ 30687:  
+ 30688:             If Not IsNull(XPDtbFrom.value) Then
+ 30689:                mSqlSub = mSqlSub + " and Transactions.Transaction_Date <=" & SQLDate(XPDtpTo.value, True) & ""
+ 30690:             End If
+ 30691: '
+ 30692: '        If XPChk(36).value = Checked Then
+ 30693: '            StrSQL = StrSQL + GetCountrySql
+ 30694: '        End If
+ 30695:          If val(DcBranches(0).BoundText) <> 0 Then
+ 30696:             mSqlSub = mSqlSub & "   and dbo.Transactions.BranchId= " & val(DcBranches(0).BoundText)
+ 30697:             If SystemOptions.UserInterface = ArabicInterface Then
+ 30698:                 branchtext = "الفرع  : " & DcBranches(0).Text
+ 30699:             Else
+ 30700:                 branchtext = "Branch  : " & DcBranches(0).Text
+ 30701:             End If
+ 30702:         End If
+ 30703:         
+ 30704:         
+ 30705:         If BrnchIDes <> "-1" And BrnchIDes <> "" Then
+ 30706:             mSqlSub = mSqlSub & "   and dbo.Transactions.BranchId in(" & BrnchIDes & ")"
+ 30707:         End If
+ 30708:         If BranshesActiv <> "-1" And BranshesActiv <> "" Then
+ 30709:             mSqlSub = mSqlSub & "   and dbo.Transactions.BranchId in(" & BranshesActiv & ")"
+ 30710:         End If
+ 30711:         
+ 30712:         If BranchGovernment <> "-1" And BranchGovernment <> "" Then
+ 30713:             mSqlSub = mSqlSub & "   and dbo.Transactions.BranchId in (" & BranchGovernment & ")"
+ 30714:         End If
+ 30715:         
+ 30716:         
+ 30717:         Dim SRep As String
+ 30718: SRep = "EXEC dbo.RPT_CloseReportItemsSummary " & _
+ 30719:     SQLDate(XPDtbFrom.value, True) & "," & _
+ 30720:     SQLDate(XPDtpTo.value, True) & "," & _
+ 30721:     CStr(val(user_id)) & "," & _
+ 30722:     IIf(val(DcBranches(0).BoundText) = 0, "NULL", CStr(val(DcBranches(0).BoundText))) & "," & _
+ 30723:     IIf(BrnchIDes = "-1" Or BrnchIDes = "", "NULL", "'" & BrnchIDes & "'") & "," & _
+ 30724:     IIf(BranchGovernment = "-1" Or BranchGovernment = "", "NULL", "'" & BranchGovernment & "'") & "," & _
+ 30725:     IIf(BranshesActiv = "-1" Or BranshesActiv = "", "NULL", "'" & BranshesActiv & "'")
+ 30726:     
+ 30727:     
+ 30728: SRep = "EXEC dbo.RPT_SalesSummary_Main " & _
+ 30729:     SQLDate(XPDtbFrom.value, True) & "," & _
+ 30730:     SQLDate(XPDtpTo.value, True) & "," & _
+ 30731:     CStr(val(user_id)) & "," & _
+ 30732:     IIf(val(DcBranches(0).BoundText) = 0, "NULL", CStr(val(DcBranches(0).BoundText))) & "," & _
+ 30733:     IIf(BrnchIDes = "-1" Or BrnchIDes = "", "NULL", "'" & BrnchIDes & "'") & "," & _
+ 30734:     IIf(BranchGovernment = "-1" Or BranchGovernment = "", "NULL", "'" & BranchGovernment & "'") & "," & _
+ 30735:     IIf(BranshesActiv = "-1" Or BranshesActiv = "", "NULL", "'" & BranshesActiv & "'")
+ 30736: 
+ 30737: 'Set RsData = New ADODB.Recordset
+ 30738: 'RsData.Open S, Cn, adOpenStatic, adLockReadOnly, adCmdText
+ 30739: 
+ 30740: 
+ 30741: 
+ 30742: 
+ 30743: mSqlSub = "EXEC dbo.RPT_CloseReportSubDetails " & _
+ 30744:     SQLDate(XPDtbFrom.value, True) & "," & _
+ 30745:     SQLDate(XPDtpTo.value, True) & "," & _
+ 30746:     CStr(val(user_id)) & "," & _
+ 30747:     IIf(val(DcBranches(0).BoundText) = 0, "NULL", CStr(val(DcBranches(0).BoundText))) & "," & _
+ 30748:     IIf(BrnchIDes = "-1" Or BrnchIDes = "", "NULL", "'" & BrnchIDes & "'") & "," & _
+ 30749:     IIf(BranshesActiv = "-1" Or BranshesActiv = "", "NULL", "'" & BranshesActiv & "'") & "," & _
+ 30750:     IIf(BranchGovernment = "-1" Or BranchGovernment = "", "NULL", "'" & BranchGovernment & "'")
+ 30751: 
+ 30752:      End If

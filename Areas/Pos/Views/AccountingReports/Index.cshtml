@@ -1,264 +1,222 @@
-@model MyERP.Models.Reports.HtmlReportPageViewModel
+﻿@model MyERP.Models.Reports.HtmlReportPageViewModel
 @{
-    Layout = null;
+    var areaName = (ViewBag.AccountingReportsArea as string) ?? "Pos";
+    Layout = string.Equals(areaName, "MainErp", StringComparison.OrdinalIgnoreCase) ? "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml" : null;
     ViewBag.Title = "تقارير الحسابات";
+    var accountTreeUrl = Url.Action("AccountTree", "AccountingReports", new { area = areaName });
 }
+<link href="@Url.Content("~/Areas/Pos/Content/html-reports.css?v=20260520-accounting-shared")" rel="stylesheet" />
 
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="utf-8" />
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>@ViewBag.Title</title>
-    <link href="@Url.Content("~/Areas/Pos/Content/html-reports.css?v=20260516-accounting-polish")" rel="stylesheet" />
-</head>
-<body>
-    <main class="html-report-page erp-ui-page accounting-reports-page" data-account-tree-url="@Url.Action("AccountTree", "AccountingReports", new { area = "Pos" })">
-        <header class="erp-hero-card">
-            <div>
-                <h1>تقارير الحسابات</h1>
-                <p>تقارير مالية خفيفة قابلة للطباعة والتصدير بدون مصمم تقارير.</p>
+<main class="html-report-page erp-ui-page accounting-reports-page" data-account-tree-url="@accountTreeUrl">
+    <header class="erp-hero-card">
+        <div>
+            <h1>تقارير الحسابات</h1>
+            <p>شاشة مشتركة بين MainErp و POS مبنية على اختيارات FrmAccountReport في VB6 وملفات Crystal الأصلية.</p>
+        </div>
+        <strong>@areaName</strong>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <section class="erp-alert erp-alert-danger no-print">@Model.Message</section>
+    }
+
+    @using (Html.BeginForm("Search", "AccountingReports", new { area = areaName }, FormMethod.Post, new { id = "accountingReportForm", @class = "erp-report-form no-print" }))
+    {
+        @Html.HiddenFor(m => m.Filter.ReportKey, new { id = "ReportKey" })
+        @Html.HiddenFor(m => m.Filter.AccountCodes, new { id = "SelectedAccountCodes" })
+        @Html.HiddenFor(m => m.Filter.AccountFrom)
+        @Html.HiddenFor(m => m.Filter.AccountTo)
+
+        <section class="erp-card">
+            <div class="erp-card-head">
+                <div>
+                    <h2>اختر التقرير</h2>
+                    <p>كل اختيار هنا مربوط برقم OptAccount وملف Crystal الأصلي، وليس مجرد قالب عام.</p>
+                </div>
             </div>
-            <strong>Dynamic ERP</strong>
-        </header>
+            <div class="erp-report-grid">
+                @foreach (var report in Model.Reports)
+                {
+                    var active = string.Equals(report.Key, Model.Filter.ReportKey, StringComparison.OrdinalIgnoreCase);
+                    <button type="button" class="erp-report-tile @(active ? "is-active" : "")" data-report-key="@report.Key" aria-pressed="@(active ? "true" : "false")">
+                        <span class="erp-report-dot"></span>
+                        <strong>@report.Title</strong>
+                        <small>@report.Description</small>
+                        <small>@report.SourceName</small>
+                    </button>
+                }
+            </div>
+        </section>
 
-        @if (!string.IsNullOrWhiteSpace(Model.Message))
-        {
-            <section class="erp-alert erp-alert-danger no-print">@Model.Message</section>
-        }
-
-        @using (Html.BeginForm("Search", "AccountingReports", new { area = "Pos" }, FormMethod.Post, new { id = "accountingReportForm", @class = "erp-report-form no-print" }))
-        {
-            @Html.HiddenFor(m => m.Filter.ReportKey, new { id = "ReportKey" })
-            @Html.HiddenFor(m => m.Filter.AccountCodes, new { id = "SelectedAccountCodes" })
-            @Html.HiddenFor(m => m.Filter.AccountFrom)
-            @Html.HiddenFor(m => m.Filter.AccountTo)
-
-            <section class="erp-card">
-                <div class="erp-card-head">
+        <section class="erp-card">
+            <div class="erp-card-head">
+                <div>
+                    <h2>فلاتر التقرير</h2>
+                    <p>الفلاتر تطبق داخل Stored Procedure، والحسابات تعتمد على Account_Serial/Account_Code من شجرة الحسابات.</p>
+                </div>
+            </div>
+            <div class="erp-filter-grid">
+                <label class="erp-field">
+                    <span>من تاريخ</span>
+                    @Html.TextBoxFor(m => m.Filter.FromDate, "{0:yyyy-MM-dd}", new { type = "date" })
+                </label>
+                <label class="erp-field">
+                    <span>إلى تاريخ</span>
+                    @Html.TextBoxFor(m => m.Filter.ToDate, "{0:yyyy-MM-dd}", new { type = "date" })
+                </label>
+                <label class="erp-field">
+                    <span>الفرع</span>
+                    @Html.DropDownListFor(m => m.Filter.BranchId, new SelectList(Model.Branches, "Id", "Name", Model.Filter.BranchId), "كل الفروع")
+                </label>
+                <label class="erp-field">
+                    <span>النشاط</span>
+                    @Html.TextBoxFor(m => m.Filter.ActivityId, new { type = "number", placeholder = "اختياري" })
+                </label>
+                <label class="erp-field">
+                    <span>المنطقة</span>
+                    @Html.TextBoxFor(m => m.Filter.RegionId, new { type = "number", placeholder = "اختياري" })
+                </label>
+                <label class="erp-field">
+                    <span>مركز التكلفة</span>
+                    @Html.TextBoxFor(m => m.Filter.CostCenterId, new { type = "number", placeholder = "اختياري" })
+                </label>
+                <label class="erp-field">
+                    <span>المشروع</span>
+                    @Html.TextBoxFor(m => m.Filter.ProjectId, new { type = "number", placeholder = "اختياري" })
+                </label>
+                <label class="erp-field">
+                    <span>نوع القيد</span>
+                    @Html.TextBoxFor(m => m.Filter.NoteType, new { type = "number", placeholder = "اختياري" })
+                </label>
+                <label class="erp-field">
+                    <span>مستوى الحساب</span>
+                    @Html.TextBoxFor(m => m.Filter.AccountLevel, new { type = "number", placeholder = "0 = كل المستويات" })
+                </label>
+                <label class="erp-field">
+                    <span>إخفاء الأرصدة الصفرية</span>
+                    @Html.CheckBox("Filter.HideZeroBalance", Model.Filter.HideZeroBalance.GetValueOrDefault(true))
+                </label>
+                <label class="erp-field">
+                    <span>تفصيلي</span>
+                    @Html.CheckBox("Filter.Detailed", Model.Filter.Detailed.GetValueOrDefault(false))
+                </label>
+                <div class="erp-account-picker">
                     <div>
-                        <h2>اختر التقرير</h2>
-                        <p>اختر التقرير المطلوب ثم اضبط الفلاتر واضغط بحث البيانات.</p>
+                        <strong>الحسابات</strong>
+                        <span id="accountTreeSummary">@(string.IsNullOrWhiteSpace(Model.Filter.AccountCodes) ? "لم يتم اختيار حسابات" : "تم اختيار حسابات")</span>
                     </div>
+                    <button type="button"
+                            class="erp-btn erp-btn-secondary js-account-selector"
+                            data-target-input="SelectedAccountCodes"
+                            data-summary-target="accountTreeSummary"
+                            data-account-tree-url="@accountTreeUrl">
+                        اختيار الحسابات
+                    </button>
                 </div>
-                <div class="erp-report-grid">
-                    @foreach (var report in Model.Reports)
-                    {
-                        var active = string.Equals(report.Key, Model.Filter.ReportKey, StringComparison.OrdinalIgnoreCase);
-                        <button type="button" class="erp-report-tile @(active ? "is-active" : "")" data-report-key="@report.Key" aria-pressed="@(active ? "true" : "false")">
-                            <span class="erp-report-dot"></span>
-                            <strong>@report.Title</strong>
-                            <small>@report.Description</small>
-                        </button>
-                    }
-                </div>
-            </section>
+            </div>
+            <div class="erp-actions">
+                <button type="submit" class="erp-btn erp-btn-primary">عرض التقرير</button>
+                <button type="button" class="erp-btn erp-btn-secondary" id="htmlReportPrintBtn">طباعة</button>
+                <button type="submit" class="erp-btn erp-btn-secondary" formaction="@Url.Action("Export", "AccountingReports", new { area = areaName })">تصدير Excel</button>
+            </div>
+        </section>
+    }
 
-            <section class="erp-card">
-                <div class="erp-card-head">
-                    <div>
-                        <h2>فلاتر التقرير</h2>
-                        <p>استخدم الفلاتر المطلوبة فقط، واترك الباقي فارغا لعرض نطاق أوسع.</p>
-                    </div>
+    @if (Model.Result != null)
+    {
+        <section class="erp-card erp-result-card" id="htmlReportResultCard">
+            <div class="erp-card-head">
+                <div>
+                    <h2>@Model.ActiveReport.Title</h2>
+                    <p>@Model.ActiveReport.SourceName</p>
                 </div>
-                <div class="erp-filter-grid">
-                    <label class="erp-field">
-                        <span>من تاريخ</span>
-                        @Html.TextBoxFor(m => m.Filter.FromDate, "{0:yyyy-MM-dd}", new { type = "date" })
-                    </label>
-                    <label class="erp-field">
-                        <span>إلى تاريخ</span>
-                        @Html.TextBoxFor(m => m.Filter.ToDate, "{0:yyyy-MM-dd}", new { type = "date" })
-                    </label>
-                    <label class="erp-field">
-                        <span>الفرع</span>
-                        @Html.DropDownListFor(m => m.Filter.BranchId, new SelectList(Model.Branches, "Id", "Name", Model.Filter.BranchId), "كل الفروع")
-                    </label>
-                    <label class="erp-field">
-                        <span>مركز تكلفة</span>
-                        @Html.TextBoxFor(m => m.Filter.CostCenterId, new { type = "number", placeholder = "اختياري" })
-                    </label>
-                    <div class="erp-account-picker">
-                        <div>
-                            <strong>الحسابات</strong>
-                            <span id="accountTreeSummary">لم يتم اختيار حسابات</span>
-                        </div>
-                        <button type="button"
-                                class="erp-btn erp-btn-secondary js-account-selector"
-                                data-target-input="SelectedAccountCodes"
-                                data-summary-target="accountTreeSummary"
-                                data-account-tree-url="@Url.Action("AccountTree", "AccountingReports", new { area = "Pos" })">
-                            اختيار الحسابات
-                        </button>
-                    </div>
-                </div>
-                <div class="erp-actions">
-                    <button type="submit" class="erp-btn erp-btn-primary">بحث البيانات</button>
-                    <button type="button" class="erp-btn erp-btn-secondary" id="htmlReportPrintBtn">طباعة</button>
-                    <button type="submit" class="erp-btn erp-btn-secondary" formaction="@Url.Action("Export", "AccountingReports", new { area = "Pos" })">تصدير Excel</button>
-                </div>
-            </section>
-        }
-
-        @if (Model.Result != null)
-        {
-            <section class="erp-card erp-result-card" id="htmlReportResultCard">
-                <div class="erp-card-head">
-                    <div>
-                        <h2>@Model.ActiveReport.Title</h2>
-                        <p>@Model.ActiveReport.Description</p>
-                    </div>
-                    <span class="erp-badge">تقرير حسابات</span>
-                </div>
-                <div class="filter-summary erp-filter-summary">
-                    <span>من تاريخ: @(Model.Filter.FromDate.HasValue ? Model.Filter.FromDate.Value.ToString("dd/MM/yyyy") : "-")</span>
-                    <span>إلى تاريخ: @(Model.Filter.ToDate.HasValue ? Model.Filter.ToDate.Value.ToString("dd/MM/yyyy") : "-")</span>
-                    <span>عدد السجلات: @Model.Result.Rows.Count</span>
-                </div>
-                <div class="html-report-table-wrap">
-                    <table class="html-report-table erp-data-table">
-                        <thead>
-                            <tr>
-                                @foreach (var column in Model.Result.Columns)
-                                {
-                                    <th>@column.Title</th>
-                                }
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @if (Model.Result.Rows.Count == 0)
+                <span class="erp-badge">@Model.ActiveReport.Description</span>
+            </div>
+            <div class="filter-summary erp-filter-summary">
+                <span>من تاريخ: @(Model.Filter.FromDate.HasValue ? Model.Filter.FromDate.Value.ToString("dd/MM/yyyy") : "-")</span>
+                <span>إلى تاريخ: @(Model.Filter.ToDate.HasValue ? Model.Filter.ToDate.Value.ToString("dd/MM/yyyy") : "-")</span>
+                <span>عدد السجلات: @Model.Result.Rows.Count</span>
+            </div>
+            <div class="html-report-table-wrap">
+                <table class="html-report-table erp-data-table">
+                    <thead>
+                        <tr>
+                            @foreach (var column in Model.Result.Columns)
                             {
-                                <tr><td colspan="@Model.Result.Columns.Count" class="empty-cell">لا توجد بيانات</td></tr>
+                                <th>@column.Title</th>
                             }
-                            else
-                            {
-                                foreach (var row in Model.Result.Rows)
-                                {
-                                    <tr>
-                                        @foreach (var column in Model.Result.Columns)
-                                        {
-                                            var value = row.ContainsKey(column.Key) ? row[column.Key] : null;
-                                            <td class="@(column.IsNumeric ? "numeric-cell" : "")">@FormatCell(value)</td>
-                                        }
-                                    </tr>
-                                }
-                            }
-                        </tbody>
-                        @if (Model.Result.Totals.Count > 0)
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Result.Rows.Count == 0)
                         {
-                            <tfoot>
+                            <tr><td colspan="@Model.Result.Columns.Count" class="empty-cell">لا توجد بيانات</td></tr>
+                        }
+                        else
+                        {
+                            foreach (var row in Model.Result.Rows)
+                            {
                                 <tr>
-                                    @for (var i = 0; i < Model.Result.Columns.Count; i++)
+                                    @foreach (var column in Model.Result.Columns)
                                     {
-                                        var column = Model.Result.Columns[i];
-                                        if (i == 0)
-                                        {
-                                            <td>الإجمالي</td>
-                                        }
-                                        else if (column.ShowTotal && Model.Result.Totals.ContainsKey(column.Key))
-                                        {
-                                            <td class="numeric-cell">@Model.Result.Totals[column.Key].ToString("0.##")</td>
-                                        }
-                                        else
-                                        {
-                                            <td></td>
-                                        }
+                                        var value = row.ContainsKey(column.Key) ? row[column.Key] : null;
+                                        <td class="@(column.IsNumeric ? "numeric-cell" : "")">@FormatCell(value)</td>
                                     }
                                 </tr>
-                            </tfoot>
+                            }
                         }
-                    </table>
-                </div>
-            </section>
-        }
-        else
-        {
-            <section class="erp-card erp-empty-state">اختر التقرير والفترة ثم اضغط بحث البيانات.</section>
-        }
-    </main>
-    <script src="@Url.Content("~/Areas/Pos/Scripts/account-selector.js")"></script>
-    <script>
-        (function () {
-            function enhanceSelectSearch(select, placeholder) {
-                if (!select || select.getAttribute("data-enhanced") === "true") { return; }
-                select.setAttribute("data-enhanced", "true");
-                var parent = select.parentNode;
-                var wrap = document.createElement("span");
-                wrap.className = "html-smart-select";
-                parent.insertBefore(wrap, select);
-                wrap.appendChild(select);
-                var input = document.createElement("input");
-                input.type = "text";
-                input.className = "html-smart-select-input";
-                input.placeholder = placeholder || "اكتب للبحث";
-                input.autocomplete = "off";
-                var results = document.createElement("div");
-                results.className = "html-smart-select-results";
-                wrap.insertBefore(input, select);
-                wrap.appendChild(results);
-
-                function text(opt) { return opt ? (opt.textContent || opt.innerText || "").trim() : ""; }
-                function sync() { input.value = select.value ? text(select.options[select.selectedIndex]) : ""; }
-                function close() { results.classList.remove("is-open"); }
-                function choose(opt) {
-                    select.value = opt.value;
-                    sync();
-                    close();
-                    select.dispatchEvent(new Event("change"));
-                }
-                function render() {
-                    var term = input.value.trim().toLowerCase();
-                    var opts = Array.prototype.slice.call(select.options).filter(function (opt) {
-                        if (!opt.value) { return term.length === 0; }
-                        return text(opt).toLowerCase().indexOf(term) >= 0 || String(opt.value).toLowerCase().indexOf(term) >= 0;
-                    }).slice(0, 40);
-                    results.innerHTML = "";
-                    if (!opts.length) {
-                        var empty = document.createElement("div");
-                        empty.className = "html-smart-select-option is-empty";
-                        empty.textContent = "لا توجد نتائج";
-                        results.appendChild(empty);
-                    } else {
-                        opts.forEach(function (opt) {
-                            var row = document.createElement("button");
-                            row.type = "button";
-                            row.className = "html-smart-select-option";
-                            row.textContent = text(opt);
-                            row.addEventListener("mousedown", function (event) {
-                                event.preventDefault();
-                                choose(opt);
-                            });
-                            results.appendChild(row);
-                        });
+                    </tbody>
+                    @if (Model.Result.Totals.Count > 0)
+                    {
+                        <tfoot>
+                            <tr>
+                                @for (var i = 0; i < Model.Result.Columns.Count; i++)
+                                {
+                                    var column = Model.Result.Columns[i];
+                                    if (i == 0)
+                                    {
+                                        <td>الإجمالي</td>
+                                    }
+                                    else if (column.ShowTotal && Model.Result.Totals.ContainsKey(column.Key))
+                                    {
+                                        <td class="numeric-cell">@Model.Result.Totals[column.Key].ToString("0.##")</td>
+                                    }
+                                    else
+                                    {
+                                        <td></td>
+                                    }
+                                }
+                            </tr>
+                        </tfoot>
                     }
-                    results.classList.add("is-open");
-                }
-                input.addEventListener("input", render);
-                input.addEventListener("focus", render);
-                input.addEventListener("blur", function () { window.setTimeout(close, 150); });
-                sync();
-            }
-
-            enhanceSelectSearch(document.querySelector("select[name='Filter.BranchId']"), "اكتب اسم الفرع أو الكود");
-
-            document.addEventListener("click", function (event) {
-                if (event.target && event.target.id === "htmlReportPrintBtn") { window.print(); }
-                var option = event.target && event.target.closest ? event.target.closest(".erp-report-tile") : null;
-                if (!option) { return; }
-                var key = option.getAttribute("data-report-key") || "";
-                var input = document.getElementById("ReportKey");
-                if (input) { input.value = key; }
-                var options = document.querySelectorAll(".erp-report-tile");
-                for (var i = 0; i < options.length; i++) {
-                    options[i].classList.toggle("is-active", options[i] === option);
-                    options[i].setAttribute("aria-pressed", options[i] === option ? "true" : "false");
-                }
-            });
-        })();
-    </script>
-</body>
-</html>
+                </table>
+            </div>
+        </section>
+    }
+    else
+    {
+        <section class="erp-card erp-empty-state">اختر التقرير والفترة ثم اضغط عرض التقرير.</section>
+    }
+</main>
+<script src="@Url.Content("~/Areas/Pos/Scripts/account-selector.js")"></script>
+<script>
+(function () {
+    document.addEventListener("click", function (event) {
+        if (event.target && event.target.id === "htmlReportPrintBtn") { window.print(); }
+        var option = event.target && event.target.closest ? event.target.closest(".erp-report-tile") : null;
+        if (!option) { return; }
+        var key = option.getAttribute("data-report-key") || "";
+        var input = document.getElementById("ReportKey");
+        if (input) { input.value = key; }
+        var options = document.querySelectorAll(".erp-report-tile");
+        for (var i = 0; i < options.length; i++) {
+            options[i].classList.toggle("is-active", options[i] === option);
+            options[i].setAttribute("aria-pressed", options[i] === option ? "true" : "false");
+        }
+    });
+})();
+</script>
 
 @functions {
     private static string FormatCell(object value)
@@ -268,17 +226,7 @@
         if (value is decimal) { return ((decimal)value).ToString("0.##"); }
         if (value is double) { return ((double)value).ToString("0.##"); }
         if (value is float) { return ((float)value).ToString("0.##"); }
-        var text = Convert.ToString(value);
-        if (!string.IsNullOrWhiteSpace(text))
-        {
-            text = text.Trim();
-            var match = System.Text.RegularExpressions.Regex.Match(text, @"\/Date\((-?\d+)(?:[+-]\d+)?\)\/");
-            long milliseconds;
-            if (match.Success && long.TryParse(match.Groups[1].Value, out milliseconds))
-            {
-                return new DateTime(1970, 1, 1).AddMilliseconds(milliseconds).ToLocalTime().ToString("dd/MM/yyyy");
-            }
-        }
-        return text;
+        return Convert.ToString(value);
     }
 }
+

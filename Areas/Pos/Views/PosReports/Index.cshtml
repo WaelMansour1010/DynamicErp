@@ -442,7 +442,7 @@
                     showEmptyBranches: byId("reportShowEmptyBranches").checked
                 };
             }
-            function renderTable(data) {
+            function renderTable(data, requestedKey) {
                 if (!data || !data.columns || !data.rows) {
                     byId("reportResult").innerHTML = "";
                     return;
@@ -453,8 +453,9 @@
                     return;
                 }
 
-                if (isProjectStatusCrystalReport(data.reportKey || data.ReportKey)) {
-                    renderFinancialClosingReport(data);
+                var effectiveReportKey = requestedKey || data.reportKey || data.ReportKey;
+                if (isProjectStatusCrystalReport(effectiveReportKey)) {
+                    renderFinancialClosingReport(data, effectiveReportKey);
                     return;
                 }
 
@@ -571,30 +572,13 @@
             function formatNumber(value) {
                 return Math.round((value + Number.EPSILON) * 100) / 100;
             }
-            function renderFinancialClosingReport(data) {
-                var cols = [
-                    { key: "RowNo", title: "م", total: false },
-                    { key: "BranchName", title: "بيان الفروع", total: false },
-                    { key: "TotalSupply", title: "إجمالي التوريد", note: "داخل الضريبة", total: true },
-                    { key: "CountCards", title: "كارت كيشني", note: "عدد", aliases: ["TotalCards", "CountCard"], total: true },
-                    { key: "CardValue", title: "كارت كيشني", note: "قيمة", aliases: ["TotalSaleDay2", "CardsValue"], total: true },
-                    { key: "CountTransaction", title: "عدد عمليات الشحن", aliases: ["CountTransac", "TransactionCashCount"], total: true },
-                    { key: "WalletBalance", title: "رصيد Wallet", aliases: ["WalletNet"], total: true },
-                    { key: "WalletSupply", title: "توريد Wallet", aliases: ["TotalWallet"], total: true },
-                    { key: "BankBalanceCharge", title: "تكلفة رسوم", note: "رسوم", warn: true, aliases: ["BankBalance", "BalanceCharge"], total: true },
-                    { key: "TotalRechargeValue", title: "أصل مبلغ الشحن", total: true },
-                    { key: "TotalRev2", title: "الخصم", total: true },
-                    { key: "TotalRevWithVat", title: "رسوم الشحن", note: "شامل الضريبة", total: true },
-                    { key: "ReturnsCount", title: "المرتجعات", note: "عدد", aliases: ["ReturnCount", "TotalReturnsCount"], total: true },
-                    { key: "TotalReturns", title: "المرتجعات", note: "قيمة", total: true },
-                    { key: "NetCashOut", title: "صافي كاش أوت", total: true },
-                    { key: "BoxValue", title: "العهدة", aliases: ["BoxBalance"], total: true },
-                    { key: "ClosingStatus", title: "حالة الإغلاق", aliases: ["CloseStatus", "VoucherType"], total: false }
-                ];
+            function renderFinancialClosingReport(data, requestedKey) {
+                var layout = getProjectStatusCrystalLayout(requestedKey || data.reportKey || data.ReportKey);
+                var cols = layout.columns;
                 var totals = {};
                 var html = ''
                     + '<div class="crystal-report">'
-                    + '<div class="crystal-title">' + escapeHtml(data.reportName || "تقرير الإغلاق المالي الشامل على مستوى الفروع") + '</div>'
+                    + '<div class="crystal-title">' + escapeHtml(layout.title || data.reportName || "تقرير") + '</div>'
                     + '<div class="responsive-table"><table class="pos-table crystal-table"><thead><tr>';
 
                 for (var i = 0; i < cols.length; i++) {
@@ -640,9 +624,90 @@
                     }
                 }
                 html += '</tr></tfoot></table></div>';
-                html += buildCrystalSummary(totals);
+                if (layout.summary !== false) {
+                    html += buildCrystalSummary(totals, layout.summaryMode);
+                }
                 html += '</div>';
                 byId("reportResult").innerHTML = html;
+            }
+            function getProjectStatusCrystalLayout(reportKey) {
+                reportKey = String(reportKey || "").toLowerCase();
+                if (reportKey === "general-sales") {
+                    return {
+                        title: "تقرير المبيعات العام",
+                        summary: true,
+                        summaryMode: "sales",
+                        columns: [
+                            { key: "RowNo", title: "م", total: false },
+                            { key: "BranchName", title: "بيان الفرع", total: false },
+                            { key: "TotalSupply", title: "إجمالي التوريد", note: "داخل الضريبة", total: true },
+                            { key: "TotalRechargeValue", title: "أصل مبلغ الشحن", total: true },
+                            { key: "TotalRev2", title: "رسوم الشحن", note: "بدون ضريبة", total: true },
+                            { key: "TotalRevVat", title: "ضريبة رسوم الشحن", total: true },
+                            { key: "TotalRevWithVat", title: "رسوم الشحن", note: "شامل الضريبة", total: true },
+                            { key: "CountTransaction", title: "عدد عمليات الشحن", total: true },
+                            { key: "CountCards", title: "كروت كيشني", note: "عدد", total: true },
+                            { key: "CardValue", title: "كروت بنك مصر", note: "قيمة", aliases: ["TotalBankMisrCard"], total: true },
+                            { key: "TotalSaleDay2Vat", title: "ضريبة بنك مصر", total: true },
+                            { key: "TotalNBECard", title: "كروت الأهلي", note: "قيمة", total: true },
+                            { key: "TotalSaleDay2Vat_NBE", title: "ضريبة الأهلي", total: true },
+                            { key: "TotalSaleDay2", title: "إجمالي الكروت", note: "قبل الضريبة", total: true },
+                            { key: "TotalSaleDay2Vat_All", title: "إجمالي ضريبة الكروت", total: true },
+                            { key: "WalletBalance", title: "رصيد Wallet", total: true },
+                            { key: "WalletSupply", title: "توريد Wallet", total: true },
+                            { key: "ReturnsCount", title: "مرتجعات", note: "عدد", aliases: ["CountReturns"], total: true },
+                            { key: "TotalReturns", title: "مرتجعات", note: "قيمة", total: true }
+                        ]
+                    };
+                }
+                if (reportKey === "revenues") {
+                    return {
+                        title: "تقرير الإيرادات",
+                        summary: false,
+                        columns: [
+                            { key: "RowNo", title: "م", total: false },
+                            { key: "BranchName", title: "التاريخ", aliases: ["ReportDate", "Transaction_Date"], total: false },
+                            { key: "TotalSupply", title: "إجمالي التوريد", note: "داخل الضريبة", total: true },
+                            { key: "TotalRechargeValue", title: "أصل مبلغ الشحن", total: true },
+                            { key: "TotalRev2", title: "الإيراد", note: "بدون ضريبة", total: true },
+                            { key: "TotalRevVat", title: "ضريبة الإيراد", total: true },
+                            { key: "TotalRevWithVat", title: "الإيراد", note: "شامل الضريبة", total: true },
+                            { key: "CountTransaction", title: "عدد العمليات", total: true },
+                            { key: "CountCards", title: "عدد الكروت", total: true },
+                            { key: "TotalSaleDay2", title: "قيمة الكروت", total: true },
+                            { key: "TotalSaleDay2Vat", title: "ضريبة الكروت", total: true },
+                            { key: "WalletBalance", title: "إجمالي Wallet", aliases: ["TotalWallet"], total: true },
+                            { key: "WalletSupply", title: "توريد Wallet", aliases: ["TotalSupplyWallet"], total: true },
+                            { key: "BankBalanceCharge", title: "تكلفة رسوم BM", warn: true, total: true },
+                            { key: "ReturnsCount", title: "مرتجعات", note: "عدد", aliases: ["ReturnCount"], total: true },
+                            { key: "TotalReturns", title: "مرتجعات", note: "قيمة", total: true }
+                        ]
+                    };
+                }
+                return {
+                    title: "تقرير الإغلاق المالي الشامل على مستوى الفروع",
+                    summary: true,
+                    summaryMode: "closing",
+                    columns: [
+                        { key: "RowNo", title: "م", total: false },
+                        { key: "BranchName", title: "بيان الفروع", total: false },
+                        { key: "TotalSupply", title: "إجمالي التوريد", note: "داخل الضريبة", total: true },
+                        { key: "CountCards", title: "كارت كيشني", note: "عدد", aliases: ["TotalCards", "CountCard"], total: true },
+                        { key: "CardValue", title: "كارت كيشني", note: "قيمة", aliases: ["TotalSaleDay2", "CardsValue"], total: true },
+                        { key: "CountTransaction", title: "عدد عمليات الشحن", aliases: ["CountTransac", "TransactionCashCount"], total: true },
+                        { key: "WalletBalance", title: "رصيد Wallet", aliases: ["WalletNet"], total: true },
+                        { key: "WalletSupply", title: "توريد Wallet", aliases: ["TotalWallet"], total: true },
+                        { key: "BankBalanceCharge", title: "تكلفة رسوم", note: "رسوم", warn: true, aliases: ["BankBalance", "BalanceCharge"], total: true },
+                        { key: "TotalRechargeValue", title: "أصل مبلغ الشحن", total: true },
+                        { key: "TotalRev2", title: "الخصم", total: true },
+                        { key: "TotalRevWithVat", title: "رسوم الشحن", note: "شامل الضريبة", total: true },
+                        { key: "ReturnsCount", title: "المرتجعات", note: "عدد", aliases: ["ReturnCount", "TotalReturnsCount"], total: true },
+                        { key: "TotalReturns", title: "المرتجعات", note: "قيمة", total: true },
+                        { key: "NetCashOut", title: "صافي كاش أوت", total: true },
+                        { key: "BoxValue", title: "العهدة", aliases: ["BoxBalance"], total: true },
+                        { key: "ClosingStatus", title: "حالة الإغلاق", aliases: ["CloseStatus", "VoucherType"], total: false }
+                    ]
+                };
             }
             function totalValue(totals, key) {
                 return totals && isFinite(totals[key]) ? totals[key] : 0;
@@ -659,10 +724,14 @@
             function moneyCell(value) {
                 return escapeHtml(formatCell(value || 0));
             }
-            function buildCrystalSummary(totals) {
+            function buildCrystalSummary(totals, mode) {
                 var countCards = totalValue(totals, "CountCards");
                 var cardValue = totalValue(totals, "CardValue");
                 var cardVat = totalValue(totals, "TotalSaleDay2Vat");
+                if (mode === "sales") {
+                    cardValue = totalValue(totals, "TotalSaleDay2") + totalValue(totals, "TotalSaleDay2Vat_All");
+                    cardVat = totalValue(totals, "TotalSaleDay2Vat_All");
+                }
                 var cardBaseValue = cardValue - cardVat;
                 var rechargeCount = totalValue(totals, "CountTransactionIn");
                 var walletCount = totalValue(totals, "CountTransactionOut");
@@ -856,8 +925,11 @@
                     }
 
                     if (xhr.status >= 200 && xhr.status < 300 && data && data.success) {
-                        byId("reportMessage").innerText = (data.reportKey || data.ReportKey) === "finance-closing-discounts" ? "" : (data.reportName || "تم تشغيل التقرير");
-                        renderTable(data);
+                        data.reportKey = key;
+                        data.ReportKey = key;
+                        data.reportName = getReportTitle(key);
+                        byId("reportMessage").innerText = key === "finance-closing-discounts" ? "" : (data.reportName || "تم تشغيل التقرير");
+                        renderTable(data, key);
                         if (typeof afterRender === "function") {
                             afterRender(data);
                         }
