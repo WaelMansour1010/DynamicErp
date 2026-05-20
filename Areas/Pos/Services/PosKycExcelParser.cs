@@ -168,6 +168,15 @@ namespace MyERP.Areas.Pos.Services
 
             var arabicParts = SplitNameParts(arabicName, 4);
             var englishParts = SplitNameParts(englishName, 4);
+            var englishAddressText = ReadColumn(sheet, rowIndex, headerMap, "EnglishAddress");
+            var englishAddressParts = string.IsNullOrWhiteSpace(englishAddressText)
+                ? new[] { "Egypt", "Egypt", "Egypt" }
+                : SplitAddressParts(englishAddressText);
+            var arabicAddress = ReadColumn(sheet, rowIndex, headerMap, "ArabicAddress");
+            if (string.IsNullOrWhiteSpace(arabicAddress))
+            {
+                arabicAddress = "مصر مصر";
+            }
             row.BranchName = branchName;
             row.Customer = new PosCustomerLookupDto
             {
@@ -183,14 +192,17 @@ namespace MyERP.Areas.Pos.Services
                 EnglishName1 = englishParts[1],
                 EnglishName2 = englishParts[2],
                 EnglishName3 = englishParts[3],
-                EnglishName5 = ReadColumn(sheet, rowIndex, headerMap, "EnglishAddress"),
+                EnglishName5 = englishAddressParts[0],
+                EnglishName6 = englishAddressParts[1],
+                EnglishName7 = englishAddressParts[2],
                 Phone = mobile,
                 Phone2 = mobile,
                 VisaNumber = cardNo,
                 CardNo = cardNo,
                 CardId = cardNo,
                 Tet_NumPoket = nationalId,
-                Address = ReadColumn(sheet, rowIndex, headerMap, "ArabicAddress"),
+                Address = arabicAddress,
+                MailAdress = string.Join(" ", englishAddressParts.Where(x => !string.IsNullOrWhiteSpace(x))),
                 BirthDate = ReadDate(sheet, rowIndex, headerMap, "BirthDate"),
                 CardDate = ReadDate(sheet, rowIndex, headerMap, "CardDate"),
                 CardEndDate = ReadDate(sheet, rowIndex, headerMap, "CardEndDate"),
@@ -393,6 +405,36 @@ namespace MyERP.Areas.Pos.Services
             if (parts.Count > count)
             {
                 result[count - 1] = string.Join(" ", parts.Skip(count - 1));
+            }
+
+            return result;
+        }
+
+        private static string[] SplitAddressParts(string value)
+        {
+            var result = new[] { string.Empty, string.Empty, string.Empty };
+            value = Regex.Replace(value ?? string.Empty, @"\s+", " ").Trim();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return result;
+            }
+
+            for (var i = 0; i < result.Length && value.Length > 0; i++)
+            {
+                if (value.Length <= 35)
+                {
+                    result[i] = value;
+                    break;
+                }
+
+                var take = value.LastIndexOf(' ', Math.Min(35, value.Length - 1));
+                if (take < 15)
+                {
+                    take = 35;
+                }
+
+                result[i] = value.Substring(0, take).Trim();
+                value = value.Substring(Math.Min(take, value.Length)).Trim();
             }
 
             return result;

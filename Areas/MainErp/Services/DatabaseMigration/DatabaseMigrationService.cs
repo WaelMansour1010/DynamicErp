@@ -40,11 +40,13 @@ namespace MyERP.Areas.MainErp.Services.DatabaseMigration
                 var files = DiscoverMigrationFiles();
                 var history = ReadHistory(connection, 500);
                 var classified = files.Where(x => x.IsClassified).ToList();
-                MarkStates(files, history);
+                MarkStates(connection, files, history);
 
                 var appliedHistory = history.Where(x => x.Success).OrderByDescending(x => x.AppliedOn).ToList();
                 var failedHistory = history.Where(x => !x.Success).OrderByDescending(x => x.AppliedOn).ToList();
-                var pending = classified.Where(x => !x.HasHashMismatch && x.ValidationStatus == "Pending").ToList();
+                var pending = classified
+                    .Where(x => !x.HasHashMismatch && IsVisiblePendingStatus(x.ValidationStatus))
+                    .ToList();
                 var mismatches = classified.Where(x => x.HasHashMismatch).ToList();
                 var runLog = ReadRuns(connection, 50);
 
@@ -66,12 +68,11 @@ namespace MyERP.Areas.MainErp.Services.DatabaseMigration
                     Sources = GetSources(),
                     ExecutionLog = runLog,
                     LastRunResult = lastRunResult,
-                    Warnings = files.Where(x => !x.IsClassified).Select(x => new MigrationWarning
-                    {
-                        Severity = "Warning",
-                        Code = "Unclassified",
-                        Message = x.ScriptName + " is not numbered with the required migration prefix and will not be applied automatically."
-                    }).Take(25).ToList()
+                    Warnings = files
+                        .Where(x => !x.IsClassified)
+                        .SelectMany(BuildClassificationWarnings)
+                        .Take(25)
+                        .ToList()
                 };
             }
         }
@@ -82,10 +83,9 @@ namespace MyERP.Areas.MainErp.Services.DatabaseMigration
             {
                 var files = DiscoverMigrationFiles();
                 var history = ReadHistory(connection, 5000);
-                MarkStates(files, history);
+                MarkStates(connection, files, history);
 
                 var result = BuildPlanResult(files, "DryRun");
-                result.Status = result.HashMismatches.Any() ? "Warning" : "Ready";
                 result.FinishedAt = DateTime.Now;
                 return result;
             }
@@ -108,7 +108,7 @@ namespace MyERP.Areas.MainErp.Services.DatabaseMigration
                 EnsureMetadataTables(connection);
                 var files = DiscoverMigrationFiles();
                 var history = ReadHistory(connection, 5000);
-                MarkStates(files, history);
+                MarkStates(connection, files, history);
 
                 var candidates = files
                     .Where(x => x.IsClassified && x.ValidationStatus == "Pending" && !x.HasHashMismatch)
@@ -285,10 +285,16 @@ namespace MyERP.Areas.MainErp.Services.DatabaseMigration
                     var header = ParseHeader(text);
                     var number = ParseMigrationNumber(info.Name);
                     var classified = number.HasValue && Regex.IsMatch(info.Name, @"^\d{4}_[A-Za-z0-9]+_.+\.sql$", RegexOptions.IgnoreCase);
+                    var autoApplyDisabled = IsHeaderNo(header, "Auto apply?") || IsHeaderNo(header, "Auto apply");
                     var warnings = DetectDangerousSql(text).ToList();
                     if (!classified)
                     {
                         warnings.Add(new MigrationWarning { Severity = "Warning", Code = "Unclassified", Message = "Old or unnumbered SQL file. It is visible for review but will not be applied automatically." });
+                    }
+                    if (autoApplyDisabled)
+                    {
+                        classified = false;
+                        warnings.Add(new MigrationWarning { Severity = "Warning", Code = "ManualOnly", Message = "Auto apply is disabled for this script. It is visible for review only and will not be applied automatically." });
                     }
 
                     results.Add(new MigrationFileInfoViewModel
@@ -303,7 +309,7 @@ namespace MyERP.Areas.MainErp.Services.DatabaseMigration
                         UpdateType = DetectUpdateType(text),
                         SafeToRerun = header.ContainsKey("Safe to rerun?") && header["Safe to rerun?"].IndexOf("Yes", StringComparison.OrdinalIgnoreCase) >= 0,
                         Dependencies = header.ContainsKey("Dependencies") ? header["Dependencies"] : "",
-                        ValidationStatus = classified ? "Pending" : "Unclassified",
+                        ValidationStatus = autoApplyDisabled ? "ManualOnly" : (classified ? "Pending" : "Unclassified"),
                         IsClassified = classified,
                         Warnings = warnings
                     });
@@ -318,7 +324,7 @@ namespace MyERP.Areas.MainErp.Services.DatabaseMigration
                 .ToList();
         }
 
-        private void MarkStates(IList<MigrationFileInfoViewModel> files, IList<MigrationHistoryViewModel> history)
+        private void MarkStates(SqlConnection connection, IList<MigrationFileInfoViewModel> files, IList<MigrationHistoryViewModel> history)
         {
             var grouped = history.GroupBy(x => x.ScriptName, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(x => x.Key, x => x.ToList(), StringComparer.OrdinalIgnoreCase);
@@ -327,7 +333,9 @@ namespace MyERP.Areas.MainErp.Services.DatabaseMigration
             {
                 if (!file.IsClassified)
                 {
-                    file.ValidationStatus = "Unclassified";
+                    file.ValidationStatus = string.Equals(file.ValidationStatus, "ManualOnly", StringComparison.OrdinalIgnoreCase)
+                        ? "ManualOnly"
+                        : "Unclassified";
                     continue;
                 }
 
@@ -335,6 +343,7 @@ namespace MyERP.Areas.MainErp.Services.DatabaseMigration
                 if (!grouped.TryGetValue(file.ScriptName, out rows))
                 {
                     file.ValidationStatus = "Pending";
+                    ApplyDependencyState(connection, file);
                     continue;
                 }
 
@@ -353,18 +362,20 @@ namespace MyERP.Areas.MainErp.Services.DatabaseMigration
                 }
 
                 file.ValidationStatus = "Pending";
+                ApplyDependencyState(connection, file);
             }
         }
 
         private MigrationRunResult BuildPlanResult(IList<MigrationFileInfoViewModel> files, string mode)
         {
-            var pending = files.Where(x => x.IsClassified && x.ValidationStatus == "Pending" && !x.HasHashMismatch).ToList();
+            var pending = files.Where(x => x.IsClassified && IsVisiblePendingStatus(x.ValidationStatus) && !x.HasHashMismatch).ToList();
             var mismatches = files.Where(x => x.IsClassified && x.HasHashMismatch).ToList();
             var warnings = files.SelectMany(x => x.Warnings).ToList();
+            var blocked = pending.Any(x => string.Equals(x.ValidationStatus, "Blocked", StringComparison.OrdinalIgnoreCase));
             return new MigrationRunResult
             {
                 Mode = mode,
-                Status = mismatches.Any() ? "Warning" : "Ready",
+                Status = mismatches.Any() ? "Warning" : (blocked ? "Blocked" : "Ready"),
                 StartedAt = DateTime.Now,
                 FinishedAt = mode == "DryRun" ? (DateTime?)DateTime.Now : null,
                 Pending = pending,
@@ -373,6 +384,94 @@ namespace MyERP.Areas.MainErp.Services.DatabaseMigration
                 WarningCount = warnings.Count + mismatches.Count,
                 Warnings = warnings
             };
+        }
+
+        private static bool IsVisiblePendingStatus(string status)
+        {
+            return string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(status, "Blocked", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsHeaderNo(IDictionary<string, string> header, string key)
+        {
+            string value;
+            return header != null
+                && header.TryGetValue(key, out value)
+                && value.IndexOf("No", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static IEnumerable<MigrationWarning> BuildClassificationWarnings(MigrationFileInfoViewModel file)
+        {
+            var warnings = file.Warnings == null
+                ? new List<MigrationWarning>()
+                : file.Warnings.Where(x => string.Equals(x.Code, "ManualOnly", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(x.Code, "Unclassified", StringComparison.OrdinalIgnoreCase)).ToList();
+
+            if (warnings.Count == 0)
+            {
+                warnings.Add(new MigrationWarning
+                {
+                    Severity = "Warning",
+                    Code = "Unclassified",
+                    Message = file.ScriptName + " is not numbered with the required migration prefix and will not be applied automatically."
+                });
+            }
+
+            foreach (var warning in warnings)
+            {
+                yield return new MigrationWarning
+                {
+                    Severity = warning.Severity,
+                    Code = warning.Code,
+                    Message = file.ScriptName + ": " + warning.Message
+                };
+            }
+        }
+
+        private static void ApplyDependencyState(SqlConnection connection, MigrationFileInfoViewModel file)
+        {
+            var missing = GetMissingDependencies(connection, file.Dependencies).ToList();
+            if (missing.Count == 0)
+            {
+                return;
+            }
+
+            file.ValidationStatus = "Blocked";
+            file.Warnings.Add(new MigrationWarning
+            {
+                Severity = "Danger",
+                Code = "MissingDependency",
+                Message = "Missing dependencies: " + string.Join(", ", missing)
+            });
+        }
+
+        private static IEnumerable<string> GetMissingDependencies(SqlConnection connection, string dependencies)
+        {
+            if (string.IsNullOrWhiteSpace(dependencies))
+            {
+                yield break;
+            }
+
+            foreach (var dependency in dependencies.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var objectName = dependency.Trim();
+                if (objectName.Length == 0 || objectName.Equals("None", StringComparison.OrdinalIgnoreCase)
+                    || objectName.Equals("N/A", StringComparison.OrdinalIgnoreCase)
+                    || objectName.Equals("-", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                using (var command = new SqlCommand("SELECT OBJECT_ID(@ObjectName)", connection))
+                {
+                    command.Parameters.Add("@ObjectName", SqlDbType.NVarChar, 300).Value = objectName;
+                    var value = command.ExecuteScalar();
+                    if (value == null || value == DBNull.Value)
+                    {
+                        yield return objectName;
+                    }
+                }
+            }
         }
 
         private IList<MigrationSourceViewModel> GetSources()

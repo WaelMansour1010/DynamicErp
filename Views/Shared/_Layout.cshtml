@@ -5322,9 +5322,9 @@
             applyCompanyScreenMenuFilter(screenResult);
         });
 
-        $.get('/Helper/GetAllowedPvKeys').done(function (pvResult) {
-            applyPvMenuFilter(pvResult);
-        });
+        // Menu permission filtering is enforced server-side by ERPAuthorize.
+        // Keep the client menu fail-open to avoid hiding valid screens when
+        // legacy pv keys differ from SystemPage privilege keys.
     });
     function searchSideMenu() {
         var name = $('#side-menu-search').val();

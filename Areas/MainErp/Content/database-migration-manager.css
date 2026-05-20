@@ -319,6 +319,13 @@
     color: #9e2722;
 }
 
+.dbm-inline-warning {
+    color: #9e2722;
+    font-size: 11px;
+    line-height: 1.45;
+    margin-top: 6px;
+}
+
 .dbm-danger-row {
     background: #fff8f8;
 }

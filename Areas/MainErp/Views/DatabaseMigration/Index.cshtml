@@ -1,4 +1,4 @@
-@model MyERP.Areas.MainErp.ViewModels.DatabaseMigration.DatabaseMigrationDashboardViewModel
+﻿@model MyERP.Areas.MainErp.ViewModels.DatabaseMigration.DatabaseMigrationDashboardViewModel
 @using System.Globalization
 @{
     Layout = "~/Areas/MainErp/Views/Shared/_MainErpLayout.cshtml";
@@ -125,8 +125,9 @@
                     <tbody>
                         @foreach (var item in Model.Pending)
                         {
+                            var isBlocked = string.Equals(item.ValidationStatus, "Blocked", StringComparison.OrdinalIgnoreCase);
                             <tr>
-                                <td><input type="checkbox" name="ScriptKeys" value="@item.ScriptKey" /></td>
+                                <td><input type="checkbox" name="ScriptKeys" value="@item.ScriptKey" @(isBlocked ? "disabled" : "") /></td>
                                 <td>@(item.MigrationNumber.HasValue ? item.MigrationNumber.Value.ToString("0000") : "-")</td>
                                 <td>@item.ScriptName</td>
                                 <td><span class="dbm-badge">@item.ModuleName</span></td>
@@ -136,7 +137,13 @@
                                 <td>@item.UpdateType</td>
                                 <td>@(item.SafeToRerun ? "نعم" : "لا")</td>
                                 <td>@item.Dependencies</td>
-                                <td><span class="dbm-state dbm-state-pending">@item.ValidationStatus</span></td>
+                                <td>
+                                    <span class="dbm-state @(isBlocked ? "dbm-state-warning" : "dbm-state-pending")">@item.ValidationStatus</span>
+                                    @foreach (var warning in item.Warnings.Where(x => string.Equals(x.Code, "MissingDependency", StringComparison.OrdinalIgnoreCase)))
+                                    {
+                                        <div class="dbm-inline-warning">@warning.Message</div>
+                                    }
+                                </td>
                                 <td><a class="dbm-icon-link" href="@Url.Action("PreviewScript", "DatabaseMigration", new { area = "MainErp", id = item.ScriptKey })"><i class="fas fa-eye"></i></a></td>
                             </tr>
                         }

@@ -169,7 +169,8 @@
                     }
                 </select>
 
-                <input name="TargetCloneDatabaseName" list="propertyMigrationTargets" value="Alromaizan_PropertyPilot_RSMDB_StagingClone_20260520" placeholder="Target Clone DB" style="min-width:320px;" />
+                <input name="TargetCloneDatabaseName" id="propertyMigrationTarget" list="propertyMigrationTargets" value="Alromaizan_PropertyPilot_RSMDB_StagingClone_20260520" placeholder="Target Clone DB" style="min-width:320px;" />
+                <small id="propertyMigrationTargetWarning" style="display:none;color:#b91c1c;font-weight:700;">Target must include Clone, Sandbox, PropertyPilot, ReadyToTest, PilotClone, or Migration.</small>
                 <datalist id="propertyMigrationTargets">
                     @foreach (var target in propertyMigrationTargets)
                     {
@@ -233,5 +234,26 @@
             </div>
         </section>
     </div>
+    <script>
+        (function () {
+            var target = document.getElementById("propertyMigrationTarget");
+            var warning = document.getElementById("propertyMigrationTargetWarning");
+            var safeMarkers = ["clone", "sandbox", "propertypilot", "readytotest", "pilotclone", "migration"];
+            function validateTarget() {
+                if (!target || !warning) {
+                    return;
+                }
+
+                var value = (target.value || "").toLowerCase();
+                var safe = safeMarkers.some(function (marker) { return value.indexOf(marker) >= 0; });
+                warning.style.display = safe ? "none" : "inline-block";
+            }
+
+            if (target) {
+                target.addEventListener("input", validateTarget);
+                validateTarget();
+            }
+        })();
+    </script>
 </body>
 </html>

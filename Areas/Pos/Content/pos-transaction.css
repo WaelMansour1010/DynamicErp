@@ -7560,3 +7560,230 @@ html[data-pos-theme] .pos-main-shell.is-teller-only-shell .pos-main-frame-card i
         justify-self: center;
     }
 }
+
+/* Compact POS sidebar cleanup: remove menu summaries and tighten daily cashier navigation. */
+.pos-main-shell {
+    grid-template-columns: 286px minmax(0, 1fr);
+}
+
+.pos-main-shell.is-sidebar-collapsed {
+    grid-template-columns: 76px minmax(0, 1fr);
+}
+
+.pos-main-sidebar {
+    gap: 8px;
+    padding: 10px 9px;
+}
+
+.pos-sidebar-brand {
+    min-height: 44px;
+    gap: 8px;
+}
+
+.pos-main-logo {
+    min-height: 42px;
+    padding: 6px 8px;
+}
+
+.pos-main-logo img {
+    max-height: 30px;
+}
+
+.pos-sidebar-collapse,
+.pos-mobile-nav-toggle {
+    height: 34px;
+    min-height: 34px;
+    width: 34px;
+}
+
+.pos-sidebar-user {
+    gap: 8px;
+    min-height: 44px;
+    padding: 7px 8px;
+}
+
+.pos-sidebar-user strong,
+.pos-nav-section-toggle b,
+.pos-main-nav .pos-nav-link span,
+.pos-favorite-link span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: normal;
+}
+
+.pos-sidebar-user small {
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.pos-sidebar-search {
+    border-radius: 12px;
+    gap: 7px;
+    min-height: 38px;
+    padding: 0 8px;
+}
+
+.pos-sidebar-search input {
+    font-size: 12.5px;
+    height: 34px;
+}
+
+.pos-nav-quick-access {
+    border-radius: 12px;
+    padding: 8px;
+}
+
+.pos-nav-quick-heading {
+    margin-bottom: 5px;
+}
+
+.pos-nav-empty {
+    font-size: 12px;
+    line-height: 1.35;
+    padding: 7px;
+}
+
+.pos-modern-nav {
+    gap: 2px;
+}
+
+.pos-nav-section {
+    border-bottom: 0;
+    margin-bottom: 2px;
+    padding-bottom: 0;
+}
+
+.pos-nav-section-toggle {
+    border-radius: 11px;
+    font-size: 13px;
+    line-height: 1.2;
+    min-height: 38px;
+    padding: 5px 7px;
+}
+
+.pos-nav-section-toggle span {
+    column-gap: 8px;
+    grid-template-columns: 28px minmax(0, 1fr);
+}
+
+.pos-nav-section-toggle small {
+    display: none !important;
+}
+
+.pos-sidebar-user .user-avatar,
+.pos-nav-section-toggle span > .pos-svg-icon,
+.pos-main-nav .pos-nav-link > .pos-svg-icon,
+.pos-favorite-link > .pos-svg-icon {
+    border-radius: 9px;
+    flex-basis: 28px;
+    height: 28px;
+    padding: 6px;
+    width: 28px;
+}
+
+.pos-nav-section-toggle .nav-chevron {
+    height: 14px;
+    width: 14px;
+}
+
+.pos-nav-submenu {
+    margin: 0;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0 2px;
+    transform: translateY(-2px);
+    transition: max-height .18s ease, opacity .14s ease, transform .14s ease, padding .14s ease;
+    visibility: hidden;
+}
+
+.pos-nav-section.is-open .pos-nav-submenu {
+    max-height: 680px;
+    opacity: 1;
+    padding: 3px 2px 4px;
+    transform: translateY(0);
+    visibility: visible;
+}
+
+.pos-main-nav .pos-nav-link,
+.pos-favorite-link {
+    border-radius: 10px;
+    border-right-width: 2px;
+    font-size: 12.5px;
+    font-weight: 750;
+    gap: 8px;
+    grid-template-columns: 28px minmax(0, 1fr);
+    line-height: 1.2;
+    min-height: 34px;
+    padding: 4px 7px 4px 10px;
+    transform: none;
+}
+
+.pos-main-nav .pos-nav-link:hover,
+.pos-favorite-link:hover {
+    transform: none;
+}
+
+.pos-main-nav .pos-nav-link.active,
+.pos-favorite-link.active {
+    background: rgba(238, 243, 255, .10);
+    border-color: rgba(255, 255, 255, .10);
+    border-right-color: rgba(233, 75, 110, .85);
+    box-shadow: inset -2px 0 0 rgba(233, 75, 110, .85);
+}
+
+.pos-main-nav .pos-nav-link.active > .pos-svg-icon,
+.pos-favorite-link.active > .pos-svg-icon,
+.pos-nav-section.has-active > .pos-nav-section-toggle span > .pos-svg-icon {
+    box-shadow: none;
+}
+
+.pos-pin-button {
+    height: 22px;
+    margin-top: -28px;
+    width: 22px;
+}
+
+.pos-pin-button .pos-svg-icon {
+    height: 12px;
+    width: 12px;
+}
+
+.pos-main-shell.is-sidebar-collapsed .pos-main-sidebar {
+    padding: 10px 7px;
+}
+
+.pos-main-shell.is-sidebar-collapsed .pos-nav-section-toggle,
+.pos-main-shell.is-sidebar-collapsed .pos-main-nav .pos-nav-link,
+.pos-main-shell.is-sidebar-collapsed .pos-favorite-link {
+    min-height: 34px;
+    padding: 4px;
+}
+
+.pos-main-shell.is-sidebar-collapsed .pos-nav-section-toggle span,
+.pos-main-shell.is-sidebar-collapsed .pos-main-nav .pos-nav-link,
+.pos-main-shell.is-sidebar-collapsed .pos-favorite-link {
+    grid-template-columns: 28px;
+}
+
+.pos-main-shell.is-sidebar-collapsed .pos-nav-section-toggle b,
+.pos-main-shell.is-sidebar-collapsed .pos-nav-section-toggle small,
+.pos-main-shell.is-sidebar-collapsed .pos-sidebar-user div,
+.pos-main-shell.is-sidebar-collapsed .pos-main-nav .pos-nav-link span,
+.pos-main-shell.is-sidebar-collapsed .pos-favorite-link span {
+    display: none !important;
+}
+
+@media (max-width: 1000px) {
+    .pos-main-shell,
+    .pos-main-shell.is-sidebar-collapsed {
+        grid-template-columns: 1fr;
+    }
+
+    .pos-main-sidebar {
+        max-width: min(86vw, 300px);
+        width: min(86vw, 300px);
+    }
+}

@@ -131,13 +131,13 @@
             <small id="posQuickAccessCount">0</small>
         </div>
         <div class="pos-nav-favorites" id="posFavoritesList"></div>
-        <div class="pos-nav-empty" id="posFavoritesEmpty">ثبت الشاشات الأكثر استخداماً من علامة الدبوس.</div>
+        <div class="pos-nav-empty" id="posFavoritesEmpty">لا توجد عناصر مثبتة</div>
     </section>
 
     <nav class="pos-main-nav pos-modern-nav" aria-label="قائمة نقطة البيع">
         <section class="pos-nav-section teller-sales-section @(salesOpen ? "is-open" : "")" data-section-id="sales">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="المبيعات" aria-expanded="@(salesOpen ? "true" : "false")">
-                <span>@PosIcon("store")<b>المبيعات</b><small>بيع، KYC، كروت، تشغيل يومي</small></span>
+                <span>@PosIcon("store")<b>المبيعات</b></span>
                 @PosIcon("chevron-down", "nav-chevron")
             </button>
             <div class="pos-nav-submenu">
@@ -153,7 +153,7 @@
 
         <section class="pos-nav-section @(reportsOpen ? "is-open" : "")" data-section-id="reports">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="التقارير" aria-expanded="@(reportsOpen ? "true" : "false")">
-                <span>@PosIcon("chart-bar")<b>التقارير</b><small>كيشني، مالية، حسابات، تقارير ديناميكية</small></span>
+                <span>@PosIcon("chart-bar")<b>التقارير</b></span>
                 @PosIcon("chevron-down", "nav-chevron")
             </button>
             <div class="pos-nav-submenu">
@@ -167,7 +167,7 @@
 
         <section class="pos-nav-section @(inventoryOpen ? "is-open" : "")" data-section-id="inventory">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="المخزون" aria-expanded="@(inventoryOpen ? "true" : "false")">
-                <span>@PosIcon("boxes")<b>المخزون</b><small>أصناف، مخازن، جرد، تحويل</small></span>
+                <span>@PosIcon("boxes")<b>المخزون</b></span>
                 @PosIcon("chevron-down", "nav-chevron")
             </button>
             <div class="pos-nav-submenu">
@@ -181,7 +181,7 @@
 
         <section class="pos-nav-section @(accountsOpen ? "is-open" : "")" data-section-id="accounts">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="الحسابات" aria-expanded="@(accountsOpen ? "true" : "false")">
-                <span>@PosIcon("landmark")<b>الحسابات</b><small>خزن، بنوك، عهد، قيود</small></span>
+                <span>@PosIcon("landmark")<b>الحسابات</b></span>
                 @PosIcon("chevron-down", "nav-chevron")
             </button>
             <div class="pos-nav-submenu">
@@ -202,7 +202,7 @@
 
         <section class="pos-nav-section @(purchasesOpen ? "is-open" : "")" data-section-id="purchases">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="المشتريات" aria-expanded="@(purchasesOpen ? "true" : "false")">
-                <span>@PosIcon("receipt")<b>المشتريات</b><small>فواتير وموردون</small></span>
+                <span>@PosIcon("receipt")<b>المشتريات</b></span>
                 @PosIcon("chevron-down", "nav-chevron")
             </button>
             <div class="pos-nav-submenu">
@@ -212,7 +212,7 @@
 
         <section class="pos-nav-section @(hrOpen ? "is-open" : "")" data-section-id="hr">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="الموارد البشرية" aria-expanded="@(hrOpen ? "true" : "false")">
-                <span>@PosIcon("users")<b>الموارد البشرية</b><small>موظفون، تأمين، رواتب</small></span>
+                <span>@PosIcon("users")<b>الموارد البشرية</b></span>
                 @PosIcon("chevron-down", "nav-chevron")
             </button>
             <div class="pos-nav-submenu">
@@ -233,7 +233,7 @@
 
         <section class="pos-nav-section @(settingsOpen ? "is-open" : "")" data-section-id="settings">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="الإعدادات والإدارة" aria-expanded="@(settingsOpen ? "true" : "false")">
-                <span>@PosIcon("settings")<b>الإعدادات والإدارة</b><small>فروع، خيارات، ربط، طباعة</small></span>
+                <span>@PosIcon("settings")<b>الإعدادات والإدارة</b></span>
                 @PosIcon("chevron-down", "nav-chevron")
             </button>
             <div class="pos-nav-submenu">
@@ -249,7 +249,7 @@
 
         <section class="pos-nav-section @(systemOpen ? "is-open" : "")" data-section-id="system">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="النظام والمراقبة" aria-expanded="@(systemOpen ? "true" : "false")">
-                <span>@PosIcon("shield-check")<b>النظام والمراقبة</b><small>مستخدمون، صلاحيات، سجلات</small></span>
+                <span>@PosIcon("shield-check")<b>النظام والمراقبة</b></span>
                 @PosIcon("chevron-down", "nav-chevron")
             </button>
             <div class="pos-nav-submenu">
@@ -272,7 +272,7 @@
 
         <section class="pos-nav-section @(excelOpen ? "is-open" : "")" data-section-id="excel">
             <button type="button" class="pos-nav-section-toggle" data-menu-toggle title="إدارة Excel والاستيراد والمطابقة" aria-expanded="@(excelOpen ? "true" : "false")">
-                <span>@PosIcon("spreadsheet")<b>إدارة Excel والاستيراد والمطابقة</b><small>استيراد، توكينات، مطابقة، تقارير أخطاء</small></span>
+                <span>@PosIcon("spreadsheet")<b>إدارة Excel والاستيراد والمطابقة</b></span>
                 @PosIcon("chevron-down", "nav-chevron")
             </button>
             <div class="pos-nav-submenu">

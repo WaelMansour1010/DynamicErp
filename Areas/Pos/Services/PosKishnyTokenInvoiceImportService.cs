@@ -412,6 +412,7 @@ namespace MyERP.Areas.Pos.Services
             var parts = SplitNameParts(name, 4);
             var invoiceDate = row.InvoiceDate ?? DateTime.Today;
             var birthDate = TryGetBirthDateFromEgyptianNationalId(row.NationalId);
+            var englishAddressParts = new[] { "Egypt", "Egypt", "Egypt" };
             return new PosCashCustomerSaveRequest
             {
                 Name = name,
@@ -424,9 +425,9 @@ namespace MyERP.Areas.Pos.Services
                 EnglishName1 = "Card",
                 EnglishName2 = "Customer",
                 EnglishName3 = "Egypt",
-                EnglishName5 = "Egypt",
-                EnglishName6 = "Egypt",
-                EnglishName7 = "Egypt",
+                EnglishName5 = englishAddressParts[0],
+                EnglishName6 = englishAddressParts[1],
+                EnglishName7 = englishAddressParts[2],
                 PhoneNo2 = row.Mobile,
                 PhoneNo = row.Mobile,
                 CardNo = row.Token,
@@ -434,7 +435,7 @@ namespace MyERP.Areas.Pos.Services
                 CardSource = "Excel Token Invoice Import",
                 Tet_NumPoket = row.NationalId,
                 Address = "مصر",
-                MailAdress = "Egypt",
+                MailAdress = string.Join(" ", englishAddressParts.Where(x => !string.IsNullOrWhiteSpace(x))),
                 BirthDate = birthDate,
                 OrderDate = invoiceDate,
                 CardDate = invoiceDate,
@@ -906,6 +907,36 @@ namespace MyERP.Areas.Pos.Services
             var parts = Regex.Split((value ?? string.Empty).Trim(), @"\s+").Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
             for (var i = 0; i < count; i++) { result[i] = i < parts.Count ? parts[i] : string.Empty; }
             if (parts.Count > count) { result[count - 1] = string.Join(" ", parts.Skip(count - 1)); }
+            return result;
+        }
+
+        private static string[] SplitAddressParts(string value)
+        {
+            var result = new[] { string.Empty, string.Empty, string.Empty };
+            value = Regex.Replace(value ?? string.Empty, @"\s+", " ").Trim();
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return result;
+            }
+
+            for (var i = 0; i < result.Length && value.Length > 0; i++)
+            {
+                if (value.Length <= 35)
+                {
+                    result[i] = value;
+                    break;
+                }
+
+                var take = value.LastIndexOf(' ', Math.Min(35, value.Length - 1));
+                if (take < 15)
+                {
+                    take = 35;
+                }
+
+                result[i] = value.Substring(0, take).Trim();
+                value = value.Substring(Math.Min(take, value.Length)).Trim();
+            }
+
             return result;
         }
 

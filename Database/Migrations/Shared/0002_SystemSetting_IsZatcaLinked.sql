@@ -1,8 +1,9 @@
 /*
 Migration number: 0002
-Module: Shared
-Purpose: Add the ZATCA integration completion flag used by the main web warning modal.
+Module: ExternalWeb
+Purpose: Add the ZATCA integration completion flag used by the large web application warning modal.
 Safe to rerun? Yes
+Auto apply?: No
 Dependencies: dbo.SystemSetting
 Date: 2026-05-19
 Author/Agent: Codex

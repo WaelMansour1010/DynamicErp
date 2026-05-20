@@ -4558,6 +4558,10 @@
     <Content Include="Areas\Pos\Sql\109_POS_WebPermissions_TellerInvoiceSafety.sql" />
     <Content Include="Areas\Pos\Sql\110_POS_EmployeePhoto_PrintCards.sql" />
     <Content Include="Areas\Pos\Sql\112_POS_PayrollAdvanceDeductionLinks.sql" />
+    <Content Include="Areas\Pos\Sql\121_POS_ProjectStatus_Command8_9_10_Reports.sql" />
+    <Content Include="Areas\Pos\Sql\122_POS_ProjectStatus_Command8_9_10_CrystalParityWrapper.sql" />
+    <Content Include="Areas\Pos\Sql\123_POS_FrmReports_XPChk_CrystalParity.sql" />
+    <Content Include="Areas\Pos\Sql\124_POS_SharedAccountingReports_CrystalParity.sql" />
     <Content Include="Areas\Pos\Sql\README_POS_Dashboard_DailySnapshots.md" />
     <Content Include="Areas\Pos\Sql\README_POS_FinancialIntelligenceReports.md" />
     <Content Include="Areas\Pos\Sql\POS_SQL_AutoUpdate_Manifest.json" />
@@ -4751,6 +4755,7 @@
     <Content Include="Database\Migrations\Shared\0001_Shared_Example_AddColumn.sql" />
     <Content Include="Database\Migrations\Shared\0002_SystemSetting_IsZatcaLinked.sql" />
     <Content Include="Database\Migrations\Shared\0003_ServiceInvoice_CashReceiptVoucher.sql" />
+    <Content Include="Database\Migrations\Shared\0004_SharedAccountingReports_CrystalParity.sql" />
     <Content Include="Docs\Database_Migration_Audit.md" />
     <Content Include="Docs\Database_Migration_System.md" />
     <Content Include="Docs\Database_Update_Manager.md" />
